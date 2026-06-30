@@ -9,19 +9,14 @@ diagram_stale: true
 
 ## Overview
 
-Three-view flow carried forward from sync-scroll's domain knowledge:
-landing (create/join) → lobby (pick song/part, see who's ready) →
-playback (synchronized scroll/lyrics/metronome view). This shape wasn't a
-source of complaints — the rebuild's UI principle is the same as the rest
-of the app: keep view state in the single client store (constitution
-principle I), don't reach into nullable module-level component refs set as
-a side effect of framework lifecycle hooks.
+Three-view flow: landing (create/join) → lobby (pick song/part, see who's
+ready) → playback (synchronized scroll/lyrics/metronome view). View state
+lives in the single client store (constitution principle I); components
+don't hold their own nullable refs set as a side effect of framework
+lifecycle hooks.
 
-Client reactivity/templating is Svelte (plain Svelte + Vite, no
-SvelteKit — see infrastructure.md), replacing Alpine.js. The
-store/session-state design itself — single source of state, per
-constitution principle I — carries forward unchanged; only the
-framework wiring it sits on top of changes.
+Client reactivity/templating is Svelte + Vite (plain Svelte, not
+SvelteKit — see infrastructure.md).
 
 ## Landing View
 

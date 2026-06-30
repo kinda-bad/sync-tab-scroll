@@ -2,17 +2,16 @@
 name: datamodel
 status: draft
 last_updated: 2026-06-30
+diagram_stale: true
 ---
 
 # Data Model
 
 ## Overview
 
-Canonical entities carried forward from sync-scroll's domain — these shapes
-were validated through 16 feature specs and aren't a source of the
-complaints that motivated the rebuild, so they're captured here as known
-domain knowledge. Storage/persistence mechanics are open (see
-infrastructure.md).
+Canonical entities for sessions, participants, the song catalog, and
+playback state. Storage/persistence mechanics are defined in
+infrastructure.md (memory-only).
 
 ## Entities
 
@@ -75,8 +74,8 @@ playback state maps correctly across parts with different note density
 pixel positions are derived from beat position via the active part's
 layout map at render time, not stored directly.
 
-[OPEN: any additional normalization rules for the rebuilt pipeline's
-output format, if it changes from the current LayoutMap shape.]
+[OPEN: any additional normalization rules needed if the pipeline's output
+format ends up differing from the LayoutMap shape above.]
 
 ## Indexes
 
