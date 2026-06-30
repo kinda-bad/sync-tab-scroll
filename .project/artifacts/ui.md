@@ -49,6 +49,5 @@ countdown can precede playback start. The host's view exposes seek
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,
   not-host action attempts — surfaced as toasts, not blocking modals.
 
-[OPEN: light/dark theming — present in the old app as a later feature
-add-on (spec 016). Decide whether this is in scope for initial rebuild or
-a later feature on top of stable artifacts.]
+Color, typography, tone, and motion are owned by `brand.md`, not this
+artifact.

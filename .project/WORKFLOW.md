@@ -10,6 +10,7 @@ This project uses [artifact-driven-dev](https://github.com/[owner]/artifact-driv
 | infrastructure.md | Real-time sync architecture, tab rendering pipeline, storage |
 | datamodel.md | Canonical session/participant/song/playback schema |
 | ui.md | Landing/lobby/playback views and their states |
+| brand.md | Color, typography, tone, and motion — look-and-feel decisions |
 
 ## Skills
 

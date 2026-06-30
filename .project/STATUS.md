@@ -9,7 +9,8 @@ _Updated: 2026-06-30. Keep this current as artifacts are refined and open questi
 | constitution.md | draft ⚠️ | 1 |
 | infrastructure.md | draft ⚠️ | 4 |
 | datamodel.md | draft ⚠️ | 2 |
-| ui.md | draft ⚠️ | 2 |
+| ui.md | draft ⚠️ | 1 |
+| brand.md | draft ⚠️ | 5 |
 
 ## Open Questions
 
@@ -28,7 +29,13 @@ _Updated: 2026-06-30. Keep this current as artifacts are refined and open questi
 
 **ui**
 - Keep Alpine.js for client-side reactivity/templating?
-- Light/dark theming — in scope for the initial rebuild, or a later feature once core artifacts are stable?
+
+**brand**
+- Color palette — keep the old dark/neon-accented direction (`neon-yellow`, `neon-blue`) or reset?
+- Typography — keep the old display/title font + monospace metadata pairing, or reset?
+- Voice & tone for copy (toasts, errors, empty states) — not yet discussed.
+- Motion — keep the "glitch" title effect and animated drain/fill bars, or reset?
+- Light/dark mode — default mode, and whether both are in scope for the initial rebuild.
 
 ## Recommended Next Step
 
