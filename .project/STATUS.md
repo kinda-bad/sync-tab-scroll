@@ -10,7 +10,7 @@ _Updated: 2026-06-30. Keep this current as artifacts are refined and open questi
 | infrastructure.md | draft ⚠️ | 4 |
 | datamodel.md | draft ⚠️ | 2 |
 | ui.md | draft ⚠️ | 1 |
-| brand.md | draft ⚠️ | 5 |
+| brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
@@ -30,13 +30,6 @@ _Updated: 2026-06-30. Keep this current as artifacts are refined and open questi
 **ui**
 - Keep Alpine.js for client-side reactivity/templating?
 
-**brand**
-- Color palette — keep the old dark/neon-accented direction (`neon-yellow`, `neon-blue`) or reset?
-- Typography — keep the old display/title font + monospace metadata pairing, or reset?
-- Voice & tone for copy (toasts, errors, empty states) — not yet discussed.
-- Motion — keep the "glitch" title effect and animated drain/fill bars, or reset?
-- Light/dark mode — default mode, and whether both are in scope for the initial rebuild.
-
 ## Recommended Next Step
 
-Run `/ardd-analyze` to check cross-artifact consistency, then `/ardd-refine <artifact>` on each draft — starting with `infrastructure` and `ui` since they carry the most open questions (mainly: which parts of the old stack to keep vs. reconsider).
+Run `/ardd-analyze` to check cross-artifact consistency, then `/ardd-refine <artifact>` on each remaining draft — starting with `infrastructure` and `ui` since they carry the most open questions (mainly: which parts of the old stack to keep vs. reconsider).
