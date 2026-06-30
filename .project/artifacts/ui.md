@@ -1,7 +1,8 @@
 ---
 name: ui
-status: draft
+status: stable
 last_updated: 2026-06-30
+diagram_stale: true
 ---
 
 # UI
@@ -16,9 +17,11 @@ of the app: keep view state in the single client store (constitution
 principle I), don't reach into nullable module-level component refs set as
 a side effect of framework lifecycle hooks.
 
-[OPEN: Keep Alpine.js for client-side reactivity/templating? The old
-codebase's actual `store.ts`/`session.ts` state containers were
-well-built — the problem was bypassing them, not Alpine itself.]
+Client reactivity/templating is Svelte (plain Svelte + Vite, no
+SvelteKit — see infrastructure.md), replacing Alpine.js. The
+store/session-state design itself — single source of state, per
+constitution principle I — carries forward unchanged; only the
+framework wiring it sits on top of changes.
 
 ## Landing View
 

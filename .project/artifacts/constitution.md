@@ -3,11 +3,16 @@ SYNC IMPACT REPORT
 ==================
 Version change: (none) → 1.0.0
 Added sections: all (initial)
+
+Version change: 1.0.0 → 1.0.1
+Resolved: deployment scale/audience open question (self-hosted/
+small-group, no auth/rate-limiting requirement). Clarification only,
+no principle redefined.
 -->
 
 ---
 name: constitution
-status: draft
+status: stable
 last_updated: 2026-06-30
 ---
 
@@ -24,9 +29,11 @@ bolted-on features. The rebuild's purpose is to fix that drift at the root —
 not to change what the app does, but how its code is organized and kept
 honest over time.
 
-[OPEN: Deployment scale/audience — was this a small-group/self-hosted tool,
-or does it need to handle untrusted public users? Affects how much the
-constitution should weigh hardening vs. velocity.]
+Deployment scale/audience: self-hosted/small-group tool, not public/
+untrusted traffic — same trust model as sync-scroll. No auth or rate
+limiting required by this constitution. Hardening remains a real future
+direction (see infrastructure.md's Production Annotations), so code
+shouldn't make adding it later a rewrite, but it isn't built now.
 
 ## Core Principles
 
@@ -116,4 +123,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-06-30
+**Version**: 1.0.1 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-06-30
