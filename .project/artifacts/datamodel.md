@@ -14,9 +14,19 @@ playback state. Storage/persistence mechanics are defined in
 infrastructure.md (memory-only).
 
 Lyrics exist in two forms per song: a raw `.lrc` file (line-level
-timestamps from lrclib.net, drives the primary lyrics view) and a
-pipeline-derived `LyricBeatMap` (syllable-level, beat-positioned, drives
-the in-tab overlay). The two are gated independently — see `ui.md`.
+timestamps, drives the primary lyrics view) and a pipeline-derived
+`LyricBeatMap` (syllable-level, beat-positioned, drives the in-tab
+overlay). Both are normally produced together, straight from lyrics
+embedded in the source Guitar Pro file, including an accurate per-line end
+timestamp (encoded as a blank-text LRC line) taken from the GP timing of
+that line's last syllable — this end-timestamp accuracy is the reason
+`.lrc` is GP-derived rather than taken from lrclib.net directly
+(pipeline.md). lrclib.net plays two distinct, narrower roles: as a
+line-break reference when GP has lyrics but no marked line boundaries
+(GP timing still used throughout), and as a full fallback `.lrc` source
+when GP has no embedded lyrics at all — only the fallback case leaves
+`lyricBeatMap` null. The two fields are independent and not guaranteed to
+co-occur — see `ui.md` for how each is gated.
 
 ## Entities
 
@@ -52,8 +62,8 @@ the in-tab overlay). The two are gated independently — see `ui.md`.
 | name | string | |
 | artist | string | |
 | parts | CatalogPart[] | Instrument parts available for this song |
-| lyricsLrc | string \| null | Path to the raw `.lrc` synced-lyrics file (lrclib.net format), null if no lyrics found for the song. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
-| lyricBeatMap | LyricBeatMap \| null | Pipeline-derived, beat-positioned version of the same lyrics, used for the in-tab overlay. Null whenever `lyricsLrc` is null |
+| lyricsLrc | string \| null | Path to the raw `.lrc` synced-lyrics file. Normally derived from the GP file's embedded lyrics (per-line end timestamps come from GP's last-syllable timing, encoded as blank-text gap lines), with lrclib.net consulted only for line-break placement if GP lacks it; falls back to an lrclib.net-sourced `.lrc` entirely when the GP file has no embedded lyrics at all. Null if no lyrics found either way. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
+| lyricBeatMap | LyricBeatMap \| null | Pipeline-derived, beat-positioned version of the same lyrics, used for the in-tab overlay. Only produced when lyrics came from the GP-embedded path — stays null when `lyricsLrc` came from the lrclib.net fallback, even though `lyricsLrc` itself is set (pipeline.md) |
 
 ### CatalogPart
 
@@ -61,7 +71,7 @@ the in-tab overlay). The two are gated independently — see `ui.md`.
 |-------|------|-------|
 | id | string | Stable identifier; what `Participant.selectedPart` references for instrument parts |
 | instrumentName | string | e.g. "Lead Guitar", "Bass" |
-| svgByDensity | Record<density, string> | Tab SVG path per density variant (pipeline output, infrastructure.md) |
+| svgByDensity | Record<density, string> | Tab SVG path per density variant (pipeline output, pipeline.md) |
 | layoutMapByDensity | Record<density, LayoutMap> | One `LayoutMap` per density variant, since coordinates differ per render |
 
 ### LyricBeatMap
@@ -113,15 +123,15 @@ layout map at render time, not stored directly.
 
 `LyricBeatMap` syllable positions are produced offline by the same
 preprocessing pipeline that emits `LayoutMap` and tab SVGs (see
-infrastructure.md), not computed at runtime — keeping lyric-to-beat
-alignment consistent with however the source Guitar Pro file defines
-timing, independent of the `.lrc` file's own (coarser, line-level)
-timestamps.
+pipeline.md), not computed at runtime — keeping lyric-to-beat alignment
+consistent with however the source Guitar Pro file defines timing,
+independent of the `.lrc` file's own (coarser, line-level) timestamps —
+and only when lyrics came from the GP-embedded path in the first place
+(the lrclib.net fallback never produces a beat map).
 
 `LayoutMap` is not an independent schema choice — it's the shape
-infrastructure.md's pipeline already emits ("tab SVGs plus layout map
-(beat → x/y coordinates)"), so there's no separate pipeline output format
-to reconcile against.
+pipeline.md's render stage already emits per density variant, so there's
+no separate pipeline output format to reconcile against.
 
 ## Indexes
 

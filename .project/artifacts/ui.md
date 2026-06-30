@@ -31,8 +31,10 @@ signals readiness. The part picker includes a **Lyrics** option alongside
 the instrument parts — selectable like any other part, but disabled when
 the song has no `.lrc` file (datamodel.md `CatalogSong.lyricsLrc`). The
 in-tab lyrics overlay (Playback View, below) is gated separately on
-`CatalogSong.lyricBeatMap` — in practice a song has both or neither, but
-the two are independent fields and not guaranteed to co-occur. Shows live
+`CatalogSong.lyricBeatMap`, which is only present when the song's lyrics
+came from the source GP file directly — a song whose `.lrc` came from the
+lrclib.net fallback has the Lyrics part selectable but no in-tab overlay
+available on any instrument part (pipeline.md). Shows live
 participant list with readiness state. Host can remove participants. A
 "lobby cursor" lets the host point at a position in the score for others
 to see before playback starts.

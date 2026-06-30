@@ -33,15 +33,41 @@ infrastructure.md.
    denser/sparser without recomputing beat alignment from scratch) plus a
    `LayoutMap` for each variant (beat → x/y/width/row in SVG coordinates).
    Uses `@coderline/alphatab` for SVG generation.
-2. **Lyrics sourcing** — look up synced lyrics for the song from lrclib.net,
-   producing the raw `.lrc` file (`CatalogSong.lyricsLrc`). If lrclib has no
-   match, the song has no lyrics — `lyricsLrc` and `lyricBeatMap` both stay
-   null, and the lyrics pseudo-part isn't selectable for that song (ui.md).
-3. **Lyric beat-mapping** — derive `LyricBeatMap` (syllable-level, beat-
-   positioned) from the source `.gp` file's own timing, not from the `.lrc`
-   file's coarser line-level timestamps. This keeps lyric-to-beat alignment
-   consistent with however the GP file defines timing, independent of
-   lrclib's granularity (datamodel.md's Normalization Rules).
+2. **Lyric extraction (primary path)** — read lyrics embedded directly in
+   the source `.gp` file (GP's own lyric-line format, attached to a track),
+   which carries per-syllable timing but doesn't always carry line-break
+   placement. When the GP file has lyrics at all, this step always produces
+   `CatalogSong.lyricBeatMap` (syllable-level, beat-positioned, derived from
+   the GP file's own timing) and a derived `CatalogSong.lyricsLrc`. GP
+   syllable timing is the reason `.lrc` is generated from GP rather than
+   taken from lrclib directly: it lets each `.lrc` line carry an accurate
+   *end* timestamp — taken from the timing of that line's last syllable —
+   not just a start timestamp. End timestamps are encoded as an extra LRC
+   line at that time with no lyric text (a blank-content "gap" entry), e.g.:
+   ```
+   [00:12.340]I'm a creep
+   [00:14.870]
+   ```
+   - If the GP file's lyrics already carry line-break positions, those are
+     used directly — lrclib.net is not consulted.
+   - If the GP file's lyrics lack line-break placement (syllables present,
+     but no marked line boundaries), lrclib.net is queried and used **only
+     as a reference for where to insert line breaks** in the GP-derived
+     syllable stream — lrclib's own timestamps are discarded; all timing in
+     the resulting `.lrc` and `lyricBeatMap` still comes from GP.
+3. **Lyrics fallback (lrclib.net)** — only runs when the GP file has no
+   embedded lyrics at all (distinct from stage 2's narrower lrclib use,
+   which only supplies line-break positions for GP lyrics that already
+   exist). In this fallback, lrclib.net's synced lyrics become
+   `CatalogSong.lyricsLrc` directly, end timestamps included. **No beat map
+   is produced in this fallback** — lrclib's data is word/line-level, not
+   GP's per-syllable timing, so `lyricBeatMap` stays null even though
+   `lyricsLrc` is set. A song can therefore end up in any of three states:
+   both fields set (GP-embedded lyrics, with or without lrclib-assisted line
+   breaks), `lyricsLrc` only (lrclib fallback, no GP lyrics at all), or
+   neither (no lyrics found anywhere). See datamodel.md and ui.md, which
+   gate the primary lyrics view and the in-tab overlay independently for
+   exactly this reason.
 4. **Publish** — write all generated assets (SVGs, layout maps, `.lrc`,
    `LyricBeatMap`) to the location the server reads the catalog from.
 
