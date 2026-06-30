@@ -7,7 +7,8 @@ This project uses [artifact-driven-dev](https://github.com/[owner]/artifact-driv
 | Artifact | Purpose |
 |---|---|
 | constitution.md | Principles guarding against the architectural drift that motivated this rebuild |
-| infrastructure.md | Real-time sync architecture, tab rendering pipeline, storage |
+| infrastructure.md | Real-time sync architecture, client/server stack, storage |
+| pipeline.md | Offline tab/lyrics rendering pipeline — stages, source format, dependencies |
 | datamodel.md | Canonical session/participant/song/playback schema |
 | ui.md | Landing/lobby/playback views and their states |
 | brand.md | Color, typography, tone, and motion — look-and-feel decisions |

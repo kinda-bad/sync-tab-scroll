@@ -1,6 +1,6 @@
 ---
 name: datamodel
-status: draft
+status: stable
 last_updated: 2026-06-30
 diagram_stale: true
 ---
@@ -12,6 +12,11 @@ diagram_stale: true
 Canonical entities for sessions, participants, the song catalog, and
 playback state. Storage/persistence mechanics are defined in
 infrastructure.md (memory-only).
+
+Lyrics exist in two forms per song: a raw `.lrc` file (line-level
+timestamps from lrclib.net, drives the primary lyrics view) and a
+pipeline-derived `LyricBeatMap` (syllable-level, beat-positioned, drives
+the in-tab overlay). The two are gated independently — see `ui.md`.
 
 ## Entities
 
@@ -27,6 +32,7 @@ infrastructure.md (memory-only).
 | playbackState | PlaybackState | Server-authoritative clock state |
 | countInEnabled | boolean | |
 | metronomeEnabled | boolean | |
+| lobbyCursorBeat | number \| null | Beat position the host is pointing at pre-playback; null once playback starts |
 
 ### Participant
 
@@ -36,16 +42,47 @@ infrastructure.md (memory-only).
 | displayName | string | |
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
-| selectedPart | string \| null | Which instrument part they're following |
+| selectedPart | string \| 'lyrics' \| null | A `CatalogPart.id` for an instrument part, or the literal `'lyrics'` for the SVG-less lyrics part (ui.md). Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
 | readiness | ReadinessStatus | e.g. 'no-part' \| 'loading' \| 'ready' |
 
-### CatalogSong / CatalogPart
+### CatalogSong
 
 | Field | Type | Notes |
 |-------|------|-------|
 | name | string | |
 | artist | string | |
-| parts | CatalogPart[] | Per-instrument tab SVGs + density variants |
+| parts | CatalogPart[] | Instrument parts available for this song |
+| lyricsLrc | string \| null | Path to the raw `.lrc` synced-lyrics file (lrclib.net format), null if no lyrics found for the song. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
+| lyricBeatMap | LyricBeatMap \| null | Pipeline-derived, beat-positioned version of the same lyrics, used for the in-tab overlay. Null whenever `lyricsLrc` is null |
+
+### CatalogPart
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | string | Stable identifier; what `Participant.selectedPart` references for instrument parts |
+| instrumentName | string | e.g. "Lead Guitar", "Bass" |
+| svgByDensity | Record<density, string> | Tab SVG path per density variant (pipeline output, infrastructure.md) |
+| layoutMapByDensity | Record<density, LayoutMap> | One `LayoutMap` per density variant, since coordinates differ per render |
+
+### LyricBeatMap
+
+| Field | Type | Notes |
+|-------|------|-------|
+| lines | LyricLine[] | |
+
+### LyricLine
+
+| Field | Type | Notes |
+|-------|------|-------|
+| text | string | Full line, for the primary lyrics view |
+| syllables | LyricSyllable[] | Syllable breakdown, for the overlay |
+
+### LyricSyllable
+
+| Field | Type | Notes |
+|-------|------|-------|
+| text | string | |
+| beatPosition | number | Same beat unit as `PlaybackState.beatPosition` |
 
 ### PlaybackState
 
@@ -74,10 +111,19 @@ playback state maps correctly across parts with different note density
 pixel positions are derived from beat position via the active part's
 layout map at render time, not stored directly.
 
-[OPEN: any additional normalization rules needed if the pipeline's output
-format ends up differing from the LayoutMap shape above.]
+`LyricBeatMap` syllable positions are produced offline by the same
+preprocessing pipeline that emits `LayoutMap` and tab SVGs (see
+infrastructure.md), not computed at runtime — keeping lyric-to-beat
+alignment consistent with however the source Guitar Pro file defines
+timing, independent of the `.lrc` file's own (coarser, line-level)
+timestamps.
+
+`LayoutMap` is not an independent schema choice — it's the shape
+infrastructure.md's pipeline already emits ("tab SVGs plus layout map
+(beat → x/y coordinates)"), so there's no separate pipeline output format
+to reconcile against.
 
 ## Indexes
 
-[OPEN: not yet relevant until persistence beyond in-memory session state is
-decided.]
+Not applicable — session state is in-memory only (infrastructure.md), with
+no persistence layer or query surface that would require an index.

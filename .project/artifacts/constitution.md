@@ -32,7 +32,7 @@ honest over time.
 Deployment scale/audience: self-hosted/small-group tool, not public/
 untrusted traffic — same trust model as sync-scroll. No auth or rate
 limiting required by this constitution. Hardening remains a real future
-direction (see infrastructure.md's Production Annotations), so code
+direction (see infrastructure.md's Production Posture), so code
 shouldn't make adding it later a rewrite, but it isn't built now.
 
 ## Core Principles

@@ -37,20 +37,10 @@ store for session state.
 
 ## Tab Rendering Pipeline
 
-A separate offline pipeline converts a source music file into tab SVGs plus
-a layout map (beat → x/y coordinates) consumed by the client's scroll
-engine. The pipeline reads Guitar Pro (`.gp`) files directly as the source
-format, since GP files carry fingering/string-assignment/track-name data
-that other formats (e.g. MIDI) can't represent. Rendering uses
-`@coderline/alphatab` to produce SVGs; a lyrics-sourcing step queries
-lrclib.net for synced lyrics where available.
-
-Per the constitution's "No Dead Architecture" principle: the pipeline
-directory contains only the current approach — no unused virtual
-environments, no vendored tools with their own nested `.git`, no
-package.json scripts pointing at files that don't exist, no README claims
-that don't match what's on disk. Anything vendored is either committed
-clean or pulled in as a real dependency.
+Tab SVGs, layout maps, and lyrics data are not produced at runtime — they
+come from an offline preprocessing pipeline and are served as static
+assets. Pipeline stages, source format, on-disk layout, and dependency
+handling are owned by `pipeline.md`, not this artifact.
 
 ## Production Posture
 
