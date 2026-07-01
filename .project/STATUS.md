@@ -30,15 +30,17 @@ and the new catalog-delivery/song-selection design (added this pass via
 - **[RESOLVED]** `datamodel.md`'s `Session.lobbyCursorTick` "null once
   playback starts" invariant is enforced in
   `server/src/handlers/playback-control.ts` and verified live.
-- **[GAP]** Song catalog listing/selection and the Lobby → Playback view
-  transition are still not wired in code — `Lobby.svelte` shows a
-  placeholder, `Playback.svelte` hardcodes a test fixture, and
-  `packages/shared/src/messages.ts` has no song-selection message. This
-  pass resolved the *design* gap (datamodel/infrastructure/ui now fully
-  specify `CatalogSong.id`, catalog delivery on session create/join, a
-  host-only song-selection message, and the server's first HTTP
-  static-file surface for serving `.gp`/`.lrc` assets) — the
-  *implementation* gap remains and is the next `/ardd-plan` target.
+- **[IMPLEMENTED, UNVERIFIED]** Song catalog listing/selection and the
+  Lobby → Playback view transition are now wired end-to-end (server
+  catalog delivery/song-select handlers, a real catalog fixture at
+  `catalog/radiohead-creep/` built with the real `extract-lyrics`
+  pipeline CLI, and client-side Landing/Lobby/Playback wired through one
+  shared session with a persistent renderer created at part-selection
+  time). `vite build` passes with no errors. **Not yet verified in a real
+  browser** — the claude-in-chrome extension was unavailable this
+  session; the user is verifying manually against the server/client
+  already running locally (`:8080`/`:5173`). Do not treat this as done
+  until that manual pass confirms it.
 
 ## Within-Artifact Issues
 
@@ -61,9 +63,11 @@ a new architectural layer — no Complexity Tracking entry warranted.
 27/27 tasks done, merged to `main`. All verified against real
 fixtures/browser sessions, not assumed.
 
-**song-catalog-selection: design complete, implementation not started.**
-Artifacts updated via `/ardd-feature` on branch `song-catalog-selection`;
-no plan/tasks generated yet.
+**song-catalog-selection: implemented, pending manual browser
+verification.** `tasks-song-catalog-selection-275d.md` — 8/14 tasks
+checked (server phases 1-3, fully WS-verified); T009-T014 (client phases
+4-6) are code-complete and build clean but unchecked pending the user's
+manual browser pass.
 
 Known limitations, documented in code and task notes, not silently
 glossed over:
@@ -72,7 +76,10 @@ glossed over:
 
 ## Recommended Next Step
 
-Run `/ardd-plan` for the song-catalog-selection feature — artifacts are
-stable and the design is now fully specified (datamodel: `CatalogSong.id`
-+ URL-rewritten asset paths; infrastructure: catalog-delivery message +
-HTTP static serving; ui: lobby picker + reset-on-reselect behavior).
+Manually verify the song-catalog-selection flow in a browser at
+`localhost:5173` (server already running on `:8080`, `CATALOG_ROOT`
+pointed at `catalog/`): Landing → create/join → Lobby (pick
+`radiohead-creep`, pick a part) → readiness reaching `ready` pre-start →
+Start → Playback rendering the real tab/lyrics. Report anything broken;
+once confirmed, check off T009-T014 and flip the tasks file to
+`completed`.
