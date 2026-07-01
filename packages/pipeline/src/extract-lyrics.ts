@@ -3,7 +3,7 @@ import { loadScore, findLyricsSource, extractSyllables, buildTickToMs } from './
 import { readRawLyricsLines, countSyllables } from './line-breaks.js';
 import { searchLrclib, parseLrclibLines } from './lrclib.js';
 import { buildLrc, passthroughLrc } from './lrc-writer.js';
-import { publishSong, slugify, type CatalogMeta } from './catalog.js';
+import { publishSong, slugify, type CatalogMeta, type CatalogPartMeta } from './catalog.js';
 
 function parseSongFilename(gpFilePath: string): { artist: string; title: string } {
   const base = path.basename(gpFilePath);
@@ -29,8 +29,21 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
   const score = loadScore(gpFilePath);
   const source = findLyricsSource(score);
 
+  const parts: CatalogPartMeta[] = score.tracks.map((track) => ({
+    id: String(track.index),
+    instrumentName: track.name,
+    trackIndex: track.index,
+  }));
+
   let lrcContent: string | null = null;
-  let meta: CatalogMeta = { lyricsTrackIndex: null, lyricsLineIndex: null, lyricLineBreaks: null };
+  let meta: CatalogMeta = {
+    name: title,
+    artist,
+    parts,
+    lyricsTrackIndex: null,
+    lyricsLineIndex: null,
+    lyricLineBreaks: null,
+  };
 
   if (source) {
     const syllables = extractSyllables(score, source);
@@ -55,7 +68,7 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
     }
 
     lrcContent = buildLrc(lines, lyricLineBreaks, syllables, tickToMs);
-    meta = { lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
+    meta = { ...meta, lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
   } else {
     const lrclibResult = await searchLrclib(title, artist);
     if (lrclibResult?.syncedLyrics) {

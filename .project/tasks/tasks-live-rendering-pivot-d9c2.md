@@ -28,10 +28,10 @@ status: in-progress
 
 ## Phase 3: Server Session/Catalog + WebSocket Protocol
 
-- [ ] T011 [artifacts: infrastructure, datamodel] Implement the in-memory session store: `Session` entities keyed by join code, a grace-period timer that destroys empty sessions. No durable backing store (annotate this as a known production posture per constitution.md, not a shortcut to silently fix later).
-- [ ] T012 [artifacts: pipeline, datamodel] [parallel] Implement the catalog loader: scans `catalog/<song-slug>/` directories at server startup, reads each `meta.json`, and builds in-memory `CatalogSong`/`CatalogPart[]` entries.
-- [ ] T013 [artifacts: infrastructure, constitution] Implement WebSocket message dispatch decomposed by message type (Principle IV — no single large switch statement). One named handler per type: session-create, session-join, part-select, readiness-update, host-remove-participant.
-- [ ] T014 [artifacts: infrastructure, datamodel] Implement host playback controls (start/pause/resume/seek): update `Session.playbackState` and broadcast `PlaybackState` (`tickPosition` + `serverTimestamp`) periodically to all participants in the session.
+- [x] T011 [artifacts: infrastructure, datamodel] Implement the in-memory session store: `Session` entities keyed by join code, a grace-period timer that destroys empty sessions. No durable backing store (annotate this as a known production posture per constitution.md, not a shortcut to silently fix later).
+- [x] T012 [artifacts: pipeline, datamodel] [parallel] Implement the catalog loader: scans `catalog/<song-slug>/` directories at server startup, reads each `meta.json`, and builds in-memory `CatalogSong`/`CatalogPart[]` entries.
+- [x] T013 [artifacts: infrastructure, constitution] Implement WebSocket message dispatch decomposed by message type (Principle IV — no single large switch statement). One named handler per type: session-create, session-join, part-select, readiness-update, host-remove-participant.
+- [x] T014 [artifacts: infrastructure, datamodel] Implement host playback controls (start/pause/resume/seek): update `Session.playbackState` and broadcast `PlaybackState` (`tickPosition` + `serverTimestamp`) periodically to all participants in the session.
 
 **Test requirement**: two WebSocket clients join the same session by code; one selects an instrument part and the other selects `'lyrics'`; both see the other's readiness update within one broadcast cycle; a host seek command updates both clients' local `PlaybackState` copies.
 

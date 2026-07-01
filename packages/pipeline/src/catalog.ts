@@ -1,7 +1,16 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+export interface CatalogPartMeta {
+  id: string;
+  instrumentName: string;
+  trackIndex: number;
+}
+
 export interface CatalogMeta {
+  name: string;
+  artist: string;
+  parts: CatalogPartMeta[];
   lyricsTrackIndex: number | null;
   lyricsLineIndex: number | null;
   lyricLineBreaks: number[] | null;

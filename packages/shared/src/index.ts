@@ -1,3 +1,5 @@
+export * from './messages.js';
+
 export type ReadinessStatus = 'no-part' | 'loading' | 'ready';
 
 export interface Participant {
