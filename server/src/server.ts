@@ -1,9 +1,11 @@
+import * as http from 'node:http';
 import { WebSocketServer } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { ServerConfig } from './config.js';
 import { SessionStore } from './session-store.js';
 import { ConnectionRegistry } from './connections.js';
 import { loadCatalog } from './catalog-loader.js';
+import { createCatalogRequestHandler } from './catalog-static.js';
 import { dispatch } from './dispatch.js';
 import type { HandlerContext } from './handlers/context.js';
 
@@ -16,7 +18,16 @@ export function createServer(config: ServerConfig): WebSocketServer {
     catalog: loadCatalog(config.catalogRoot),
   };
 
-  const wss = new WebSocketServer({ port: config.port });
+  // WS upgrade and the catalog's static-file serving share one http.Server
+  // (infrastructure.md "Song Catalog Delivery") instead of running as two
+  // separate listeners on two ports.
+  const catalogHandler = createCatalogRequestHandler(config.catalogRoot);
+  const httpServer = http.createServer((req, res) => {
+    if (!catalogHandler(req, res)) res.writeHead(404).end();
+  });
+  httpServer.listen(config.port);
+
+  const wss = new WebSocketServer({ server: httpServer });
 
   wss.on('connection', (socket) => {
     socket.on('message', (data) => {
