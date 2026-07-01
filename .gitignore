@@ -7,3 +7,6 @@ client/public/test/
 
 # Local catalog content (real commercial .gp files, pipeline output — not for the repo)
 catalog/
+
+# Claude Code local tooling/config — not for the repo
+.claude/
