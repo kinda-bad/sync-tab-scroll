@@ -4,3 +4,6 @@ dist/
 
 # Local test fixtures (real commercial .gp files — not for the repo)
 client/public/test/
+
+# Local catalog content (real commercial .gp files, pipeline output — not for the repo)
+catalog/
