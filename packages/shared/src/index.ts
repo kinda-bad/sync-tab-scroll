@@ -21,12 +21,14 @@ export interface CatalogPart {
 }
 
 export interface CatalogSong {
+  /** Stable song slug, matches the catalog directory name. */
+  id: string;
   name: string;
   artist: string;
-  /** Path to the source .gp file — one multi-track file per song. */
+  /** Client-fetchable URL path to the source .gp file — one multi-track file per song. */
   gpFilePath: string;
   parts: CatalogPart[];
-  /** Path to the raw .lrc synced-lyrics file. Null if no lyrics found either way. */
+  /** Client-fetchable URL path to the raw .lrc synced-lyrics file. Null if no lyrics found either way. */
   lyricsLrc: string | null;
   /** Which track's beats carry the GP-embedded lyrics. Null when lyricsLrc came from the lrclib.net fallback. */
   lyricsTrackIndex: number | null;

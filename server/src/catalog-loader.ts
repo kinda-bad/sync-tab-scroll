@@ -30,14 +30,15 @@ export function loadCatalog(catalogRoot: string): CatalogSong[] {
     if (!gpFile) throw new Error(`No .gp file found in catalog directory: ${songDir}`);
 
     const lrcPath = path.join(songDir, 'lyrics.lrc');
-    const lyricsLrc = fs.existsSync(lrcPath) ? lrcPath : null;
+    const urlPrefix = `/catalog/${dir.name}`;
 
     const song: CatalogSong = {
+      id: dir.name,
       name: meta.name,
       artist: meta.artist,
-      gpFilePath: path.join(songDir, gpFile),
+      gpFilePath: `${urlPrefix}/${gpFile}`,
       parts: meta.parts,
-      lyricsLrc,
+      lyricsLrc: fs.existsSync(lrcPath) ? `${urlPrefix}/lyrics.lrc` : null,
       lyricsTrackIndex: meta.lyricsTrackIndex,
       lyricsLineIndex: meta.lyricsLineIndex,
       lyricLineBreaks: meta.lyricLineBreaks,
