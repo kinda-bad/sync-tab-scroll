@@ -12,34 +12,33 @@ _Updated: 2026-07-01. Keep this current as artifacts are refined and open questi
 | infrastructure.md | stable ✅ | 0 |
 | ui.md | stable ✅ | 0 |
 | brand.md | stable ✅ | 0 |
+| features.md | — | 0 |
 
 ## Open Questions
 
-None formally tracked in the artifacts. See "Implementation vs. Artifact
-Findings" below for two real items surfaced by the completed
-implementation that aren't yet captured anywhere durable.
+None formally tracked in the artifacts.
 
 ## Cross-Artifact Issues
 
-None.
+None. `CatalogSong.id`, the URL-rewritten `gpFilePath`/`lyricsLrc` fields,
+and the new catalog-delivery/song-selection design (added this pass via
+`/ardd-feature`) are referenced consistently across `datamodel.md`,
+`infrastructure.md`, and `ui.md`.
 
 ## Implementation vs. Artifact Findings
 
-(Outside `/ardd-analyze`'s strict artifact-to-artifact scope, but real and
-worth tracking now that implementation is complete.)
-
-- **[RESOLVED]** `datamodel.md`'s `Session.lobbyCursorTick` states "null
-  once playback starts." `server/src/handlers/playback-control.ts` now
-  enforces this: the `'start'` action nulls `lobbyCursorTick` before
-  broadcasting. Verified with a live two-message test (set cursor → 9600,
-  send `start`, confirm broadcast shows `lobbyCursorTick: null` and
-  `status: running`).
-- **[GAP]** Song selection, catalog listing, in-lobby part selection, and
-  the Lobby → Playback view transition are not wired end-to-end anywhere.
-  `ui.md`'s Lobby View reads as if this flow exists. It was repeatedly
-  noted as inline code TODOs across the implementation (fixed test
-  fixtures used instead of real selection) but never surfaced as a
-  project-level open item until this analysis.
+- **[RESOLVED]** `datamodel.md`'s `Session.lobbyCursorTick` "null once
+  playback starts" invariant is enforced in
+  `server/src/handlers/playback-control.ts` and verified live.
+- **[GAP]** Song catalog listing/selection and the Lobby → Playback view
+  transition are still not wired in code — `Lobby.svelte` shows a
+  placeholder, `Playback.svelte` hardcodes a test fixture, and
+  `packages/shared/src/messages.ts` has no song-selection message. This
+  pass resolved the *design* gap (datamodel/infrastructure/ui now fully
+  specify `CatalogSong.id`, catalog delivery on session create/join, a
+  host-only song-selection message, and the server's first HTTP
+  static-file surface for serving `.gp`/`.lrc` assets) — the
+  *implementation* gap remains and is the next `/ardd-plan` target.
 
 ## Within-Artifact Issues
 
@@ -47,34 +46,33 @@ None.
 
 ## Constitution Compliance
 
-No violations.
+No violations. The new HTTP static-file surface is a small addition, not
+a new architectural layer — no Complexity Tracking entry warranted.
 
 ## Diagrams
 
-- datamodel.md — up to date ✅
-- infrastructure.md — up to date ✅
-- ui.md — up to date ✅
+- datamodel.md — stale ⚠️ (run `/ardd-render datamodel`)
+- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure`)
+- ui.md — stale ⚠️ (run `/ardd-render ui`)
 
 ## Implementation Status
 
-**Complete.** `tasks-live-rendering-pivot-d9c2.md` — 27/27 tasks done,
-`status: completed`. Plan `plan-live-rendering-pivot-2026-07-01.md` fully
-implemented on branch `live-rendering-pivot`: monorepo scaffolding, lyrics
-pipeline, server protocol, live client-side alphaTab rendering (dark +
-light mode), playback sync, in-tab lyrics overlay + full lyrics view,
-loading/empty/error states, lobby cursor. All verified against real
+**live-rendering-pivot: complete.** `tasks-live-rendering-pivot-d9c2.md` —
+27/27 tasks done, merged to `main`. All verified against real
 fixtures/browser sessions, not assumed.
+
+**song-catalog-selection: design complete, implementation not started.**
+Artifacts updated via `/ardd-feature` on branch `song-catalog-selection`;
+no plan/tasks generated yet.
 
 Known limitations, documented in code and task notes, not silently
 glossed over:
 - Full live-audio verification blocked by Chrome's autoplay policy in
   browser-automation testing (real user clicks will work fine).
-- No song-selection/catalog-listing flow — see Implementation vs.
-  Artifact Findings above.
 
 ## Recommended Next Step
 
-If continuing feature work, the song-selection/catalog-listing flow is
-the natural next slice — recommend a fresh `/ardd-plan` pass for it
-rather than an ad hoc addition, since it touches server (new handlers),
-client (new UI), and possibly datamodel (a song-listing message shape).
+Run `/ardd-plan` for the song-catalog-selection feature — artifacts are
+stable and the design is now fully specified (datamodel: `CatalogSong.id`
++ URL-rewritten asset paths; infrastructure: catalog-delivery message +
+HTTP static serving; ui: lobby picker + reset-on-reselect behavior).

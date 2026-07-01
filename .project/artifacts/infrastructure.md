@@ -2,7 +2,7 @@
 name: infrastructure
 status: stable
 last_updated: 2026-07-01
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -53,6 +53,34 @@ participant's headless alphaTab instance (ui.md) both consume
 Sessions are server-memory-only: a grace-period timer destroys empty
 sessions, and a server restart drops active ones. No durable backing
 store for session state.
+
+## Song Catalog Delivery
+
+The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,
+datamodel.md) is server-global — it isn't part of any one `Session` and
+isn't re-scanned per request. A client receives the full catalog once,
+right after its `session-create`/`session-join` succeeds, as its own
+message distinct from `session-state` (which only ever carries one
+session's state, not the server-wide catalog).
+
+Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`)
+live on the server's disk under `catalog/<song-slug>/` (pipeline.md), but
+`CatalogSong` as published to a client carries a client-fetchable URL, not
+that disk path — the server exposes the catalog root as static HTTP
+content (e.g. `/catalog/<song-slug>/<file>`), and `catalog-loader.ts`
+rewrites each on-disk path to its corresponding URL before the loaded
+`CatalogSong[]` is ever handed to a socket. This is the first HTTP surface
+this server exposes — until now it was WebSocket-only (`ws`) with no
+static-file serving at all; the WebSocket upgrade and the static catalog
+route share the same underlying `http.Server` instance rather than
+running as two separate listeners on two ports.
+
+Song selection is host-only, following the same authorization check as
+`playback-control` (host id vs. the connection's participant id): the
+host picks a `CatalogSong.id`, which sets `Session.selectedSong` and
+`Session.availableParts` and is broadcast to all participants via the
+normal `session-state` broadcast — no separate message type is needed for
+the result, only for the host's selection action.
 
 ## Tab Rendering
 

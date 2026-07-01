@@ -1,8 +1,8 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-06-30
-diagram_status: current
+last_updated: 2026-07-01
+diagram_status: stale
 ---
 
 # Data Model
@@ -30,6 +30,12 @@ when GP has no embedded lyrics at all — only the fallback case leaves
 lyrics-view and in-tab-overlay data are independent and not guaranteed to
 co-occur — see `ui.md` for how each is gated.
 
+The full `CatalogSong[]` list is server-global, not per-session — it's
+loaded once at server startup (pipeline.md) and delivered to a client
+once it creates or joins a session, independent of `Session` itself
+(infrastructure.md). The host selects a song by `CatalogSong.id`, which
+populates `Session.selectedSong` and `Session.availableParts`.
+
 ## Entities
 
 ### Session
@@ -37,7 +43,7 @@ co-occur — see `ui.md` for how each is gated.
 | Field | Type | Notes |
 |-------|------|-------|
 | code | string | Short join code, shown to participants |
-| selectedSong | string \| null | |
+| selectedSong | string \| null | A `CatalogSong.id` (song slug), or null before the host has picked a song |
 | availableParts | CatalogPart[] | Parts for the selected song |
 | participants | Participant[] | |
 | hostId | string | Participant id with host privileges |
@@ -61,11 +67,12 @@ co-occur — see `ui.md` for how each is gated.
 
 | Field | Type | Notes |
 |-------|------|-------|
+| id | string | Stable song slug (matches the catalog directory name, pipeline.md — e.g. `creep`); what `Session.selectedSong` and the song-selection message reference |
 | name | string | |
 | artist | string | |
-| gpFilePath | string | Path to the source `.gp` file (pipeline output, pipeline.md) — one multi-track file per song, matching how Guitar Pro files are normally authored. Loaded once by the client and shared across every part; each `CatalogPart` selects a track within it via `trackIndex` |
+| gpFilePath | string | Client-fetchable URL path to the source `.gp` file (e.g. `/catalog/creep/creep.gp`), not a server filesystem path — the server serves the catalog directory statically over HTTP (infrastructure.md) and the loader rewrites the on-disk path to this URL before publishing `CatalogSong` to any client. One multi-track file per song, matching how Guitar Pro files are normally authored. Loaded once by the client and shared across every part; each `CatalogPart` selects a track within it via `trackIndex` |
 | parts | CatalogPart[] | Instrument parts available for this song |
-| lyricsLrc | string \| null | Path to the raw `.lrc` synced-lyrics file. Normally derived from the GP file's embedded lyrics (per-line end timestamps come from GP's last-syllable timing, encoded as blank-text gap lines), with lrclib.net consulted only for line-break placement if GP lacks it; falls back to an lrclib.net-sourced `.lrc` entirely when the GP file has no embedded lyrics at all. Null if no lyrics found either way. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
+| lyricsLrc | string \| null | Client-fetchable URL path to the raw `.lrc` synced-lyrics file (same URL-rewriting as `gpFilePath`, infrastructure.md). Normally derived from the GP file's embedded lyrics (per-line end timestamps come from GP's last-syllable timing, encoded as blank-text gap lines), with lrclib.net consulted only for line-break placement if GP lacks it; falls back to an lrclib.net-sourced `.lrc` entirely when the GP file has no embedded lyrics at all. Null if no lyrics found either way. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
 | lyricsTrackIndex | number \| null | Index into `gpFilePath`'s parsed score identifying which track's beats actually carry the GP-embedded lyrics (`Beat.lyrics`) — the track lyrics were authored on, not necessarily any `CatalogPart.trackIndex` (the lyrics-bearing track may not be offered as a selectable instrument part at all). Null whenever `lyricsLrc` came from the lrclib.net fallback (no GP-embedded lyrics to point at). The client reads this track's beats at render time to derive syllable text + tick position for the in-tab overlay — no separate tick-map artifact is published (see Normalization Rules) |
 | lyricsLineIndex | number \| null | Which index into a beat's `Beat.lyrics` array to read (`Beat.lyrics` is indexed by lyric line/channel — GP supports multiple simultaneous lyric channels, e.g. main vocal vs. a harmony line — not by syllable). Almost always `0`; the pipeline picks the first non-empty channel rather than the client guessing, in case a GP file's primary content isn't at index 0. Same nullability as `lyricsTrackIndex` |
 | lyricLineBreaks | number[] \| null | Syllable count per line, in the order syllables appear across `lyricsTrackIndex`'s beats at `lyricsLineIndex` — lets the client regroup the flat per-beat syllable stream it reads from the parsed score back into lines matching `.lrc`, without the pipeline needing to publish tick positions itself. Same nullability as `lyricsTrackIndex` |
