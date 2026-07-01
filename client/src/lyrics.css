@@ -1,0 +1,24 @@
+.lyrics-overlay {
+  padding: 0.5rem;
+  font-family: monospace;
+  color: #ffe600;
+}
+
+.lyric-syllable.at-highlight {
+  color: #ff2d78;
+  font-weight: bold;
+}
+
+.full-lyrics-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 2rem;
+  color: #ffe600;
+  text-align: center;
+}
+
+.full-lyrics-view.at-highlight {
+  color: #ff2d78;
+}
