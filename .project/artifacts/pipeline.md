@@ -1,18 +1,25 @@
 ---
 name: pipeline
-status: draft
+status: stable
 last_updated: 2026-06-30
 ---
 
-# Tab Rendering Pipeline
+# Lyrics Extraction Pipeline
 
 ## Overview
 
-An offline preprocessing pipeline that turns a Guitar Pro source file into
-everything the app serves as static assets for a song: per-part tab SVGs at
-multiple density levels, a `LayoutMap` per SVG (beat → coordinate), and
-lyrics data in both its raw and pipeline-derived forms (`lyricsLrc`,
-`LyricBeatMap` — see datamodel.md). The pipeline runs ahead of time, not at
+An offline preprocessing pipeline scoped to **lyrics only**. Tab rendering
+is no longer a pipeline concern — the source `.gp` file is published as-is
+and rendered live, client-side, by `@coderline/alphatab` (infrastructure.md).
+The pipeline's job is to turn a Guitar Pro source file's embedded lyrics
+(when present) into what the app serves for a song: a raw `.lrc` file, and
+a pointer (`lyricsTrackIndex` + `lyricsLineIndex` + `lyricLineBreaks`) at
+which GP track/channel carries the lyrics and how its syllable stream
+regroups into lines — not
+a precomputed tick map, since the client derives syllable tick positions
+live from the same parsed `.gp` file it already loads (datamodel.md,
+constitution Principle V). It also validates/publishes the `.gp` file
+itself alongside those outputs. The pipeline runs ahead of time, not at
 request time; the server only ever serves its output.
 
 This artifact exists separately from infrastructure.md because the pipeline
@@ -27,18 +34,22 @@ infrastructure.md.
 
 ## Pipeline Stages
 
-1. **Render** — read the source `.gp` (Guitar Pro) file per part, produce a
-   tab SVG per density variant (see `CatalogPart.svgVariants` in
-   datamodel.md — multiple bars-per-row layouts so a part can be re-rendered
-   denser/sparser without recomputing beat alignment from scratch) plus a
-   `LayoutMap` for each variant (beat → x/y/width/row in SVG coordinates).
-   Uses `@coderline/alphatab` for SVG generation.
-2. **Lyric extraction (primary path)** — read lyrics embedded directly in
-   the source `.gp` file (GP's own lyric-line format, attached to a track),
-   which carries per-syllable timing but doesn't always carry line-break
-   placement. When the GP file has lyrics at all, this step always produces
-   `CatalogSong.lyricBeatMap` (syllable-level, beat-positioned, derived from
-   the GP file's own timing) and a derived `CatalogSong.lyricsLrc`. GP
+1. **Lyric extraction (primary path)** — read lyrics embedded directly in
+   the source `.gp` file (GP's own lyric-line format, attached to a
+   track's beats, indexed by lyric line/channel rather than by syllable —
+   GP supports multiple simultaneous lyric channels, e.g. a main vocal
+   line alongside a harmony line), which carries per-syllable timing but
+   doesn't always carry line-break placement. When the GP file has lyrics
+   at all, this step always produces `CatalogSong.lyricsTrackIndex` (which
+   track's beats carry the lyrics), `CatalogSong.lyricsLineIndex` (which
+   channel within those beats to read — the first non-empty one, almost
+   always `0`, decided here rather than left for the client to guess),
+   and `CatalogSong.lyricLineBreaks` (syllable-count-per-line, so the
+   client can regroup the flat per-beat syllable stream it reads live
+   from the parsed score into the same lines as `.lrc` — no tick
+   positions are published; the client reads those directly off the
+   track's beats via alphaTab at render time, datamodel.md) and a derived
+   `CatalogSong.lyricsLrc`. GP
    syllable timing is the reason `.lrc` is generated from GP rather than
    taken from lrclib directly: it lets each `.lrc` line carry an accurate
    *end* timestamp — taken from the timing of that line's last syllable —
@@ -49,64 +60,102 @@ infrastructure.md.
    [00:14.870]
    ```
    - If the GP file's lyrics already carry line-break positions, those are
-     used directly — lrclib.net is not consulted.
+     used directly — lrclib.net is not consulted. **Validated**: this
+     placement is not exposed by alphaTab's public API at all — alphaTab
+     only surfaces per-beat dispatched syllables, and internally discards
+     the raw whole-track lyrics text (with the author's own `\n` line
+     breaks, when present) once dispatched per-beat data exists, which is
+     the normal case for modern GP7/8 exports. Recovering GP's own line
+     breaks requires reading `score.gpif`'s Track-level
+     `<Lyrics><Line><Text>` directly from the `.gp` file's zip contents —
+     a lightweight raw XML read, separate from using alphaTab for
+     beat/tick timing.
+   - **Also validated**: GP's own line breaks aren't universal — one of 5
+     real files checked (a GP8 export) had zero `\n` line breaks in its
+     raw lyrics text despite carrying full lyric content, confirming this
+     path is genuinely needed, not just theoretical.
    - If the GP file's lyrics lack line-break placement (syllables present,
-     but no marked line boundaries), lrclib.net is queried and used **only
-     as a reference for where to insert line breaks** in the GP-derived
-     syllable stream — lrclib's own timestamps are discarded; all timing in
-     the resulting `.lrc` and `lyricBeatMap` still comes from GP.
-3. **Lyrics fallback (lrclib.net)** — only runs when the GP file has no
-   embedded lyrics at all (distinct from stage 2's narrower lrclib use,
+     but no marked line boundaries, per the raw-XML check above), lrclib.net
+     is queried and used **only as a reference for where to insert line
+     breaks** in the GP-derived syllable stream — lrclib's own timestamps
+     are discarded; all timing in the resulting `.lrc` still comes from GP,
+     and `lyricLineBreaks` records the line-break placement decided here
+     (whichever source it came from) so the client can regroup the same
+     way at render time.
+2. **Lyrics fallback (lrclib.net)** — only runs when the GP file has no
+   embedded lyrics at all (distinct from stage 1's narrower lrclib use,
    which only supplies line-break positions for GP lyrics that already
    exist). In this fallback, lrclib.net's synced lyrics become
-   `CatalogSong.lyricsLrc` directly, end timestamps included. **No beat map
-   is produced in this fallback** — lrclib's data is word/line-level, not
-   GP's per-syllable timing, so `lyricBeatMap` stays null even though
-   `lyricsLrc` is set. A song can therefore end up in any of three states:
-   both fields set (GP-embedded lyrics, with or without lrclib-assisted line
-   breaks), `lyricsLrc` only (lrclib fallback, no GP lyrics at all), or
-   neither (no lyrics found anywhere). See datamodel.md and ui.md, which
-   gate the primary lyrics view and the in-tab overlay independently for
-   exactly this reason.
-4. **Publish** — write all generated assets (SVGs, layout maps, `.lrc`,
-   `LyricBeatMap`) to the location the server reads the catalog from.
+   `CatalogSong.lyricsLrc` directly, end timestamps included. **None of
+   `lyricsTrackIndex`, `lyricsLineIndex`, or `lyricLineBreaks` is produced
+   in this fallback** — there's no GP track to point at, and lrclib's data
+   is word/line-level,
+   not GP's per-syllable timing. A song can therefore end up in any of
+   three states: both `lyricsLrc` and the GP-track pointer set (GP-embedded
+   lyrics, with or without lrclib-assisted line breaks), `lyricsLrc` only
+   (lrclib fallback, no GP lyrics at all), or neither (no lyrics found
+   anywhere). See datamodel.md and ui.md, which gate the primary lyrics
+   view and the in-tab overlay independently for exactly this reason.
+3. **Publish** — write the validated `.gp` file (`CatalogSong.gpFilePath` —
+   one multi-track file per song, datamodel.md) plus whatever lyrics
+   artifacts were produced (`.lrc`, `lyricsTrackIndex`, `lyricsLineIndex`,
+   `lyricLineBreaks`) to the location the server reads the catalog from.
+   No tab rendering or
+   tick-map computation happens here or anywhere else in the pipeline — the
+   published `.gp` file is rendered live, client-side, by alphaTab
+   (infrastructure.md), which also derives lyric syllable tick positions
+   directly from it.
 
-Each stage is a separate script/step, run in order by a single orchestration
-entry point — not one undifferentiated script. [OPEN: exact script
-boundaries and orchestration mechanism — keep a shell script driving
-per-stage Node/Python scripts, or consolidate into one tool? The prior
-implementation used 4-5 separate scripts driven by a shell script; that
-stage boundary was sound, but file/script naming should describe what each
-stage *does*, not survive as leftover names from an earlier MIDI-based
-approach.]
+**Resolved**: a single consolidated script runs extraction → fallback →
+publish in sequence for a song, rather than separate per-stage scripts
+driven by a shell orchestrator. The old pipeline's 4-5-script-plus-shell
+structure matched a much heavier pipeline (render, extract, fallback,
+publish, each with real independent tooling); at 2-3 lightweight steps
+with no heavy per-stage tooling of its own (`@coderline/alphatab` plus a
+small XML read, per Dependencies below), separate files/processes would
+add indirection without a real benefit. Name the script for what it does
+(e.g. `extract-lyrics`), not a leftover from the render-era naming.
 
 ## Source Format
 
 Guitar Pro (`.gp`) files are the only source format read by the pipeline.
-GP files carry fingering, string-assignment, and track-name data that other
-formats (e.g. MIDI) can't represent, which the tab rendering depends on. A
-prior version of this pipeline read MIDI as its source format; that
-approach is fully replaced, not kept as a fallback or alternate path.
+GP files carry fingering, string-assignment, track-name, and embedded-lyric
+data that other formats (e.g. MIDI) can't represent — the lyric extraction
+stages depend on this, and the published `.gp` file is what the client's
+alphaTab instance renders directly (infrastructure.md), so GP fidelity
+matters end-to-end, not just during preprocessing. A prior version of this
+pipeline read MIDI as its source format; that approach is fully replaced,
+not kept as a fallback or alternate path.
 
 ## Inputs & Outputs On Disk
 
-[OPEN: directory layout for pipeline inputs (source `.gp` files) and
-outputs (rendered SVGs, layout maps, lyrics data) — needs a structure that
-makes "what's the current output for song X" unambiguous, with no
-leftover artifacts from intermediate runs checked in. The prior pipeline
-left stale `.mid` files in both an input directory and an intermediate
-output directory from the no-longer-used MIDI approach; whatever structure
-this pipeline uses, intermediate/scratch output should not be committed.]
+**Resolved**: one directory per song (e.g. `catalog/<song-slug>/`)
+containing the source `.gp` file — which is what gets published/served
+as-is, no separate transformed copy — together with its generated `.lrc`
+and a small metadata file (e.g. `meta.json`) holding `lyricsTrackIndex`,
+`lyricsLineIndex`, and `lyricLineBreaks`. "What's the current output for
+song X" is just "look in that song's directory"; adding or removing a
+song is one directory operation, not a cross-reference between separate
+input and output trees. No intermediate/scratch output is written to this
+tree — the prior pipeline's stale leftover `.mid` files (from the
+no-longer-used MIDI approach) are the cautionary example this avoids.
 
 ## Dependencies
 
-[OPEN: the prior pipeline vendored a third-party GP-to-tab conversion tool
-as a subdirectory carrying its own nested `.git` (a direct violation of the
-constitution's Quality Standards). Decide: is an equivalent tool still
-needed given `@coderline/alphatab` handles rendering directly, and if a
-third-party tool is needed, is it added as a real package dependency, a
-proper git submodule, or vendored as plain committed files with provenance
-noted — never silently nested.]
+The prior pipeline vendored a third-party GP-to-tab conversion tool as a
+subdirectory carrying its own nested `.git` (a direct violation of the
+constitution's Quality Standards). That tool is no longer needed at all —
+tab rendering moved entirely to the client via `@coderline/alphatab`
+(infrastructure.md), so the pipeline has no rendering dependency to vendor
+or install. **Resolved, validated against 5 real `.gp` files**: no separate
+GP-parsing library is needed. Two lightweight mechanisms cover the whole
+extraction, both confirmed working directly against real files:
+`@coderline/alphatab` itself (already a project dependency, and usable in
+Node, not just the browser) for per-beat lyric text and tick/timing data;
+and a plain zip + XML read of `score.gpif`'s Track-level
+`<Lyrics><Line><Text>` for GP's own line-break placement, which alphaTab
+doesn't expose on its public API. No new heavy dependency to add or
+vendor — this closes the open question rather than just narrowing it.
 
 ## Constitution Compliance
 
@@ -122,8 +171,13 @@ existed).
 
 ## Re-running The Pipeline
 
-[OPEN: when does the pipeline need to re-run for a song — only on new
-song ingestion, or also when `@coderline/alphatab`'s rendering output
-changes (e.g. a dependency bump)? Affects whether published output is
-treated as a build artifact (regenerable, not source-of-truth) or as
-checked-in source-of-truth that's manually updated.]
+The pipeline only needs to re-run on new song ingestion or a change to the
+lyric-extraction logic itself (e.g. fixing a line-break heuristic). It no
+longer needs to re-run when alphaTab's rendering changes (a dependency
+bump, a new alphaTab version) — rendering happens live at request time in
+the client, not offline in this pipeline, so an alphaTab upgrade is a
+client-side concern only (infrastructure.md). Published output
+(`.lrc`, the `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`
+pointer, the validated `.gp` copy) is therefore a build artifact
+regenerable from source `.gp`
+files at any time, not hand-maintained source-of-truth.

@@ -8,6 +8,15 @@ Version change: 1.0.0 → 1.0.1
 Resolved: deployment scale/audience open question (self-hosted/
 small-group, no auth/rate-limiting requirement). Clarification only,
 no principle redefined.
+
+Version change: 1.0.1 → 1.1.0
+Added: Core Principle V (Check Library Idioms Before Building Custom
+Mechanism). Rationale: the live-rendering pivot (datamodel.md, pipeline.md,
+infrastructure.md, ui.md) removed a whole reconciliation layer
+(`LayoutMap`, per-density SVG pre-rendering) that existed only because the
+prior design didn't use alphaTab's own built-in cursor and rendering
+model. The custom mechanism was built to solve a problem the library
+already solved natively.
 -->
 
 ---
@@ -91,6 +100,25 @@ switch over 20 message types in one function; `session-created` and
 server's equivalent (`MessageRouter`) already followed this principle
 correctly and is the model to replicate.
 
+### V. Check Library Idioms Before Building Custom Mechanism
+
+Before implementing a custom mechanism to solve a problem in a concern
+already owned by a library the project depends on, check whether that
+library has a built-in, idiomatic way to solve it. Reaching for a hand-
+built solution without checking is treated the same as introducing an
+abstraction the codebase doesn't need — it should be surfaced as a
+question ("does alphaTab already do this?") before being built, not
+discovered as duplicated work later.
+
+*Rationale*: sync-scroll's tab-scroll cursor was a hand-built overlay
+reconstructed from a separately computed `LayoutMap`, because it wasn't
+known that alphaTab's playback module already ships a native cursor
+(`.at-cursor-bar`/`.at-cursor-beat`) derived from the same render pass as
+the staff. That mismatch between the overlay and the staff was a real,
+recurring bug class — one that the live-rendering pivot eliminated
+structurally by using alphaTab's built-in cursor instead of reconciling
+against one.
+
 ## Quality Standards
 
 - A `package.json`'s declared `name` and `scripts` must match the actual
@@ -123,4 +151,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.0.1 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-06-30
+**Version**: 1.1.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-06-30
