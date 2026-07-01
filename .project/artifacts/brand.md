@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # Brand & Theming
@@ -40,12 +40,10 @@ from the prior app's production CSS:
 
 | Role | Token | Value | alphaTab resource / class |
 |---|---|---|---|
-| Fret numbers (text) | `--tab-foreground` | `#ffe600` (full-brightness neon-yellow) | `mainGlyphColor` (text nodes only — see override note below) |
-| Default glyph strokes (stems, beams) | `--tab-foreground-dim` | `rgba(255,230,0,0.40)` (dim neon-yellow) | `mainGlyphColor` (default) |
-| Geometry (bends, slurs) | `--tab-geometry` | `rgba(255,45,120,0.55)` (neon-pink) | `mainGlyphColor` (path-element override) |
-| Ghost notes, ties | `--tab-foreground-dim` | same as default strokes | `secondaryGlyphColor` |
-| Bar numbers | `--tab-foreground-dim` | same as default strokes | `barNumberColor` |
-| Section labels ("Verse", "Chorus" — `EffectMarker`; `EffectTempo` is suppressed entirely, shown in the app's transport UI instead) | `--tab-foreground-dim` | same as default strokes — deliberately reused, not a new meaning | `scoreInfoColor` |
+| Note glyphs (fret numbers, notes, stems, beams, bend/slur geometry — everything `mainGlyphColor` covers) | `--tab-foreground` | `#ffe600` (full-brightness neon-yellow) | `mainGlyphColor` (flat — see note below) |
+| Ghost notes, ties | `--tab-foreground-dim` | `rgba(255,230,0,0.40)` (dim neon-yellow) | `secondaryGlyphColor` |
+| Bar numbers | `--tab-foreground-dim` | same as ghost notes/ties | `barNumberColor` |
+| Section labels ("Verse", "Chorus" — `EffectMarker`; `EffectTempo` is suppressed entirely, shown in the app's transport UI instead) | `--tab-foreground-dim` | same as ghost notes/ties — deliberately reused, not a new meaning | `scoreInfoColor` |
 | Staff lines | `--tab-ruling-dim` | `rgba(0,207,255,0.40)` (dim neon-blue) | `staffLineColor` |
 | Barlines | `--tab-ruling-mid` | `rgba(0,207,255,0.50)` (mid neon-blue, brighter than staff lines so bar boundaries read clearly) | `barSeparatorColor` |
 | Playback cursor | — | `neon-pink`, near-opaque | `.at-cursor-bar` / `.at-cursor-beat` |
@@ -53,19 +51,30 @@ from the prior app's production CSS:
 | Base (non-highlighted) lyric text | — | `neon-yellow` | full lyrics view |
 | Lobby pre-playback pointer (`Session.lobbyCursorTick`) | — | `neon-yellow` — deliberately *not* pink, distinguishing "someone is pointing here" (anticipatory) from "this is playing right now" (active) | lobby cursor overlay |
 
-alphaTab's `display.resources` API sets one color per named role, but the
-fret-number/default-stroke/geometry split above is three real colors for
-what's nominally one role (`mainGlyphColor`). The prior app achieved this
-via a sentinel-color-then-CSS-fill-match hack (necessary only because
-static pre-rendered SVG couldn't be recolored any other way); with live
-rendering, the SVG is real semantic DOM, so the same split is achieved by
-targeting the actual element types directly with CSS (e.g. text nodes vs.
-stroked paths) — no sentinel indirection needed, just direct selectors on
-what alphaTab actually renders. `mainGlyphColor` itself is set to
-`--tab-foreground-dim` (the default-stroke value) as its single base
-value; the `--tab-foreground` and `--tab-geometry` overrides apply on top
-via those direct element-type selectors (infrastructure.md, implementation
-mechanism only — this artifact owns the values, not the code shape).
+**Revised during implementation**: the original plan called for a 3-way
+split within `mainGlyphColor` — bright fret-number text, dim default
+strokes, and a distinct pink tone for bend/slur geometry — recovered via
+direct CSS selectors on alphaTab's live SVG element types (text nodes vs.
+stroked paths), on the theory that live rendering's real semantic DOM
+would let a modern CSS approach replace the prior app's sentinel-color-
+then-CSS-fill-match hack (necessary there only because static
+pre-rendered SVG couldn't be recolored any other way).
+
+That plan turned out to be wrong: verified empirically (live-rendered SVG
+DOM inspected in a real browser, alphaTab v1.8.3) that every glyph —
+fret numbers, stems, beams, bend arrows alike — renders as a `<text>`
+element carrying no distinguishing class, only a resource-assigned
+`fill`. There is no CSS selector that can separate "fret-number text"
+from "default stroke" from "bend geometry" within `mainGlyphColor`; they
+are the same role with no sub-structure to target. `mainGlyphColor` is
+therefore one flat value (full-brightness, matching the old app's
+highest-emphasis choice for legibility), not three.
+
+A feature request has been drafted for `@coderline/alphatab` asking for
+either finer-grained resource-color settings or stable semantic classes/
+attributes on rendered glyphs, which would let this artifact's original
+3-way intent be revisited if it lands upstream. Until then, the flat
+value above is the real, current design — not a placeholder.
 
 **Light mode — proposed, not harvested.** The prior app never shipped
 light mode for tab notation, and its draft spec was internally
@@ -80,12 +89,10 @@ production-proven like dark mode's.
 
 | Role | Token | Value | alphaTab resource / class |
 |---|---|---|---|
-| Fret numbers (text) | `--tab-foreground` | `#8a6a00` (deep amber-gold) | `mainGlyphColor` (text nodes only) |
-| Default glyph strokes (stems, beams) | `--tab-foreground-dim` | `rgba(138,106,0,0.45)` | `mainGlyphColor` (default) |
-| Geometry (bends, slurs) | `--tab-geometry` | `rgba(163,19,79,0.60)` (deep rose) | `mainGlyphColor` (path-element override) |
-| Ghost notes, ties | `--tab-foreground-dim` | same as default strokes | `secondaryGlyphColor` |
-| Bar numbers | `--tab-foreground-dim` | same as default strokes | `barNumberColor` |
-| Section labels | `--tab-foreground-dim` | same as default strokes | `scoreInfoColor` |
+| Note glyphs (fret numbers, notes, stems, beams, bend/slur geometry) | `--tab-foreground` | `#8a6a00` (deep amber-gold) | `mainGlyphColor` (flat — see dark-mode note above; same constraint applies) |
+| Ghost notes, ties | `--tab-foreground-dim` | `rgba(138,106,0,0.45)` | `secondaryGlyphColor` |
+| Bar numbers | `--tab-foreground-dim` | same as ghost notes/ties | `barNumberColor` |
+| Section labels | `--tab-foreground-dim` | same as ghost notes/ties | `scoreInfoColor` |
 | Staff lines | `--tab-ruling-dim` | `rgba(0,114,168,0.45)` (deep cyan-blue) | `staffLineColor` |
 | Barlines | `--tab-ruling-mid` | `rgba(0,114,168,0.60)` | `barSeparatorColor` |
 | Playback cursor | — | `#a3134f`, near-opaque (deep rose) | `.at-cursor-bar` / `.at-cursor-beat` |

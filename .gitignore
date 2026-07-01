@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .env
+
+# Local test fixtures (real commercial .gp files — not for the repo)
+client/public/test/
