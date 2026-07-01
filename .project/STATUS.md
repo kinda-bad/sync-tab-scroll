@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-06-30. Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-01. Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -15,11 +15,11 @@ _Updated: 2026-06-30. Keep this current as artifacts are refined and open questi
 
 ## Open Questions
 
-None. All six artifacts are stable with zero unresolved `[OPEN: ...]` items.
+None.
 
 ## Cross-Artifact Issues
 
-None. The alphaTab client/pipeline dual-use framing gap is fixed — infrastructure.md now notes alphaTab is used in both runtimes.
+None.
 
 ## Within-Artifact Issues
 
@@ -35,6 +35,13 @@ No violations.
 - infrastructure.md — up to date ✅
 - ui.md — up to date ✅
 
+## Plan Status
+
+`plan-live-rendering-pivot-2026-07-01.md` is **approved**, on branch
+`live-rendering-pivot`. Covers 7 phases: monorepo scaffolding → lyrics
+pipeline → server/protocol → client alphaTab rendering (dark mode) →
+playback sync → lyrics overlay/karaoke view → light mode + UI polish.
+
 ## Recommended Next Step
 
-`/ardd-plan` — all six artifacts are content-complete, consistent, and stable.
+`/ardd-tasks` to break the approved plan into an ordered task list.
