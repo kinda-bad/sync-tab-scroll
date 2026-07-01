@@ -10,6 +10,9 @@ importers:
 
   client:
     dependencies:
+      '@coderline/alphatab':
+        specifier: ^1.8.0
+        version: 1.8.3
       '@sync-tab-scroll/shared':
         specifier: workspace:*
         version: link:../packages/shared

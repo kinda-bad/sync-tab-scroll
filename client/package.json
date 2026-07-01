@@ -8,6 +8,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@coderline/alphatab": "^1.8.0",
     "@sync-tab-scroll/shared": "workspace:*"
   },
   "devDependencies": {
