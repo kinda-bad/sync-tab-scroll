@@ -9,9 +9,9 @@ status: in-progress
 ## Phase 1: Monorepo Scaffolding
 
 - [x] T001 [artifacts: constitution, infrastructure] Set up the pnpm workspace root: `pnpm-workspace.yaml` listing `client`, `server`, `packages/shared`; root `package.json`, root `tsconfig.json`, `.gitignore`. No business logic in any of these files — bootstrap/config only (Principle III).
-- [ ] T002 [artifacts: infrastructure, datamodel] [parallel] Scaffold `packages/shared`: a TypeScript package exporting datamodel.md's entities as pure types/interfaces — `Session`, `Participant`, `CatalogSong`, `CatalogPart`, `PlaybackState`, and the `ReadinessStatus` union — no runtime logic, types only.
-- [ ] T003 [artifacts: infrastructure] [parallel] Scaffold the `server` package: Node + `ws` WebSocket server skeleton. Entry point (`index.ts`) only reads config, constructs dependencies, and starts listening (Principle III) — accepts connections and logs, no message handling yet.
-- [ ] T004 [artifacts: infrastructure, ui] [parallel] Scaffold the `client` package: Svelte + Vite, plain Svelte (no SvelteKit). One reactive client store holding view state (Principle I). Empty placeholder components for Landing/Lobby/Playback views, wired to the store's view-state field only.
+- [x] T002 [artifacts: infrastructure, datamodel] [parallel] Scaffold `packages/shared`: a TypeScript package exporting datamodel.md's entities as pure types/interfaces — `Session`, `Participant`, `CatalogSong`, `CatalogPart`, `PlaybackState`, and the `ReadinessStatus` union — no runtime logic, types only.
+- [x] T003 [artifacts: infrastructure] [parallel] Scaffold the `server` package: Node + `ws` WebSocket server skeleton. Entry point (`index.ts`) only reads config, constructs dependencies, and starts listening (Principle III) — accepts connections and logs, no message handling yet.
+- [x] T004 [artifacts: infrastructure, ui] [parallel] Scaffold the `client` package: Svelte + Vite, plain Svelte (no SvelteKit). One reactive client store holding view state (Principle I). Empty placeholder components for Landing/Lobby/Playback views, wired to the store's view-state field only.
 
 **Test requirement**: `pnpm install` succeeds at the workspace root; `pnpm -r build` succeeds across all three packages with no business logic present yet.
 
