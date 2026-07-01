@@ -138,6 +138,39 @@ design here. Key implementation points:
   `session.playbackState.status` transitions to `'running'` — read this
   in the same subscriber, not duplicated per view.
 
+**Discovered during implementation (after phases 1-3 landed)**: three
+integration gaps the server-only phases couldn't surface, resolved before
+writing phase 4-6 tasks:
+
+- **Dev proxy**: `gpFilePath`/`lyricsLrc` are root-relative
+  (`/catalog/...`), but the client runs on Vite's dev port with no proxy
+  to the server's port — same-origin proxy added to `vite.config.ts`
+  rather than absolute cross-origin URLs (which would also need CORS
+  headers `catalog-static.ts` doesn't set).
+- **Nothing triggers playback start**: the Lobby→Playback transition is
+  keyed on `playbackState.status === 'running'`, but no client code sent
+  `playback-control: start` anywhere. Added a host-only "Start" button in
+  the Lobby view (ui.md already places transport controls conceptually
+  with the host; a lobby-side start button is the coherent trigger for a
+  status-driven transition that fires *before* Playback exists to host
+  its own controls).
+- **Renderer lifecycle vs. ui.md's readiness model**: ui.md states
+  per-participant loading/readiness (alphaTab init + SoundFont load)
+  happens *in the lobby*, so the host can wait for everyone before
+  starting — but renderer creation living inside `Playback.svelte` (as
+  built for the live-rendering pivot) only mounts after playback already
+  started, so lobby readiness could never actually reach `ready`.
+  Resolved in favor of ui.md's stated model: renderer/headless-player
+  creation moves to fire the moment a participant's part is known (song
+  selected + `selectedPart` set), not on `Playback.svelte` mount, and the
+  instance/container persists across the Lobby→Playback view switch
+  instead of being torn down and recreated. Concretely: the tab/overlay/
+  full-lyrics container elements move to `App.svelte` (always mounted,
+  visibility toggled by CSS on `$clientStore.view` rather than
+  conditional rendering), and engine creation/teardown logic is extracted
+  into its own module (e.g. `playback-engine.ts`) callable from wherever
+  `selectedPart` becomes known, not duplicated per view.
+
 ## Phase Breakdown
 
 1. **Server: catalog URL rewriting + static serving** — `catalog-loader.ts`
@@ -162,10 +195,24 @@ design here. Key implementation points:
    `Landing.svelte`'s create/join form, lift `wsClient`/session creation
    to `App.svelte`, wire `clientStore.view` transitions
    (`landing`→`lobby` on session-state received, `lobby`→`playback` on
-   `playbackState.status === 'running'`). Depends on nothing upstream
+   `playbackState.status === 'running'`), add the Vite dev proxy for
+   `/catalog`, and add the host-only "Start" button in the Lobby that
+   sends `playback-control: start`. Depends on nothing upstream
    (independent of phases 1–3) but is a prerequisite for phases 5–6.
    Testable via real browser session: land, create a session, confirm
-   the view switches to Lobby with no manual URL param.
+   the view switches to Lobby with no manual URL param; host clicking
+   Start flips playback state to running.
+4b. **Client: persistent renderer lifecycle** — extract the alphaTab/
+   headless-player creation, lyrics-overlay wiring, and drift-correction
+   subscription currently in `Playback.svelte`'s `onMount` into a
+   standalone module; move the tab/overlay/full-lyrics container
+   elements into `App.svelte` (always mounted, CSS-hidden outside
+   `view === 'playback'`); trigger creation as soon as `selectedPart` is
+   known (in the Lobby), not on `Playback.svelte` mount — matching
+   ui.md's stated per-participant loading/readiness happening pre-start.
+   Depends on phase 4. Testable via real browser session: readiness
+   reaches `'ready'` for a participant while still in the Lobby view
+   (before the host clicks Start).
 5. **Client: Lobby catalog picker** — replace the placeholder, wire
    `song-select`, add the client-store handling for the `catalog`
    message. Depends on phases 1–3 (server-side catalog plumbing) and
