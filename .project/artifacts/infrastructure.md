@@ -1,8 +1,8 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-06-30
-diagram_stale: false
+last_updated: 2026-07-01
+diagram_status: current
 ---
 
 # Infrastructure
@@ -72,6 +72,11 @@ and now applied at client render/init time instead of offline:
 // Principle V).
 const settings = new at.Settings();
 settings.core.engine = 'svg';
+settings.core.fontDirectory = '/font/'; // Bravura assets served as a static client asset — see Font & Worker Setup below
+// Verified during implementation: alphaTab's web-worker auto-detection
+// silently fails under Vite's ESM dev/build output (render() was a no-op
+// with workers enabled); main-thread rendering works immediately.
+settings.core.useWorkers = false;
 settings.display.layoutMode = at.LayoutMode.Page;
 // No settings.display.barsPerRow pin — auto-wrap by default (someday:
 // host-mandated bars-per-row and participant-preferred horizontal layout
@@ -84,7 +89,7 @@ if (!isPercussion) settings.notation.rhythmMode = at.TabRhythmMode.ShowWithBars;
 // directly via the resources API — no sentinel-then-CSS-fill-match
 // indirection needed, unlike the old static-SVG pipeline.
 const r = settings.display.resources;
-r.mainGlyphColor      = 'var(--tab-foreground-dim)';
+r.mainGlyphColor      = 'var(--tab-foreground)';
 r.secondaryGlyphColor = 'var(--tab-foreground-dim)';
 r.staffLineColor      = 'var(--tab-ruling-dim)';
 r.barSeparatorColor   = 'var(--tab-ruling-mid)';
@@ -105,12 +110,33 @@ const NE = at.NotationElement;
 ].forEach(el => settings.notation.elements.set(el, false));
 ```
 
-`mainGlyphColor` above sets one base color; brand.md's fret-number-text
-and bend/slur-geometry overrides are applied on top via direct CSS
-selectors targeting alphaTab's actual SVG element types, since the
-`resources` API itself only allows one color per role (brand.md has the
-full color reasoning and values — this section is implementation
-mechanism only).
+**Revised during implementation**: `mainGlyphColor` is a flat value, not a
+base color with CSS overrides layered on top as originally planned.
+Verified empirically (live-rendered SVG DOM inspected in a real browser):
+alphaTab's SVG output carries no per-glyph-type class — every glyph
+(fret numbers, stems, beams, bend/slur geometry) is a `<text>` element
+distinguishable only by its resource-assigned `fill`, so there is no CSS
+selector that can split `mainGlyphColor` into sub-roles. brand.md has the
+full color reasoning and values, and documents a feature request filed
+with alphaTab requesting finer-grained resource colors or semantic
+classes, which would let this be revisited if it lands upstream.
+
+### Font & Worker Setup
+
+Two more implementation-verified deviations from what the render-settings
+block above might suggest at a glance:
+
+- `@coderline/alphatab`'s Vite plugin (`@coderline/alphatab/vite`) is
+  broken in the installed 1.8.3 release — it references a nested build
+  file (`dist/vite/alphaTab.vite.mjs`) that doesn't exist in the published
+  package. Font assets (Bravura, OFL-licensed) are instead committed
+  directly to the client's static assets and served from `/font/`, with
+  `core.fontDirectory` pointed at that path — a manual substitute for
+  what the plugin would otherwise automate, not a design choice.
+- `core.useWorkers` must be `false` (see code block above) — alphaTab's
+  web-worker script auto-detection assumes a single bundled script file,
+  which doesn't hold under Vite's ESM module output. Main-thread
+  rendering works without issue at the scale this app needs.
 
 Cursor and highlight overlays (`.at-cursor-bar`, `.at-cursor-beat`,
 `.at-highlight`) remain genuinely CSS-class-driven, styled by brand.md —

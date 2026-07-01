@@ -27,6 +27,12 @@ export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRend
   const settings = new at.Settings();
   settings.core.engine = 'svg';
   settings.core.fontDirectory = '/font/';
+  // alphaTab's audio player spawns its own worker independent of
+  // core.useWorkers (which only controls the render worker) and needs a
+  // classic (non-ESM) script it can load — auto-detection fails under
+  // Vite's ESM dev/build output, same root cause as the render-worker
+  // issue. A classic build copy is served as a static asset for this.
+  settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href;
   // Web workers fail to initialize under Vite's ESM dev/build output
   // (alphaTab's worker-script auto-detection assumes a single bundled
   // script file, not ES modules) — verified empirically: render() was a
@@ -44,6 +50,13 @@ export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRend
   r.barSeparatorColor = darkTabColors.rulingMid;
   r.barNumberColor = darkTabColors.foregroundDim;
   r.scoreInfoColor = darkTabColors.foregroundDim;
+
+  // alphaTab is the audio engine (ui.md) — the SoundFont is a real,
+  // multi-MB asset the client loads (infrastructure.md); using the
+  // Apache-2.0-licensed Sonivox soundfont alphaTab ships, rather than
+  // sourcing/licensing a separate one.
+  settings.player.enablePlayer = true;
+  settings.player.soundFont = '/soundfont/sonivox.sf2';
 
   // Hide score header fields — the app renders title/artist/part in HTML.
   // Keep EffectMarker (section labels); suppress free text annotations and
@@ -70,6 +83,8 @@ export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRend
   }
 
   const api = new at.AlphaTabApi(container, settings);
+
+  api.error.on((e) => console.error('[tab-renderer] error', e));
 
   api.scoreLoaded.on((score) => {
     const track = score.tracks[trackIndex];

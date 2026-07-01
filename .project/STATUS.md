@@ -19,7 +19,11 @@ None.
 
 ## Cross-Artifact Issues
 
-None.
+None. brand.md and infrastructure.md were both corrected this session to
+remove a disproven claim (that alphaTab's SVG output could be CSS-targeted
+per glyph type for a 3-way color split) and now consistently describe the
+flattened `mainGlyphColor` design plus the upstream alphaTab feature
+request filed to potentially restore finer-grained theming later.
 
 ## Within-Artifact Issues
 
@@ -32,16 +36,25 @@ No violations.
 ## Diagrams
 
 - datamodel.md — up to date ✅
-- infrastructure.md — up to date ✅
+- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` — content changed this session, structure likely unaffected but not yet re-rendered)
 - ui.md — up to date ✅
 
-## Plan Status
+## Implementation Status
 
-`plan-live-rendering-pivot-2026-07-01.md` is **approved**, on branch
-`live-rendering-pivot`. Covers 7 phases: monorepo scaffolding → lyrics
-pipeline → server/protocol → client alphaTab rendering (dark mode) →
-playback sync → lyrics overlay/karaoke view → light mode + UI polish.
+Plan `plan-live-rendering-pivot-2026-07-01.md` is approved, on branch
+`live-rendering-pivot`. Tasks file `tasks-live-rendering-pivot-d9c2.md` is
+`in-progress`: **17/27 tasks complete** (Phases 1-4 done — scaffolding,
+lyrics pipeline, server protocol, client alphaTab rendering in dark mode,
+all verified against real fixtures/browser). Phase 5 (Playback Sync,
+T018-T020) is next.
+
+A background research agent is investigating whether alphaTab's `html5`
+(canvas) render engine would help/hurt/not-affect the glyph-theming
+limitation found in Phase 4 — not yet reported back as of this analysis.
 
 ## Recommended Next Step
 
-`/ardd-tasks` to break the approved plan into an ordered task list.
+`/ardd-render infrastructure` to refresh its diagram, then continue
+`/ardd-implement` with Phase 5 (T018-T020: client-side drift correction,
+headless alphaTab for lyrics-part participants, metronome/count-in
+wiring).
