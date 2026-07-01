@@ -15,15 +15,31 @@ _Updated: 2026-07-01. Keep this current as artifacts are refined and open questi
 
 ## Open Questions
 
-None.
+None formally tracked in the artifacts. See "Implementation vs. Artifact
+Findings" below for two real items surfaced by the completed
+implementation that aren't yet captured anywhere durable.
 
 ## Cross-Artifact Issues
 
-None. brand.md and infrastructure.md were both corrected this session to
-remove a disproven claim (that alphaTab's SVG output could be CSS-targeted
-per glyph type for a 3-way color split) and now consistently describe the
-flattened `mainGlyphColor` design plus the upstream alphaTab feature
-request filed to potentially restore finer-grained theming later.
+None.
+
+## Implementation vs. Artifact Findings
+
+(Outside `/ardd-analyze`'s strict artifact-to-artifact scope, but real and
+worth tracking now that implementation is complete.)
+
+- **[RESOLVED]** `datamodel.md`'s `Session.lobbyCursorTick` states "null
+  once playback starts." `server/src/handlers/playback-control.ts` now
+  enforces this: the `'start'` action nulls `lobbyCursorTick` before
+  broadcasting. Verified with a live two-message test (set cursor → 9600,
+  send `start`, confirm broadcast shows `lobbyCursorTick: null` and
+  `status: running`).
+- **[GAP]** Song selection, catalog listing, in-lobby part selection, and
+  the Lobby → Playback view transition are not wired end-to-end anywhere.
+  `ui.md`'s Lobby View reads as if this flow exists. It was repeatedly
+  noted as inline code TODOs across the implementation (fixed test
+  fixtures used instead of real selection) but never surfaced as a
+  project-level open item until this analysis.
 
 ## Within-Artifact Issues
 
@@ -36,25 +52,29 @@ No violations.
 ## Diagrams
 
 - datamodel.md — up to date ✅
-- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` — content changed this session, structure likely unaffected but not yet re-rendered)
+- infrastructure.md — up to date ✅
 - ui.md — up to date ✅
 
 ## Implementation Status
 
-Plan `plan-live-rendering-pivot-2026-07-01.md` is approved, on branch
-`live-rendering-pivot`. Tasks file `tasks-live-rendering-pivot-d9c2.md` is
-`in-progress`: **17/27 tasks complete** (Phases 1-4 done — scaffolding,
-lyrics pipeline, server protocol, client alphaTab rendering in dark mode,
-all verified against real fixtures/browser). Phase 5 (Playback Sync,
-T018-T020) is next.
+**Complete.** `tasks-live-rendering-pivot-d9c2.md` — 27/27 tasks done,
+`status: completed`. Plan `plan-live-rendering-pivot-2026-07-01.md` fully
+implemented on branch `live-rendering-pivot`: monorepo scaffolding, lyrics
+pipeline, server protocol, live client-side alphaTab rendering (dark +
+light mode), playback sync, in-tab lyrics overlay + full lyrics view,
+loading/empty/error states, lobby cursor. All verified against real
+fixtures/browser sessions, not assumed.
 
-A background research agent is investigating whether alphaTab's `html5`
-(canvas) render engine would help/hurt/not-affect the glyph-theming
-limitation found in Phase 4 — not yet reported back as of this analysis.
+Known limitations, documented in code and task notes, not silently
+glossed over:
+- Full live-audio verification blocked by Chrome's autoplay policy in
+  browser-automation testing (real user clicks will work fine).
+- No song-selection/catalog-listing flow — see Implementation vs.
+  Artifact Findings above.
 
 ## Recommended Next Step
 
-`/ardd-render infrastructure` to refresh its diagram, then continue
-`/ardd-implement` with Phase 5 (T018-T020: client-side drift correction,
-headless alphaTab for lyrics-part participants, metronome/count-in
-wiring).
+If continuing feature work, the song-selection/catalog-listing flow is
+the natural next slice — recommend a fresh `/ardd-plan` pass for it
+rather than an ad hoc addition, since it touches server (new handlers),
+client (new UI), and possibly datamodel (a song-listing message shape).
