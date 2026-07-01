@@ -3,6 +3,7 @@
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
+  import Toasts from './components/Toasts.svelte';
 </script>
 
 {#if $clientStore.view === 'landing'}
@@ -12,3 +13,5 @@
 {:else}
   <Playback />
 {/if}
+
+<Toasts />

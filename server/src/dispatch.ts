@@ -7,6 +7,7 @@ import { handlePartSelect } from './handlers/part-select.js';
 import { handleReadinessUpdate } from './handlers/readiness-update.js';
 import { handleHostRemoveParticipant } from './handlers/host-remove-participant.js';
 import { handlePlaybackControl } from './handlers/playback-control.js';
+import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 
 /**
  * Routes each incoming message to its own named handler (Principle IV) —
@@ -26,5 +27,7 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleHostRemoveParticipant(ctx, socket, message);
     case 'playback-control':
       return handlePlaybackControl(ctx, socket, message);
+    case 'lobby-cursor-set':
+      return handleLobbyCursorSet(ctx, socket, message);
   }
 }

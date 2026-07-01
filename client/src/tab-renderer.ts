@@ -1,10 +1,23 @@
 import * as at from '@coderline/alphatab';
-import { darkTabColors } from './brand-colors';
+import { darkTabColors, lightTabColors } from './brand-colors';
+
+export type Theme = 'dark' | 'light';
 
 export interface TabRendererOptions {
   container: HTMLElement;
   gpFilePath: string;
   trackIndex: number;
+  theme?: Theme;
+}
+
+function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
+  const colors = theme === 'dark' ? darkTabColors : lightTabColors;
+  resources.mainGlyphColor = colors.foreground; // flat full-brightness — see class doc comment below
+  resources.secondaryGlyphColor = colors.foregroundDim;
+  resources.staffLineColor = colors.rulingDim;
+  resources.barSeparatorColor = colors.rulingMid;
+  resources.barNumberColor = colors.foregroundDim;
+  resources.scoreInfoColor = colors.foregroundDim;
 }
 
 /**
@@ -22,8 +35,11 @@ export interface TabRendererOptions {
  * class). Recovering the split would require sniffing each glyph's
  * Bravura codepoint, a fragile mechanism this session chose not to build.
  * This needs a follow-up /ardd-refine brand + infrastructure pass.
+ *
+ * Light-mode values (brand.md) are a first pass, not production-validated
+ * like dark mode's harvested values — expect a future visual QA pass.
  */
-export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRendererOptions): at.AlphaTabApi {
+export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark' }: TabRendererOptions): at.AlphaTabApi {
   const settings = new at.Settings();
   settings.core.engine = 'svg';
   settings.core.fontDirectory = '/font/';
@@ -43,13 +59,7 @@ export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRend
   // host-mandated bars-per-row and participant-preferred horizontal layout
   // are deferred future direction, not built now).
 
-  const r = settings.display.resources;
-  r.mainGlyphColor = darkTabColors.foreground; // flat full-brightness — see class doc comment above
-  r.secondaryGlyphColor = darkTabColors.foregroundDim;
-  r.staffLineColor = darkTabColors.rulingDim;
-  r.barSeparatorColor = darkTabColors.rulingMid;
-  r.barNumberColor = darkTabColors.foregroundDim;
-  r.scoreInfoColor = darkTabColors.foregroundDim;
+  applyThemeColors(settings.display.resources, theme);
 
   // alphaTab is the audio engine (ui.md) — the SoundFont is a real,
   // multi-MB asset the client loads (infrastructure.md); using the
@@ -101,4 +111,11 @@ export function createTabRenderer({ container, gpFilePath, trackIndex }: TabRend
     .then((buffer) => api.load(new Uint8Array(buffer), [trackIndex]));
 
   return api;
+}
+
+/** Toggles theme at runtime (no reload) — re-renders with the new resource colors, since alphaTab's colors are SVG fill attributes, not CSS-inherited. */
+export function setTheme(api: at.AlphaTabApi, theme: Theme): void {
+  applyThemeColors(api.settings.display.resources, theme);
+  api.updateSettings();
+  api.render();
 }

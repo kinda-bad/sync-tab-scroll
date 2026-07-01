@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { AlphaTabApi } from '@coderline/alphatab';
-  import { createTabRenderer } from '../tab-renderer';
+  import { createTabRenderer, setTheme, type Theme } from '../tab-renderer';
   import { createHeadlessPlayer } from '../headless-player';
   import { createWsClient } from '../ws-client';
   import { correctDrift, applyPlaybackSettings } from '../playback-sync';
@@ -9,6 +9,7 @@
   import { walkLyricBeats, groupIntoLines } from '../lyrics-beat-walk';
   import { createLyricsOverlay, type LyricsOverlay } from '../lyrics-overlay';
   import { parseLrc, type LrcLine } from '../lrc-parser';
+  import { waitUntilReady } from '../readiness';
 
   // TODO: wire gpFilePath/trackIndex/lyrics pointer from real song/part
   // selection (no song-picker WS flow exists yet — out of scope for
@@ -37,13 +38,29 @@
   let showOverlay = true;
   let api: AlphaTabApi;
   let overlay: LyricsOverlay | undefined;
+  let theme: Theme = 'dark';
 
   onMount(() => {
     const onDestroyCallbacks: Array<() => void> = [];
 
+    const wsClient = createWsClient(`ws://${location.hostname}:8080`);
+
+    const asHost = params.get('join') === null;
+    if (asHost) {
+      wsClient.send({ type: 'session-create', displayName: 'Host' });
+    } else {
+      wsClient.send({ type: 'session-join', code: params.get('join')!, displayName: 'Member' });
+    }
+    wsClient.send({ type: 'readiness-update', readiness: 'loading' });
+
     api = isLyricsPart
       ? createHeadlessPlayer('/test/creep.gp', 1)
       : createTabRenderer({ container, gpFilePath: '/test/creep.gp', trackIndex: 1 });
+
+    // Loading spans both the .gp parse/render and the SoundFont load,
+    // whichever finishes last (infrastructure.md, ui.md Loading state) —
+    // applies identically to visible and headless instances.
+    waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
     if (!isLyricsPart) {
       const unsubscribeScore = api.scoreLoaded.on((score) => {
@@ -76,15 +93,6 @@
       onDestroyCallbacks.push(() => api.playerPositionChanged.off(onPosition));
     }
 
-    const wsClient = createWsClient(`ws://${location.hostname}:8080`);
-
-    const asHost = params.get('join') === null;
-    if (asHost) {
-      wsClient.send({ type: 'session-create', displayName: 'Host' });
-    } else {
-      wsClient.send({ type: 'session-join', code: params.get('join')!, displayName: 'Member' });
-    }
-
     const unsubscribeStore = clientStore.subscribe((state) => {
       if (!state.session || !api.isReadyForPlayback) return;
       correctDrift(api, state.session.playbackState);
@@ -103,10 +111,17 @@
     showOverlay = !showOverlay;
     overlay?.setVisible(showOverlay);
   }
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    if (!isLyricsPart) setTheme(api, theme);
+  }
 </script>
 
 <section>
   <h1>Playback</h1>
+  <button onclick={toggleTheme}>Toggle {theme === 'dark' ? 'light' : 'dark'} mode</button>
   {#if !isLyricsPart}
     <button onclick={toggleOverlay}>Toggle lyrics overlay</button>
     <div bind:this={container} class="tab-container"></div>
@@ -118,7 +133,7 @@
 
 <style>
   .tab-container {
-    background: #0a0a0a;
+    background: var(--canvas-bg, #0a0a0a);
     min-height: 400px;
   }
 </style>

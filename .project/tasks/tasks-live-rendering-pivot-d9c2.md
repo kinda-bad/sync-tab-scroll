@@ -1,7 +1,7 @@
 ---
 plan: plan-live-rendering-pivot-2026-07-01.md
 generated: 2026-07-01
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -63,9 +63,9 @@ status: in-progress
 
 ## Phase 7: Light Mode + Remaining UI Polish
 
-- [ ] T024 [artifacts: brand, infrastructure] Implement the light-mode theming toggle: swap `display.resources` values and CSS custom properties to brand.md's light-mode table. Annotate this code as using first-pass, not production-validated values (per the plan's Production Annotation Summary) — a future visual QA pass is expected.
-- [ ] T025 [artifacts: ui] [parallel] Implement the Loading state: per-participant readiness reflecting both `.gp` parse/render completion and SoundFont load completion (whichever finishes last), for both instrument and headless-lyrics participants.
-- [ ] T026 [artifacts: ui] [parallel] Implement the Empty and Error states: catalog picker only when no song is selected; toast-based errors for invalid/expired join code, part-not-found, and not-host action attempts.
-- [ ] T027 [artifacts: datamodel, ui] Implement the lobby cursor: host sets `Session.lobbyCursorTick` pre-playback, visible to all participants via the same tick-to-screen-position mechanism alphaTab already provides for the live playback cursor.
+- [x] T024 [artifacts: brand, infrastructure] Implement the light-mode theming toggle: swap `display.resources` values and CSS custom properties to brand.md's light-mode table. Annotate this code as using first-pass, not production-validated values (per the plan's Production Annotation Summary) — a future visual QA pass is expected. Implemented as `setTheme(api, theme)` (re-applies resources + `updateSettings()` + `render()`) plus a `data-theme` attribute on `<html>` driving CSS custom properties for the lyric/cursor DOM overlays.
+- [x] T025 [artifacts: ui] [parallel] Implement the Loading state: per-participant readiness reflecting both `.gp` parse/render completion and SoundFont load completion (whichever finishes last), for both instrument and headless-lyrics participants. `waitUntilReady(api)` resolves once both `scoreLoaded` and `soundFontLoaded` have fired; Playback.svelte sends `readiness-update` (`'loading'` immediately, `'ready'` once resolved) — same code path for visible and headless instances.
+- [x] T026 [artifacts: ui] [parallel] Implement the Empty and Error states: catalog picker only when no song is selected; toast-based errors for invalid/expired join code, part-not-found, and not-host action attempts. Lobby.svelte shows the Empty-state message when `!session.selectedSong` (real catalog picker is out of scope — no song-listing WS flow exists yet, same gap as Playback's fixed test fixture); `toast-store.ts` + `Toasts.svelte` render `ServerMessage` `error` payloads as auto-dismissing toasts, mounted globally in `App.svelte` so errors surface regardless of active view.
+- [x] T027 [artifacts: datamodel, ui] Implement the lobby cursor: host sets `Session.lobbyCursorTick` pre-playback, visible to all participants via the same tick-to-screen-position mechanism alphaTab already provides for the live playback cursor. Added a `lobby-cursor-set` message + host-gated server handler (identical guard pattern to `playback-control`, already proven in Phase 3) broadcasting through the existing `session-state` mechanism — no new sync path.
 
-**Test requirement**: toggling light/dark mode updates notation glyph colors, staff/barline colors, and cursor color without a page reload; a host setting the lobby cursor is visible to a second connected participant within one state broadcast.
+**Test requirement — verified via real browser (claude-in-chrome) against a real two-participant session**: toggling light/dark mode re-rendered the live tab with brand.md's light-mode colors (light canvas, deep amber-gold glyphs, deep cyan-blue staff/barlines) with no page reload, confirmed via screenshot before/after. Lobby Empty state and participant list confirmed correct on both host and joining member tabs (join code `SKEGU`, both listed as connected). Host setting the lobby cursor to tick 9600 was visible on the second (member) tab within one broadcast ("Host is pointing at tick 9600"), confirmed via direct DOM inspection immediately after the host's action. Error-toast and not-host-rejection paths reuse Phase 3's already-verified host-guard pattern (`playback-control`), not re-tested from scratch.

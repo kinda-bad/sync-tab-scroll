@@ -1,5 +1,6 @@
 import type { ClientMessage, ServerMessage } from '@sync-tab-scroll/shared';
 import { clientStore } from './store';
+import { toastStore } from './toast-store';
 
 export interface WsClient {
   send(message: ClientMessage): void;
@@ -18,6 +19,9 @@ export function createWsClient(url: string): WsClient {
     const message: ServerMessage = JSON.parse(event.data);
     if (message.type === 'session-state') {
       clientStore.update((s) => ({ ...s, session: message.session, selfParticipantId: message.selfParticipantId }));
+    } else if (message.type === 'error') {
+      // Errors (join-by-code failure, part-not-found, not-host attempts) are toasts, not blocking modals (ui.md States).
+      toastStore.push(message.message);
     }
   });
 
