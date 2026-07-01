@@ -25,6 +25,13 @@ status: in-progress
 
 ## Phase 4: Client — shared connection + view transitions
 
+**Note**: T009-T014 below are implemented (code written, `vite build` passes,
+no browser verification performed — the claude-in-chrome extension was
+unavailable this session). Checkboxes intentionally left unchecked per
+each task's stated test requirement; user is verifying manually via
+`localhost:5173`/`localhost:8080` running locally. Do not mark `[x]` until
+that verification is confirmed.
+
 - [ ] T009 [artifacts: infrastructure, datamodel] Implement `client/src/views/Landing.svelte` as a real create/join form per ui.md's Landing View: a display-name input, a "Create session" button, a join-code input + "Join" button. On submit, call a shared connection function (T010) with the appropriate `session-create`/`session-join` message. Persist `sessionCode`/`displayName` to `localStorage` on success so a refresh can silently rejoin (attempt an automatic `session-join` with the stored code on mount if present). Test: component test (or manual browser test folded into T011's end-to-end check) confirming the create button sends `session-create` with the entered display name.
 - [ ] T010 [artifacts: infrastructure] Extract the connection bootstrap (currently duplicated in `Lobby.svelte`'s and `Playback.svelte`'s `onMount`) into a single function callable from `App.svelte`/`Landing.svelte` — e.g. a `connect(displayName, joinCode?)` helper in `ws-client.ts` or a new small module — that creates one `WsClient`, sends `session-create` or `session-join`, and stores the `WsClient` instance somewhere every view can read (a field on `clientStore`'s state, or a separate singleton module, per constitution Principle I — one reactive source, not a second ad hoc global). Remove the per-view `createWsClient(...)` + `session-create`/`session-join` calls from `Lobby.svelte` and `Playback.svelte` (they'll read the shared client instead, wired in T011/T013). Test: none standalone — covered by T011.
 - [ ] T011 [artifacts: infrastructure] In `client/src/store.ts`'s WS-message handling (`ws-client.ts`'s `message` listener), transition `clientStore`'s `view` field: set to `'lobby'` the first time a `session-state` message is received while `view === 'landing'`; set to `'playback'` when an incoming `session-state`'s `session.playbackState.status === 'running'` while `view === 'lobby'`. Also handle the new `catalog` message type here (store `CatalogSong[]` on `clientStore`, per T012). Update `client/src/App.svelte` to no longer need any manual view-switch triggers — it already reads `$clientStore.view` reactively. Test: real browser session — load the app, submit the Landing form, confirm the DOM shows Lobby's `<h1>Lobby</h1>` with no URL query params involved.
