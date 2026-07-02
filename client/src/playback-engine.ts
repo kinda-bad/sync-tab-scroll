@@ -93,6 +93,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // real user seek apart from correctDrift's own programmatic assignment.
   let lastAppliedInteraction: boolean | undefined;
   let lastProgrammaticTick: number | null = null;
+  let lastAppliedSpotlightTick: number | null = null;
   let latestSession: Session | null = null;
   let latestSelfId: string | null = null;
 
@@ -116,6 +117,17 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     const appliedTick = correctDrift(api, s.session.playbackState);
     if (appliedTick !== null) lastProgrammaticTick = appliedTick;
     applyPlaybackSettings(api, s.session);
+
+    // Spotlight mode (ui.md "lobby cursor"): force this participant's view
+    // to follow the host's lobbyCursorTick only while the host-only toggle
+    // is on. Guarded on the tick actually changing, not just re-applied
+    // every store tick, and tracked via lastProgrammaticTick so the seek
+    // listener below doesn't mistake this for a real user seek.
+    if (s.session.spotlightMode && s.session.lobbyCursorTick !== null && s.session.lobbyCursorTick !== lastAppliedSpotlightTick) {
+      lastAppliedSpotlightTick = s.session.lobbyCursorTick;
+      api.tickPosition = s.session.lobbyCursorTick;
+      lastProgrammaticTick = s.session.lobbyCursorTick;
+    }
   });
 
   // Broadcasts a host's seek to the rest of the session. Guarded against a

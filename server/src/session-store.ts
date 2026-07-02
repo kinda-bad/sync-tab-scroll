@@ -37,6 +37,7 @@ export class SessionStore {
       countInEnabled: false,
       metronomeEnabled: false,
       lobbyCursorTick: null,
+      spotlightMode: false,
     };
     this.sessions.set(code, session);
     return session;

@@ -29,6 +29,10 @@
   function clearLobbyCursor() {
     wsClient?.send({ type: 'lobby-cursor-set', tickPosition: null });
   }
+
+  function toggleSpotlightMode() {
+    wsClient?.send({ type: 'spotlight-mode-set', enabled: !session?.spotlightMode });
+  }
 </script>
 
 <section class="lobby">
@@ -100,6 +104,11 @@
         <input type="number" bind:value={lobbyCursorInput} class="cursor-input" />
         <Button variant="ghost" label="Set lobby cursor" onclick={setLobbyCursor} />
         <Button variant="ghost" label="Clear" onclick={clearLobbyCursor} />
+        <Button
+          variant={session.spotlightMode ? 'riot' : 'ghost'}
+          label={session.spotlightMode ? 'Spotlight mode: on' : 'Spotlight mode: off'}
+          onclick={toggleSpotlightMode}
+        />
       </div>
     {/if}
   {:else}

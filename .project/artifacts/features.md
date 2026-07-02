@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 ---
 
 
@@ -68,7 +68,7 @@ Errors (bad join code, selecting an unavailable part, a non-host trying a host-o
 
 ## Lobby cursor
 _Added 2026-07-01 · datamodel, ui_
-Before playback starts, the host can point at a position in the score; all participants see the same pointer. It's automatically cleared the moment playback starts, so it never lingers alongside the live playback cursor.
+Before playback starts, the host can point at a position in the score. Whether participants' views follow it depends on a host-only "Spotlight mode" toggle: on, every participant's view snaps to match the host's pointer; off, each participant is free to browse their own view independently and the pointer is shown only as an informational readout. Both the pointer and Spotlight mode are automatically cleared/reset the moment playback starts, so neither lingers alongside the live playback cursor.
 
 ## Song catalog listing & selection
 _Added 2026-07-01 · datamodel, infrastructure, ui_

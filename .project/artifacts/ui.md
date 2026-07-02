@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 diagram_status: stale
 ---
 
@@ -46,7 +46,13 @@ lrclib.net fallback has the Lyrics part selectable but no in-tab overlay
 available on any instrument part (pipeline.md). Shows live
 participant list with readiness state. Host can remove participants. A
 "lobby cursor" lets the host point at a position in the score for others
-to see before playback starts.
+to see before playback starts. A host-only "Spotlight mode" toggle sits
+next to the lobby-cursor controls: while it's on, the lobby cursor forces
+every participant's view to follow it; while it's off, each participant
+is free to browse their own rendered tab independently, and the lobby
+cursor's tick is shown only as an informational readout (not applied to
+anyone's view). Spotlight mode resets to off when playback starts, same
+as the lobby cursor itself resetting to null.
 
 ## Playback View
 

@@ -8,6 +8,7 @@ import { handleReadinessUpdate } from './handlers/readiness-update.js';
 import { handleHostRemoveParticipant } from './handlers/host-remove-participant.js';
 import { handlePlaybackControl } from './handlers/playback-control.js';
 import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
+import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
 
 /**
@@ -30,6 +31,8 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handlePlaybackControl(ctx, socket, message);
     case 'lobby-cursor-set':
       return handleLobbyCursorSet(ctx, socket, message);
+    case 'spotlight-mode-set':
+      return handleSpotlightModeSet(ctx, socket, message);
     case 'song-select':
       return handleSongSelect(ctx, socket, message);
   }
