@@ -13,7 +13,7 @@ export default defineConfig({
   // use the classic worker script (core.scriptFile, see tab-renderer.ts)
   // instead, matching how the render worker is already handled.
   optimizeDeps: {
-    exclude: ['@coderline/alphatab'],
+    exclude: ['@coderline/alphatab']
   },
   server: {
     // Catalog asset URLs (CatalogSong.gpFilePath/lyricsLrc) are
@@ -21,7 +21,7 @@ export default defineConfig({
     // (infrastructure.md). Proxying keeps them same-origin for the client
     // dev server instead of needing CORS headers on the server response.
     proxy: {
-      '/catalog': 'http://localhost:8080',
-    },
-  },
+      '/catalog': 'http://localhost:8080'
+    }
+  }
 });

@@ -1,0 +1,115 @@
+/*
+ * Signature visual devices (brand.md). Component markup stays identical
+ * across themes — these classes change *how* they render per data-theme,
+ * not what markup gets applied, so components never branch on theme.
+ */
+
+/* ── Torn/taped edge ─────────────────────────────────────────────────────
+   The persistent bar's top edge (facing into the content it sits below) —
+   a ripped-paper silhouette instead of a clean rule. */
+.torn-edge {
+  clip-path: polygon(
+    0% 10%, 4% 3%, 8% 12%, 12% 4%, 16% 11%, 20% 2%, 24% 9%, 28% 3%,
+    32% 12%, 36% 4%, 40% 10%, 44% 2%, 48% 9%, 52% 4%, 56% 12%, 60% 3%,
+    64% 10%, 68% 2%, 72% 9%, 76% 4%, 80% 12%, 84% 3%, 88% 10%, 92% 2%,
+    96% 9%, 100% 4%,
+    100% 100%, 0% 100%
+  );
+}
+
+/* ── Hazard stripe fill ──────────────────────────────────────────────────
+   One device, three jobs (per-participant readiness, playback progress,
+   lyric-timing highlight) — diagonal caution-tape stripes instead of a
+   smooth gradient fill. `--hazard-fill` is the 0–1 progress the caller sets. */
+.hazard-stripes {
+  --hazard-fill: 0;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+.hazard-stripes::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: calc(var(--hazard-fill) * 100%);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--hazard) 0px,
+    var(--hazard) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  background-color: var(--hazard-dim);
+  transition: width 0.2s linear;
+}
+
+/* ── Dark mode: glitch fringe ────────────────────────────────────────────
+   Chromatic-aberration-style double fringe on the torn edge, recolored to
+   the punk palette (riot + hazard, not literal RGB channel split). Brief
+   and infrequent — a glitch, not a constant shimmer. */
+[data-theme='dark'] .signature-glitch {
+  position: relative;
+}
+[data-theme='dark'] .signature-glitch::before,
+[data-theme='dark'] .signature-glitch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+[data-theme='dark'] .signature-glitch::before {
+  box-shadow: inset 0 2px 0 0 var(--riot);
+  animation: glitch-fringe-a 7s infinite;
+}
+[data-theme='dark'] .signature-glitch::after {
+  box-shadow: inset 0 -2px 0 0 var(--hazard);
+  animation: glitch-fringe-b 7s infinite;
+}
+@keyframes glitch-fringe-a {
+  0%, 92%, 100% { opacity: 0; transform: translate(0, 0); }
+  92.5% { opacity: 0.8; transform: translate(-3px, 1px); }
+  93.5% { opacity: 0; }
+}
+@keyframes glitch-fringe-b {
+  0%, 92%, 100% { opacity: 0; transform: translate(0, 0); }
+  92.7% { opacity: 0.7; transform: translate(3px, -1px); }
+  93.7% { opacity: 0; }
+}
+
+/* ── Light mode: tape peel ───────────────────────────────────────────────
+   A torn strip of tape in one corner that lifts slightly on hover/focus —
+   same DIY-physical idea as the glitch, different medium (paper, not
+   screen). Purely decorative, aria-hidden by the component. */
+[data-theme='light'] .signature-tape {
+  position: relative;
+}
+[data-theme='light'] .signature-tape::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 48px;
+  height: 16px;
+  background: var(--hazard-dim);
+  border: 1px solid var(--border);
+  transform: rotate(-3deg);
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+[data-theme='light'] .signature-tape:hover::after,
+[data-theme='light'] .signature-tape:focus-within::after {
+  transform: rotate(-3deg) translateY(-3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='dark'] .signature-glitch::before,
+  [data-theme='dark'] .signature-glitch::after {
+    animation: none;
+  }
+  [data-theme='light'] .signature-tape::after {
+    transition: none;
+  }
+}

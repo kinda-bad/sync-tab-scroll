@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 ---
 
 # Brand & Theming
@@ -14,9 +14,100 @@ and interaction states (the code-shaped concerns), while this one owns
 look-and-feel decisions a designer would make. `ui.md` references this
 artifact rather than restating color/type choices inline.
 
-The app's identity is dark, neon-accented, and glitch-titled.
+The app's identity is **punk rock**: DIY, torn-paper/hazard-tape
+physicality, stark and disciplined rather than a glossy multi-neon
+cyberpunk look. (Superseded 2026-07-02 — see UI Chrome Redesign below;
+the original "dark, neon-accented, glitch-titled" framing undersold
+the direction and is kept below only where it still applies, to Tab
+Notation specifically.)
 
-## Color Palette
+## UI Chrome Redesign (2026-07-02)
+
+A deliberate departure from the prior app (`sync-scroll`), which this
+project drew initial inspiration from: `sync-scroll`'s UI runs a full
+neon rainbow (pink + blue + green + yellow + red all live at once)
+through its chrome, which reads closer to a video-game HUD than punk.
+This app narrows that: the **full neon set is reserved for Tab
+Notation only** (below — untouched, still locked), where it's
+functional (differentiating instrument voices). The UI chrome itself —
+the persistent Bar, buttons, cards, forms — runs a stark, disciplined
+palette of five semantic roles, deliberately not a rainbow:
+
+| Token | Role |
+|---|---|
+| `--bg` | base canvas |
+| `--surface` | bar/card/panel background |
+| `--ink` / `--ink-dim` | primary / secondary text |
+| `--riot` | the one loud accent — CTAs, cursor, "live"/active state |
+| `--hazard` | caution/pending accent — readiness fill, tape texture |
+
+These are **semantic role names, not theme-specific** (no `--void` vs.
+`--paper` split) so that components never branch on which theme is
+active — only the values behind each name change per
+`[data-theme='...']` block (`client/src/styles/tokens.css`). This is
+also what makes the palette extensible: a future theme (e.g. a
+straight cyberpunk palette, floated as a long-term goal) is a new
+`[data-theme='cyberpunk']` block plus a new toolbar entry in
+`.storybook/preview.ts`'s `withThemeByDataAttribute` config — nothing
+else changes, no component touches theme-specific logic.
+
+**Dark mode** — a void/stage concept:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#0a0a0a` |
+| `--surface` | `#17171b` |
+| `--ink` | `#f2f0e8` |
+| `--riot` | `#ff2178` |
+| `--hazard` | `#ffcc00` |
+
+**Light mode** — its own pass, not a mechanical inversion: a
+photocopied-flyer concept (warm-toner ink on newsprint paper, deeper/
+inkier accents rather than dark mode's glow):
+
+| Token | Value |
+|---|---|
+| `--bg` | `#e4e1d6` (deliberately not cream/`#F4F1EA` — reads as an AI-default) |
+| `--surface` | `#d6d2c4` |
+| `--ink` | `#131211` |
+| `--riot` | `#c40855` |
+| `--hazard` | `#a8760a` |
+
+### Signature element: the persistent Bar
+
+One persistent bar, pinned to the **bottom** of the viewport, present
+in the Lobby and Playback views both — never a separate top header +
+bottom transport-bar split (`sync-scroll`'s pattern, explicitly
+rejected: it reads as two different UIs stitched together). Bottom
+placement matches transport-control muscle memory (players, DAWs) and
+reads like the lip of a stage. Landing has no bar — its own full-screen
+moment.
+
+The bar's top edge is a torn/ripped-paper silhouette (`clip-path`
+polygon, no image assets — `.torn-edge`, `client/src/styles/motifs.css`)
+rather than a clean rule. Its readiness/progress fill is a diagonal
+hazard-tape stripe (`.hazard-stripes`) rather than a smooth gradient —
+one visual device doing triple duty: per-participant readiness in the
+Lobby, playback progress in Playback, and (existing motif, kept) the
+lyric-timing drain/fill visual. The combined effect reads as a torn
+strip of caution tape stuck across the screen edge — the single most
+recognizable, unmistakable element of the redesign.
+
+### Motion: diverges by theme, not just palette
+
+- **Dark** keeps a glitch/chromatic-aberration fringe on the bar's torn
+  edge (`.signature-glitch`) — recolored to `--riot`/`--hazard` rather
+  than sync-scroll's literal pink/cyan channel split. Broadcast/screen
+  distortion suits a void/stage backdrop.
+- **Light** swaps this for a **tape-peel** micro-interaction instead
+  (`.signature-tape`) — a small torn-tape corner that lifts slightly on
+  hover/focus. Same DIY-physical energy, expressed through a different
+  medium (paper, not screen) — not a lazy palette-only swap of the same
+  effect.
+
+Both respect `prefers-reduced-motion`.
+
+## Color Palette (Tab Notation)
 
 Dark canvas with neon accents (`neon-yellow`, `neon-blue`, `neon-pink`
 token names) carrying distinct roles: yellow for note/lyric content,
@@ -30,6 +121,11 @@ design-pass placeholder. Light mode has no equivalent to harvest (see
 Tab Notation & Playback Cursor below) and remains a design-pass detail to
 nail down during implementation, per this artifact's general practice of
 fixing *direction*, not swatches, until values are actually validated.
+
+**This palette is unchanged by the UI Chrome Redesign above** — it
+remains the full neon set, reserved specifically for tab notation's
+functional need to differentiate instrument voices, not extended to
+the rest of the UI.
 
 ### Tab Notation & Playback Cursor
 
@@ -102,24 +198,43 @@ production-proven like dark mode's.
 
 ## Typography
 
-A distinct display/title font (`font-title`, tracking-widest) for song
-titles; monospace (`font-mono`) for metadata and labels.
+`--font-display: 'Bungee'` for hero/title moments only (the app
+logotype, song title, big state words like READY/LIVE) — bold, blocky,
+poster/graffiti energy, more distinctive than the originally-considered
+Bebas Neue while staying legible at small sizes. Used with restraint:
+everywhere else, including all buttons/labels/lists/forms, is
+`--font-mono: 'IBM Plex Mono'` — its typewriter energy suits DIY zine
+text, and it shares monospace logic with the tab notation's own fret
+numbers. Two roles, not three — restraint over a fuller type system.
 
 ## Voice & Tone
 
 Terse and utilitarian. Toasts, errors, and empty states state the fact
 plainly — no personality, no jokes, no exclamation points. This applies
-even though the visual direction (neon/glitch) is louder; the voice
+even though the visual direction (punk rock, loud) is louder; the voice
 doesn't have to match the visual volume.
 
 ## Motion & Vibe
 
-A "glitch" title effect (`glitch-title`, `glitch-rule-b`) and animated
-drain-bar/fill-bar lyric-timing visuals.
+Dark mode: a glitch/chromatic-aberration fringe (`.signature-glitch`,
+`client/src/styles/motifs.css`) on the persistent Bar's torn edge, and
+the "glitch" title effect on hero type. Light mode: a tape-peel
+micro-interaction (`.signature-tape`) in its place — see UI Chrome
+Redesign above for why these diverge by theme rather than sharing one
+effect. Animated hazard-stripe drain/fill visuals (`.hazard-stripes`)
+carry per-participant readiness, playback progress, and lyric-timing
+highlight — one device, three jobs.
 
 ## Light/Dark Mode
 
-Both modes are in scope for the initial build. Dark is the default: the
-neon accent system is designed against a dark canvas, and that's the
-identity this app has. Light mode is the explicit alternate a user can
-switch to, with its own accent tuning per Color Palette above.
+Both modes are in scope for the initial build. Dark is the default.
+Designed in sequence, dark first, with light built as its own pass
+against dark's finished bones (layout, type, the persistent Bar) rather
+than a mechanical inversion — the void/stage vs. photocopied-flyer
+concepts above are deliberately different metaphors, not the same
+metaphor with swapped hex values. One `data-theme` attribute on
+`<html>` drives both the UI chrome tokens (`tokens.css`) and the tab
+notation's own theme (`brand-colors.ts`, `tab-renderer.ts`'s
+`setTheme`) — toggling theme anywhere in the app switches both at once.
+Toolbar-driven in Storybook too (`@storybook/addon-themes`), so new
+components get built against both themes from the start, not retrofitted.
