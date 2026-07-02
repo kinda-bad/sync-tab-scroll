@@ -26,10 +26,6 @@ interface EngineState {
 
 let state: EngineState | undefined;
 
-export function getEngine(): EngineState | undefined {
-  return state;
-}
-
 /**
  * Creates the alphaTab/headless instance the moment a participant's part is
  * known (song selected + selectedPart set) — in the Lobby, not on
