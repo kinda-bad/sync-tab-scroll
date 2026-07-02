@@ -82,3 +82,13 @@ The current host can manually hand off host privileges to another connected part
 ## Request to become host
 _Slug: `request-to-become-host` · Status: backlogged · Logged 2026-07-01_
 A non-host participant can ask the current host to hand off host privileges to them, rather than only the host being able to initiate a handoff.
+
+## Metronome toggle
+_Slug: `metronome-toggle` · Status: backlogged · Logged 2026-07-02_
+The host can turn the session's metronome on or off (`Session.metronomeEnabled`, already wired to alphaTab's `metronomeVolume` in `playback-sync.ts`, but nothing currently lets the host set the flag — no message type or server handler exists for it).
+Why: before designing a custom toggle, research whether `@coderline/alphatab` already provides its own metronome-enablement UI/mechanism worth deferring to instead (constitution Principle V) — ejected from `plan-song-catalog-selection-2026-07-02.md` for this reason, rather than designed inline.
+
+## Count-in toggle
+_Slug: `count-in-toggle` · Status: backlogged · Logged 2026-07-02_
+The host can turn the pre-playback count-in on or off (`Session.countInEnabled`, already wired to alphaTab's `countInVolume` in `playback-sync.ts`, but nothing currently lets the host set the flag — no message type or server handler exists for it).
+Why: same research question as metronome-toggle — check alphaTab's own count-in UI/mechanism before building a custom one (constitution Principle V). Likely resolved together with `metronome-toggle` in the same `/ardd-plan` pass, since both need the same session-settings message/handler shape.
