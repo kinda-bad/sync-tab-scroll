@@ -4,7 +4,6 @@ import * as at from '@coderline/alphatab';
 export const darkTabColors = {
   foreground: new at.model.Color(255, 230, 0, 255), // full-brightness neon-yellow — fret-number text
   foregroundDim: new at.model.Color(255, 230, 0, 102), // dim neon-yellow (0.40 alpha) — default strokes, ghost notes/ties, bar numbers, section labels
-  geometry: new at.model.Color(255, 45, 120, 140), // neon-pink (0.55 alpha) — bend/slur geometry
   rulingDim: new at.model.Color(0, 207, 255, 102), // dim neon-blue (0.40 alpha) — staff lines
   rulingMid: new at.model.Color(0, 207, 255, 128), // mid neon-blue (0.50 alpha) — barlines
 };
@@ -13,7 +12,6 @@ export const darkTabColors = {
 export const lightTabColors = {
   foreground: new at.model.Color(138, 106, 0, 255), // deep amber-gold — fret-number text
   foregroundDim: new at.model.Color(138, 106, 0, 115), // dim deep amber-gold (0.45 alpha)
-  geometry: new at.model.Color(163, 19, 79, 153), // deep rose (0.60 alpha) — bend/slur geometry
   rulingDim: new at.model.Color(0, 114, 168, 115), // deep cyan-blue (0.45 alpha) — staff lines
   rulingMid: new at.model.Color(0, 114, 168, 153), // deep cyan-blue (0.60 alpha) — barlines
 };

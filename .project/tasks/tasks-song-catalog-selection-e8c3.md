@@ -9,7 +9,7 @@ status: in-progress
 ## Phase 1: Constitution compliance
 
 - [x] T001 [artifacts: constitution] [parallel] In `client/src/views/Playback.svelte`, replace `let theme: 'dark' | 'light' = 'dark';` with an import of the existing `Theme` type from `../tab-renderer` (`import type { Theme } from '../tab-renderer';`) and declare `let theme: Theme = 'dark';` — resolves the Principle VI violation (an inline retype of a type already named and exported elsewhere). Test: `npx vite build` (from `client/`) succeeds with no type errors; visually confirm the toggle-theme button still works (dark/light swap) via a manual check or existing browser session.
-- [ ] T002 [artifacts: constitution] [parallel] In `client/src/brand-colors.ts`, delete the unused `geometry` field from both `darkTabColors` (line 7) and `lightTabColors` (line 16) — confirmed via `grep -rn "\.geometry" client/src` that nothing reads either field; they're leftover from the abandoned 3-way `mainGlyphColor` split (brand.md, infrastructure.md's "Revised during implementation" note). Test: `npx vite build` succeeds; re-run the same grep to confirm zero remaining references anywhere in the codebase.
+- [x] T002 [artifacts: constitution] [parallel] In `client/src/brand-colors.ts`, delete the unused `geometry` field from both `darkTabColors` (line 7) and `lightTabColors` (line 16) — confirmed via `grep -rn "\.geometry" client/src` that nothing reads either field; they're leftover from the abandoned 3-way `mainGlyphColor` split (brand.md, infrastructure.md's "Revised during implementation" note). Test: `npx vite build` succeeds; re-run the same grep to confirm zero remaining references anywhere in the codebase.
 
 ## Phase 2: infrastructure.md corrections (artifact-only, no code changes)
 
