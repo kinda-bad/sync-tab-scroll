@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { clientStore, type ViewState } from './store';
+  import { clientStore } from './store';
   import { ensurePlaybackEngine, renderNowVisible } from './playback-engine';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
@@ -10,17 +10,21 @@
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
-  let previousView: ViewState = 'landing';
+  let previousHasPart = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: isLyricsPart = participant?.selectedPart === 'lyrics';
+  // Visible as soon as a part is picked, independent of view or playback
+  // state (Lobby or Playback, running/paused/stopped) — not gated to the
+  // Playback view the way it used to be.
+  $: hasPart = participant?.selectedPart != null;
 
   // Fires the moment a participant's part is known (song selected +
   // selectedPart set) — in the Lobby, not on Playback mount — so
   // per-participant loading/readiness (ui.md) resolves before the host
   // starts playback, instead of only after.
-  $: if (session && $clientStore.wsClient && participant?.selectedPart != null && tabContainer) {
+  $: if (session && $clientStore.wsClient && hasPart && tabContainer) {
     const song = $clientStore.catalog.find((s) => s.id === session!.selectedSong);
     if (song) {
       const part = session!.availableParts.find((p) => p.trackIndex === participant!.selectedPart);
@@ -29,21 +33,20 @@
     }
   }
 
-  // The tab container is created (and alphaTab's first render fires) back
-  // in the Lobby while still display:none — alphaTab skips that render and
-  // never re-renders on its own once shown. Force one real render right as
-  // the view transitions to Playback (previousView tracks the transition
-  // so this fires once, not on every session-state update while already
-  // in Playback). Deferred past `tick()` + a animation frame: reading
-  // `$clientStore.view` here and calling render() synchronously races
-  // Svelte's own DOM patch that flips the container's `visible` class —
-  // alphaTab still sees width=0 if asked before that patch (and the
-  // subsequent layout/paint) has actually landed.
+  // alphaTab's first render (fired from its own scoreLoaded handler) skips
+  // if the container is display:none at that instant. Now that visibility
+  // tracks `hasPart` directly (set in the same tick as ensurePlaybackEngine
+  // above), the container is normally already visible by the time the
+  // async score fetch/parse finishes — but force one explicit re-render
+  // right after the container first becomes visible as a safety net,
+  // deferred past `tick()` + a animation frame so it can't race Svelte's
+  // own DOM patch for the `visible` class the way the view-keyed version
+  // of this fix once did.
   $: {
-    if ($clientStore.view === 'playback' && previousView !== 'playback') {
+    if (hasPart && !previousHasPart) {
       tick().then(() => requestAnimationFrame(() => renderNowVisible()));
     }
-    previousView = $clientStore.view;
+    previousHasPart = hasPart;
   }
 </script>
 
@@ -55,11 +58,11 @@
   <Playback />
 {/if}
 
-<div class="engine-containers" class:visible={$clientStore.view === 'playback' && !isLyricsPart}>
+<div class="engine-containers" class:visible={hasPart && !isLyricsPart}>
   <div bind:this={tabContainer} class="tab-container"></div>
   <div bind:this={overlayContainer}></div>
 </div>
-<div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={$clientStore.view === 'playback' && isLyricsPart}></div>
+<div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
 
 <Toasts />
 
