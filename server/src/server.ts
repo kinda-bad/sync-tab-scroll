@@ -50,6 +50,14 @@ export function createServer(config: ServerConfig): WebSocketServer {
       if (participant) participant.connectionStatus = 'disconnected';
       ctx.sessionStore.markPossiblyEmpty(conn.sessionCode);
 
+      // Let remaining participants see the disconnect immediately (stale
+      // connectivity info otherwise persisted until some other broadcast
+      // happened to fire) — detach() above already removed this socket
+      // from the registry, so it only reaches those still connected.
+      if (session) {
+        ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
+      }
+
       // Host disconnecting starts the succession grace period (infrastructure.md
       // Host Succession) — cancelled if they reconnect within it (session-join.ts).
       if (session && conn.participantId === session.hostId) {
