@@ -22,6 +22,7 @@ interface EngineState {
   isLyricsPart: boolean;
   theme: Theme;
   showOverlay: boolean;
+  scoreLoaded: boolean;
 }
 
 let state: EngineState | undefined;
@@ -40,9 +41,19 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex });
 
-  state = { api, isLyricsPart, theme: 'dark', showOverlay: true };
+  state = { api, isLyricsPart, theme: 'dark', showOverlay: true, scoreLoaded: false };
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
+
+  // The engine is created (and its first render fires) while still in the
+  // Lobby, with the tab container hidden via `display:none` (T011c) —
+  // alphaTab skips that render ("width=0, element invisible") and never
+  // re-renders on its own once the container is shown. Track load state so
+  // `renderNowVisible` can force a real render once the Playback view
+  // actually shows the container.
+  api.scoreLoaded.on(() => {
+    state!.scoreLoaded = true;
+  });
 
   if (!isLyricsPart && song.lyricsTrackIndex !== null && song.lyricsLineIndex !== null && song.lyricLineBreaks) {
     const lyricsTrackIndex = song.lyricsTrackIndex;
@@ -82,6 +93,18 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     correctDrift(api, s.session.playbackState);
     applyPlaybackSettings(api, s.session);
   });
+}
+
+/**
+ * Forces a real alphaTab render once the tab container is actually shown
+ * (App.svelte calls this on the Lobby→Playback transition). No-op for a
+ * lyrics-part participant (no visible tab canvas) or if the score hasn't
+ * loaded yet (the engine's own scoreLoaded render will succeed on its own
+ * once it fires, since the container is visible by then).
+ */
+export function renderNowVisible(): void {
+  if (!state || state.isLyricsPart || !state.scoreLoaded) return;
+  state.api.render();
 }
 
 export function toggleOverlay(): void {

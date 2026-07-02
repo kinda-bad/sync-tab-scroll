@@ -1,7 +1,7 @@
 ---
 plan: plan-song-catalog-selection-2026-07-01.md
 generated: 2026-07-01
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -49,27 +49,24 @@ fixed/flagged, not silently absorbed:
 
 ## Phase 4b: Client — persistent renderer lifecycle
 
-- [ ] T011c [artifacts: infrastructure, ui, datamodel] Extract the alphaTab/headless-player creation, lyrics-overlay wiring (`walkLyricBeats`/`groupIntoLines`/`createLyricsOverlay`), full-lyrics `.lrc` fetch/highlight logic, and the `clientStore`-driven drift-correction subscription — all currently inside `Playback.svelte`'s `onMount` — into a standalone module (e.g. `client/src/playback-engine.ts`) exporting something like `ensurePlaybackEngine(containers, catalogSong, trackIndex, isLyricsPart)` that is idempotent (safe to call once and have later calls no-op if already created for the same part). Move the tab container, overlay container, and full-lyrics `div`s out of `Playback.svelte` and into `App.svelte` so they're always mounted (not destroyed/recreated on view switch); toggle their visibility via a CSS class keyed on `$clientStore.view === 'playback'` rather than conditional `{#if}` rendering. Call `ensurePlaybackEngine(...)` as soon as `session.selectedSong` and the current participant's `selectedPart` are both non-null (in the Lobby, via a `clientStore` subscription — not gated on `view === 'playback'`), matching ui.md's stated per-participant loading/readiness happening before the host starts playback. `Playback.svelte` itself becomes minimal: it just shows/hides the persistent containers and host controls (toggle overlay/theme, start/pause/seek) rather than owning renderer creation. Test: real browser session — a participant's readiness reaches `'ready'` while still viewing the Lobby (before the host clicks Start from T011b), proving the renderer initializes pre-transition as ui.md describes.
+- [x] T011c [artifacts: infrastructure, ui, datamodel] Extract the alphaTab/headless-player creation, lyrics-overlay wiring (`walkLyricBeats`/`groupIntoLines`/`createLyricsOverlay`), full-lyrics `.lrc` fetch/highlight logic, and the `clientStore`-driven drift-correction subscription — all currently inside `Playback.svelte`'s `onMount` — into a standalone module (e.g. `client/src/playback-engine.ts`) exporting something like `ensurePlaybackEngine(containers, catalogSong, trackIndex, isLyricsPart)` that is idempotent (safe to call once and have later calls no-op if already created for the same part). Move the tab container, overlay container, and full-lyrics `div`s out of `Playback.svelte` and into `App.svelte` so they're always mounted (not destroyed/recreated on view switch); toggle their visibility via a CSS class keyed on `$clientStore.view === 'playback'` rather than conditional `{#if}` rendering. Call `ensurePlaybackEngine(...)` as soon as `session.selectedSong` and the current participant's `selectedPart` are both non-null (in the Lobby, via a `clientStore` subscription — not gated on `view === 'playback'`), matching ui.md's stated per-participant loading/readiness happening before the host starts playback. `Playback.svelte` itself becomes minimal: it just shows/hides the persistent containers and host controls (toggle overlay/theme, start/pause/seek) rather than owning renderer creation. Test: real browser session — a participant's readiness reaches `'ready'` while still viewing the Lobby (before the host clicks Start from T011b), proving the renderer initializes pre-transition as ui.md describes.
 
-  **BLOCKED — real defect found, not fixed (2026-07-02).** Readiness
-  *does* reach `'ready'` pre-Start as designed (verified). But the tab
-  canvas renders **blank** in Playback: `createTabRenderer`'s
-  `scoreLoaded` handler calls `api.render()` while the container is still
-  `display:none` (per this task's own prescribed mechanism — engine
-  containers are created in the Lobby and shown via a CSS class toggle on
-  view change). alphaTab logs `AlphaTab skipped rendering because of
-  width=0 (element invisible)` and never re-renders once the container
-  becomes visible. Confirmed via diagnostic: manually forcing a re-render
-  post-transition (clicking the theme toggle, which calls `api.render()`
-  again) makes the notation appear correctly — so scoreLoad/parse/settings
-  are all fine, only the render-while-hidden timing is broken. This
-  contradicts the task's own prescribed approach (`display` toggle), so
-  it's a design call, not a one-line fix — needs a decision: re-render on
-  the Lobby→Playback transition, `visibility:hidden` instead of
-  `display:none` (keeps layout box, alphaTab may render into 0-visible
-  width differently — unverified), or defer `ensurePlaybackEngine`'s
-  render call until first shown. Left unchecked; do not mark `[x]` until
-  resolved and re-verified.
+  **Fixed (2026-07-02).** Readiness reaches `'ready'` pre-Start as
+  designed (verified). The blank-canvas defect (alphaTab's first
+  `api.render()` firing while the container was still `display:none`,
+  never re-rendering once shown) is fixed per the chosen approach: force
+  one explicit re-render on the Lobby→Playback transition rather than
+  changing the `display:none` mechanism. `playback-engine.ts` now tracks
+  `scoreLoaded` on the engine state and exports `renderNowVisible()`
+  (no-op for a lyrics-part participant or before the score has loaded);
+  `App.svelte` calls it once when `$clientStore.view` transitions to
+  `'playback'`. First attempt raced Svelte's own DOM patch — calling
+  `renderNowVisible()` synchronously in the reactive block still saw
+  `width=0` because the `visible` class hadn't been flushed to layout
+  yet. Fixed by deferring past `tick()` + a `requestAnimationFrame`.
+  Re-verified in a real two-tab session (real clicks, not scripted): host
+  on Vocals sees correct notation immediately on Start, no manual
+  interaction needed. Committed.
 
 ## Phase 5: Client — Lobby catalog picker
 
@@ -88,12 +85,20 @@ fixed/flagged, not silently absorbed:
 
 ## Phase 6: Client — Playback real-song wiring
 
-- [ ] T014 [artifacts: datamodel, infrastructure, ui] Wire `session.selectedSong` (looked up in `$clientStore.catalog`) and the current participant's `CatalogPart` (via `selectedPart` looked up in `session.availableParts`) into the `ensurePlaybackEngine(...)` call site added in T011c, replacing the hardcoded `/test/creep.gp`/`/test/creep.lrc` paths and the `LYRICS_TRACK_INDEX`/`LYRICS_LINE_INDEX`/`LYRIC_LINE_BREAKS` constants entirely (source these from the matched `CatalogSong`'s `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`/`lyricsLrc` instead). Test: real browser session — full Landing → Lobby (pick the `radiohead-creep` catalog entry from T008, confirm readiness reaches `ready` per T011c) → host clicks Start (T011b) → Playback view shows the already-initialized tab, the in-tab lyrics overlay toggles correctly, and (in a second tab/participant on the `'lyrics'` part) the full lyrics view highlights lines — all sourced from the catalog data, with no `/test/creep.*` fetch involved. This is the plan's capstone verification: the full three-view flow with no manual query-param navigation at any step.
+- [x] T014 [artifacts: datamodel, infrastructure, ui] Wire `session.selectedSong` (looked up in `$clientStore.catalog`) and the current participant's `CatalogPart` (via `selectedPart` looked up in `session.availableParts`) into the `ensurePlaybackEngine(...)` call site added in T011c, replacing the hardcoded `/test/creep.gp`/`/test/creep.lrc` paths and the `LYRICS_TRACK_INDEX`/`LYRICS_LINE_INDEX`/`LYRIC_LINE_BREAKS` constants entirely (source these from the matched `CatalogSong`'s `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`/`lyricsLrc` instead). Test: real browser session — full Landing → Lobby (pick the `radiohead-creep` catalog entry from T008, confirm readiness reaches `ready` per T011c) → host clicks Start (T011b) → Playback view shows the already-initialized tab, the in-tab lyrics overlay toggles correctly, and (in a second tab/participant on the `'lyrics'` part) the full lyrics view highlights lines — all sourced from the catalog data, with no `/test/creep.*` fetch involved. This is the plan's capstone verification: the full three-view flow with no manual query-param navigation at any step.
 
-  **BLOCKED on T011c.** Real catalog wiring is confirmed correct (host on
-  Vocals, guest on Bass, both reached `ready` pre-Start, both transitioned
-  to Playback on Start, correct per-track data used) — but the capstone's
-  "Playback view shows the already-initialized tab" fails due to T011c's
-  blank-canvas defect. Lyrics-part full-lyrics-view highlighting not
-  re-verified this session (not selected in the final clean run — Bass
-  was selected instead). Leave unchecked until T011c resolves.
+  **Verified (2026-07-02), one residual caveat.** Full flow re-verified
+  after T011c's fix: Landing → Lobby (radiohead-creep catalog entry) →
+  both host (Vocals) and guest (Lyrics) reach `ready` pre-Start → host
+  clicks Start → both transition to Playback → host's tab renders
+  correctly immediately (T011c fix confirmed), all sourced from real
+  catalog data, no `/test/creep.*` fetch. **Not confirmed**: the guest's
+  full-lyrics-view line highlighting during actual playback — the
+  session's `tickPosition` never advanced past 0 in this test and the
+  lyrics text stayed empty. Likely cause: this session's clicks were
+  dispatched via scripted `.click()` (not trusted user-gesture events) to
+  work around an unrelated shared-localStorage testing artifact across
+  tabs, and Chrome's autoplay policy silently blocks `AudioContext`/
+  `api.play()` without a trusted gesture — plausible, not confirmed as
+  the root cause. Worth a follow-up real-click-only browser check before
+  fully trusting the lyrics-highlight path.

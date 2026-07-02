@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { clientStore } from './store';
-  import { ensurePlaybackEngine } from './playback-engine';
+  import { tick } from 'svelte';
+  import { clientStore, type ViewState } from './store';
+  import { ensurePlaybackEngine, renderNowVisible } from './playback-engine';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
@@ -9,6 +10,7 @@
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
+  let previousView: ViewState = 'landing';
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -25,6 +27,23 @@
       const trackIndex = isLyricsPart ? (song.lyricsTrackIndex ?? 0) : (part?.trackIndex ?? 0);
       ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart);
     }
+  }
+
+  // The tab container is created (and alphaTab's first render fires) back
+  // in the Lobby while still display:none — alphaTab skips that render and
+  // never re-renders on its own once shown. Force one real render right as
+  // the view transitions to Playback (previousView tracks the transition
+  // so this fires once, not on every session-state update while already
+  // in Playback). Deferred past `tick()` + a animation frame: reading
+  // `$clientStore.view` here and calling render() synchronously races
+  // Svelte's own DOM patch that flips the container's `visible` class —
+  // alphaTab still sees width=0 if asked before that patch (and the
+  // subsequent layout/paint) has actually landed.
+  $: {
+    if ($clientStore.view === 'playback' && previousView !== 'playback') {
+      tick().then(() => requestAnimationFrame(() => renderNowVisible()));
+    }
+    previousView = $clientStore.view;
   }
 </script>
 
