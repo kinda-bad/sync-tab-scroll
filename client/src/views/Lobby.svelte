@@ -1,5 +1,6 @@
 <script lang="ts">
   import { clientStore } from '../store';
+  import type { SelectedPart } from '@sync-tab-scroll/shared';
 
   let lobbyCursorInput = 0;
 
@@ -13,7 +14,7 @@
     wsClient?.send({ type: 'song-select', songId });
   }
 
-  function selectPart(part: number | 'lyrics' | null) {
+  function selectPart(part: SelectedPart) {
     wsClient?.send({ type: 'part-select', part });
   }
 

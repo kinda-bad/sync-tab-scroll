@@ -17,12 +17,19 @@ infrastructure.md, ui.md) removed a whole reconciliation layer
 prior design didn't use alphaTab's own built-in cursor and rendering
 model. The custom mechanism was built to solve a problem the library
 already solved natively.
+
+Version change: 1.1.0 → 1.2.0
+Added: Core Principle VI (Named Types Over Inline Duplication).
+Rationale: `Participant.selectedPart` and the `part-select` wire
+message's `part` field were both hand-typed as `number | 'lyrics' | null`
+independently, with nothing tying them together — caught during an
+`/ardd-critique` pass on the song-catalog-selection feature.
 -->
 
 ---
 name: constitution
 status: stable
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # sync-tab-scroll Constitution
@@ -119,6 +126,20 @@ recurring bug class — one that the live-rendering pivot eliminated
 structurally by using alphaTab's built-in cursor instead of reconciling
 against one.
 
+### VI. Named Types Over Inline Duplication
+
+Favor named, exported types over inline type literals. If a type is used
+in more than one place, it must be a named type with a single source of
+truth — not independently retyped at each usage site, even if the
+inline shapes happen to match today.
+
+*Rationale*: `Participant.selectedPart` and the `part-select` wire
+message's `part` field were both hand-typed as `number | 'lyrics' | null`
+independently. Nothing enforced they stayed in sync — a future change to
+one could silently drift from the other, since structurally-identical
+inline types give TypeScript no way to flag the mismatch. Surfaced during
+an `/ardd-critique` pass, not by a compile error.
+
 ## Quality Standards
 
 - A `package.json`'s declared `name` and `scripts` must match the actual
@@ -151,4 +172,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.1.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-06-30
+**Version**: 1.2.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-01

@@ -2,13 +2,24 @@ export * from './messages.js';
 
 export type ReadinessStatus = 'no-part' | 'loading' | 'ready';
 
+/**
+ * A participant's chosen part, single source of truth for both
+ * `Participant.selectedPart` and the `part-select` wire message (they must
+ * stay identical, so this is the one place that declares the shape —
+ * constitution Principle VI). Explicit semantics per branch:
+ * - `number` — a `CatalogPart.trackIndex`: following that instrument track.
+ * - `'lyrics'` — the tab-less lyrics part (a special case, not a
+ *   `CatalogPart` at all — see `CatalogSong.lyricsLrc`).
+ * - `null` — no part chosen yet.
+ */
+export type SelectedPart = number | 'lyrics' | null;
+
 export interface Participant {
   id: string;
   displayName: string;
   role: 'host' | 'member';
   connectionStatus: 'connected' | 'disconnected';
-  /** A CatalogPart.trackIndex for an instrument part, or the literal 'lyrics' for the tab-less lyrics part. */
-  selectedPart: number | 'lyrics' | null;
+  selectedPart: SelectedPart;
   readiness: ReadinessStatus;
   /** Wall-clock time this participant first joined — determines tenure for host succession (the longest-tenured connected participant is promoted if the host stays disconnected past the grace period). Preserved across a reconnect, not reset. */
   joinedAt: number;

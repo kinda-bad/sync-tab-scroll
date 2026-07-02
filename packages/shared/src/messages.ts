@@ -1,9 +1,9 @@
-import type { CatalogSong, ReadinessStatus, Session } from './index.js';
+import type { CatalogSong, ReadinessStatus, SelectedPart, Session } from './index.js';
 
 export type ClientMessage =
   | { type: 'session-create'; displayName: string }
   | { type: 'session-join'; code: string; displayName: string; participantId?: string }
-  | { type: 'part-select'; part: number | 'lyrics' | null }
+  | { type: 'part-select'; part: SelectedPart }
   | { type: 'readiness-update'; readiness: ReadinessStatus }
   | { type: 'host-remove-participant'; participantId: string }
   | { type: 'playback-control'; action: 'start' | 'pause' | 'resume' | 'seek'; tickPosition?: number }
