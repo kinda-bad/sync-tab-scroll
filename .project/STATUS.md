@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-01. Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-02. Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -20,36 +20,16 @@ None formally tracked in the artifacts.
 
 ## Cross-Artifact Issues
 
-None. `CatalogSong.id`, the URL-rewritten `gpFilePath`/`lyricsLrc` fields,
-and the new catalog-delivery/song-selection design (added this pass via
-`/ardd-feature`) are referenced consistently across `datamodel.md`,
-`infrastructure.md`, and `ui.md`.
-
-## Implementation vs. Artifact Findings
-
-- **[RESOLVED]** `datamodel.md`'s `Session.lobbyCursorTick` "null once
-  playback starts" invariant is enforced in
-  `server/src/handlers/playback-control.ts` and verified live.
-- **[IMPLEMENTED, UNVERIFIED]** Song catalog listing/selection and the
-  Lobby → Playback view transition are now wired end-to-end (server
-  catalog delivery/song-select handlers, a real catalog fixture at
-  `catalog/radiohead-creep/` built with the real `extract-lyrics`
-  pipeline CLI, and client-side Landing/Lobby/Playback wired through one
-  shared session with a persistent renderer created at part-selection
-  time). `vite build` passes with no errors. **Not yet verified in a real
-  browser** — the claude-in-chrome extension was unavailable this
-  session; the user is verifying manually against the server/client
-  already running locally (`:8080`/`:5173`). Do not treat this as done
-  until that manual pass confirms it.
+None found this pass.
 
 ## Within-Artifact Issues
 
-None.
+None — no `[OPEN]` placeholders in any artifact.
 
 ## Constitution Compliance
 
-No violations. The new HTTP static-file surface is a small addition, not
-a new architectural layer — no Complexity Tracking entry warranted.
+No new violations found this pass beyond what's already tracked in
+`DEFECTS.md` (Principle VI inline-retyping of `Theme` in `Playback.svelte`).
 
 ## Diagrams
 
@@ -57,29 +37,46 @@ a new architectural layer — no Complexity Tracking entry warranted.
 - infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure`)
 - ui.md — stale ⚠️ (run `/ardd-render ui`)
 
+## Code-vs-Artifact Defects
+
+6 known defects — see `DEFECTS.md`, last checked 2026-07-02. Run
+`/ardd-verify` to refresh.
+
+## Feedback
+
+No open feedback files. `feedback-lobby-cursor-mode-e13b.md` was consumed by
+`plan-lobby-cursor-modes-2026-07-03.md` and is now `status: planned`.
+
+## Feature Backlog
+
+4 backlogged · 0 planned · 0 tasked · 0 implemented — see
+`.project/artifacts/features.md`. Target a backlogged slug with
+`/ardd-plan <slug>`.
+
+## Plans
+
+- `plan-lobby-cursor-modes-2026-07-03.md` — **approved**, not yet tasked.
+  Introduces host-only `Session.spotlightMode`, gating the lobby cursor's
+  force-follow effect (which doesn't exist in code yet and this plan
+  builds). Artifact revisions to `datamodel.md`/`ui.md`/`features.md` are
+  deferred to implementation (Phases 1 and 4).
+- `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md` — implemented,
+  merged to `main` (see Implementation Status below).
+- `plan-live-rendering-pivot-2026-07-01.md` — implemented, merged to `main`.
+
 ## Implementation Status
 
 **live-rendering-pivot: complete.** `tasks-live-rendering-pivot-d9c2.md` —
-27/27 tasks done, merged to `main`. All verified against real
-fixtures/browser sessions, not assumed.
+27/27 tasks done, merged to `main`.
 
-**song-catalog-selection: implemented, pending manual browser
-verification.** `tasks-song-catalog-selection-275d.md` — 8/14 tasks
-checked (server phases 1-3, fully WS-verified); T009-T014 (client phases
-4-6) are code-complete and build clean but unchecked pending the user's
-manual browser pass.
+**song-catalog-selection: complete.** Both `tasks-song-catalog-selection-275d.md`
+and `tasks-song-catalog-selection-e8c3.md` fully checked and merged to `main`,
+including browser-verified client phases.
 
-Known limitations, documented in code and task notes, not silently
-glossed over:
-- Full live-audio verification blocked by Chrome's autoplay policy in
-  browser-automation testing (real user clicks will work fine).
+**lobby-cursor-modes: not yet tasked.** Plan approved on branch
+`lobby-cursor-modes`; no tasks file generated yet.
 
 ## Recommended Next Step
 
-Manually verify the song-catalog-selection flow in a browser at
-`localhost:5173` (server already running on `:8080`, `CATALOG_ROOT`
-pointed at `catalog/`): Landing → create/join → Lobby (pick
-`radiohead-creep`, pick a part) → readiness reaching `ready` pre-start →
-Start → Playback rendering the real tab/lyrics. Report anything broken;
-once confirmed, check off T009-T014 and flip the tasks file to
-`completed`.
+Run `/ardd-tasks` against `plan-lobby-cursor-modes-2026-07-03.md` to generate
+its task list, then `/ardd-implement` to build it.
