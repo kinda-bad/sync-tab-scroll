@@ -1,7 +1,7 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 diagram_status: stale
 ---
 
@@ -50,7 +50,8 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | playbackState | PlaybackState | Server-authoritative clock state |
 | countInEnabled | boolean | |
 | metronomeEnabled | boolean | |
-| lobbyCursorTick | number \| null | MIDI tick position the host is pointing at pre-playback (same unit as `PlaybackState.tickPosition`); null once playback starts |
+| lobbyCursorTick | number \| null | MIDI tick position the host is pointing at pre-playback (same unit as `PlaybackState.tickPosition`); null once playback starts. Only force-follows every participant's view while `spotlightMode` is true — otherwise each participant browses their own rendered tab independently |
+| spotlightMode | boolean | Host-only toggle (default false), same pattern as `metronomeEnabled`/`countInEnabled`. Gates `lobbyCursorTick`'s force-follow effect. Resets to false when playback starts, same as `lobbyCursorTick` resetting to null |
 
 ### Participant
 
