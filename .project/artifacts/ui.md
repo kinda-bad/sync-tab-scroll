@@ -98,7 +98,12 @@ paused; participants' views don't.
   (infrastructure.md) — show a loading/readiness state per participant
   rather than blocking the whole lobby. The lyrics part still has a load
   step (headless alphaTab init, `.lrc` fetch); it's not exempt from
-  loading just because it renders no staff.
+  loading just because it renders no staff. This load is triggered the
+  moment a participant's part is known (song selected + part picked), in
+  the Lobby — not on entering the Playback view — so the host can
+  actually observe everyone reach `ready` before starting; the renderer/
+  headless instance and its containers persist across the Lobby→Playback
+  transition rather than being torn down and recreated.
 - **Empty**: no song selected yet — lobby shows the catalog picker only,
   part picker/readiness list hidden until `Session.selectedSong` is set.
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,

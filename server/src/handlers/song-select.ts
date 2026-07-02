@@ -19,14 +19,19 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     return;
   }
 
-  session.selectedSong = song.id;
-  session.availableParts = song.parts;
-  // Re-selecting a song resets every participant's part/readiness (ui.md) —
-  // a part id/index from the old song's parts has no guaranteed meaning
-  // against the new song's parts.
-  for (const participant of session.participants) {
-    participant.selectedPart = null;
-    participant.readiness = 'no-part';
+  // Re-selecting the song that's already selected is a no-op on parts/
+  // readiness (ui.md) — e.g. re-clicking the same catalog entry shouldn't
+  // wipe out everyone's part choice just because the host clicked again.
+  if (session.selectedSong !== song.id) {
+    session.selectedSong = song.id;
+    session.availableParts = song.parts;
+    // Selecting a genuinely different song resets every participant's
+    // part/readiness — a part id/index from the old song's parts has no
+    // guaranteed meaning against the new song's parts.
+    for (const participant of session.participants) {
+      participant.selectedPart = null;
+      participant.readiness = 'no-part';
+    }
   }
 
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
