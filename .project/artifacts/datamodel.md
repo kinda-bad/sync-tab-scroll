@@ -60,7 +60,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | displayName | string | |
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
-| selectedPart | string \| 'lyrics' \| null | A `CatalogPart.id` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for shared clock/metronome (infrastructure.md). Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
+| selectedPart | number \| 'lyrics' \| null | A `CatalogPart.trackIndex` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for shared clock/metronome (infrastructure.md). Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
 | readiness | ReadinessStatus | e.g. 'no-part' \| 'loading' \| 'ready' |
 | joinedAt | number | Wall-clock time this participant first joined; preserved across a reconnect, not reset. Determines tenure for host succession (infrastructure.md) |
 
@@ -82,9 +82,8 @@ populates `Session.selectedSong` and `Session.availableParts`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| id | string | Stable identifier; what `Participant.selectedPart` references for instrument parts |
 | instrumentName | string | e.g. "Lead Guitar", "Bass" |
-| trackIndex | number | Index into the track list of `CatalogSong.gpFilePath`'s parsed score — selects which track alphaTab renders/plays for this part. No per-density asset variant to store; bars-per-row density is a live alphaTab display setting applied at render time, not baked into the file. Percussion status (`staveProfile` selection, infrastructure.md) is read from the track's own parsed data (alphaTab exposes this natively — `track.percussionArticulations`/instrument metadata) rather than stored here, per constitution Principle V |
+| trackIndex | number | Index into the track list of `CatalogSong.gpFilePath`'s parsed score — selects which track alphaTab renders/plays for this part. Also the stable identifier `Participant.selectedPart` references for instrument parts; no separate `id` field, since a track's index is already stable per song and a prior `id: String(trackIndex)` field only duplicated it under a different type. No per-density asset variant to store; bars-per-row density is a live alphaTab display setting applied at render time, not baked into the file. Percussion status (`staveProfile` selection, infrastructure.md) is read from the track's own parsed data (alphaTab exposes this natively — `track.percussionArticulations`/instrument metadata) rather than stored here, per constitution Principle V |
 
 ### PlaybackState
 

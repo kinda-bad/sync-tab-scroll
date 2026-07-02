@@ -13,7 +13,7 @@
     wsClient?.send({ type: 'song-select', songId });
   }
 
-  function selectPart(part: string | null) {
+  function selectPart(part: number | 'lyrics' | null) {
     wsClient?.send({ type: 'part-select', part });
   }
 
@@ -57,10 +57,10 @@
 
       <h2>Your part</h2>
       <ul>
-        {#each session.availableParts as part (part.id)}
+        {#each session.availableParts as part (part.trackIndex)}
           <li>
             {part.instrumentName}
-            <button disabled={selfParticipant?.selectedPart === part.id} onclick={() => selectPart(part.id)}>Select</button>
+            <button disabled={selfParticipant?.selectedPart === part.trackIndex} onclick={() => selectPart(part.trackIndex)}>Select</button>
           </li>
         {/each}
         <li>

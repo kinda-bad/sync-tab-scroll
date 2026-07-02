@@ -2,7 +2,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export interface CatalogPartMeta {
-  id: string;
   instrumentName: string;
   trackIndex: number;
 }

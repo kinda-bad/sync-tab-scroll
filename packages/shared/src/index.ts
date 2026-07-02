@@ -7,18 +7,16 @@ export interface Participant {
   displayName: string;
   role: 'host' | 'member';
   connectionStatus: 'connected' | 'disconnected';
-  /** A CatalogPart.id for an instrument part, or the literal 'lyrics' for the tab-less lyrics part. */
-  selectedPart: string | 'lyrics' | null;
+  /** A CatalogPart.trackIndex for an instrument part, or the literal 'lyrics' for the tab-less lyrics part. */
+  selectedPart: number | 'lyrics' | null;
   readiness: ReadinessStatus;
   /** Wall-clock time this participant first joined — determines tenure for host succession (the longest-tenured connected participant is promoted if the host stays disconnected past the grace period). Preserved across a reconnect, not reset. */
   joinedAt: number;
 }
 
 export interface CatalogPart {
-  /** Stable identifier; what Participant.selectedPart references for instrument parts. */
-  id: string;
   instrumentName: string;
-  /** Index into the track list of CatalogSong.gpFilePath's parsed score. */
+  /** Index into the track list of CatalogSong.gpFilePath's parsed score — also the stable identifier Participant.selectedPart references for instrument parts (no separate id field; a track's index is already stable per song). */
   trackIndex: number;
 }
 

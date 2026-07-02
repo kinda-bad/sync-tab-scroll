@@ -18,10 +18,10 @@
   // selectedPart set) — in the Lobby, not on Playback mount — so
   // per-participant loading/readiness (ui.md) resolves before the host
   // starts playback, instead of only after.
-  $: if (session && $clientStore.wsClient && participant?.selectedPart && tabContainer) {
+  $: if (session && $clientStore.wsClient && participant?.selectedPart != null && tabContainer) {
     const song = $clientStore.catalog.find((s) => s.id === session!.selectedSong);
     if (song) {
-      const part = session!.availableParts.find((p) => p.id === participant!.selectedPart);
+      const part = session!.availableParts.find((p) => p.trackIndex === participant!.selectedPart);
       const trackIndex = isLyricsPart ? (song.lyricsTrackIndex ?? 0) : (part?.trackIndex ?? 0);
       ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart);
     }
