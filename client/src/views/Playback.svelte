@@ -2,8 +2,9 @@
   import { toggleOverlay as engineToggleOverlay, toggleTheme as engineToggleTheme } from '../playback-engine';
   import { clientStore } from '../store';
   import Button from '../components/Button.svelte';
+  import type { Theme } from '../tab-renderer';
 
-  let theme: 'dark' | 'light' = 'dark';
+  let theme: Theme = 'dark';
 
   // Derived from clientStore (constitution Principle I) rather than reading
   // playback-engine's module-singleton state reactively — a bare function

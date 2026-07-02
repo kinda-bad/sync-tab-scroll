@@ -12,13 +12,21 @@ const DRIFT_THRESHOLD_TICKS = 50;
  * exceeds a threshold — never a continuous drive from the server. Applies
  * identically whether `api` is a visible or headless instance.
  */
-export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState): void {
-  if (!api.isReadyForPlayback) return;
+/**
+ * Returns the tick position this call itself programmatically applied to
+ * `api.tickPosition`, or `null` if it didn't touch it — callers use this to
+ * distinguish a real user seek from the drift correction's own assignment,
+ * which alphaTab's `playerPositionChanged` fires identically (`isSeek: true`)
+ * either way.
+ */
+export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState): number | null {
+  if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
   if (playbackState.status === 'running' && !isPlaying) {
     api.tickPosition = playbackState.tickPosition;
     api.play();
+    return playbackState.tickPosition;
   } else if (playbackState.status !== 'running' && isPlaying) {
     api.pause();
   }
@@ -26,7 +34,9 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState): vo
   const drift = Math.abs(api.tickPosition - playbackState.tickPosition);
   if (drift > DRIFT_THRESHOLD_TICKS) {
     api.tickPosition = playbackState.tickPosition;
+    return playbackState.tickPosition;
   }
+  return null;
 }
 
 /**

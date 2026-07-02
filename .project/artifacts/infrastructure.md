@@ -54,6 +54,13 @@ Sessions are server-memory-only: a grace-period timer destroys empty
 sessions, and a server restart drops active ones. No durable backing
 store for session state.
 
+A closed socket triggers an immediate `session-state` broadcast to the
+rest of the session (`server/src/server.ts`'s `close` handler, right
+after marking the participant `disconnected`) — remaining participants
+see connectivity changes right away rather than waiting for the next
+periodic `PlaybackState` broadcast to happen to carry the updated
+participant list along with it.
+
 ## Reconnect By Identity
 
 A client persists `{code, displayName, participantId}` (e.g. to
@@ -145,16 +152,14 @@ settings.display.staveProfile = isPercussion ? at.StaveProfile.Score : at.StaveP
 // TabRhythmMode.Automatic silently falls through to Hidden for TabMixed — must be explicit.
 if (!isPercussion) settings.notation.rhythmMode = at.TabRhythmMode.ShowWithBars;
 
-// Colors: brand.md's token values (Tab Notation & Playback Cursor), set
-// directly via the resources API — no sentinel-then-CSS-fill-match
+// Colors: brand.md's token values (Tab Notation & Playback Cursor),
+// applied by client/src/tab-renderer.ts's applyThemeColors() — not CSS
+// variables (alphaTab's RenderingResources fields are typed as Color
+// objects, not strings). applyThemeColors() assigns at.model.Color
+// instances (RGBA) from client/src/brand-colors.ts's darkTabColors/
+// lightTabColors, selected by the theme parameter passed into
+// createTabRenderer/setTheme — no sentinel-then-CSS-fill-match
 // indirection needed, unlike the old static-SVG pipeline.
-const r = settings.display.resources;
-r.mainGlyphColor      = 'var(--tab-foreground)';
-r.secondaryGlyphColor = 'var(--tab-foreground-dim)';
-r.staffLineColor      = 'var(--tab-ruling-dim)';
-r.barSeparatorColor   = 'var(--tab-ruling-mid)';
-r.barNumberColor      = 'var(--tab-foreground-dim)';
-r.scoreInfoColor      = 'var(--tab-foreground-dim)';
 
 // Hide score header fields — the app renders title/artist/part in HTML.
 // Keep EffectMarker (section labels); suppress free text annotations and
@@ -183,7 +188,7 @@ classes, which would let this be revisited if it lands upstream.
 
 ### Font & Worker Setup
 
-Two more implementation-verified deviations from what the render-settings
+Three more implementation-verified deviations from what the render-settings
 block above might suggest at a glance:
 
 - `@coderline/alphatab`'s Vite plugin (`@coderline/alphatab/vite`) is
@@ -197,6 +202,21 @@ block above might suggest at a glance:
   web-worker script auto-detection assumes a single bundled script file,
   which doesn't hold under Vite's ESM module output. Main-thread
   rendering works without issue at the scale this app needs.
+- `settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href`
+  (`client/src/tab-renderer.ts:51`) — a distinct setting from
+  `core.useWorkers` above. alphaTab's audio player spawns its own worker
+  independent of the render worker `core.useWorkers` controls, and that
+  player worker needs a classic (non-ESM) script it can load, since
+  auto-detection fails under Vite's ESM output the same way the render
+  worker's did. A classic build copy is served as a static client asset
+  at that path for this.
+
+The audio side of tab rendering also deviates from a bare visual-only
+setup: `settings.player.enablePlayer = true` and `settings.player.soundFont
+= '/soundfont/sonivox.sf2'` (`client/src/tab-renderer.ts:68-69`) wire up
+alphaTab's audio engine (ui.md), using the Apache-2.0-licensed Sonivox
+soundfont alphaTab ships rather than sourcing or licensing a separate
+SoundFont asset.
 
 Cursor and highlight overlays (`.at-cursor-bar`, `.at-cursor-beat`,
 `.at-highlight`) remain genuinely CSS-class-driven, styled by brand.md —

@@ -1,5 +1,5 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
-import type { CatalogSong } from '@sync-tab-scroll/shared';
+import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, type Theme } from './tab-renderer';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
@@ -88,10 +88,46 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   // Drift correction + metronome/count-in settings (infrastructure.md) — runs
   // for the lifetime of the engine, not gated on which view is showing.
+  // Also gates host-only, paused-only seek (ui.md) and tracks the last tick
+  // this subscription applied itself, so the seek listener below can tell a
+  // real user seek apart from correctDrift's own programmatic assignment.
+  let lastAppliedInteraction: boolean | undefined;
+  let lastProgrammaticTick: number | null = null;
+  let latestSession: Session | null = null;
+  let latestSelfId: string | null = null;
+
   clientStore.subscribe((s) => {
+    latestSession = s.session;
+    latestSelfId = s.selfParticipantId;
     if (!s.session || !api.isReadyForPlayback) return;
-    correctDrift(api, s.session.playbackState);
+
+    // alphaTab's native click-to-seek is already active by default
+    // (settings.player.enableUserInteraction) — restrict it to the host,
+    // and only while paused, rather than building custom seek UI
+    // (constitution Principle V).
+    const isHost = s.session.hostId === s.selfParticipantId;
+    const canSeek = isHost && s.session.playbackState.status !== 'running';
+    if (canSeek !== lastAppliedInteraction) {
+      api.settings.player.enableUserInteraction = canSeek;
+      api.updateSettings();
+      lastAppliedInteraction = canSeek;
+    }
+
+    const appliedTick = correctDrift(api, s.session.playbackState);
+    if (appliedTick !== null) lastProgrammaticTick = appliedTick;
     applyPlaybackSettings(api, s.session);
+  });
+
+  // Broadcasts a host's seek to the rest of the session. Guarded against a
+  // feedback loop: correctDrift's own `api.tickPosition = ...` assignment
+  // above fires this same event with `isSeek: true` — ignore any seek that
+  // matches the tick we just applied ourselves rather than one the host
+  // actually clicked.
+  api.playerPositionChanged.on((e) => {
+    if (!e.isSeek) return;
+    if (e.currentTick === lastProgrammaticTick) return;
+    if (!latestSession || latestSession.hostId !== latestSelfId) return;
+    wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: e.currentTick });
   });
 }
 
