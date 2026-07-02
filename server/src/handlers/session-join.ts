@@ -26,6 +26,14 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
     // refresh (fresh page load) — their part choice is kept, but readiness
     // must re-derive from scratch rather than stay stale at 'ready'.
     existing.readiness = 'no-part';
+
+    // The host reconnecting within the grace period cancels any pending
+    // succession (infrastructure.md Host Succession) — note this checks
+    // Session.hostId, not existing.role, since a promoted host's role was
+    // already flipped to 'host' and the demoted original host's role to
+    // 'member' if succession already fired; only a same-hostId reconnect
+    // should cancel a still-pending timer.
+    if (existing.id === session.hostId) ctx.sessionStore.cancelHostReassignment(session.code);
   } else {
     participantId = crypto.randomUUID();
     session.participants.push({
@@ -35,6 +43,7 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
       connectionStatus: 'connected',
       selectedPart: null,
       readiness: 'no-part',
+      joinedAt: Date.now(),
     });
   }
 

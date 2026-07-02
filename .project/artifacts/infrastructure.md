@@ -54,6 +54,38 @@ Sessions are server-memory-only: a grace-period timer destroys empty
 sessions, and a server restart drops active ones. No durable backing
 store for session state.
 
+## Reconnect By Identity
+
+A client persists `{code, displayName, participantId}` (e.g. to
+localStorage) once a session exists, and passes `participantId` back on
+`session-join`. If it matches an existing participant in that session,
+the server reclaims that participant (updates `displayName`/
+`connectionStatus`, resets `readiness` since the reconnecting client's
+renderer/headless instance is gone after a fresh page load) instead of
+minting a new one — `id`, `role`, and `joinedAt` are preserved. Without
+this, a refreshing host would lose host control permanently: `Session.
+hostId` would keep pointing at an old participant id no socket can ever
+reclaim.
+
+## Host Succession
+
+If the participant holding `Session.hostId` disconnects, a grace-period
+timer (2 minutes) starts. If they reconnect within it (Reconnect By
+Identity, above, matching on `Session.hostId`), the timer is cancelled
+and nothing changes. If the timer expires with no reconnect, the
+longest-tenured currently-connected participant (by `Participant.
+joinedAt`, excluding the outgoing host) is promoted: `Session.hostId`
+moves to them, their `role` becomes `'host'`, and the outgoing host's
+`role` becomes `'member'` (they keep their seat and can still rejoin
+later, just without host privileges). If no other participant is
+connected when the timer fires, nothing is promoted — an empty-of-
+connections session is already covered by the session-destruction grace
+timer above.
+
+This grace period is configurable (`ServerConfig.hostReassignGraceMs`,
+env `HOST_REASSIGN_GRACE_MS`) — mainly so it can be shortened for tests;
+production default is 2 minutes.
+
 ## Song Catalog Delivery
 
 The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,

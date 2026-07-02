@@ -10,6 +10,8 @@ export interface Participant {
   /** A CatalogPart.id for an instrument part, or the literal 'lyrics' for the tab-less lyrics part. */
   selectedPart: string | 'lyrics' | null;
   readiness: ReadinessStatus;
+  /** Wall-clock time this participant first joined — determines tenure for host succession (the longest-tenured connected participant is promoted if the host stays disconnected past the grace period). Preserved across a reconnect, not reset. */
+  joinedAt: number;
 }
 
 export interface CatalogPart {

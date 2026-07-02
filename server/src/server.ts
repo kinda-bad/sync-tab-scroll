@@ -7,13 +7,14 @@ import { ConnectionRegistry } from './connections.js';
 import { loadCatalog } from './catalog-loader.js';
 import { createCatalogRequestHandler } from './catalog-static.js';
 import { dispatch } from './dispatch.js';
+import { promoteNextHost } from './host-succession.js';
 import type { HandlerContext } from './handlers/context.js';
 
 const BROADCAST_INTERVAL_MS = 1000;
 
 export function createServer(config: ServerConfig): WebSocketServer {
   const ctx: HandlerContext = {
-    sessionStore: new SessionStore(),
+    sessionStore: new SessionStore(config.hostReassignGraceMs),
     connections: new ConnectionRegistry(),
     catalog: loadCatalog(config.catalogRoot),
   };
@@ -48,6 +49,12 @@ export function createServer(config: ServerConfig): WebSocketServer {
       const participant = session?.participants.find((p) => p.id === conn.participantId);
       if (participant) participant.connectionStatus = 'disconnected';
       ctx.sessionStore.markPossiblyEmpty(conn.sessionCode);
+
+      // Host disconnecting starts the succession grace period (infrastructure.md
+      // Host Succession) — cancelled if they reconnect within it (session-join.ts).
+      if (session && conn.participantId === session.hostId) {
+        ctx.sessionStore.scheduleHostReassignment(conn.sessionCode, () => promoteNextHost(ctx, conn.sessionCode));
+      }
     });
   });
 
