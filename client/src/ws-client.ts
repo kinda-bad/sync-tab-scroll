@@ -26,6 +26,10 @@ export function createWsClient(url: string): WsClient {
         let view = s.view;
         if (view === 'landing') view = 'lobby';
         else if (view === 'lobby' && message.session.playbackState.status === 'running') view = 'playback';
+        // A host 'stop' (not 'pause', which stays in Playback) sends
+        // everyone back to the Lobby — the only reverse transition; there's
+        // no other path out of Playback once entered.
+        else if (view === 'playback' && message.session.playbackState.status === 'stopped') view = 'lobby';
         return { ...s, view, session: message.session, selfParticipantId: message.selfParticipantId };
       });
     } else if (message.type === 'catalog') {
