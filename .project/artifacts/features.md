@@ -2,6 +2,7 @@
 last_updated: 2026-07-01
 ---
 
+
 # Features
 
 ## Lyrics extraction pipeline
@@ -73,3 +74,11 @@ Before playback starts, the host can point at a position in the score; all parti
 _Added 2026-07-01 · datamodel, infrastructure, ui_
 The host picks a song from the server's loaded catalog in the lobby, which sets the session's available parts and the song every participant's playback view renders — wiring the Lobby→Playback transition end-to-end instead of a hardcoded test fixture.
 Why: the catalog was already loaded server-side (`catalog-loader.ts`) but never exposed to clients, and no song-selection message existed; this also required the server's first HTTP static-file surface, since catalog `.gp`/`.lrc` assets previously had no client-fetchable URL.
+
+## Host delegation
+_Slug: `host-delegation` · Status: backlogged · Logged 2026-07-01_
+The current host can manually hand off host privileges to another connected participant in the lobby, without needing to disconnect.
+
+## Request to become host
+_Slug: `request-to-become-host` · Status: backlogged · Logged 2026-07-01_
+A non-host participant can ask the current host to hand off host privileges to them, rather than only the host being able to initiate a handoff.
