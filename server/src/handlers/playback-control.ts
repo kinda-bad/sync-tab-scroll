@@ -17,6 +17,7 @@ export function handlePlaybackControl(ctx: HandlerContext, socket: WebSocket, me
     case 'start':
       session.playbackState.status = 'running';
       session.lobbyCursorTick = null; // datamodel.md: null once playback starts
+      session.spotlightMode = false; // datamodel.md: resets to false once playback starts
       break;
     case 'resume':
       session.playbackState.status = 'running';
