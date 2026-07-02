@@ -1,6 +1,7 @@
 import type { Session } from '@sync-tab-scroll/shared';
 
 const GRACE_PERIOD_MS = 30_000;
+const DEFAULT_HOST_REASSIGN_GRACE_MS = 120_000;
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,6 +19,9 @@ function generateJoinCode(): string {
 export class SessionStore {
   private sessions = new Map<string, Session>();
   private graceTimers = new Map<string, NodeJS.Timeout>();
+  private hostReassignTimers = new Map<string, NodeJS.Timeout>();
+
+  constructor(private hostReassignGraceMs: number = DEFAULT_HOST_REASSIGN_GRACE_MS) {}
 
   create(hostId: string): Session {
     let code = generateJoinCode();
@@ -67,5 +71,28 @@ export class SessionStore {
       this.graceTimers.delete(code);
     }, GRACE_PERIOD_MS);
     this.graceTimers.set(code, timer);
+  }
+
+  /**
+   * Starts the host-succession grace timer (infrastructure.md Host
+   * Succession) — a no-op if one is already pending for this session, so
+   * the host disconnecting twice in a row doesn't reset the clock.
+   */
+  scheduleHostReassignment(code: string, onGraceExpired: () => void): void {
+    if (this.hostReassignTimers.has(code)) return;
+    const timer = setTimeout(() => {
+      this.hostReassignTimers.delete(code);
+      onGraceExpired();
+    }, this.hostReassignGraceMs);
+    this.hostReassignTimers.set(code, timer);
+  }
+
+  /** Cancels a pending host-succession timer — the host reconnected within the grace period. */
+  cancelHostReassignment(code: string): void {
+    const timer = this.hostReassignTimers.get(code);
+    if (timer) {
+      clearTimeout(timer);
+      this.hostReassignTimers.delete(code);
+    }
   }
 }

@@ -2,31 +2,44 @@ export * from './messages.js';
 
 export type ReadinessStatus = 'no-part' | 'loading' | 'ready';
 
+/**
+ * A participant's chosen part, single source of truth for both
+ * `Participant.selectedPart` and the `part-select` wire message (they must
+ * stay identical, so this is the one place that declares the shape —
+ * constitution Principle VI). Explicit semantics per branch:
+ * - `number` — a `CatalogPart.trackIndex`: following that instrument track.
+ * - `'lyrics'` — the tab-less lyrics part (a special case, not a
+ *   `CatalogPart` at all — see `CatalogSong.lyricsLrc`).
+ * - `null` — no part chosen yet.
+ */
+export type SelectedPart = number | 'lyrics' | null;
+
 export interface Participant {
   id: string;
   displayName: string;
   role: 'host' | 'member';
   connectionStatus: 'connected' | 'disconnected';
-  /** A CatalogPart.id for an instrument part, or the literal 'lyrics' for the tab-less lyrics part. */
-  selectedPart: string | 'lyrics' | null;
+  selectedPart: SelectedPart;
   readiness: ReadinessStatus;
+  /** Wall-clock time this participant first joined — determines tenure for host succession (the longest-tenured connected participant is promoted if the host stays disconnected past the grace period). Preserved across a reconnect, not reset. */
+  joinedAt: number;
 }
 
 export interface CatalogPart {
-  /** Stable identifier; what Participant.selectedPart references for instrument parts. */
-  id: string;
   instrumentName: string;
-  /** Index into the track list of CatalogSong.gpFilePath's parsed score. */
+  /** Index into the track list of CatalogSong.gpFilePath's parsed score — also the stable identifier Participant.selectedPart references for instrument parts (no separate id field; a track's index is already stable per song). */
   trackIndex: number;
 }
 
 export interface CatalogSong {
+  /** Stable song slug, matches the catalog directory name. */
+  id: string;
   name: string;
   artist: string;
-  /** Path to the source .gp file — one multi-track file per song. */
+  /** Client-fetchable URL path to the source .gp file — one multi-track file per song. */
   gpFilePath: string;
   parts: CatalogPart[];
-  /** Path to the raw .lrc synced-lyrics file. Null if no lyrics found either way. */
+  /** Client-fetchable URL path to the raw .lrc synced-lyrics file. Null if no lyrics found either way. */
   lyricsLrc: string | null;
   /** Which track's beats carry the GP-embedded lyrics. Null when lyricsLrc came from the lrclib.net fallback. */
   lyricsTrackIndex: number | null;

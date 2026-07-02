@@ -30,7 +30,6 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
   const source = findLyricsSource(score);
 
   const parts: CatalogPartMeta[] = score.tracks.map((track) => ({
-    id: String(track.index),
     instrumentName: track.name,
     trackIndex: track.index,
   }));

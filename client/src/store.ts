@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
-import type { Session } from '@sync-tab-scroll/shared';
+import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
+import type { WsClient } from './ws-client';
 
 export type ViewState = 'landing' | 'lobby' | 'playback';
 
@@ -10,6 +11,9 @@ export interface ClientState {
   view: ViewState;
   session: Session | null;
   selfParticipantId: string | null;
+  catalog: CatalogSong[];
+  /** The single shared WsClient (constitution Principle III) — created once on Landing form submit, read by every later view instead of each view opening its own connection. */
+  wsClient: WsClient | null;
 }
 
 function createClientStore() {
@@ -17,6 +21,8 @@ function createClientStore() {
     view: 'landing',
     session: null,
     selfParticipantId: null,
+    catalog: [],
+    wsClient: null,
   });
   return { subscribe, set, update };
 }

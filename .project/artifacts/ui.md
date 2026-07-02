@@ -1,8 +1,8 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-06-30
-diagram_status: current
+last_updated: 2026-07-01
+diagram_status: stale
 ---
 
 # UI
@@ -26,7 +26,16 @@ silently rejoin.
 
 ## Lobby View
 
-Host picks a song from the catalog; each participant picks their part and
+Host picks a song from the catalog (name + artist per entry, delivered
+once per client on session create/join — infrastructure.md, datamodel.md)
+via a simple list picker; selecting an entry broadcasts the choice to
+every participant in the session so the part picker below reflects the
+newly-selected song's `Session.availableParts`. Re-selecting a different
+song while participants already have parts
+chosen resets those choices (a part index/id from the old song's
+`CatalogSong.parts` has no guaranteed meaning against the new song) —
+each participant's `selectedPart` reverts to `null` and readiness to
+`'no-part'`, same as first joining. Each participant picks their part and
 signals readiness. The part picker includes a **Lyrics** option alongside
 the instrument parts — selectable like any other part, but disabled when
 the song has no `.lrc` file (datamodel.md `CatalogSong.lyricsLrc`). The
@@ -89,8 +98,14 @@ paused; participants' views don't.
   (infrastructure.md) — show a loading/readiness state per participant
   rather than blocking the whole lobby. The lyrics part still has a load
   step (headless alphaTab init, `.lrc` fetch); it's not exempt from
-  loading just because it renders no staff.
-- **Empty**: no song selected yet — lobby shows the catalog picker only.
+  loading just because it renders no staff. This load is triggered the
+  moment a participant's part is known (song selected + part picked), in
+  the Lobby — not on entering the Playback view — so the host can
+  actually observe everyone reach `ready` before starting; the renderer/
+  headless instance and its containers persist across the Lobby→Playback
+  transition rather than being torn down and recreated.
+- **Empty**: no song selected yet — lobby shows the catalog picker only,
+  part picker/readiness list hidden until `Session.selectedSong` is set.
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,
   not-host action attempts — surfaced as toasts, not blocking modals.
 

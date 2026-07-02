@@ -1,36 +1,34 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { createWsClient, type WsClient } from '../ws-client';
   import { clientStore } from '../store';
+  import type { SelectedPart } from '@sync-tab-scroll/shared';
 
-  // TODO: wire real song-selection (no catalog-listing WS flow exists yet,
-  // same gap noted in Playback.svelte) — this view demonstrates the Empty
-  // state, participant list, and lobby cursor (T026, T027) against a real
-  // session, not a full catalog picker.
-  const params = new URLSearchParams(location.search);
-  let wsClient: WsClient;
   let lobbyCursorInput = 0;
 
-  onMount(() => {
-    wsClient = createWsClient(`ws://${location.hostname}:8080`);
-    const asHost = params.get('join') === null;
-    if (asHost) {
-      wsClient.send({ type: 'session-create', displayName: 'Host' });
-    } else {
-      wsClient.send({ type: 'session-join', code: params.get('join')!, displayName: 'Member' });
-    }
-  });
+  $: session = $clientStore.session;
+  $: wsClient = $clientStore.wsClient;
+  $: catalog = $clientStore.catalog;
+  $: isHost = session?.hostId === $clientStore.selfParticipantId;
+  $: selfParticipant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
+
+  function selectSong(songId: string) {
+    wsClient?.send({ type: 'song-select', songId });
+  }
+
+  function selectPart(part: SelectedPart) {
+    wsClient?.send({ type: 'part-select', part });
+  }
+
+  function startPlayback() {
+    wsClient?.send({ type: 'playback-control', action: 'start' });
+  }
 
   function setLobbyCursor() {
-    wsClient.send({ type: 'lobby-cursor-set', tickPosition: lobbyCursorInput });
+    wsClient?.send({ type: 'lobby-cursor-set', tickPosition: lobbyCursorInput });
   }
 
   function clearLobbyCursor() {
-    wsClient.send({ type: 'lobby-cursor-set', tickPosition: null });
+    wsClient?.send({ type: 'lobby-cursor-set', tickPosition: null });
   }
-
-  $: session = $clientStore.session;
-  $: isHost = session?.hostId === $clientStore.selfParticipantId;
 </script>
 
 <section>
@@ -40,7 +38,46 @@
     <p>Join code: <strong>{session.code}</strong></p>
 
     {#if !session.selectedSong}
-      <p>No song selected yet — catalog picker goes here.</p>
+      <p>No song selected yet.</p>
+      <h2>Catalog</h2>
+      <ul>
+        {#each catalog as song (song.id)}
+          <li>
+            {song.name} — {song.artist}
+            {#if isHost}
+              <button onclick={() => selectSong(song.id)}>Select</button>
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p>Song: <strong>{catalog.find((s) => s.id === session.selectedSong)?.name ?? session.selectedSong}</strong></p>
+      {#if isHost}
+        <button onclick={() => selectSong(session.selectedSong!)} title="Re-pick from the catalog">Change song</button>
+      {/if}
+
+      <h2>Your part</h2>
+      <ul>
+        {#each session.availableParts as part (part.trackIndex)}
+          <li>
+            {part.instrumentName}
+            <button disabled={selfParticipant?.selectedPart === part.trackIndex} onclick={() => selectPart(part.trackIndex)}>Select</button>
+          </li>
+        {/each}
+        <li>
+          Lyrics
+          <button
+            disabled={!catalog.find((s) => s.id === session.selectedSong)?.lyricsLrc || selfParticipant?.selectedPart === 'lyrics'}
+            onclick={() => selectPart('lyrics')}
+          >
+            Select
+          </button>
+        </li>
+      </ul>
+
+      {#if isHost}
+        <button onclick={startPlayback}>Start</button>
+      {/if}
     {/if}
 
     <h2>Participants</h2>

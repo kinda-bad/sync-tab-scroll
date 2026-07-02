@@ -2,7 +2,7 @@
 name: infrastructure
 status: stable
 last_updated: 2026-07-01
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -53,6 +53,66 @@ participant's headless alphaTab instance (ui.md) both consume
 Sessions are server-memory-only: a grace-period timer destroys empty
 sessions, and a server restart drops active ones. No durable backing
 store for session state.
+
+## Reconnect By Identity
+
+A client persists `{code, displayName, participantId}` (e.g. to
+localStorage) once a session exists, and passes `participantId` back on
+`session-join`. If it matches an existing participant in that session,
+the server reclaims that participant (updates `displayName`/
+`connectionStatus`, resets `readiness` since the reconnecting client's
+renderer/headless instance is gone after a fresh page load) instead of
+minting a new one — `id`, `role`, and `joinedAt` are preserved. Without
+this, a refreshing host would lose host control permanently: `Session.
+hostId` would keep pointing at an old participant id no socket can ever
+reclaim.
+
+## Host Succession
+
+If the participant holding `Session.hostId` disconnects, a grace-period
+timer (2 minutes) starts. If they reconnect within it (Reconnect By
+Identity, above, matching on `Session.hostId`), the timer is cancelled
+and nothing changes. If the timer expires with no reconnect, the
+longest-tenured currently-connected participant (by `Participant.
+joinedAt`, excluding the outgoing host) is promoted: `Session.hostId`
+moves to them, their `role` becomes `'host'`, and the outgoing host's
+`role` becomes `'member'` (they keep their seat and can still rejoin
+later, just without host privileges). If no other participant is
+connected when the timer fires, nothing is promoted — an empty-of-
+connections session is already covered by the session-destruction grace
+timer above.
+
+This grace period is configurable (`ServerConfig.hostReassignGraceMs`,
+env `HOST_REASSIGN_GRACE_MS`) — mainly so it can be shortened for tests;
+production default is 2 minutes.
+
+## Song Catalog Delivery
+
+The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,
+datamodel.md) is server-global — it isn't part of any one `Session` and
+isn't re-scanned per request. A client receives the full catalog once,
+right after its `session-create`/`session-join` succeeds, as its own
+message distinct from `session-state` (which only ever carries one
+session's state, not the server-wide catalog).
+
+Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`)
+live on the server's disk under `catalog/<song-slug>/` (pipeline.md), but
+`CatalogSong` as published to a client carries a client-fetchable URL, not
+that disk path — the server exposes the catalog root as static HTTP
+content (e.g. `/catalog/<song-slug>/<file>`), and `catalog-loader.ts`
+rewrites each on-disk path to its corresponding URL before the loaded
+`CatalogSong[]` is ever handed to a socket. This is the first HTTP surface
+this server exposes — until now it was WebSocket-only (`ws`) with no
+static-file serving at all; the WebSocket upgrade and the static catalog
+route share the same underlying `http.Server` instance rather than
+running as two separate listeners on two ports.
+
+Song selection is host-only, following the same authorization check as
+`playback-control` (host id vs. the connection's participant id): the
+host picks a `CatalogSong.id`, which sets `Session.selectedSong` and
+`Session.availableParts` and is broadcast to all participants via the
+normal `session-state` broadcast — no separate message type is needed for
+the result, only for the host's selection action.
 
 ## Tab Rendering
 
