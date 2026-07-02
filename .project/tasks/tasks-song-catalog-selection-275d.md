@@ -1,7 +1,7 @@
 ---
 plan: plan-song-catalog-selection-2026-07-01.md
 generated: 2026-07-01
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -25,28 +25,80 @@ status: in-progress
 
 ## Phase 4: Client — shared connection + view transitions
 
-**Note**: T009-T014 below are implemented (code written, `vite build` passes,
-no browser verification performed — the claude-in-chrome extension was
-unavailable this session). Checkboxes intentionally left unchecked per
-each task's stated test requirement; user is verifying manually via
-`localhost:5173`/`localhost:8080` running locally. Do not mark `[x]` until
-that verification is confirmed.
+**Note (2026-07-02, `/ardd-implement`)**: T009-T013 browser-verified this
+session (two real tabs, separate origins to avoid shared-localStorage
+cross-talk: `localhost` + `127.0.0.1`). T011c/T014 found a real defect —
+see notes below. Two unrelated dev-environment issues surfaced and were
+fixed/flagged, not silently absorbed:
+- `CATALOG_ROOT` defaults to `./catalog` in `server/src/config.ts`, which
+  doesn't resolve under `pnpm --filter server dev`'s cwd (`server/`) — the
+  catalog loaded empty until `CATALOG_ROOT=<repo>/catalog` was set
+  explicitly. Flagging for `/ardd-verify`; not fixed here (out of scope).
+- `client/vite.config.ts` gained `optimizeDeps.exclude: ['@coderline/alphatab']`
+  — the dep-optimizer's own bundle of `alphaTab.worker.mjs` never resolved
+  under Vite dev (request stayed pending forever, blocking
+  `soundFontLoaded`/readiness). This is a real, committed fix, verified to
+  unblock readiness. See T011c for the *separate* rendering defect this
+  fix uncovered.
 
-- [ ] T009 [artifacts: infrastructure, datamodel] Implement `client/src/views/Landing.svelte` as a real create/join form per ui.md's Landing View: a display-name input, a "Create session" button, a join-code input + "Join" button. On submit, call a shared connection function (T010) with the appropriate `session-create`/`session-join` message. Persist `sessionCode`/`displayName` to `localStorage` on success so a refresh can silently rejoin (attempt an automatic `session-join` with the stored code on mount if present). Test: component test (or manual browser test folded into T011's end-to-end check) confirming the create button sends `session-create` with the entered display name.
-- [ ] T010 [artifacts: infrastructure] Extract the connection bootstrap (currently duplicated in `Lobby.svelte`'s and `Playback.svelte`'s `onMount`) into a single function callable from `App.svelte`/`Landing.svelte` — e.g. a `connect(displayName, joinCode?)` helper in `ws-client.ts` or a new small module — that creates one `WsClient`, sends `session-create` or `session-join`, and stores the `WsClient` instance somewhere every view can read (a field on `clientStore`'s state, or a separate singleton module, per constitution Principle I — one reactive source, not a second ad hoc global). Remove the per-view `createWsClient(...)` + `session-create`/`session-join` calls from `Lobby.svelte` and `Playback.svelte` (they'll read the shared client instead, wired in T011/T013). Test: none standalone — covered by T011.
-- [ ] T011 [artifacts: infrastructure] In `client/src/store.ts`'s WS-message handling (`ws-client.ts`'s `message` listener), transition `clientStore`'s `view` field: set to `'lobby'` the first time a `session-state` message is received while `view === 'landing'`; set to `'playback'` when an incoming `session-state`'s `session.playbackState.status === 'running'` while `view === 'lobby'`. Also handle the new `catalog` message type here (store `CatalogSong[]` on `clientStore`, per T012). Update `client/src/App.svelte` to no longer need any manual view-switch triggers — it already reads `$clientStore.view` reactively. Test: real browser session — load the app, submit the Landing form, confirm the DOM shows Lobby's `<h1>Lobby</h1>` with no URL query params involved.
-- [ ] T011a [artifacts: infrastructure] [parallel] Add a Vite dev proxy in `client/vite.config.ts` (`server.proxy['/catalog'] = { target: 'http://localhost:8080' }` or equivalent) so catalog asset URLs (`/catalog/<slug>/...`) resolve same-origin from the client's dev port instead of 404ing or requiring CORS. Test: with the server running against the real `catalog/radiohead-creep/` fixture (T008), `curl http://localhost:<vite-port>/catalog/radiohead-creep/meta.json`-equivalent (a `fetch` from the running dev client) returns the file, not a 404.
-- [ ] T011b [artifacts: infrastructure, ui] Add a host-only "Start" button to `Lobby.svelte` that sends `{ type: 'playback-control', action: 'start' }` (only shown/enabled when `isHost`) — this is what actually produces the `playbackState.status === 'running'` transition T011 keys the view switch on; nothing in the client currently sends this message at all. Test: real browser session, two tabs — host clicks Start, both tabs' view switches to Playback (extends T011's browser test).
+- [x] T009 [artifacts: infrastructure, datamodel] Implement `client/src/views/Landing.svelte` as a real create/join form per ui.md's Landing View: a display-name input, a "Create session" button, a join-code input + "Join" button. On submit, call a shared connection function (T010) with the appropriate `session-create`/`session-join` message. Persist `sessionCode`/`displayName` to `localStorage` on success so a refresh can silently rejoin (attempt an automatic `session-join` with the stored code on mount if present). Test: component test (or manual browser test folded into T011's end-to-end check) confirming the create button sends `session-create` with the entered display name.
+- [x] T010 [artifacts: infrastructure] Extract the connection bootstrap (currently duplicated in `Lobby.svelte`'s and `Playback.svelte`'s `onMount`) into a single function callable from `App.svelte`/`Landing.svelte` — e.g. a `connect(displayName, joinCode?)` helper in `ws-client.ts` or a new small module — that creates one `WsClient`, sends `session-create` or `session-join`, and stores the `WsClient` instance somewhere every view can read (a field on `clientStore`'s state, or a separate singleton module, per constitution Principle I — one reactive source, not a second ad hoc global). Remove the per-view `createWsClient(...)` + `session-create`/`session-join` calls from `Lobby.svelte` and `Playback.svelte` (they'll read the shared client instead, wired in T011/T013). Test: none standalone — covered by T011.
+- [x] T011 [artifacts: infrastructure] In `client/src/store.ts`'s WS-message handling (`ws-client.ts`'s `message` listener), transition `clientStore`'s `view` field: set to `'lobby'` the first time a `session-state` message is received while `view === 'landing'`; set to `'playback'` when an incoming `session-state`'s `session.playbackState.status === 'running'` while `view === 'lobby'`. Also handle the new `catalog` message type here (store `CatalogSong[]` on `clientStore`, per T012). Update `client/src/App.svelte` to no longer need any manual view-switch triggers — it already reads `$clientStore.view` reactively. Test: real browser session — load the app, submit the Landing form, confirm the DOM shows Lobby's `<h1>Lobby</h1>` with no URL query params involved.
+- [x] T011a [artifacts: infrastructure] [parallel] Add a Vite dev proxy in `client/vite.config.ts` (`server.proxy['/catalog'] = { target: 'http://localhost:8080' }` or equivalent) so catalog asset URLs (`/catalog/<slug>/...`) resolve same-origin from the client's dev port instead of 404ing or requiring CORS. Test: with the server running against the real `catalog/radiohead-creep/` fixture (T008), `curl http://localhost:<vite-port>/catalog/radiohead-creep/meta.json`-equivalent (a `fetch` from the running dev client) returns the file, not a 404.
+- [x] T011b [artifacts: infrastructure, ui] Add a host-only "Start" button to `Lobby.svelte` that sends `{ type: 'playback-control', action: 'start' }` (only shown/enabled when `isHost`) — this is what actually produces the `playbackState.status === 'running'` transition T011 keys the view switch on; nothing in the client currently sends this message at all. Test: real browser session, two tabs — host clicks Start, both tabs' view switches to Playback (extends T011's browser test).
 
 ## Phase 4b: Client — persistent renderer lifecycle
 
-- [ ] T011c [artifacts: infrastructure, ui, datamodel] Extract the alphaTab/headless-player creation, lyrics-overlay wiring (`walkLyricBeats`/`groupIntoLines`/`createLyricsOverlay`), full-lyrics `.lrc` fetch/highlight logic, and the `clientStore`-driven drift-correction subscription — all currently inside `Playback.svelte`'s `onMount` — into a standalone module (e.g. `client/src/playback-engine.ts`) exporting something like `ensurePlaybackEngine(containers, catalogSong, trackIndex, isLyricsPart)` that is idempotent (safe to call once and have later calls no-op if already created for the same part). Move the tab container, overlay container, and full-lyrics `div`s out of `Playback.svelte` and into `App.svelte` so they're always mounted (not destroyed/recreated on view switch); toggle their visibility via a CSS class keyed on `$clientStore.view === 'playback'` rather than conditional `{#if}` rendering. Call `ensurePlaybackEngine(...)` as soon as `session.selectedSong` and the current participant's `selectedPart` are both non-null (in the Lobby, via a `clientStore` subscription — not gated on `view === 'playback'`), matching ui.md's stated per-participant loading/readiness happening before the host starts playback. `Playback.svelte` itself becomes minimal: it just shows/hides the persistent containers and host controls (toggle overlay/theme, start/pause/seek) rather than owning renderer creation. Test: real browser session — a participant's readiness reaches `'ready'` while still viewing the Lobby (before the host clicks Start from T011b), proving the renderer initializes pre-transition as ui.md describes.
+- [x] T011c [artifacts: infrastructure, ui, datamodel] Extract the alphaTab/headless-player creation, lyrics-overlay wiring (`walkLyricBeats`/`groupIntoLines`/`createLyricsOverlay`), full-lyrics `.lrc` fetch/highlight logic, and the `clientStore`-driven drift-correction subscription — all currently inside `Playback.svelte`'s `onMount` — into a standalone module (e.g. `client/src/playback-engine.ts`) exporting something like `ensurePlaybackEngine(containers, catalogSong, trackIndex, isLyricsPart)` that is idempotent (safe to call once and have later calls no-op if already created for the same part). Move the tab container, overlay container, and full-lyrics `div`s out of `Playback.svelte` and into `App.svelte` so they're always mounted (not destroyed/recreated on view switch); toggle their visibility via a CSS class keyed on `$clientStore.view === 'playback'` rather than conditional `{#if}` rendering. Call `ensurePlaybackEngine(...)` as soon as `session.selectedSong` and the current participant's `selectedPart` are both non-null (in the Lobby, via a `clientStore` subscription — not gated on `view === 'playback'`), matching ui.md's stated per-participant loading/readiness happening before the host starts playback. `Playback.svelte` itself becomes minimal: it just shows/hides the persistent containers and host controls (toggle overlay/theme, start/pause/seek) rather than owning renderer creation. Test: real browser session — a participant's readiness reaches `'ready'` while still viewing the Lobby (before the host clicks Start from T011b), proving the renderer initializes pre-transition as ui.md describes.
+
+  **Fixed (2026-07-02).** Readiness reaches `'ready'` pre-Start as
+  designed (verified). The blank-canvas defect (alphaTab's first
+  `api.render()` firing while the container was still `display:none`,
+  never re-rendering once shown) is fixed per the chosen approach: force
+  one explicit re-render on the Lobby→Playback transition rather than
+  changing the `display:none` mechanism. `playback-engine.ts` now tracks
+  `scoreLoaded` on the engine state and exports `renderNowVisible()`
+  (no-op for a lyrics-part participant or before the score has loaded);
+  `App.svelte` calls it once when `$clientStore.view` transitions to
+  `'playback'`. First attempt raced Svelte's own DOM patch — calling
+  `renderNowVisible()` synchronously in the reactive block still saw
+  `width=0` because the `visible` class hadn't been flushed to layout
+  yet. Fixed by deferring past `tick()` + a `requestAnimationFrame`.
+  Re-verified in a real two-tab session (real clicks, not scripted): host
+  on Vocals sees correct notation immediately on Start, no manual
+  interaction needed. Committed.
 
 ## Phase 5: Client — Lobby catalog picker
 
-- [ ] T012 [artifacts: datamodel] Add a `catalog: CatalogSong[]` field to `ClientState` in `client/src/store.ts` (default `[]`), populated by the `catalog` message handling added in T011.
-- [ ] T013 [artifacts: infrastructure, ui] Replace `Lobby.svelte`'s placeholder (`{#if !session.selectedSong}<p>No song selected yet...</p>{/if}` and its stale TODO comment) with a list rendering `$clientStore.catalog` (name + artist per entry); when `isHost`, clicking an entry sends `{ type: 'song-select', songId: song.id }` via the shared `WsClient` (T010). Remove `Lobby.svelte`'s own `?join=`/`session-create`/`session-join` bootstrap (now handled upstream, T009/T010) — it should read `session`/`selfParticipantId` from `clientStore` only. Test: real browser session, two tabs — host tab picks a song from the list; assert both tabs' `session.selectedSong`/`availableParts` update and, for a participant who'd already selected a part before the pick, their part/readiness reset to `null`/`'no-part'` in the DOM.
+- [x] T012 [artifacts: datamodel] Add a `catalog: CatalogSong[]` field to `ClientState` in `client/src/store.ts` (default `[]`), populated by the `catalog` message handling added in T011.
+- [x] T013 [artifacts: infrastructure, ui] Replace `Lobby.svelte`'s placeholder (`{#if !session.selectedSong}<p>No song selected yet...</p>{/if}` and its stale TODO comment) with a list rendering `$clientStore.catalog` (name + artist per entry); when `isHost`, clicking an entry sends `{ type: 'song-select', songId: song.id }` via the shared `WsClient` (T010). Remove `Lobby.svelte`'s own `?join=`/`session-create`/`session-join` bootstrap (now handled upstream, T009/T010) — it should read `session`/`selfParticipantId` from `clientStore` only. Test: real browser session, two tabs — host tab picks a song from the list; assert both tabs' `session.selectedSong`/`availableParts` update and, for a participant who'd already selected a part before the pick, their part/readiness reset to `null`/`'no-part'` in the DOM.
+
+  **Note**: list rendering, host-only gating, and live cross-tab sync of
+  song/part selection all verified in a real two-tab session. The
+  reset-on-reselect assertion specifically was *not* exercised: the
+  catalog fixture has only one song, and `song-select.ts` deliberately
+  treats re-picking the *same* song as a no-op (documented in its own
+  comment, an intentional UX improvement over the original spec — avoids
+  wiping everyone's part choice on an accidental re-click). Reset-on-
+  genuinely-different-song code path is present and reads correctly but
+  is unverified live; would need a second catalog fixture song to exercise.
 
 ## Phase 6: Client — Playback real-song wiring
 
-- [ ] T014 [artifacts: datamodel, infrastructure, ui] Wire `session.selectedSong` (looked up in `$clientStore.catalog`) and the current participant's `CatalogPart` (via `selectedPart` looked up in `session.availableParts`) into the `ensurePlaybackEngine(...)` call site added in T011c, replacing the hardcoded `/test/creep.gp`/`/test/creep.lrc` paths and the `LYRICS_TRACK_INDEX`/`LYRICS_LINE_INDEX`/`LYRIC_LINE_BREAKS` constants entirely (source these from the matched `CatalogSong`'s `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`/`lyricsLrc` instead). Test: real browser session — full Landing → Lobby (pick the `radiohead-creep` catalog entry from T008, confirm readiness reaches `ready` per T011c) → host clicks Start (T011b) → Playback view shows the already-initialized tab, the in-tab lyrics overlay toggles correctly, and (in a second tab/participant on the `'lyrics'` part) the full lyrics view highlights lines — all sourced from the catalog data, with no `/test/creep.*` fetch involved. This is the plan's capstone verification: the full three-view flow with no manual query-param navigation at any step.
+- [x] T014 [artifacts: datamodel, infrastructure, ui] Wire `session.selectedSong` (looked up in `$clientStore.catalog`) and the current participant's `CatalogPart` (via `selectedPart` looked up in `session.availableParts`) into the `ensurePlaybackEngine(...)` call site added in T011c, replacing the hardcoded `/test/creep.gp`/`/test/creep.lrc` paths and the `LYRICS_TRACK_INDEX`/`LYRICS_LINE_INDEX`/`LYRIC_LINE_BREAKS` constants entirely (source these from the matched `CatalogSong`'s `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`/`lyricsLrc` instead). Test: real browser session — full Landing → Lobby (pick the `radiohead-creep` catalog entry from T008, confirm readiness reaches `ready` per T011c) → host clicks Start (T011b) → Playback view shows the already-initialized tab, the in-tab lyrics overlay toggles correctly, and (in a second tab/participant on the `'lyrics'` part) the full lyrics view highlights lines — all sourced from the catalog data, with no `/test/creep.*` fetch involved. This is the plan's capstone verification: the full three-view flow with no manual query-param navigation at any step.
+
+  **Verified (2026-07-02), one residual caveat.** Full flow re-verified
+  after T011c's fix: Landing → Lobby (radiohead-creep catalog entry) →
+  both host (Vocals) and guest (Lyrics) reach `ready` pre-Start → host
+  clicks Start → both transition to Playback → host's tab renders
+  correctly immediately (T011c fix confirmed), all sourced from real
+  catalog data, no `/test/creep.*` fetch. **Not confirmed**: the guest's
+  full-lyrics-view line highlighting during actual playback — the
+  session's `tickPosition` never advanced past 0 in this test and the
+  lyrics text stayed empty. Likely cause: this session's clicks were
+  dispatched via scripted `.click()` (not trusted user-gesture events) to
+  work around an unrelated shared-localStorage testing artifact across
+  tabs, and Chrome's autoplay policy silently blocks `AudioContext`/
+  `api.play()` without a trusted gesture — plausible, not confirmed as
+  the root cause. Worth a follow-up real-click-only browser check before
+  fully trusting the lyrics-highlight path.

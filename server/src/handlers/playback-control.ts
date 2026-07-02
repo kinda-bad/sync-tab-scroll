@@ -24,6 +24,13 @@ export function handlePlaybackControl(ctx: HandlerContext, socket: WebSocket, me
     case 'pause':
       session.playbackState.status = 'paused';
       break;
+    case 'stop':
+      // Full stop, not pause-in-place: resets position and sends everyone
+      // back to the Lobby (client view transition keys off this status,
+      // ws-client.ts) rather than leaving them parked mid-song.
+      session.playbackState.status = 'stopped';
+      session.playbackState.tickPosition = 0;
+      break;
     case 'seek':
       if (message.tickPosition !== undefined) session.playbackState.tickPosition = message.tickPosition;
       break;

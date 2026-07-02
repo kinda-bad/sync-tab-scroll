@@ -10,8 +10,11 @@
   // since nothing tells it to re-run when the singleton changes. The
   // singleton itself still exists for imperative one-off calls below
   // (toggleOverlay/toggleTheme), which don't need reactivity.
-  $: participant = $clientStore.session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
+  $: session = $clientStore.session;
+  $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: isLyricsPart = participant?.selectedPart === 'lyrics';
+  $: isHost = session?.hostId === $clientStore.selfParticipantId;
+  $: isRunning = session?.playbackState.status === 'running';
 
   function toggleOverlay() {
     engineToggleOverlay();
@@ -21,6 +24,14 @@
     theme = engineToggleTheme();
     document.documentElement.dataset.theme = theme;
   }
+
+  function togglePause() {
+    $clientStore.wsClient?.send({ type: 'playback-control', action: isRunning ? 'pause' : 'resume' });
+  }
+
+  function stop() {
+    $clientStore.wsClient?.send({ type: 'playback-control', action: 'stop' });
+  }
 </script>
 
 <section>
@@ -28,5 +39,9 @@
   <button onclick={toggleTheme}>Toggle {theme === 'dark' ? 'light' : 'dark'} mode</button>
   {#if !isLyricsPart}
     <button onclick={toggleOverlay}>Toggle lyrics overlay</button>
+  {/if}
+  {#if isHost}
+    <button onclick={togglePause}>{isRunning ? 'Pause' : 'Resume'}</button>
+    <button onclick={stop}>Stop</button>
   {/if}
 </section>

@@ -6,7 +6,7 @@ export type ClientMessage =
   | { type: 'part-select'; part: SelectedPart }
   | { type: 'readiness-update'; readiness: ReadinessStatus }
   | { type: 'host-remove-participant'; participantId: string }
-  | { type: 'playback-control'; action: 'start' | 'pause' | 'resume' | 'seek'; tickPosition?: number }
+  | { type: 'playback-control'; action: 'start' | 'pause' | 'resume' | 'stop' | 'seek'; tickPosition?: number }
   | { type: 'lobby-cursor-set'; tickPosition: number | null }
   | { type: 'song-select'; songId: string };
 
