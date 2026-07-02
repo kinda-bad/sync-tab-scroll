@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toggleOverlay as engineToggleOverlay, toggleTheme as engineToggleTheme } from '../playback-engine';
   import { clientStore } from '../store';
+  import Button from '../components/Button.svelte';
 
   let theme: 'dark' | 'light' = 'dark';
 
@@ -10,11 +11,8 @@
   // since nothing tells it to re-run when the singleton changes. The
   // singleton itself still exists for imperative one-off calls below
   // (toggleOverlay/toggleTheme), which don't need reactivity.
-  $: session = $clientStore.session;
-  $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
+  $: participant = $clientStore.session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: isLyricsPart = participant?.selectedPart === 'lyrics';
-  $: isHost = session?.hostId === $clientStore.selfParticipantId;
-  $: isRunning = session?.playbackState.status === 'running';
 
   function toggleOverlay() {
     engineToggleOverlay();
@@ -22,26 +20,24 @@
 
   function toggleTheme() {
     theme = engineToggleTheme();
+    // Same data-theme attribute the punk-rock UI chrome tokens read
+    // (styles/tokens.css) — one toggle switches both the tab notation
+    // colors and the rest of the app at once.
     document.documentElement.dataset.theme = theme;
-  }
-
-  function togglePause() {
-    $clientStore.wsClient?.send({ type: 'playback-control', action: isRunning ? 'pause' : 'resume' });
-  }
-
-  function stop() {
-    $clientStore.wsClient?.send({ type: 'playback-control', action: 'stop' });
   }
 </script>
 
-<section>
-  <h1>Playback</h1>
-  <button onclick={toggleTheme}>Toggle {theme === 'dark' ? 'light' : 'dark'} mode</button>
+<section class="playback-controls">
+  <Button variant="ghost" label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleTheme} />
   {#if !isLyricsPart}
-    <button onclick={toggleOverlay}>Toggle lyrics overlay</button>
-  {/if}
-  {#if isHost}
-    <button onclick={togglePause}>{isRunning ? 'Pause' : 'Resume'}</button>
-    <button onclick={stop}>Stop</button>
+    <Button variant="ghost" label="Toggle lyrics" onclick={toggleOverlay} />
   {/if}
 </section>
+
+<style>
+  .playback-controls {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+</style>

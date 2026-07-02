@@ -10,3 +10,6 @@ catalog/
 
 # Claude Code local tooling/config — not for the repo
 .claude/
+
+*storybook.log
+storybook-static

@@ -6,6 +6,9 @@
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
   import Toasts from './components/Toasts.svelte';
+  import Bar from './components/Bar.svelte';
+  import Button from './components/Button.svelte';
+  import ReadinessBadge from './components/ReadinessBadge.svelte';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -48,15 +51,43 @@
     }
     previousHasPart = hasPart;
   }
+
+  // The one persistent bar (brand.md) — shown in Lobby and Playback both,
+  // never a separate top header + bottom transport split. Landing has no
+  // bar (its own full-screen moment).
+  $: showBar = $clientStore.view === 'lobby' || $clientStore.view === 'playback';
+  $: catalogSong = $clientStore.catalog.find((s) => s.id === session?.selectedSong);
+  $: isHost = session?.hostId === $clientStore.selfParticipantId;
+  $: isRunning = session?.playbackState.status === 'running';
+  $: readyCount = session?.participants.filter((p) => p.readiness === 'ready').length ?? 0;
+  $: totalCount = session?.participants.length ?? 0;
+  // Aggregate readiness in the Lobby; once actually playing the hazard
+  // strip reads as fully "live" rather than tracking exact song position
+  // (which would need alphaTab duration wired through — a later pass).
+  $: barProgress = $clientStore.view === 'playback' ? 1 : totalCount > 0 ? readyCount / totalCount : 0;
+
+  function startPlayback() {
+    $clientStore.wsClient?.send({ type: 'playback-control', action: 'start' });
+  }
+
+  function togglePause() {
+    $clientStore.wsClient?.send({ type: 'playback-control', action: isRunning ? 'pause' : 'resume' });
+  }
+
+  function stopPlayback() {
+    $clientStore.wsClient?.send({ type: 'playback-control', action: 'stop' });
+  }
 </script>
 
-{#if $clientStore.view === 'landing'}
-  <Landing />
-{:else if $clientStore.view === 'lobby'}
-  <Lobby />
-{:else}
-  <Playback />
-{/if}
+<div class="app-content" class:with-bar={showBar}>
+  {#if $clientStore.view === 'landing'}
+    <Landing />
+  {:else if $clientStore.view === 'lobby'}
+    <Lobby />
+  {:else}
+    <Playback />
+  {/if}
+</div>
 
 <div class="engine-containers" class:visible={hasPart && !isLyricsPart}>
   <div bind:this={tabContainer} class="tab-container"></div>
@@ -64,9 +95,43 @@
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
 
+{#if showBar && session}
+  <Bar progress={barProgress}>
+    {#snippet identity()}
+      {#if catalogSong}
+        <strong class="bar-title">{catalogSong.name}</strong>
+        <span class="bar-artist"> — {catalogSong.artist}</span>
+      {:else}
+        <span class="bar-artist">Join code: {session.code}</span>
+      {/if}
+    {/snippet}
+    {#snippet controls()}
+      {#if isHost}
+        {#if $clientStore.view === 'lobby'}
+          <Button variant="riot" label="Start" disabled={!session.selectedSong} onclick={startPlayback} />
+        {:else}
+          <Button variant="ghost" label={isRunning ? 'Pause' : 'Resume'} onclick={togglePause} />
+          <Button variant="ghost" label="Stop" onclick={stopPlayback} />
+        {/if}
+      {/if}
+    {/snippet}
+    {#snippet status()}
+      {#if participant}
+        <ReadinessBadge readiness={participant.readiness} connected={participant.connectionStatus === 'connected'} />
+      {/if}
+    {/snippet}
+  </Bar>
+{/if}
+
 <Toasts />
 
 <style>
+  .app-content.with-bar {
+    /* Clears the persistent Bar (its own height + the hazard strip above
+       it) so bottom content isn't hidden behind it. */
+    padding-bottom: calc(var(--bar-height) + var(--space-8));
+  }
+
   .engine-containers,
   .full-lyrics-view {
     display: none;
@@ -78,5 +143,14 @@
   .tab-container {
     background: var(--canvas-bg, #0a0a0a);
     min-height: 400px;
+  }
+
+  .bar-title {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+  .bar-artist {
+    color: var(--ink-dim);
+    font-size: 0.8125rem;
   }
 </style>

@@ -1,0 +1,84 @@
+/*
+ * Design tokens (brand.md). Two themes today (dark, light); the pattern is
+ * meant to grow — a future theme (e.g. a straight cyberpunk palette) is a
+ * new `:root[data-theme='...']` block below, nothing else changes, since
+ * every component only ever reads the semantic --bg/--surface/--ink/--riot/
+ * --hazard/--border names, never a theme's raw hex values directly.
+ *
+ * Naming is semantic-by-role, not theme-specific (no --void vs --paper
+ * split) precisely so components stay theme-agnostic.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --surface: #17171b;
+  --surface-raised: #201f24;
+  --ink: #f2f0e8;
+  --ink-dim: rgba(242, 240, 232, 0.55);
+  --riot: #ff2178;
+  --riot-dim: rgba(255, 33, 120, 0.35);
+  --hazard: #ffcc00;
+  --hazard-dim: rgba(255, 204, 0, 0.35);
+  --border: rgba(242, 240, 232, 0.14);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
+:root[data-theme='light'] {
+  /* Not an inversion of dark — a photocopied-flyer concept: warm-toner
+     near-black ink on newsprint paper, deeper/inkier accents rather than
+     dark mode's glowing neon (brand.md, Light/Dark Mode). */
+  --bg: #e4e1d6;
+  --surface: #d6d2c4;
+  --surface-raised: #cac5b5;
+  --ink: #131211;
+  --ink-dim: rgba(19, 18, 17, 0.55);
+  --riot: #c40855;
+  --riot-dim: rgba(196, 8, 85, 0.18);
+  --hazard: #a8760a;
+  --hazard-dim: rgba(168, 118, 10, 0.18);
+  --border: rgba(19, 18, 17, 0.18);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
+:root {
+  --font-display: 'Bungee', 'Arial Black', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --bar-height: 3.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+button,
+input {
+  font-family: inherit;
+}
