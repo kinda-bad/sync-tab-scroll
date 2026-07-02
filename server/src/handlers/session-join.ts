@@ -10,15 +10,33 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
     return;
   }
 
-  const participantId = crypto.randomUUID();
-  session.participants.push({
-    id: participantId,
-    displayName: message.displayName,
-    role: 'member',
-    connectionStatus: 'connected',
-    selectedPart: null,
-    readiness: 'no-part',
-  });
+  // Reclaim an existing (likely disconnected) participant by its persisted
+  // id, e.g. after a page refresh — rather than always minting a new one.
+  // Without this, a refreshing host would silently lose host control:
+  // Session.hostId would keep pointing at the old, now-permanently-
+  // disconnected participant.
+  const existing = message.participantId ? session.participants.find((p) => p.id === message.participantId) : undefined;
+
+  let participantId: string;
+  if (existing) {
+    participantId = existing.id;
+    existing.displayName = message.displayName;
+    existing.connectionStatus = 'connected';
+    // The participant's own renderer/headless instance is gone after a
+    // refresh (fresh page load) — their part choice is kept, but readiness
+    // must re-derive from scratch rather than stay stale at 'ready'.
+    existing.readiness = 'no-part';
+  } else {
+    participantId = crypto.randomUUID();
+    session.participants.push({
+      id: participantId,
+      displayName: message.displayName,
+      role: 'member',
+      connectionStatus: 'connected',
+      selectedPart: null,
+      readiness: 'no-part',
+    });
+  }
 
   ctx.connections.attach(socket, { sessionCode: session.code, participantId });
   ctx.sessionStore.markActive(session.code);

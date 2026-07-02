@@ -1,28 +1,23 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { connect } from '../ws-client';
+  import { loadStoredSession } from '../session-persistence';
 
   let displayName = '';
   let joinCode = '';
 
-  const STORAGE_KEY = 'sync-tab-scroll:session';
-
   onMount(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return;
-    const { code, displayName: storedName } = JSON.parse(stored);
-    if (code && storedName) connect(storedName, code);
+    const stored = loadStoredSession();
+    if (stored) connect(stored.displayName, stored.code, stored.participantId);
   });
 
   function createSession() {
     if (!displayName) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ displayName }));
     connect(displayName);
   }
 
   function joinSession() {
     if (!displayName || !joinCode) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ code: joinCode, displayName }));
     connect(displayName, joinCode);
   }
 </script>

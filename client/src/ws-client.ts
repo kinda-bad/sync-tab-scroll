@@ -52,11 +52,11 @@ export function createWsClient(url: string): WsClient {
  * one WsClient every view reads through `clientStore.wsClient`, instead of
  * each view opening its own socket and session independently.
  */
-export function connect(displayName: string, joinCode?: string): void {
+export function connect(displayName: string, joinCode?: string, participantId?: string): void {
   const wsClient = createWsClient(`ws://${location.hostname}:8080`);
   clientStore.update((s) => ({ ...s, wsClient }));
   if (joinCode) {
-    wsClient.send({ type: 'session-join', code: joinCode, displayName });
+    wsClient.send({ type: 'session-join', code: joinCode, displayName, participantId });
   } else {
     wsClient.send({ type: 'session-create', displayName });
   }
