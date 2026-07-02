@@ -1,7 +1,7 @@
 ---
 plan: plan-song-catalog-selection-2026-07-02.md
 generated: 2026-07-02
-status: ready
+status: in-progress
 ---
 
 # Tasks
@@ -20,5 +20,21 @@ status: ready
 
 ## Phase 3: ui.md gap — playback transport controls
 
-- [ ] T007 [artifacts: datamodel, infrastructure, ui] Add host-only pause/resume to `client/src/views/Playback.svelte`: derive `isHost` (`$clientStore.session?.hostId === $clientStore.selfParticipantId`) and `isRunning` (`$clientStore.session?.playbackState.status === 'running'`) reactively (same pattern as the existing `isLyricsPart` derivation added this session), and show a host-only button that sends `$clientStore.wsClient?.send({ type: 'playback-control', action: isRunning ? 'pause' : 'resume' })` — toggling label between "Pause"/"Resume" based on `isRunning`. Server-side `server/src/handlers/playback-control.ts` already handles both actions; this is client UI only. Test: real browser session — host clicks Pause, all participants' tab/lyrics view actually stops advancing (verify via the existing drift-correction mechanism, which already reacts to `playbackState.status`); host clicks Resume, playback continues from the same position.
+- [x] T007 [artifacts: datamodel, infrastructure, ui] Add host-only pause/resume to `client/src/views/Playback.svelte`: derive `isHost` (`$clientStore.session?.hostId === $clientStore.selfParticipantId`) and `isRunning` (`$clientStore.session?.playbackState.status === 'running'`) reactively (same pattern as the existing `isLyricsPart` derivation added this session), and show a host-only button that sends `$clientStore.wsClient?.send({ type: 'playback-control', action: isRunning ? 'pause' : 'resume' })` — toggling label between "Pause"/"Resume" based on `isRunning`. Server-side `server/src/handlers/playback-control.ts` already handles both actions; this is client UI only. Test: real browser session — host clicks Pause, all participants' tab/lyrics view actually stops advancing (verify via the existing drift-correction mechanism, which already reacts to `playbackState.status`); host clicks Resume, playback continues from the same position.
+
+  **Reconciled 2026-07-03 (`/ardd-converge`)**: done, but not where this task
+  describes. An intervening visual-redesign pass (separate branch, merged
+  before this reconciliation) moved host controls out of individual views
+  and into a single persistent `Bar` component (`client/src/components/
+  Bar.svelte`) rendered from `App.svelte`, present in both Lobby and
+  Playback — so `isRunning`/`togglePause` now live in `App.svelte`, not
+  `Playback.svelte`. The requirement (host-only Pause/Resume, verified live
+  in a real two-tab browser session, tab/lyrics view actually stops
+  advancing) is satisfied; the file location just moved for unrelated
+  architectural reasons.
 - [ ] T008 [artifacts: datamodel, infrastructure, ui] Wire host-gated, paused-only seek using alphaTab's native click-to-seek (already active via `settings.player.enableUserInteraction`, default `true`, never overridden in `tab-renderer.ts` — confirmed no custom seek UI needs building, per constitution Principle V). In `client/src/playback-engine.ts`'s `ensurePlaybackEngine`, add a `clientStore` subscription (alongside the existing drift-correction one) that sets `api.settings.player.enableUserInteraction = (session.hostId === selfParticipantId) && session.playbackState.status !== 'running'` and calls `api.updateSettings()` whenever that computed value changes (guard against calling `updateSettings()` on every tick — only when the boolean actually flips). Add an `api.playerPositionChanged.on((e) => { ... })` listener that, when `e.isSeek` is true and the current participant is host, sends `{ type: 'playback-control', action: 'seek', tickPosition: e.currentTick }`. Test: real browser session, two tabs — with playback paused, host clicks a beat on the rendered tab; confirm both the host's and a participant's `tickPosition` update to match. Also explicitly verify no feedback loop: after the seek settles, leave both tabs idle for a few seconds and confirm no repeated seek messages are sent (check via a temporary console log or network inspection) — the risk is that `correctDrift()`'s own programmatic `api.tickPosition = ...` assignment could itself fire `playerPositionChanged` with `isSeek: true` and re-trigger a broadcast; if that happens, gate the listener to ignore position changes that match the just-applied server tick (e.g. track the last tick sent via drift correction and skip if `e.currentTick` matches it).
+
+  **Reconciled 2026-07-03 (`/ardd-converge`)**: not started. `enableUserInteraction`
+  is still unmodified in `tab-renderer.ts` (premise of this task still holds)
+  and no `seek` handling exists in `playback-engine.ts`.
+- [x] T009 [artifacts: datamodel, infrastructure, ui] *(gap found during `/ardd-converge`, not originally tasked)* Add a host-only Stop control, distinct from Pause: `packages/shared/src/messages.ts`'s `playback-control` action union gained `'stop'`; `server/src/handlers/playback-control.ts`'s `stop` case sets `playbackState.status = 'stopped'` and resets `tickPosition` to 0 (a full stop, not pause-in-place); `client/src/ws-client.ts` added the `playback → lobby` view transition keyed specifically on `'stopped'` (not `'paused'`, which stays in Playback); `client/src/components/Bar.svelte`'s host controls include a Stop button alongside Pause/Resume. This resolved a real gap surfaced by manual testing this session — once a session entered Playback there was previously no way back to the Lobby at all. Verified live: Stop returns to Lobby with song/parts still selected, ready to Start again.
