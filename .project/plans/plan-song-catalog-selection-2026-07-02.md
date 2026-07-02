@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: song-catalog-selection
 created: 2026-07-02
 ---
