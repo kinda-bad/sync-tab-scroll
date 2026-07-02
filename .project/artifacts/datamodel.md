@@ -42,7 +42,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| code | string | Short join code, shown to participants |
+| code | string | Short join code, shown to participants. 4 characters, drawn from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (uppercase letters + digits, minus `I`/`O`/`0`/`1` — visually ambiguous when read off one screen and typed into another) (`server/src/session-store.ts`). 4 was chosen as small and easy to communicate verbally/by glance; the charset has 32 symbols, so collision risk only becomes a real concern well beyond this app's expected concurrent-session scale. Lengthen if that scale need ever arises — the generator and this note should be updated together |
 | selectedSong | string \| null | A `CatalogSong.id` (song slug), or null before the host has picked a song |
 | availableParts | CatalogPart[] | Parts for the selected song |
 | participants | Participant[] | |
