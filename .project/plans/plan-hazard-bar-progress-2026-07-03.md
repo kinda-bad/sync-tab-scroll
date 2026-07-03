@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: hazard-bar-progress
 created: 2026-07-03
 features: []
