@@ -1,10 +1,44 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import { WebSocket } from 'ws';
 
 export interface StoredSession {
   code: string;
   displayName: string;
   participantId: string;
+}
+
+/**
+ * Navigates a fresh page to the app, clicks through the Landing chooser's
+ * "Create a session" choice, and submits the create form with the given
+ * name — the sequence every spec previously duplicated inline before the
+ * chooser/split-form Landing restructure.
+ */
+export async function createSessionAsHost(page: Page, name: string): Promise<void> {
+  await page.goto('http://localhost:4173/');
+  await page.getByRole('button', { name: 'Create a session' }).click();
+  await page.getByPlaceholder('Musician').fill(name);
+  await page.getByRole('button', { name: 'Create session' }).click();
+}
+
+/**
+ * Opens a new browser context/page, clicks through the Landing chooser's
+ * "Join a session" choice, and submits the join form with the given name +
+ * code — mirrors the shape of the inline `joinAsMember` helpers previously
+ * duplicated across `multi-participant.spec.ts`/`host-controls.spec.ts`.
+ */
+export async function joinSessionAsMember(
+  browser: Browser,
+  name: string,
+  code: string,
+): Promise<{ context: BrowserContext; page: Page }> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/');
+  await page.getByRole('button', { name: 'Join a session' }).click();
+  await page.getByPlaceholder('Musician').fill(name);
+  await page.getByLabel('Session code').fill(code);
+  await page.getByRole('button', { name: 'Join' }).click();
+  return { context, page };
 }
 
 /**
