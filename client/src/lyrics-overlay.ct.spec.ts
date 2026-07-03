@@ -46,6 +46,11 @@ test('centers the active syllable horizontally within the strip', async ({ mount
 
   await drive(page, 150); // activates "you"
 
+  // .lyrics-track's transform is CSS-transitioned (motifs.css, 0.25s ease)
+  // so the centered position isn't reflected in layout the instant the
+  // style is set — wait for the transition to settle before measuring.
+  await page.waitForTimeout(300);
+
   const activeBox = await page.locator('.lyric-syllable.at-highlight').boundingBox();
   const overlayBox = await page.locator('.lyrics-overlay').boundingBox();
 

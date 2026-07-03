@@ -133,13 +133,14 @@
 }
 
 /* ── In-tab lyrics overlay ────────────────────────────────────────────────
-   lyrics-overlay.ts builds .lyrics-overlay (a flowing strip of
-   .lyric-syllable spans) as plain DOM, not Svelte-templated — same
-   reasoning as the cursor rules above, global unscoped CSS rather than a
-   component's scoped <style>. .lyrics-overlay-container is Svelte-
-   templated (App.svelte and this same test harness both use it) but is
-   defined here too rather than scoped, so any container using this class
-   gets consistent positioning behavior without duplicating the rule.
+   lyrics-overlay.ts builds .lyrics-overlay (a single-line horizontal
+   ticker strip containing one .lyrics-track holding all .lyric-syllable
+   spans) as plain DOM, not Svelte-templated — same reasoning as the
+   cursor rules above, global unscoped CSS rather than a component's
+   scoped <style>. .lyrics-overlay-container is Svelte-templated
+   (App.svelte and this same test harness both use it) but is defined
+   here too rather than scoped, so any container using this class gets
+   consistent positioning behavior without duplicating the rule.
 
    `position: fixed` (viewport-relative), not `absolute` within the
    container: `.engine-containers` is as tall as the *entire* rendered
@@ -147,7 +148,12 @@
    anchored to its bottom would sit far below the fold, invisible unless
    scrolled all the way down — verified live in a real browser, not just
    reasoned about. Fixed positioning keeps it genuinely "on top of the
-   tab notation" (ui.md) regardless of scroll position while playing. */
+   tab notation" (ui.md) regardless of scroll position while playing.
+
+   .lyrics-overlay is the fixed-height viewport strip (overflow hidden,
+   no wrapping); .lyrics-track is the inner element that actually moves —
+   its transform: translateX(...) is set by lyrics-overlay.ts to keep the
+   active syllable centered in the strip (plan-lyrics-ticker-2026-07-03.md). */
 .lyrics-overlay-container {
   position: relative;
   /* Clicks must reach the tab canvas underneath for click-to-seek. */
@@ -158,17 +164,23 @@
   left: 0;
   right: 0;
   bottom: calc(var(--bar-height, 0px) + var(--space-4));
+  height: var(--lyrics-strip-height, 3rem);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.25em;
+  align-items: center;
+  white-space: nowrap;
   padding: var(--space-2) var(--space-3);
   background: rgba(10, 10, 10, 0.75);
   font-family: var(--font-mono);
   font-size: 0.9375rem;
   color: var(--ink-dim);
-  max-height: 40%;
   overflow: hidden;
   pointer-events: none;
+}
+.lyrics-track {
+  display: inline-flex;
+  white-space: nowrap;
+  gap: 0 0.25em;
+  transition: transform 0.25s ease;
 }
 .lyric-syllable.at-highlight {
   color: var(--riot);
