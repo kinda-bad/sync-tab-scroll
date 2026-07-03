@@ -93,6 +93,8 @@
   }
 
   function startPlayback() {
+    songPartModalOpen = false;
+    settingsModalOpen = false;
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'start' });
   }
 
