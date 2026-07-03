@@ -1,7 +1,7 @@
 ---
 plan: plan-test-coverage-2026-07-02.md
 generated: 2026-07-02
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -38,4 +38,6 @@ status: in-progress
 
 ## Phase 4: Full suite verification
 
-- [ ] T022 Run `pnpm --filter client test` and `pnpm --filter server test` together (or `pnpm -r test` if that resolves cleanly across the workspace) and confirm every test file from Phases 2-3 passes with no failures, and no test leaks state into another (e.g. via shared `process.env`, fake timers not restored, or a shared `SessionStore` instance). Fix any such leakage found. Report the final total test/file count across both packages.
+- [x] T022 Run `pnpm --filter client test` and `pnpm --filter server test` together (or `pnpm -r test` if that resolves cleanly across the workspace) and confirm every test file from Phases 2-3 passes with no failures, and no test leaks state into another (e.g. via shared `process.env`, fake timers not restored, or a shared `SessionStore` instance). Fix any such leakage found. Report the final total test/file count across both packages.
+
+  **Result:** `pnpm -r test` resolves cleanly. 21 test files, 81 tests total (6 files/25 tests client, 15 files/56 tests server), all passing, confirmed stable across 3 consecutive full-suite runs. No leakage found: `config.test.ts` restores `process.env` in `afterEach`; timer-faking tests (`session-store.test.ts`, `toast-store.test.ts`) restore real timers in `afterEach`; every handler test constructs its own fresh `SessionStore`/`ConnectionRegistry` rather than sharing one across tests.
