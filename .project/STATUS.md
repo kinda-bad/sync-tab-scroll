@@ -57,12 +57,12 @@ these fixes until the next `/ardd-verify` run confirms them against code.
 
 ## Plans
 
-- `plan-theme-persistence-2026-07-03.md` — **draft**, not yet tasked/approved.
-  Branch `theme-persistence` (current worktree). Fixes a live-browser-confirmed
-  bug: `ensurePlaybackEngine()` hardcodes a fresh engine's theme to `'dark'`
-  instead of reading the current/persisted value, so a light-mode preference
-  sticks for the app chrome but silently reverts to dark for the tab notation
-  on every fresh load.
+- `plan-theme-persistence-2026-07-03.md` — **approved**, tasked (5 tasks,
+  3 phases). Branch `theme-persistence` (current worktree). Fixes a
+  live-browser-confirmed bug: `ensurePlaybackEngine()` hardcodes a fresh
+  engine's theme to `'dark'` instead of reading the current/persisted
+  value, so a light-mode preference sticks for the app chrome but
+  silently reverts to dark for the tab notation on every fresh load.
 - `plan-settings-modal-redesign-2026-07-03.md`, `plan-session-create-selection-2026-07-03.md`,
   `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
   `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
@@ -78,7 +78,7 @@ test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
 playback-sync-fixes, lyrics-ticker, settings-modal-redesign,
 session-create-selection: complete**, all merged to `main`.
 
-**theme-persistence: drafted, not yet approved/tasked.** Branch
+**theme-persistence: approved and tasked, not yet implemented.** Branch
 `theme-persistence` (separate worktree, off `main`).
 
 Full suite green on merged `main`: client vitest 6 files/25 tests, client
@@ -113,8 +113,8 @@ the range once 1Password is available, before pushing.
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-theme-persistence-2026-07-03.md` to
-approve and task it, then `/ardd-implement`. Separately: a human still
-needs to manually verify the two-participant playback and lyrics-ticker
-scroll/centering behavior in a real browser (not automatable here), and
-the unsigned commit range needs re-signing before `main` is pushed.
+Run `/ardd-implement` against `tasks-theme-persistence-d738.md`.
+Separately: a human still needs to manually verify the two-participant
+playback and lyrics-ticker scroll/centering behavior in a real browser
+(not automatable here), and the unsigned commit range needs re-signing
+before `main` is pushed.
