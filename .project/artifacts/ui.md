@@ -20,9 +20,16 @@ SvelteKit — see infrastructure.md).
 
 ## Landing View
 
-Create a new session or join an existing one by code. Persists
-session code + display name (e.g. to localStorage) so a refresh can
-silently rejoin.
+An initial chooser ("Create a session" / "Join a session") leads to one of
+two separate forms, each with its own "Your name" input: the create form
+just needs a name; the join form additionally needs a session code. Each
+form is a native `<form>` with its own `onsubmit`, so pressing Enter
+submits that form directly — no shared name field and no keydown-guessing
+between two co-located actions, since only one form is ever shown at a
+time. Both forms have a small "Back" control returning to the chooser.
+Persists session code + display name (e.g. to localStorage) so a refresh
+can silently rejoin, bypassing the chooser entirely when a stored session
+exists.
 
 ## Lobby View
 

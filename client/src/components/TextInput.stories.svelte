@@ -9,4 +9,4 @@
 </script>
 
 <Story name="DisplayName" args={{ label: 'Your name', placeholder: 'Musician' }} />
-<Story name="JoinCode" args={{ label: 'Session code', placeholder: 'ABC123', uppercase: true }} />
+<Story name="JoinCode" args={{ label: 'Session code', placeholder: 'AB12', uppercase: true }} />

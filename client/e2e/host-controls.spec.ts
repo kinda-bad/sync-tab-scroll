@@ -1,26 +1,14 @@
-import { test, expect, type Browser } from '@playwright/test';
-import { readStoredSession, sendAsParticipant } from './helpers';
-
-async function joinAsMember(browser: Browser, code: string) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Member');
-  await page.getByLabel('Session code').fill(code);
-  await page.getByRole('button', { name: 'Join' }).click();
-  return { context, page };
-}
+import { test, expect } from '@playwright/test';
+import { createSessionAsHost, joinSessionAsMember, readStoredSession, sendAsParticipant } from './helpers';
 
 test('host Start/Pause/Resume/Stop transitions are reflected for a joined member', async ({ page, browser }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
   await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
   const hostSession = await readStoredSession(page);
 
-  const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+  const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics
   await memberPage.getByRole('button', { name: 'Close' }).click();
 
@@ -51,9 +39,7 @@ test('host Start/Pause/Resume/Stop transitions are reflected for a joined member
 });
 
 test('host removing a participant removes them from the other participant list', async ({ page, browser }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
   // The song/part modal is forced open (non-dismissible) until this
   // participant has both a song and a part — which also blocks the
   // settings-cog control behind its backdrop. Select both first so the
@@ -64,7 +50,7 @@ test('host removing a participant removes them from the other participant list',
   await page.getByRole('button', { name: 'Close' }).click();
   const hostSession = await readStoredSession(page);
 
-  const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+  const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
 
   // The participant list now lives behind the settings-cog modal's
   // Participants tab (SettingsModal.svelte), not inline in the Lobby body.
