@@ -4,16 +4,24 @@
   import Button from './Button.svelte';
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
+  import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
   let activeTab: 'participants' | 'settings' = 'participants';
   let lobbyCursorInput = 0;
+  let theme: StoredTheme = loadStoredTheme() ?? 'dark';
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(theme);
+    persistTheme(theme);
+  }
 
   function setLobbyCursor() {
     wsClient?.send({ type: 'lobby-cursor-set', tickPosition: lobbyCursorInput });
@@ -67,7 +75,8 @@
       <p class="hint">Connecting…</p>
     {/if}
   {:else}
-    <!-- Theme control added in Phase 2 (T010) -->
+    <span class="section-label">Theme</span>
+    <Button variant="ghost" label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleTheme} />
   {/if}
 </Modal>
 
