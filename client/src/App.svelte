@@ -66,9 +66,9 @@
   $: readyCount = session?.participants.filter((p) => p.readiness === 'ready').length ?? 0;
   $: totalCount = session?.participants.length ?? 0;
   // Aggregate readiness in the Lobby; once actually playing the hazard
-  // strip reads as fully "live" rather than tracking exact song position
-  // (which would need alphaTab duration wired through — a later pass).
-  $: barProgress = $clientStore.view === 'playback' ? 1 : totalCount > 0 ? readyCount / totalCount : 0;
+  // strip tracks real song position via clientStore.playbackProgress
+  // (playback-engine.ts's playerPositionChanged subscription).
+  $: barProgress = $clientStore.view === 'playback' ? $clientStore.playbackProgress : totalCount > 0 ? readyCount / totalCount : 0;
 
   // Song/part selection lives in a modal (ui.md Lobby View), not inline —
   // forced open whenever either is missing (pre-playback only; once

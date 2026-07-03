@@ -22,9 +22,13 @@ status: ready
 
   Implemented exactly as described — a third, standalone `api.playerPositionChanged.on(...)` subscription in `ensurePlaybackEngine()`, unconditional, computing `e.endTime > 0 ? e.currentTime / e.endTime : 0` and writing it via `clientStore.update`. T002's test passes (see T002's note for the driving-mechanism deviation). Full `test:ct` suite (21 tests) passes with no regressions.
 
-- [ ] T004 In `client/src/App.svelte`, change the `barProgress` derivation's `'playback'` branch from the literal `1` to `$clientStore.playbackProgress`: `$: barProgress = $clientStore.view === 'playback' ? $clientStore.playbackProgress : totalCount > 0 ? readyCount / totalCount : 0;`.
+- [x] T004 In `client/src/App.svelte`, change the `barProgress` derivation's `'playback'` branch from the literal `1` to `$clientStore.playbackProgress`: `$: barProgress = $clientStore.view === 'playback' ? $clientStore.playbackProgress : totalCount > 0 ? readyCount / totalCount : 0;`.
 
-- [ ] T005 [artifacts: ui] No `ui.md` content change needed — confirm rather than silently skip: `ui.md` never documented the hardcoded-`1` placeholder as intended design (it wasn't mentioned there at all), so this is a pure implementation fix bringing the code in line with what a "playback progress" bar should already do, not a documented-design reversal requiring an artifact edit.
+  Changed exactly as described; also updated the adjacent comment (previously explaining the "1"/"live" placeholder) to describe the real tracking now in place.
+
+- [x] T005 [artifacts: ui] No `ui.md` content change needed — confirm rather than silently skip: `ui.md` never documented the hardcoded-`1` placeholder as intended design (it wasn't mentioned there at all), so this is a pure implementation fix bringing the code in line with what a "playback progress" bar should already do, not a documented-design reversal requiring an artifact edit.
+
+  Confirmed via `grep -rn "barProgress\|hazard" .project/artifacts/ui.md` — no reference to the hardcoded-1 placeholder exists in `ui.md`. No artifact edit needed.
 
 ## Phase 2: Manual verification
 
