@@ -52,10 +52,12 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   await page.getByRole('button', { name: 'Create session' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
+  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's
+  await memberPage.getByRole('button', { name: 'Close' }).click();
 
   await page.getByRole('spinbutton').fill('500');
   await page.getByRole('button', { name: 'Set lobby cursor' }).click();

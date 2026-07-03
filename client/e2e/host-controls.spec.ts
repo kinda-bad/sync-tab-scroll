@@ -17,10 +17,12 @@ test('host Start/Pause/Resume/Stop transitions are reflected for a joined member
   await page.getByRole('button', { name: 'Create session' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
+  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics
+  await memberPage.getByRole('button', { name: 'Close' }).click();
 
   // Drive readiness past the audio-decode gate (see single-participant.spec.ts's scope note).
   await sendAsParticipant(hostSession, { type: 'readiness-update', readiness: 'ready' });

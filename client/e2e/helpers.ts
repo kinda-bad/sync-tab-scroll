@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { WebSocket } from 'ws';
 
 export interface StoredSession {
@@ -7,8 +7,17 @@ export interface StoredSession {
   participantId: string;
 }
 
-/** Reads the {code, displayName, participantId} session-persistence.ts writes to localStorage. */
+/**
+ * Reads the {code, displayName, participantId} session-persistence.ts
+ * writes to localStorage — polls briefly rather than reading once, since
+ * the write happens via a reactive clientStore subscription, not
+ * synchronously with whatever UI action (e.g. clicking "Create session")
+ * triggered it.
+ */
 export async function readStoredSession(page: Page): Promise<StoredSession> {
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('sync-tab-scroll:session')), { timeout: 5_000 })
+    .not.toBeNull();
   const raw = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:session'));
   if (!raw) throw new Error('No session in localStorage yet');
   return JSON.parse(raw);

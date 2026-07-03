@@ -9,11 +9,13 @@
   import Bar from './components/Bar.svelte';
   import Button from './components/Button.svelte';
   import ReadinessBadge from './components/ReadinessBadge.svelte';
+  import SongPartModal from './components/SongPartModal.svelte';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
+  let songPartModalOpen = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -66,6 +68,24 @@
   // (which would need alphaTab duration wired through — a later pass).
   $: barProgress = $clientStore.view === 'playback' ? 1 : totalCount > 0 ? readyCount / totalCount : 0;
 
+  // Song/part selection lives in a modal (ui.md Lobby View), not inline —
+  // forced open whenever either is missing (pre-playback only; once
+  // playback starts every participant necessarily already has a part).
+  // One-directional: this only ever forces `songPartModalOpen` to `true`,
+  // never back to `false` — otherwise the instant selection completes and
+  // `needsSongOrPart` flips false, an OR'd derived value would snap the
+  // modal shut on its own before the user ever chose to close it.
+  $: needsSongOrPart = $clientStore.view === 'lobby' && (!session?.selectedSong || !hasPart);
+  $: if (needsSongOrPart) songPartModalOpen = true;
+
+  function toggleSongPartModal() {
+    songPartModalOpen = !songPartModalOpen;
+  }
+
+  function closeSongPartModal() {
+    songPartModalOpen = false;
+  }
+
   function startPlayback() {
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'start' });
   }
@@ -106,6 +126,9 @@
       {/if}
     {/snippet}
     {#snippet controls()}
+      {#if $clientStore.view === 'lobby'}
+        <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
+      {/if}
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
           <Button variant="riot" label="Start" disabled={!session.selectedSong} onclick={startPlayback} />
@@ -122,6 +145,8 @@
     {/snippet}
   </Bar>
 {/if}
+
+<SongPartModal open={songPartModalOpen} dismissible={!needsSongOrPart} onClose={closeSongPartModal} />
 
 <Toasts />
 

@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-02
+last_updated: 2026-07-03
 diagram_status: stale
 ---
 
@@ -26,24 +26,30 @@ silently rejoin.
 
 ## Lobby View
 
-Host picks a song from the catalog (name + artist per entry, delivered
-once per client on session create/join — infrastructure.md, datamodel.md)
-via a simple list picker; selecting an entry broadcasts the choice to
-every participant in the session so the part picker below reflects the
-newly-selected song's `Session.availableParts`. Re-selecting a different
-song while participants already have parts
-chosen resets those choices (a part index/id from the old song's
-`CatalogSong.parts` has no guaranteed meaning against the new song) —
-each participant's `selectedPart` reverts to `null` and readiness to
-`'no-part'`, same as first joining. Each participant picks their part and
-signals readiness. The part picker includes a **Lyrics** option alongside
-the instrument parts — selectable like any other part, but disabled when
-the song has no `.lrc` file (datamodel.md `CatalogSong.lyricsLrc`). The
-in-tab lyrics overlay (Playback View, below) is gated separately on
-`CatalogSong.lyricsTrackIndex`, which is only present when the song's lyrics
-came from the source GP file directly — a song whose `.lrc` came from the
-lrclib.net fallback has the Lyrics part selectable but no in-tab overlay
-available on any instrument part (pipeline.md). Shows live
+Song and part selection happens in a modal, not inline in the Lobby body
+— opened via a "Song & part" control in the persistent nav bar, and
+opened automatically (non-dismissibly, while either is unset) whenever
+the current participant has no song selected for the session or no part
+selected for themselves; once both are set, the modal becomes dismissible
+and stays closed until reopened via the nav control. Inside it: host
+picks a song from the catalog (name + artist per entry, delivered once
+per client on session create/join — infrastructure.md, datamodel.md) via
+a simple list picker; selecting an entry broadcasts the choice to every
+participant in the session so the part picker reflects the newly-selected
+song's `Session.availableParts`. Re-selecting a different song while
+participants already have parts chosen resets those choices (a part
+index/id from the old song's `CatalogSong.parts` has no guaranteed
+meaning against the new song) — each participant's `selectedPart`
+reverts to `null` and readiness to `'no-part'`, same as first joining.
+Each participant picks their part and signals readiness. The part picker
+includes a **Lyrics** option alongside the instrument parts — selectable
+like any other part, but disabled when the song has no `.lrc` file
+(datamodel.md `CatalogSong.lyricsLrc`). The in-tab lyrics overlay
+(Playback View, below) is gated separately on `CatalogSong.lyricsTrackIndex`,
+which is only present when the song's lyrics came from the source GP file
+directly — a song whose `.lrc` came from the lrclib.net fallback has the
+Lyrics part selectable but no in-tab overlay available on any instrument
+part (pipeline.md). Outside the modal, the Lobby body shows live
 participant list with readiness state. Host can remove participants. A
 "lobby cursor" lets the host point at a position in the score for others
 to see before playback starts. A host-only "Spotlight mode" toggle sits
@@ -110,8 +116,9 @@ paused; participants' views don't.
   actually observe everyone reach `ready` before starting; the renderer/
   headless instance and its containers persist across the Lobby→Playback
   transition rather than being torn down and recreated.
-- **Empty**: no song selected yet — lobby shows the catalog picker only,
-  part picker/readiness list hidden until `Session.selectedSong` is set.
+- **Empty**: no song selected yet — the song/part modal auto-opens
+  showing the catalog picker only; the part picker within it appears
+  once `Session.selectedSong` is set.
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,
   not-host action attempts — surfaced as toasts, not blocking modals.
 
