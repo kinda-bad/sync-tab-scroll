@@ -80,18 +80,29 @@ cursor input/Set/Clear buttons, Spotlight-mode toggle button) — same
 (`tasks-ui-polish-pass-b013.md` T011). The Settings tab is new: a single
 dark/light toggle control.
 
-**Theme control, and a pre-existing gap this closes**: `playback-engine.ts`
-already exports a `toggleTheme()` function (flips `state.theme` and calls
-`tab-renderer.ts`'s `setTheme(api, theme)` on the active alphaTab
-instance) — but nothing in `App.svelte` currently calls it, so it's dead
-code today; it also only ever handles the tab-notation half of theming,
-never the document-level `data-theme` attribute that drives the rest of
-the app's CSS palette (`tokens.css`'s `:root[data-theme='...']` blocks,
-brand.md). This plan introduces a new small module, `client/src/theme.ts`
-(mirroring `session-persistence.ts`'s shape: a `StoredTheme` type, a
-`loadStoredTheme()`/`persistTheme()` pair against `localStorage`, and an
-`applyTheme(theme)` that sets `document.documentElement.dataset.theme`),
-called on app startup (persisted preference, default `'dark'` if none
+**Theme control — revised mid-implementation, real pre-existing control
+found**: the original version of this plan stated `playback-engine.ts`'s
+`toggleTheme()` was dead code and that the app had no existing in-app
+theme control. Both were wrong — `client/src/views/Playback.svelte`
+already has a live "Light mode / Dark mode" button that calls
+`toggleTheme()` and sets `document.documentElement.dataset.theme`
+directly, inline, in the Playback view's own controls. It just doesn't
+persist across a refresh, and — crucially — the settings-cog this plan
+adds is Lobby-only, so simply deleting `Playback.svelte`'s button without
+another fix would leave Playback view with no theme control at all, a
+real regression. Resolved with the user: the settings-cog (and
+`SettingsModal`) becomes reachable from **both** the Lobby and Playback
+views (not Lobby-only as originally stated), and `Playback.svelte`'s
+ad-hoc button/local `theme` state/direct `toggleTheme()`/`dataset.theme`
+wiring is removed entirely, replaced by the same shared, persisted
+Settings-tab control described below — one control, reachable
+everywhere, instead of two overlapping ones (only one of which
+persisted). This plan still introduces a new small module,
+`client/src/theme.ts` (mirroring `session-persistence.ts`'s shape: a
+`StoredTheme` type, a `loadStoredTheme()`/`persistTheme()` pair against
+`localStorage`, and an `applyTheme(theme)` that sets
+`document.documentElement.dataset.theme`), called on app startup
+(persisted preference, default `'dark'` if none
 stored — matching `tokens.css`'s existing default) and from the Settings
 tab's toggle. `applyTheme()` also calls `playback-engine.ts`'s existing
 `toggleTheme()`-adjacent logic — refactored slightly from a toggle into
