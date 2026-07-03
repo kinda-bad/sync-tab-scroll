@@ -92,3 +92,8 @@ Why: before designing a custom toggle, research whether `@coderline/alphatab` al
 _Slug: `count-in-toggle` · Status: backlogged · Logged 2026-07-02_
 The host can turn the pre-playback count-in on or off (`Session.countInEnabled`, already wired to alphaTab's `countInVolume` in `playback-sync.ts`, but nothing currently lets the host set the flag — no message type or server handler exists for it).
 Why: same research question as metronome-toggle — check alphaTab's own count-in UI/mechanism before building a custom one (constitution Principle V). Likely resolved together with `metronome-toggle` in the same `/ardd-plan` pass, since both need the same session-settings message/handler shape.
+
+## Test coverage backfill
+_Slug: `test-coverage-backfill` · Status: implemented · Logged 2026-07-02 · Plan: plan-test-coverage-2026-07-02.md · Tasks: tasks-test-coverage-bfe8.md_
+Bring the codebase into compliance with constitution Principle VII (Test-First Development): `client` and `packages/shared` have no test runner configured and zero tests; `server` has coverage for only one handler (`spotlight-mode-set`) out of eight.
+Why: logged via `/ardd-verify` (see `DEFECTS.md`'s constitution.md entry) — Principle VII was added mid-implementation of `plan-lobby-cursor-modes-2026-07-03.md` specifically because a task needed a test with no runner/harness to write it against. This entry tracks closing the resulting gap deliberately, rather than backfilling it ad hoc.
