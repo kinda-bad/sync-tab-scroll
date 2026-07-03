@@ -1,7 +1,7 @@
 ---
 plan: plan-playback-sync-fixes-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -54,4 +54,6 @@ status: ready
 
 ## Phase 4: Full suite verification
 
-- [ ] T011 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, `pnpm --filter client test:e2e`, and `pnpm --filter server test`. Confirm every test from Phases 1-3 passes alongside the existing suite (102 tests total as of the last full count, from `test-coverage-backfill`/`playwright-client-coverage`/`ui-polish-pass`), with no regressions. Report final test/file counts per package.
+- [x] T011 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, `pnpm --filter client test:e2e`, and `pnpm --filter server test`. Confirm every test from Phases 1-3 passes alongside the existing suite (102 tests total as of the last full count, from `test-coverage-backfill`/`playwright-client-coverage`/`ui-polish-pass`), with no regressions. Report final test/file counts per package.
+
+  **All green, no regressions.** Final counts: client vitest 6 files/25 tests (unchanged); client CT 12 files/15 tests (+3 in `playback-engine.ct.spec.ts` for the new reporter); client E2E 4 files/9 tests (unchanged file/test count — the join-code assertions were added into an existing test, not a new one); server vitest 16 files/58 tests (+1 file/+2 tests for `playback-tick-report.test.ts`). Total: 107 tests across both packages (was 102). One environmental hiccup during this run, unrelated to any code change: a stray leftover dev server from an earlier session was still listening on :8080 without the fixture-catalog env var, which Playwright's `reuseExistingServer` picked up and caused one E2E test (`multi-participant.spec.ts`) to see real catalog content instead of the synthetic fixture — killed the stray process and reran; all 9 E2E tests then passed cleanly.
