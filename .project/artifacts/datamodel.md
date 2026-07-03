@@ -1,7 +1,7 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-07-02
+last_updated: 2026-07-03
 diagram_status: stale
 ---
 
@@ -47,7 +47,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | availableParts | CatalogPart[] | Parts for the selected song |
 | participants | Participant[] | |
 | hostId | string | Participant id with host privileges |
-| playbackState | PlaybackState | Server-authoritative clock state |
+| playbackState | PlaybackState | Clock state the server stores and relays; `tickPosition` itself is host-client-authoritative, not server-computed (infrastructure.md) |
 | countInEnabled | boolean | |
 | metronomeEnabled | boolean | |
 | lobbyCursorTick | number \| null | MIDI tick position the host is pointing at pre-playback (same unit as `PlaybackState.tickPosition`); null once playback starts. Only force-follows every participant's view while `spotlightMode` is true — otherwise each participant browses their own rendered tab independently |
@@ -91,9 +91,9 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | Field | Type | Notes |
 |-------|------|-------|
 | status | 'stopped' \| 'running' \| 'paused' | |
-| tickPosition | number | MIDI tick position — alphaTab's native score-position unit (`api.tickPosition`), instrument-agnostic and density-agnostic |
+| tickPosition | number | MIDI tick position — alphaTab's native score-position unit (`api.tickPosition`), instrument-agnostic and density-agnostic. Host-client-authoritative, not server-computed: the server never parses the GP file, so it has no tempo/PPQ knowledge to derive tick position from elapsed time itself. While playback is `'running'`, the host's client periodically self-reports its own real, continuously-advancing `api.tickPosition` (`playback-tick-report` message, ~1/sec); the server just stores whatever it's told and relays it via the existing periodic broadcast (infrastructure.md) |
 | bpm | number | Informational — current tempo for display (e.g. lobby/playback tempo readout). Not used for tick-to-time math; each client's alphaTab instance derives timing from the score's own tempo map |
-| serverTimestamp | number | Wall-clock time this `tickPosition` was authoritative. Each participant's alphaTab instance (visible or headless, per ui.md) drives its own local clock from playback start and periodically re-syncs `tickPosition`/`timePosition` against this rather than being continuously driven by the server (infrastructure.md) |
+| serverTimestamp | number | Wall-clock time the host last reported `tickPosition` (refreshed by the server alongside it on each `playback-tick-report`). Each participant's alphaTab instance (visible or headless, per ui.md) drives its own local clock from playback start and periodically re-syncs `tickPosition`/`timePosition` against this rather than being continuously driven by the server (infrastructure.md). Using `serverTimestamp` to extrapolate/compensate for propagation latency is a deferred future refinement, not implemented yet |
 
 ## Normalization Rules
 

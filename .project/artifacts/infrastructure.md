@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-01
+last_updated: 2026-07-03
 diagram_status: stale
 ---
 
@@ -35,20 +35,42 @@ per-beat lyric/tick data, rather than adding a second GP-parsing library.
 ## Session & Real-Time Sync
 
 The server owns session state (participants, selected song/part, playback
-clock) and is the source of truth for "what tick position are we on right
-now" (`PlaybackState.tickPosition`, datamodel.md). Playback start is
-synchronized across participants when the host starts/resumes/seeks; from
-that point, each participant's own alphaTab instance drives its local
-clock and cursor independently, rather than the server continuously
-pushing position and the client snapping to it. The server still broadcasts
-`PlaybackState` periodically (`tickPosition` + `serverTimestamp`), and each
-client uses that broadcast to correct its alphaTab instance's
-`tickPosition`/`timePosition` if it has drifted — a periodic correction,
-not a continuous drive. This applies uniformly to every participant: an
+clock) but is **not** the source of truth for "what tick position are we
+on right now" — it structurally can't be, since it never parses the
+published `.gp` file (no tempo/PPQ knowledge) and so has no way to compute
+tick position from elapsed wall-clock time itself. Instead, the host's
+client is the functional authority: while playback is `'running'`, the
+host's own alphaTab instance already tracks an accurate,
+continuously-advancing `api.tickPosition`, and periodically self-reports
+it to the server via a `playback-tick-report` message (roughly every
+second). The server just stores whatever the host last reported
+(`Session.playbackState.tickPosition`) and refreshes
+`serverTimestamp = Date.now()` alongside it — it doesn't recompute or
+extrapolate the value on its own.
+
+Playback start is synchronized across participants when the host
+starts/resumes/seeks; from that point, each participant's own alphaTab
+instance drives its local clock and cursor independently, rather than the
+server continuously pushing position and the client snapping to it. The
+server still broadcasts `PlaybackState` periodically (`tickPosition` +
+`serverTimestamp`) — unchanged, existing mechanism — and each client uses
+that broadcast to correct its alphaTab instance's `tickPosition`/
+`timePosition` if it has drifted against the host's last-reported value —
+a periodic correction, not a continuous drive. This applies uniformly to
+every participant, including the host itself (whose own client both
+reports and receives-and-corrects-against the same value): an
 instrument-part participant's visible alphaTab renderer and a lyrics-part
 participant's headless alphaTab instance (ui.md) both consume
 `PlaybackState` the same way and both expose the same `tickPosition`/
 `timePosition` properties to correct against.
+
+`serverTimestamp`-based extrapolation on the receiving end — compensating
+for host→server→client propagation latency by projecting `tickPosition`
+forward from `serverTimestamp` rather than using it as-is — is a deferred
+future refinement, not part of the current mechanism. Accepted as a
+manageable, minor imprecision for now, consistent with the existing
+50-tick drift tolerance and this app's small-scale self-hosted trust
+model.
 
 Sessions are server-memory-only: a grace-period timer destroys empty
 sessions, and a server restart drops active ones. No durable backing

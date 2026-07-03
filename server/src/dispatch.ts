@@ -10,6 +10,7 @@ import { handlePlaybackControl } from './handlers/playback-control.js';
 import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
+import { handlePlaybackTickReport } from './handlers/playback-tick-report.js';
 
 /**
  * Routes each incoming message to its own named handler (Principle IV) —
@@ -35,5 +36,7 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleSpotlightModeSet(ctx, socket, message);
     case 'song-select':
       return handleSongSelect(ctx, socket, message);
+    case 'playback-tick-report':
+      return handlePlaybackTickReport(ctx, socket, message);
   }
 }

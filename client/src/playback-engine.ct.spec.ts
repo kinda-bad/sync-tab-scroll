@@ -41,3 +41,93 @@ test('constructs the engine and renders real tab output without crashing', async
   await page.waitForTimeout(500);
   expect(pageErrors).toEqual([]);
 });
+
+/**
+ * Playback-tick-report reporter (plan-playback-sync-fixes): deliberately not
+ * gated on `api.isReadyForPlayback` (see SCOPE NOTE above — that flag never
+ * resolves under browser automation), so it's testable here independent of
+ * that known limitation. Drives the real `clientStore` (exposed by the
+ * harness as `window.__clientStore` for this purpose) rather than the real
+ * WS server.
+ */
+function makeSession(overrides: { hostId: string; status: 'stopped' | 'running' | 'paused' }) {
+  return {
+    code: 'ABCD',
+    selectedSong: 'creep',
+    availableParts: [],
+    participants: [],
+    hostId: overrides.hostId,
+    playbackState: { status: overrides.status, tickPosition: 0, bpm: 120, serverTimestamp: Date.now() },
+    countInEnabled: false,
+    metronomeEnabled: false,
+    lobbyCursorTick: null,
+    spotlightMode: false,
+  };
+}
+
+test('reports tickPosition periodically while host and running', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'host-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'running' }));
+
+  await expect
+    .poll(
+      async () => {
+        const messages = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages);
+        return messages.filter((m) => m.type === 'playback-tick-report').length;
+      },
+      { timeout: 5_000 },
+    )
+    .toBeGreaterThan(0);
+
+  const reports = await page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string; tickPosition?: number }[] }).__sentMessages.filter((m) => m.type === 'playback-tick-report'),
+  );
+  const tickPosition = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+  expect(reports[0].tickPosition).toBe(tickPosition);
+});
+
+test('does not report tickPosition when not host', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'member-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'running' }));
+
+  await page.waitForTimeout(1_500);
+  const reports = await page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-tick-report'),
+  );
+  expect(reports).toEqual([]);
+});
+
+test('does not report tickPosition when status is not running', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'host-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'paused' }));
+
+  await page.waitForTimeout(1_500);
+  const reports = await page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-tick-report'),
+  );
+  expect(reports).toEqual([]);
+});
