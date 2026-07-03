@@ -73,15 +73,21 @@ identically regardless of which one they're on:
   — drawn from the same render pass as the staff itself, not a separately
   computed overlay, so it can't drift out of position relative to the
   notation the way a precomputed layout-derived cursor could. An optional
-  lyrics overlay can be toggled on top via alphaTab's `.at-highlight`
-  styling — syllable text and tick position are read live off
-  `CatalogSong.lyricsTrackIndex`'s beats (not the currently-viewed
-  instrument track's own beats, which is usually a different track
-  entirely), regrouped into lines via `lyricLineBreaks`
-  (datamodel.md, infrastructure.md). This overlay is custom client logic,
-  not alphaTab's native lyrics rendering — alphaTab only draws lyric text
-  natively on the track that actually carries it, which usually isn't the
-  instrument track a participant is viewing.
+  lyrics overlay can be toggled on as a single-line horizontal ticker
+  fixed to the bottom of the viewport: syllable text and tick position
+  are read live off `CatalogSong.lyricsTrackIndex`'s beats (not the
+  currently-viewed instrument track's own beats, which is usually a
+  different track entirely), flattened into one continuous stream. The
+  strip never wraps to multiple lines — as syllables advance it scrolls
+  right-to-left, snapping (not continuously gliding) so the currently
+  active syllable, styled via alphaTab's `.at-highlight` role, is
+  re-centered on each syllable change; the centering uses plain DOM
+  measurement (`offsetLeft`/`offsetWidth`) against the ticker's own
+  rendered layout, not an alphaTab bounds lookup, and is recomputed on
+  window resize. This overlay is custom client logic, not alphaTab's
+  native lyrics rendering — alphaTab only draws lyric text natively on
+  the track that actually carries it, which usually isn't the instrument
+  track a participant is viewing.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. Full lyric text is
