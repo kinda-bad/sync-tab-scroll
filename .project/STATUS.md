@@ -30,8 +30,9 @@ None — no `[OPEN]` placeholders in any artifact.
 
 No new violations found this pass. `DEFECTS.md`'s Principle VII entry has
 not been re-verified since `test-coverage-backfill`, `playwright-client-coverage`,
-`playback-sync-fixes`, and `lyrics-ticker` were implemented and merged —
-likely stale, but that's `/ardd-verify`'s call to make, not this pass's.
+`playback-sync-fixes`, `lyrics-ticker`, `settings-modal-redesign`, and
+`session-create-selection` were implemented and merged — likely stale,
+but that's `/ardd-verify`'s call to make, not this pass's.
 
 ## Diagrams
 
@@ -51,14 +52,8 @@ see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
 ## Plans
 
-- `plan-settings-modal-redesign-2026-07-03.md` — **approved**, not yet
-  tasked. Branch `settings-modal-redesign` (current). Moves the
-  participant list/lobby-cursor/Spotlight controls and a new theme
-  toggle into a cog-opened, tabbed settings modal; keeps song/part
-  selection as its own separate modal; makes "Start" close all open
-  modals without touching the lyrics overlay; moves the hazard-tape
-  strip to the top of the viewport.
-- `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
+- `plan-settings-modal-redesign-2026-07-03.md`, `plan-session-create-selection-2026-07-03.md`,
+  `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
   `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
   `plan-test-coverage-2026-07-02.md`, `plan-lobby-cursor-modes-2026-07-03.md`,
   `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
@@ -69,17 +64,34 @@ see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
 test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
-playback-sync-fixes, lyrics-ticker: complete**, all merged to `main`.
+playback-sync-fixes, lyrics-ticker, settings-modal-redesign,
+session-create-selection: complete**, all merged to `main`. Currently on
+`main`, worktree clean.
 
-Two items from `playback-sync-fixes`/`lyrics-ticker` still await a human's
-live-browser confirmation (not automatable in this environment): the
-two-participant no-rubberband playback check, and the lyrics ticker's
-scroll/center/resize behavior plus tab-scroll-padding clearance.
+Full suite green on merged `main`: client vitest 6 files/25 tests, client
+CT 20/20, client e2e 10/10, server vitest 16 files/58 tests.
 
-**settings-modal-redesign: approved, not yet tasked.** Branch
-`settings-modal-redesign` (current).
+**Unsigned commits — needs attention before any push.** Every commit
+across `settings-modal-redesign`, `session-create-selection`, and their
+merge commits into `main` was made with `--no-gpg-sign` (1Password was
+locked throughout both implementation passes). Re-sign the range (e.g.
+an interactive rebase resigning back to before `4d59333`/`2acb6b4`) once
+1Password is available, before pushing.
+
+**Still needs a human's live-browser confirmation** (not automatable in
+this environment):
+- Two-participant no-rubberband playback (`playback-sync-fixes`).
+- Lyrics ticker scroll/center/resize + tab-scroll-padding clearance
+  (`lyrics-ticker`).
+- Hazard-strip top positioning and content top-padding clearance
+  (`settings-modal-redesign`).
+- Theme toggle reachable from both Lobby and Playback, changes both the
+  CSS palette and tab notation together, and persists across a refresh
+  (`settings-modal-redesign`).
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-settings-modal-redesign-2026-07-03.md` to
-generate its task list, then `/ardd-implement`.
+No plan currently awaiting tasking. Recommend a manual live-browser pass
+over the four unconfirmed items above (captured via `/ardd-feedback` if
+anything doesn't match expectations), and re-signing the unsigned commit
+range before pushing `main`.
