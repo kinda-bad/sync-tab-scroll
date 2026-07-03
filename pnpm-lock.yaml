@@ -21,8 +21,8 @@ importers:
         specifier: ^1.58.2
         version: 1.58.2(@types/node@20.19.43)(svelte@5.56.4)(tsx@4.22.4)(vite@6.4.3(@types/node@20.19.43)(tsx@4.22.4))
       '@playwright/test':
-        specifier: ^1.61.1
-        version: 1.61.1
+        specifier: ^1.58.2
+        version: 1.58.2
       '@storybook/addon-svelte-csf':
         specifier: ^5.1.2
         version: 5.1.2(@storybook/svelte@10.4.6(storybook@10.4.6(@testing-library/dom@10.4.1)(@types/react@19.2.17)(react@19.2.7))(svelte@5.56.4))(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.4)(vite@6.4.3(@types/node@20.19.43)(tsx@4.22.4)))(storybook@10.4.6(@testing-library/dom@10.4.1)(@types/react@19.2.17)(react@19.2.7))(svelte@5.56.4)(vite@6.4.3(@types/node@20.19.43)(tsx@4.22.4))
@@ -35,6 +35,9 @@ importers:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.1.1
         version: 5.1.1(svelte@5.56.4)(vite@6.4.3(@types/node@20.19.43)(tsx@4.22.4))
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       storybook:
         specifier: ^10.4.6
         version: 10.4.6(@testing-library/dom@10.4.1)(@types/react@19.2.17)(react@19.2.7)
@@ -50,6 +53,9 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.43)
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0
 
   packages/pipeline:
     dependencies:
@@ -863,8 +869,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@playwright/test@1.61.1':
-    resolution: {integrity: sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==}
+  '@playwright/test@1.58.2':
+    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1448,18 +1454,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright-core@1.61.1:
-    resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright@1.58.2:
     resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright@1.61.1:
-    resolution: {integrity: sha512-DWnY5o3YbLWK4GovuAVwpqL+1VwGNdUGrRr++8j8PtQQzvAVZUIMjKQ90fY689sEJZJBbZVw1rXaOKSTitkzPQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2242,9 +2238,9 @@ snapshots:
       - vite
       - yaml
 
-  '@playwright/test@1.61.1':
+  '@playwright/test@1.58.2':
     dependencies:
-      playwright: 1.61.1
+      playwright: 1.58.2
 
   '@rollup/rollup-android-arm-eabi@4.62.2':
     optional: true
@@ -2844,17 +2840,9 @@ snapshots:
 
   playwright-core@1.58.2: {}
 
-  playwright-core@1.61.1: {}
-
   playwright@1.58.2:
     dependencies:
       playwright-core: 1.58.2
-    optionalDependencies:
-      fsevents: 2.3.2
-
-  playwright@1.61.1:
-    dependencies:
-      playwright-core: 1.61.1
     optionalDependencies:
       fsevents: 2.3.2
 
