@@ -24,12 +24,24 @@ Rationale: `Participant.selectedPart` and the `part-select` wire
 message's `part` field were both hand-typed as `number | 'lyrics' | null`
 independently, with nothing tying them together — caught during an
 `/ardd-critique` pass on the song-catalog-selection feature.
+
+Version change: 1.2.0 → 1.3.0
+Added: Core Principle VII (Test-First Development). Rationale: a task in
+the lobby-cursor-modes implementation required a scripted test with no
+test runner or test file anywhere in the repo to write it against —
+every handler "tested" up to that point had only been verified manually.
+This principle backs an assumption `/ardd-implement`'s own rules already
+made but the constitution never actually required, and names the
+resulting gap (client, shared, and nearly all of server currently
+untested) as a present violation, not a grandfathered one. Follow-up:
+run `/ardd-verify` to log the gap in `DEFECTS.md`, then backlog closing
+it via `/ardd-feature` or a `/ardd-plan` pass.
 -->
 
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 ---
 
 # sync-tab-scroll Constitution
@@ -140,6 +152,30 @@ one could silently drift from the other, since structurally-identical
 inline types give TypeScript no way to flag the mismatch. Surfaced during
 an `/ardd-critique` pass, not by a compile error.
 
+### VII. Test-First Development
+
+Every code change — client, server, and shared packages alike — is preceded
+by a test that exercises the behavior being added or changed, written and
+confirmed to fail before any implementation code is written. A task without
+a test requirement is the exception (e.g. a pure research/decision task or
+a documentation-only change), not the default; when in doubt, write the
+test. This applies to the whole codebase, not just new features — there is
+no carve-out for existing modules to remain untested indefinitely.
+
+*Rationale*: `/ardd-implement`'s own task-execution rules already assumed
+this ("write and fail the test before any implementation begins"), but no
+constitution principle actually backed that assumption — until this
+amendment, nothing in this document required a test runner to exist at
+all. That gap was concrete, not theoretical: implementing the Spotlight-mode
+feature (`plan-lobby-cursor-modes-2026-07-03.md`) hit a task requiring a
+scripted test with no test runner, no `*.test.ts` file, and no WS test
+harness anywhere in the repo to write it against — every prior "tested"
+handler had only ever been verified manually. This principle closes that
+gap going forward and puts a name on the standing violation it already
+created: the current lack of coverage across `client`, `packages/shared`,
+and all of `server` except one handler is a real, present violation of this
+principle, not a pre-existing condition it grandfathers in.
+
 ## Quality Standards
 
 - A `package.json`'s declared `name` and `scripts` must match the actual
@@ -172,4 +208,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.2.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-01
+**Version**: 1.3.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-02
