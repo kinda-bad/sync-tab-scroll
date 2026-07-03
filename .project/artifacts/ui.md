@@ -55,16 +55,49 @@ like any other part, but disabled when the song has no `.lrc` file
 which is only present when the song's lyrics came from the source GP file
 directly — a song whose `.lrc` came from the lrclib.net fallback has the
 Lyrics part selectable but no in-tab overlay available on any instrument
-part (pipeline.md). Outside the modal, the Lobby body shows live
-participant list with readiness state. Host can remove participants. A
-"lobby cursor" lets the host point at a position in the score for others
-to see before playback starts. A host-only "Spotlight mode" toggle sits
-next to the lobby-cursor controls: while it's on, the lobby cursor forces
-every participant's view to follow it; while it's off, each participant
-is free to browse their own rendered tab independently, and the lobby
-cursor's tick is shown only as an informational readout (not applied to
-anyone's view). Spotlight mode resets to off when playback starts, same
-as the lobby cursor itself resetting to null.
+part (pipeline.md).
+
+A second, separate modal — opened via a settings-cog control in the
+persistent nav bar, alongside "Song & part" — holds everything that used
+to render inline in the Lobby body. Unlike the song/part modal, it's a
+plain freely-openable/dismissible modal with no forced-open gating, and
+it has two tabs:
+
+- **Participants**: the live participant list with readiness state (host
+  can remove participants), the "lobby cursor" (lets the host point at a
+  position in the score for others to see before playback starts), and a
+  host-only "Spotlight mode" toggle next to the lobby-cursor controls:
+  while it's on, the lobby cursor forces every participant's view to
+  follow it; while it's off, each participant is free to browse their own
+  rendered tab independently, and the lobby cursor's tick is shown only
+  as an informational readout (not applied to anyone's view). Spotlight
+  mode resets to off when playback starts, same as the lobby cursor
+  itself resetting to null. This is the default tab.
+- **Settings**: a dark/light theme toggle — the app's first in-app theme
+  control (`client/src/theme.ts`); toggling it switches both the app's CSS
+  palette and the tab notation's colors together, and the choice persists
+  across a refresh.
+
+Clicking "Start" closes both the song/part modal and this settings modal
+if either is open (not the lyrics overlay, a separate on-tab toggle
+unrelated to either modal).
+
+With both of those moved out, the routed Lobby view body itself is now
+just a single state-dependent hint line, checked in this order:
+
+1. Not host, and no song selected yet: "Waiting for the host to pick a
+   song."
+2. Host, and no song selected yet: "Pick a song to get started," plus a
+   pointer to the "Song & part" nav-bar control.
+3. A song is selected but this participant has no part yet: "Select your
+   part," plus the same pointer.
+4. Both are set: "`{readyCount}` of `{totalCount}` ready — waiting for
+   host to start."
+
+Cases 1-3 normally render behind the song/part modal's existing
+forced-open, non-dismissible backdrop (unchanged scope) — reachable in
+principle, not literally dead code, just usually covered immediately in
+today's normal flow.
 
 ## Playback View
 

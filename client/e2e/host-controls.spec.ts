@@ -54,6 +54,14 @@ test('host removing a participant removes them from the other participant list',
   await page.goto('http://localhost:4173/');
   await page.getByPlaceholder('Musician').fill('Host');
   await page.getByRole('button', { name: 'Create session' }).click();
+  // The song/part modal is forced open (non-dismissible) until this
+  // participant has both a song and a part — which also blocks the
+  // settings-cog control behind its backdrop. Select both first so the
+  // modal can be dismissed and the cog reached, same pattern the other
+  // host-controls test already uses.
+  await page.getByRole('button', { name: 'Select' }).first().click();
+  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
+  await page.getByRole('button', { name: 'Close' }).click();
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);

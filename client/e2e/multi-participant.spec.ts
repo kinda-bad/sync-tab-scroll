@@ -39,8 +39,15 @@ test('song/part selection sync between host and member', async ({ page, browser 
 
   // Selecting a part immediately sends readiness-update: 'loading' (App.svelte's
   // ensurePlaybackEngine call, before any audio/readiness gate) — a real,
-  // audio-independent, cross-participant-visible signal.
-  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
+  // audio-independent, cross-participant-visible signal. The participant
+  // list (with readiness badges) now lives behind the settings-cog modal's
+  // Participants tab, which is itself blocked by the member's own
+  // (forced-open, non-dismissible-until-set) song/part modal — so the
+  // member picks their own part too, to dismiss it and reach the cog.
+  await page.getByRole('button', { name: 'Select' }).first().click(); // host: the (only) instrument part
+  await memberPage.getByRole('button', { name: 'Select' }).first().click(); // member: same part, just to dismiss their own modal
+  await memberPage.getByRole('button', { name: 'Close' }).click();
+  await memberPage.getByRole('button', { name: 'Settings' }).click();
   await expect(memberPage.locator('.badge').first()).toHaveText('LOADING', { timeout: 10_000 });
 
   await memberContext.close();

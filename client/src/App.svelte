@@ -10,12 +10,14 @@
   import Button from './components/Button.svelte';
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
+  import SettingsModal from './components/SettingsModal.svelte';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
   let songPartModalOpen = false;
+  let settingsModalOpen = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -86,6 +88,10 @@
     songPartModalOpen = false;
   }
 
+  function toggleSettingsModal() {
+    settingsModalOpen = !settingsModalOpen;
+  }
+
   function startPlayback() {
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'start' });
   }
@@ -127,6 +133,7 @@
     {#snippet controls()}
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
+        <Button variant="ghost" label="Settings" onclick={toggleSettingsModal} />
       {/if}
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
@@ -146,6 +153,7 @@
 {/if}
 
 <SongPartModal open={songPartModalOpen} dismissible={!needsSongOrPart} onClose={closeSongPartModal} />
+<SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
 
 <Toasts />
 
