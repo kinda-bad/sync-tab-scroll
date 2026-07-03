@@ -103,6 +103,9 @@
   }
 
   function stopPlayback() {
+    // Reset so a stale value from a prior playback doesn't briefly show
+    // before the first new playerPositionChanged event arrives on replay.
+    clientStore.update((s) => ({ ...s, playbackProgress: 0 }));
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'stop' });
   }
 </script>

@@ -1,7 +1,7 @@
 ---
 plan: plan-hazard-bar-progress-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -32,7 +32,11 @@ status: ready
 
 ## Phase 2: Manual verification
 
-- [ ] T006 Manual verification in a real browser: start playback and confirm the hazard strip visibly drains/fills as the song progresses, reaching (approximately) full near the song's end. Note for whoever runs this: this specific check may actually be achievable despite this project's known audio-decode-never-resolves limitation, since `playerPositionChanged` fires from alphaTab's internal transport/clock and may advance independently of whether real audio output ever actually plays — attempt it rather than assuming it's blocked. If the event genuinely never fires without real audio, confirm and note that explicitly (with what was actually observed) rather than guessing.
+- [x] T006 Manual verification in a real browser: start playback and confirm the hazard strip visibly drains/fills as the song progresses, reaching (approximately) full near the song's end. Note for whoever runs this: this specific check may actually be achievable despite this project's known audio-decode-never-resolves limitation, since `playerPositionChanged` fires from alphaTab's internal transport/clock and may advance independently of whether real audio output ever actually plays — attempt it rather than assuming it's blocked. If the event genuinely never fires without real audio, confirm and note that explicitly (with what was actually observed) rather than guessing.
+
+  **Confirmed working in a real browser (claude-in-chrome, fresh tab, this worktree's own dev servers on :5173/:8080).** Created a session, selected Creep/Thom Yorke's part, clicked Start. Measured `.hazard-bar`'s computed `--hazard-fill` CSS variable directly (not just eyeballing pixels): `0.00118` immediately after Start, `0.00273` after +4s, `0.00505` after +9s, `0.01050` after +24s — monotonic, steadily increasing, confirming `playerPositionChanged` really does fire with advancing `currentTime`/`endTime` in a genuine (non-Playwright-CT) Chrome tab, contradicting the CT-specific finding from T002 (that finding stands for Playwright's component-test harness specifically, not for real browser automation generally — the synth worker apparently does run here). Visually zoomed on the strip and confirmed a matching thin sliver of hazard-tape fill at the left edge. Notably, the *visual cursor* (`.at-cursor-bar`) stayed completely frozen throughout (checked via `getBoundingClientRect()`, identical before/after) — the numeric position value and the cursor's own rendering are apparently driven by separate mechanisms, so this confirms the hazard-bar fix specifically works, without saying anything new about the separate playback-sync-fixes rubberband/lyrics-ticker-scroll questions (which depend on the cursor/visual rendering path, still unconfirmed).
+
+  The prior implementation pass's own attempt at this (documented below, preserved for the record) hit browser-tool contention from a concurrent session rather than completing — this pass used a fresh tab and dev-server pair and got a clean result.
 
   **Still pending human verification — live-check attempt via claude-in-chrome did not complete.** Two things worth recording:
 
@@ -50,3 +54,7 @@ status: ready
   All green: `test` (vitest) — 6 files, 25 tests passed. `test:ct` — 21 tests passed (including both new/changed `playback-engine.ct.spec.ts` tests from T002/T003). `test:e2e` — 10 tests passed.
 
   **Deviation/gotcha found while running this task:** the first `test:e2e` run failed 9/10 tests. Root cause: this worktree's own dev servers (started manually for the T006 attempt, client on :5173 and server on :8080 via plain `pnpm dev`, i.e. the real `catalog/` root) were still running when `test:e2e` ran, and the e2e Playwright config's `webServer` entry uses `reuseExistingServer: !process.env.CI` for the port-8080 server — so it silently reused my already-running server instead of starting its own with `CATALOG_ROOT=../client/test-fixtures/fixture-catalog`, causing the tests to run against the wrong (real, non-fixture) catalog data. Killed the manually-started servers (client :5173, server :8080) before rerunning; all 10 e2e tests then passed cleanly. Not a regression in this branch's code — a test-run hygiene issue caused by this session's own earlier manual dev-server usage.
+
+## Follow-up: closed the reset gap flagged in T006
+
+Not part of the original 7 tasks — fixed immediately after T006's live confirmation rather than left as a dangling known-gap, since it's small and squarely in scope of "hazard bar functionality." `App.svelte`'s `stopPlayback()` now resets `clientStore`'s `playbackProgress` to `0` before sending the stop message, so a stale value from a prior playback doesn't briefly flash before the first new `playerPositionChanged` event arrives on a replayed session. Re-ran the full suite after this change: vitest 6/25, CT 21/21, both still green (e2e not re-run a third time for this one-line change, no reason to expect it affects any e2e flow — none of the e2e specs assert on `playbackProgress`/hazard-fill values).
