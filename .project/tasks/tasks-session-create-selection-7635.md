@@ -1,7 +1,7 @@
 ---
 plan: plan-session-create-selection-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -58,4 +58,6 @@ status: ready
 
 ## Phase 4: Full suite verification
 
-- [ ] T012 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e` together. Confirm every test from Phases 1-3 passes alongside the existing suite, with no regressions. Report final test/file counts.
+- [x] T012 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e` together. Confirm every test from Phases 1-3 passes alongside the existing suite, with no regressions. Report final test/file counts.
+
+  All green, no regressions: vitest 6 files/25 tests; CT 16 files/16 tests; e2e 5 files/9 tests (single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2) — same file/test counts as before this plan (this plan changed *how* the e2e setup happens, not how many tests exist). Total client: 27 files / 50 tests.
