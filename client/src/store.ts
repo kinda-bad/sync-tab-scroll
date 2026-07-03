@@ -14,6 +14,8 @@ export interface ClientState {
   catalog: CatalogSong[];
   /** The single shared WsClient (constitution Principle III) — created once on Landing form submit, read by every later view instead of each view opening its own connection. */
   wsClient: WsClient | null;
+  /** Real playback position (0–1), local to this participant's own alphaTab instance — updated by playback-engine.ts's `playerPositionChanged` subscription. Read by App.svelte's hazard-strip fill while in the Playback view. */
+  playbackProgress: number;
 }
 
 function createClientStore() {
@@ -23,6 +25,7 @@ function createClientStore() {
     selfParticipantId: null,
     catalog: [],
     wsClient: null,
+    playbackProgress: 0,
   });
   return { subscribe, set, update };
 }
