@@ -1,4 +1,5 @@
 import type { Theme } from './tab-renderer';
+import { setEngineTheme } from './playback-engine';
 
 export type StoredTheme = Theme;
 
@@ -16,12 +17,12 @@ export function persistTheme(theme: StoredTheme): void {
 
 /**
  * Sets the document-level CSS palette (styles/tokens.css reads
- * `[data-theme='...']`). Callers that also want the tab-notation colors
- * to switch together (per brand.md's "toggling theme anywhere in the app
- * switches both at once") should prefer this module's own call site in
- * `main.ts`/`SettingsModal.svelte`, which pairs this with
- * `playback-engine.ts`'s `setEngineTheme()` — see T008.
+ * `[data-theme='...']`) and the tab-notation colors together, per
+ * brand.md's "toggling theme anywhere in the app switches both at once."
+ * `setEngineTheme()` is a no-op if no playback engine is active yet (e.g.
+ * called from `main.ts` before entering the Lobby/Playback views).
  */
 export function applyTheme(theme: StoredTheme): void {
   document.documentElement.dataset.theme = theme;
+  setEngineTheme(theme);
 }
