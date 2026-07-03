@@ -44,14 +44,6 @@ likely stale, but that's `/ardd-verify`'s call to make, not this pass's.
 1 known defect — see `DEFECTS.md`, last checked 2026-07-02 (likely stale,
 see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
-## Feedback
-
-1 open feedback file — `feedback-settings-modal-redesign-7e73.md` (on the
-current branch, `settings-modal-redesign`): a cog-opened settings modal
-(Participants/Settings tabs), "Start" closing all open modals without
-affecting the lyrics overlay, and moving the hazard-tape bar to the top
-of the view. Will be picked up by the next `/ardd-plan`.
-
 ## Feature Backlog
 
 5 backlogged · 0 planned · 0 tasked · 2 implemented (`test-coverage-backfill`,
@@ -59,13 +51,19 @@ of the view. Will be picked up by the next `/ardd-plan`.
 
 ## Plans
 
+- `plan-settings-modal-redesign-2026-07-03.md` — **approved**, not yet
+  tasked. Branch `settings-modal-redesign` (current). Moves the
+  participant list/lobby-cursor/Spotlight controls and a new theme
+  toggle into a cog-opened, tabbed settings modal; keeps song/part
+  selection as its own separate modal; makes "Start" close all open
+  modals without touching the lyrics overlay; moves the hazard-tape
+  strip to the top of the viewport.
 - `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
   `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
   `plan-test-coverage-2026-07-02.md`, `plan-lobby-cursor-modes-2026-07-03.md`,
   `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
-- No plan yet exists for the open `settings-modal-redesign` feedback.
 
 ## Implementation Status
 
@@ -78,13 +76,10 @@ live-browser confirmation (not automatable in this environment): the
 two-participant no-rubberband playback check, and the lyrics ticker's
 scroll/center/resize behavior plus tab-scroll-padding clearance.
 
-**settings-modal-redesign: feedback captured, not yet planned.** Current
-branch `settings-modal-redesign` (renamed from the now-merged
-`playback-sync-fixes`, which was rebased onto `main` and is otherwise
-identical to it).
+**settings-modal-redesign: approved, not yet tasked.** Branch
+`settings-modal-redesign` (current).
 
 ## Recommended Next Step
 
-Run `/ardd-plan` to draft a plan from `feedback-settings-modal-redesign-7e73.md`
-(the cog/tabbed-settings-modal, Start-closes-modals, and hazard-bar-position
-items).
+Run `/ardd-tasks` against `plan-settings-modal-redesign-2026-07-03.md` to
+generate its task list, then `/ardd-implement`.
