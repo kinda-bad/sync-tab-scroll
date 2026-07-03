@@ -1,7 +1,7 @@
 ---
 plan: plan-theme-persistence-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -30,4 +30,6 @@ status: ready
 
 ## Phase 3: Full suite verification
 
-- [ ] T005 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test passes with no regressions. Report final test/file counts.
+- [x] T005 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test passes with no regressions. Report final test/file counts.
+
+  **All green, no regressions.** vitest: 6 files / 25 tests. CT: 8 files / 21 tests — this plan added exactly 1 new test (`playback-engine.ct.spec.ts`'s theme-persistence regression test); the file count differs from `tasks-ui-polish-pass-b013.md`'s last-reported "12 files" figure, but that's pre-existing drift from intervening work on other branches (e.g. `song-catalog-selection`, merged since), not something this plan's changes caused — confirmed via `find . -name "*.ct.spec.ts"` that exactly 8 CT spec files exist on disk today. E2E: 4 files / 10 tests (this plan touched no E2E files, count unaffected). Total across `client`: 18 files / 56 tests.
