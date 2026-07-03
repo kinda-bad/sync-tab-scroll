@@ -1,17 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { createSessionAsHost } from './helpers';
 
 test('a fresh session auto-opens the song/part modal', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
 
   await expect(page.getByRole('dialog', { name: 'Song & part' })).toBeVisible({ timeout: 10_000 });
 });
 
 test('selecting a song and a part allows the modal to be closed manually', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
 
   const modal = page.getByRole('dialog', { name: 'Song & part' });
   await expect(modal).toBeVisible({ timeout: 10_000 });
@@ -27,9 +24,7 @@ test('selecting a song and a part allows the modal to be closed manually', async
 });
 
 test('the nav-bar control reopens the modal afterward', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
 
   const modal = page.getByRole('dialog', { name: 'Song & part' });
   await expect(modal).toBeVisible({ timeout: 10_000 });
