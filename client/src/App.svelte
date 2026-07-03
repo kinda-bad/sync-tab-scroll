@@ -165,6 +165,17 @@
   .full-lyrics-view.visible {
     display: block;
   }
+  .engine-containers.visible {
+    /* Reserves scroll room so the tab's last rows can clear the fixed
+       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). Applied
+       whenever an instrument part is visible at all, not only while the
+       lyrics overlay is actively toggled on — toggleOverlay()'s show/hide
+       state isn't exposed outside playback-engine.ts's module closure, so
+       this is an accepted minor inefficiency (unused padding when lyrics
+       are toggled off) rather than new reactive plumbing to reclaim it
+       precisely. */
+    padding-bottom: var(--lyrics-strip-height);
+  }
   .engine-containers {
     /* Positioning context for .lyrics-overlay-container, so the overlay
        renders on top of the tab notation instead of stacking below it
