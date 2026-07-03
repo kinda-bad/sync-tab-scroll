@@ -42,7 +42,7 @@
     gap: var(--space-4);
     min-height: var(--bar-height);
     padding: var(--space-2) var(--space-4) var(--space-3);
-    background: var(--surface);
+    background: var(--bar-surface);
     /* torn-edge's clip-path eats into the top ~12% — extra top padding
        keeps content clear of the jagged silhouette. */
     padding-top: calc(var(--space-3) + 0.5rem);

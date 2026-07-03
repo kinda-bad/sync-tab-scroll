@@ -35,9 +35,13 @@ status: in-progress
 
 ## Phase 3: Bar dark-mode fill contrast
 
-- [ ] T008 [artifacts: brand] Add a `--bar-surface` custom property to `client/src/styles/tokens.css` for both `data-theme="dark"` and the light theme, distinct from the existing `--surface` value in each (a value visually differentiated from `--surface` while staying within `brand.md`'s established dark/light palettes — do not introduce a new hue family, adjust lightness/tint within the existing palette). Update `client/src/components/Bar.svelte`'s `background: var(--surface)` to `background: var(--bar-surface)`.
-- [ ] T009 [artifacts: brand] Revise `brand.md`'s palette table: add a `--bar-surface` row alongside the existing `--surface` row (both dark and light value tables), with a one-line rationale (bar needs to read as distinct from the cards/panels it shares `--surface` with). Bump `last_updated`.
-- [ ] T010 Manual verification in dark mode: confirm the persistent Bar now visually reads as distinct from surrounding Lobby/Playback content, and that the hazard-stripe fill on top of it (unchanged, per the plan's declined-reversal scope) still renders correctly over the new base color.
+- [x] T008 [artifacts: brand] Add a `--bar-surface` custom property to `client/src/styles/tokens.css` for both `data-theme="dark"` and the light theme, distinct from the existing `--surface` value in each (a value visually differentiated from `--surface` while staying within `brand.md`'s established dark/light palettes — do not introduce a new hue family, adjust lightness/tint within the existing palette). Update `client/src/components/Bar.svelte`'s `background: var(--surface)` to `background: var(--bar-surface)`.
+
+  **Found and avoided a real trap:** `--surface-raised` already exists in `tokens.css` but is already spoken for — it's `HazardBar.svelte`'s own base/track color (the "empty" color behind the stripe fill). Reusing it for the Bar's root too would have made the Bar and its own hazard-stripe track the same shade, trading one contrast problem for another. Added a genuinely new `--bar-surface` (`#2a2930` dark, `#bfb9a5` light) instead.
+- [x] T009 [artifacts: brand] Revise `brand.md`'s palette table: add a `--bar-surface` row alongside the existing `--surface` row (both dark and light value tables), with a one-line rationale (bar needs to read as distinct from the cards/panels it shares `--surface` with). Bump `last_updated`.
+- [x] T010 Manual verification in dark mode: confirm the persistent Bar now visually reads as distinct from surrounding Lobby/Playback content, and that the hazard-stripe fill on top of it (unchanged, per the plan's declined-reversal scope) still renders correctly over the new base color.
+
+  **Confirmed via real browser**, both via computed-style inspection (`.bar`'s `background-color` resolves to `rgb(42, 41, 48)` — exactly `--bar-surface`) and visually (Bar reads as a distinct lighter panel against the near-black canvas, hazard-stripe tape renders correctly on top unchanged). Aside: the lyrics overlay (Phase 2) also renders during this check since it's not gated to the Playback view — this matches the app's existing pre-playback tab-preview design (visible once a part is selected, `hasPart`-gated not view-gated), not a new interaction introduced by this phase.
 
 ## Phase 4: Song/part-selection modal
 

@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-07-02
+last_updated: 2026-07-03
 ---
 
 # Brand & Theming
@@ -36,7 +36,8 @@ palette of five semantic roles, deliberately not a rainbow:
 | Token | Role |
 |---|---|
 | `--bg` | base canvas |
-| `--surface` | bar/card/panel background |
+| `--surface` | card/panel background |
+| `--bar-surface` | the persistent Bar's own background — distinct from `--surface` so the Bar reads as its own layer against the cards/panels behind it, not camouflaged into them |
 | `--ink` / `--ink-dim` | primary / secondary text |
 | `--riot` | the one loud accent — CTAs, cursor, "live"/active state |
 | `--hazard` | caution/pending accent — readiness fill, tape texture |
@@ -57,6 +58,7 @@ else changes, no component touches theme-specific logic.
 |---|---|
 | `--bg` | `#0a0a0a` |
 | `--surface` | `#17171b` |
+| `--bar-surface` | `#2a2930` |
 | `--ink` | `#f2f0e8` |
 | `--riot` | `#ff2178` |
 | `--hazard` | `#ffcc00` |
@@ -69,6 +71,7 @@ inkier accents rather than dark mode's glow):
 |---|---|
 | `--bg` | `#e4e1d6` (deliberately not cream/`#F4F1EA` — reads as an AI-default) |
 | `--surface` | `#d6d2c4` |
+| `--bar-surface` | `#bfb9a5` |
 | `--ink` | `#131211` |
 | `--riot` | `#c40855` |
 | `--hazard` | `#a8760a` |
