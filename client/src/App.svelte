@@ -133,6 +133,8 @@
     {#snippet controls()}
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
+      {/if}
+      {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
         <Button variant="ghost" label="Settings" onclick={toggleSettingsModal} />
       {/if}
       {#if isHost}
