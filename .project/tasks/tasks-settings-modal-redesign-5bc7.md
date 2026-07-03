@@ -1,7 +1,7 @@
 ---
 plan: plan-settings-modal-redesign-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -90,4 +90,5 @@ proceeds with the rename now that the caller is accounted for.
 
 ## Phase 5: Full suite verification
 
-- [ ] T018 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test from Phases 1-4 passes alongside the existing suite, with no regressions. Report final test/file counts.
+- [x] T018 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test from Phases 1-4 passes alongside the existing suite, with no regressions. Report final test/file counts.
+  - Done: `test` (vitest) — 25/25 tests passed, 6 files. `test:ct` (Playwright CT) — 20/20 tests passed, 9 files (including this plan's new `theme.ct.spec.ts` and `Bar.ct.spec.ts`). `test:e2e` (Playwright e2e) — 10/10 tests passed, 5 files (including this plan's new T012 test in `single-participant.spec.ts`). No regressions across any suite.
