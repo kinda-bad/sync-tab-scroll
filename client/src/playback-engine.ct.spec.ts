@@ -113,6 +113,48 @@ test('does not report tickPosition when not host', async ({ mount, page }) => {
   expect(reports).toEqual([]);
 });
 
+/**
+ * Hazard-bar real playback progress (plan-hazard-bar-progress): a third,
+ * narrowly-scoped `playerPositionChanged` subscription (distinct from the
+ * lrc-line-matching and seek-broadcast ones already covered above) writes
+ * `currentTime / endTime` to `clientStore.playbackProgress` on every real
+ * alphaTab instance, unconditionally (no host/session gating). Driven the
+ * same way as "reports tickPosition periodically" above: setting
+ * `api.tickPosition` directly is the same mechanism `correctDrift` itself
+ * relies on to fire `playerPositionChanged` without needing real audio.
+ */
+async function readPlaybackProgress(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const store = (window as unknown as { __clientStore: { subscribe: (fn: (s: unknown) => void) => () => void } }).__clientStore;
+    let value: unknown;
+    const unsub = store.subscribe((s) => {
+      value = (s as { playbackProgress: number }).playbackProgress;
+    });
+    unsub();
+    return value as number;
+  });
+}
+
+test('tracks real playbackProgress in clientStore from playerPositionChanged', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  expect(await readPlaybackProgress(page)).toBe(0);
+
+  await page.evaluate(() => {
+    const api = (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi();
+    api.tickPosition = 1000;
+  });
+
+  await expect.poll(() => readPlaybackProgress(page), { timeout: 5_000 }).toBeGreaterThan(0);
+
+  const expectedRatio = await page.evaluate(() => {
+    const api = (window as unknown as { __getApi: () => { currentTime: number; endTime: number } }).__getApi();
+    return api.endTime > 0 ? api.currentTime / api.endTime : 0;
+  });
+  expect(await readPlaybackProgress(page)).toBe(expectedRatio);
+});
+
 test('does not report tickPosition when status is not running', async ({ mount, page }) => {
   const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
