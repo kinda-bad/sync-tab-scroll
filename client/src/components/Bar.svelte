@@ -12,8 +12,10 @@
   export let status: Snippet;
 </script>
 
-<div class="bar-wrap">
+<div class="hazard-wrap">
   <HazardBar fill={progress} />
+</div>
+<div class="bar-wrap">
   <div class="bar torn-edge signature-glitch signature-tape">
     <div class="bar-section bar-identity">
       {@render identity()}
@@ -28,6 +30,14 @@
 </div>
 
 <style>
+  .hazard-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 100;
+  }
+
   .bar-wrap {
     position: fixed;
     left: 0;

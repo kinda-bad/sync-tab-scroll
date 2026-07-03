@@ -29,9 +29,9 @@ None — no `[OPEN]` placeholders in any artifact.
 ## Constitution Compliance
 
 No new violations found this pass. `DEFECTS.md`'s Principle VII entry has
-not been re-verified since `test-coverage-backfill` and
-`playwright-client-coverage` were implemented and merged — likely stale,
-but that's `/ardd-verify`'s call to make, not this pass's.
+not been re-verified since `test-coverage-backfill`, `playwright-client-coverage`,
+`playback-sync-fixes`, and `lyrics-ticker` were implemented and merged —
+likely stale, but that's `/ardd-verify`'s call to make, not this pass's.
 
 ## Diagrams
 
@@ -44,16 +44,6 @@ but that's `/ardd-verify`'s call to make, not this pass's.
 1 known defect — see `DEFECTS.md`, last checked 2026-07-02 (likely stale,
 see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
-## Feedback
-
-No open feedback files on this branch (`playback-sync-fixes`). All 3
-present here are `status: planned`: `feedback-lobby-cursor-mode-e13b.md`,
-`feedback-playback-sync-f03d.md`, `feedback-ui-polish-pass-e180.md`.
-
-Note: `feedback-lyrics-ticker-bfd9.md` exists only on the separate,
-unmerged `lyrics-ticker` branch — not visible from here, which is expected
-branch scoping, not a gap.
-
 ## Feature Backlog
 
 5 backlogged · 0 planned · 0 tasked · 2 implemented (`test-coverage-backfill`,
@@ -61,18 +51,16 @@ branch scoping, not a gap.
 
 ## Plans
 
-- `plan-playback-sync-fixes-2026-07-03.md` — **approved**, not yet tasked.
-  Branch `playback-sync-fixes` (current). Fixes the playback-rubberband
-  bug via host-authoritative `tickPosition` reporting, and makes the
-  session join code always visible in the persistent bar.
-- `plan-lyrics-ticker-2026-07-03.md` — **approved**, not yet tasked. Lives
-  on the separate `lyrics-ticker` branch, not visible from here. Redesigns
-  the in-tab lyrics overlay as a single-line, snap-to-active-syllable,
-  bottom-pinned scrolling ticker.
-- `plan-ui-polish-pass-2026-07-03.md`,
-  `plan-playwright-coverage-2026-07-02.md`,
-  `plan-test-coverage-2026-07-02.md`,
-  `plan-lobby-cursor-modes-2026-07-03.md`,
+- `plan-settings-modal-redesign-2026-07-03.md` — **approved**, not yet
+  tasked. Branch `settings-modal-redesign` (current). Moves the
+  participant list/lobby-cursor/Spotlight controls and a new theme
+  toggle into a cog-opened, tabbed settings modal; keeps song/part
+  selection as its own separate modal; makes "Start" close all open
+  modals without touching the lyrics overlay; moves the hazard-tape
+  strip to the top of the viewport.
+- `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
+  `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
+  `plan-test-coverage-2026-07-02.md`, `plan-lobby-cursor-modes-2026-07-03.md`,
   `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
@@ -80,16 +68,18 @@ branch scoping, not a gap.
 ## Implementation Status
 
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
-test-coverage-backfill, playwright-client-coverage, ui-polish-pass:
-complete**, all merged to `main`.
+test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
+playback-sync-fixes, lyrics-ticker: complete**, all merged to `main`.
 
-**playback-sync-fixes: approved, not yet tasked.** Branch
-`playback-sync-fixes` (current).
+Two items from `playback-sync-fixes`/`lyrics-ticker` still await a human's
+live-browser confirmation (not automatable in this environment): the
+two-participant no-rubberband playback check, and the lyrics ticker's
+scroll/center/resize behavior plus tab-scroll-padding clearance.
 
-**lyrics-ticker: approved, not yet tasked.** Branch `lyrics-ticker`
-(separate, unmerged).
+**settings-modal-redesign: approved, not yet tasked.** Branch
+`settings-modal-redesign` (current).
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-playback-sync-fixes-2026-07-03.md` to
+Run `/ardd-tasks` against `plan-settings-modal-redesign-2026-07-03.md` to
 generate its task list, then `/ardd-implement`.

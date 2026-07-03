@@ -54,17 +54,29 @@ test('host removing a participant removes them from the other participant list',
   await page.goto('http://localhost:4173/');
   await page.getByPlaceholder('Musician').fill('Host');
   await page.getByRole('button', { name: 'Create session' }).click();
+  // The song/part modal is forced open (non-dismissible) until this
+  // participant has both a song and a part — which also blocks the
+  // settings-cog control behind its backdrop. Select both first so the
+  // modal can be dismissed and the cog reached, same pattern the other
+  // host-controls test already uses.
+  await page.getByRole('button', { name: 'Select' }).first().click();
+  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
+  await page.getByRole('button', { name: 'Close' }).click();
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+
+  // The participant list now lives behind the settings-cog modal's
+  // Participants tab (SettingsModal.svelte), not inline in the Lobby body.
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText('Member', { exact: true })).toBeVisible({ timeout: 10_000 });
 
-  // Lobby.svelte doesn't currently render a host-facing remove-participant
-  // button — the host-remove-participant handler exists server-side
-  // (server/src/handlers/host-remove-participant.ts, covered in
-  // tasks-test-coverage-bfe8.md's T018) but nothing sends that message from
-  // the UI. Drive it directly via the same real WS message a future UI
-  // control would send, rather than skip this scenario entirely.
+  // Lobby.svelte (and now SettingsModal.svelte) doesn't currently render a
+  // host-facing remove-participant button — the host-remove-participant
+  // handler exists server-side (server/src/handlers/host-remove-participant.ts,
+  // covered in tasks-test-coverage-bfe8.md's T018) but nothing sends that
+  // message from the UI. Drive it directly via the same real WS message a
+  // future UI control would send, rather than skip this scenario entirely.
   await sendAsParticipant(hostSession, { type: 'host-remove-participant', participantId: (await readStoredSession(memberPage)).participantId });
 
   await expect(page.getByText('Member', { exact: true })).toHaveCount(0, { timeout: 10_000 });

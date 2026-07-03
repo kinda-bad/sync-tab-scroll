@@ -10,12 +10,14 @@
   import Button from './components/Button.svelte';
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
+  import SettingsModal from './components/SettingsModal.svelte';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
   let songPartModalOpen = false;
+  let settingsModalOpen = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -86,7 +88,13 @@
     songPartModalOpen = false;
   }
 
+  function toggleSettingsModal() {
+    settingsModalOpen = !settingsModalOpen;
+  }
+
   function startPlayback() {
+    songPartModalOpen = false;
+    settingsModalOpen = false;
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'start' });
   }
 
@@ -128,6 +136,9 @@
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
       {/if}
+      {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
+        <Button variant="ghost" label="Settings" onclick={toggleSettingsModal} />
+      {/if}
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
           <Button variant="riot" label="Start" disabled={!session.selectedSong} onclick={startPlayback} />
@@ -146,14 +157,22 @@
 {/if}
 
 <SongPartModal open={songPartModalOpen} dismissible={!needsSongOrPart} onClose={closeSongPartModal} />
+<SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
 
 <Toasts />
 
 <style>
   .app-content.with-bar {
-    /* Clears the persistent Bar (its own height + the hazard strip above
-       it) so bottom content isn't hidden behind it. */
-    padding-bottom: calc(var(--bar-height) + var(--space-8));
+    /* The hazard strip now pins to the very top of the viewport
+       (Bar.svelte's .hazard-wrap) instead of sitting above the nav bar —
+       clear it here so top content isn't hidden behind it. HazardBar
+       itself renders at ~0.625rem tall (0.5rem height + 1px border each
+       side); --space-6 gives a bit of breathing room beyond that. */
+    padding-top: var(--space-6);
+    /* Clears the persistent, bottom-pinned Bar's own height alone now —
+       it no longer needs to also account for the hazard strip's height,
+       since that moved out from above it to the top of the viewport. */
+    padding-bottom: var(--bar-height);
   }
 
   .engine-containers,

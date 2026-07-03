@@ -186,9 +186,8 @@ export function __getEngineStateForTesting(): { api: AlphaTabApi } | undefined {
   return state;
 }
 
-export function toggleTheme(): Theme {
-  if (!state) return 'dark';
-  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+export function setEngineTheme(theme: Theme): void {
+  if (!state) return;
+  state.theme = theme;
   if (!state.isLyricsPart) setTheme(state.api, state.theme);
-  return state.theme;
 }
