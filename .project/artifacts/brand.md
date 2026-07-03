@@ -88,13 +88,24 @@ moment.
 
 The bar's top edge is a torn/ripped-paper silhouette (`clip-path`
 polygon, no image assets — `.torn-edge`, `client/src/styles/motifs.css`)
-rather than a clean rule. Its readiness/progress fill is a diagonal
-hazard-tape stripe (`.hazard-stripes`) rather than a smooth gradient —
-one visual device doing triple duty: per-participant readiness in the
-Lobby, playback progress in Playback, and (existing motif, kept) the
-lyric-timing drain/fill visual. The combined effect reads as a torn
-strip of caution tape stuck across the screen edge — the single most
-recognizable, unmistakable element of the redesign.
+rather than a clean rule.
+
+The readiness/progress fill — a diagonal hazard-tape stripe
+(`.hazard-stripes`) rather than a smooth gradient — is **not** part of
+the bar itself. It renders as its own independently `position: fixed`
+strip pinned to the **top** of the viewport (`HazardBar.svelte`,
+mounted in its own `.hazard-wrap` by `Bar.svelte`, `top: 0`), decoupled
+from the bottom-pinned nav bar (`.bar-wrap`, `bottom: 0`) — moved there
+specifically so it's never sandwiched between the nav bar and the main
+content. Same `progress` prop, same one-device-triple-duty role
+(per-participant readiness in the Lobby, playback progress in
+Playback, and the lyric-timing drain/fill visual), just anchored to the
+opposite screen edge from the bar it originally shared a container
+with. The combined effect — a torn strip of caution tape stuck across
+the top of the screen, with the bottom-pinned nav bar as its own
+separate torn-edge element — is still the single most recognizable,
+unmistakable pairing of the redesign, just no longer literally one
+element.
 
 ### Motion: diverges by theme, not just palette
 
