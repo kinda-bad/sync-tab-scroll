@@ -1,16 +1,22 @@
 ---
 plan: plan-playwright-coverage-2026-07-02.md
 generated: 2026-07-02
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Playwright infrastructure
 
-- [ ] T001 Install `@playwright/test` and `@playwright/experimental-ct-svelte` as `client` dev dependencies (`pnpm --filter client add -D @playwright/test @playwright/experimental-ct-svelte`). Run `pnpm --filter client exec playwright install chromium` (Chromium only — no cross-browser matrix requested or justified for this project's scale).
-- [ ] T002 Write `client/playwright.config.ts` defining two projects: `e2e` (testDir `./e2e`, a `webServer` array config launching the real `server` package with `CATALOG_ROOT` pointed at `../catalog` on one port, and `vite preview` serving a production `client` build on another port — matching what a real user gets, not the dev server) and `ct` (using `@playwright/experimental-ct-svelte`'s component-testing config, testDir `./src` matching `*.ct.spec.ts` colocated with source, mirroring the vitest `*.test.ts` colocation convention). Confirm `pnpm --filter client exec playwright test --list` enumerates both projects (even with zero test files yet) without config errors.
-- [ ] T003 Add `client/package.json` scripts: `"test:e2e": "playwright test --project=e2e"` and `"test:ct": "playwright test --project=ct"`. Leave the existing `"test"` (vitest) script untouched — this is a second, distinct test command, not a replacement.
+- [x] T001 Install `@playwright/test` and `@playwright/experimental-ct-svelte` as `client` dev dependencies (`pnpm --filter client add -D @playwright/test @playwright/experimental-ct-svelte`). Run `pnpm --filter client exec playwright install chromium` (Chromium only — no cross-browser matrix requested or justified for this project's scale).
+
+  **Blocker found and resolved:** `@playwright/experimental-ct-svelte` has no version supporting Svelte 5 + Vite 5 (versions ≤1.54 pin `vite-plugin-svelte@^3.0.1`, Svelte 3/4 only; 1.55+ requires `vite-plugin-svelte@^5.1.0`, which needs Vite 6). User chose to upgrade the client to Vite 6 rather than hand-roll a harness or drop component tests. Upgraded `vite` to `^6.4.3` and `@sveltejs/vite-plugin-svelte` to `^5.1.1`; confirmed both `pnpm --filter client build` and `pnpm --filter client build-storybook` still succeed before installing the latest (now-compatible) `@playwright/experimental-ct-svelte@^1.58.2`.
+- [x] T002 Write `client/playwright.config.ts` defining two projects: `e2e` (testDir `./e2e`, a `webServer` array config launching the real `server` package with `CATALOG_ROOT` pointed at `../catalog` on one port, and `vite preview` serving a production `client` build on another port — matching what a real user gets, not the dev server) and `ct` (using `@playwright/experimental-ct-svelte`'s component-testing config, testDir `./src` matching `*.ct.spec.ts` colocated with source, mirroring the vitest `*.test.ts` colocation convention). Confirm `pnpm --filter client exec playwright test --list` enumerates both projects (even with zero test files yet) without config errors.
+
+  Added `client/playwright/index.html`/`index.ts` (CT mount template, required by `@playwright/experimental-ct-svelte`). Verified with `PW_SKIP_WEBSERVER=1 npx playwright test --list` (a config-only env var this config respects, skipping the `webServer` array so `--list` doesn't need real server/client processes running) — 0 tests found, no config errors, both projects recognized.
+- [x] T003 Add `client/package.json` scripts: `"test:e2e": "playwright test --project=e2e"` and `"test:ct": "playwright test --project=ct"`. Leave the existing `"test"` (vitest) script untouched — this is a second, distinct test command, not a replacement.
+
+  Also updated `client/vite.config.ts` to import `defineConfig` from `vitest/config` and added a `test.include`/`test.exclude` block — vitest's default include glob also matches Playwright's `*.spec.ts`/`*.ct.spec.ts` files, which vitest can't run; excluded explicitly rather than letting them error. Confirmed `pnpm --filter client test` still passes 6 files/25 tests unchanged.
 
 ## Phase 2: ws-client component test
 
