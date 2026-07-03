@@ -13,3 +13,8 @@ catalog/
 
 *storybook.log
 storybook-static
+
+# Playwright CT build cache and test-run artifacts
+client/playwright/.cache/
+client/test-results/
+client/playwright-report/

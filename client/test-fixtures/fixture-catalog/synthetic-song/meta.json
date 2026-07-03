@@ -1,0 +1,10 @@
+{
+  "name": "Synthetic Test Song",
+  "artist": "Test Fixtures",
+  "parts": [
+    { "instrumentName": "Guitar", "trackIndex": 0 }
+  ],
+  "lyricsTrackIndex": null,
+  "lyricsLineIndex": null,
+  "lyricLineBreaks": null
+}

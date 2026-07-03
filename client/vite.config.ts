@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
@@ -23,5 +23,12 @@ export default defineConfig({
     proxy: {
       '/catalog': 'http://localhost:8080'
     }
-  }
+  },
+  test: {
+    // Vitest's default include glob also matches Playwright's *.spec.ts
+    // (e2e/) and *.ct.spec.ts (component tests) — neither runs under
+    // vitest, so exclude both explicitly rather than let them error.
+    include: ['src/**/*.test.ts'],
+    exclude: ['e2e/**', 'src/**/*.ct.spec.ts'],
+  },
 });
