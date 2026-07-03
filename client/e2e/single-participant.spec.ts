@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readStoredSession, sendAsParticipant } from './helpers';
+import { createSessionAsHost, readStoredSession, sendAsParticipant } from './helpers';
 
 /**
  * SCOPE NOTE: reaching `readiness: 'ready'` naturally requires alphaTab's
@@ -12,10 +12,7 @@ import { readStoredSession, sendAsParticipant } from './helpers';
  * exercised end-to-end.
  */
 test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByRole('button', { name: 'Create a session' }).click();
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
 
   // Join code stays visible in the persistent Bar before song selection too
   // (plan-playback-sync-fixes: the identity() snippet used to replace it
@@ -39,10 +36,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
 });
 
 test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canvas', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByRole('button', { name: 'Create a session' }).click();
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list
   await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
