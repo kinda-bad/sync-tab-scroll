@@ -17,6 +17,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
   await page.getByRole('button', { name: 'Create session' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
+  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
 
   const session = await readStoredSession(page);
   await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });
@@ -33,6 +34,7 @@ test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canv
   await page.getByRole('button', { name: 'Create session' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list
+  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
 
   const session = await readStoredSession(page);
   await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });

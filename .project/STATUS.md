@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-02. Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03. Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -29,12 +29,10 @@ None — no `[OPEN]` placeholders in any artifact.
 ## Constitution Compliance
 
 No new violations found this pass. `DEFECTS.md`'s Principle VII entry is
-now partially stale relative to code — `test-coverage-backfill` closed
-most of the gap it describes (server handlers, `session-store`,
-`connections`, and client pure-logic modules are now covered by vitest).
-The remaining, still-accurate gap is exactly what
-`plan-playwright-coverage-2026-07-02.md` targets. Not corrected here;
-`/ardd-verify` owns `DEFECTS.md`.
+now likely fully stale — `playwright-client-coverage`'s implementation
+closed the remaining DOM/alphaTab/WebSocket-coupled test-coverage gap it
+described, on top of `test-coverage-backfill`'s earlier work. Not
+corrected here; `/ardd-verify` owns `DEFECTS.md`.
 
 ## Diagrams
 
@@ -44,44 +42,42 @@ The remaining, still-accurate gap is exactly what
 
 ## Code-vs-Artifact Defects
 
-1 known defect — see `DEFECTS.md`, last checked 2026-07-02 (partially
+1 known defect — see `DEFECTS.md`, last checked 2026-07-02 (likely fully
 stale, see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
 ## Feedback
 
-No open feedback files.
+No open feedback files. `feedback-ui-polish-pass-e180.md` was consumed
+by `plan-ui-polish-pass-2026-07-03.md` (5 items incorporated, 1
+hazard-stripe-removal item declined by the user) and is now
+`status: planned`.
 
 ## Feature Backlog
 
-4 backlogged · 1 planned · 0 tasked · 1 implemented — see
+5 backlogged · 0 planned · 0 tasked · 2 implemented — see
 `.project/artifacts/features.md`.
 
 ## Plans
 
-- `plan-playwright-coverage-2026-07-02.md` — **approved**, not yet
-  tasked. Two Playwright projects (e2e, ct) covering client's
-  DOM/alphaTab/WebSocket-coupled modules; audio assertions explicitly
-  out of scope.
-- `plan-test-coverage-2026-07-02.md` — implemented, merged to `main`
-  (vitest backfill: 21 files, 81 tests across client/server).
-- `plan-lobby-cursor-modes-2026-07-03.md` — implemented and merged, except
-  `T010` (manual two-tab browser verification) which remains blocked on
-  a Chrome-extension typing glitch — `playwright-client-coverage`'s
-  `multi-participant.spec.ts` (Phase 4) is planned to supersede the need
-  for that manual step entirely.
-- `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
+- `plan-ui-polish-pass-2026-07-03.md` — **approved**, not yet tasked.
+  Fixes playback cursor visibility, click-to-seek, and lyrics-overlay
+  placement; bar dark-mode contrast; song/part-selection modal.
+- `plan-playwright-coverage-2026-07-02.md`,
+  `plan-test-coverage-2026-07-02.md`,
+  `plan-lobby-cursor-modes-2026-07-03.md`,
+  `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
 
 ## Implementation Status
 
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
-test-coverage-backfill: complete**, all merged to `main`.
+test-coverage-backfill, playwright-client-coverage: complete**, all
+merged to `main`.
 
-**playwright-client-coverage: approved, not yet tasked.** Branch
-`playwright-coverage`.
+**ui-polish-pass: approved, not yet tasked.** Branch `ui-polish-pass`.
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-playwright-coverage-2026-07-02.md` to
+Run `/ardd-tasks` against `plan-ui-polish-pass-2026-07-03.md` to
 generate its task list, then `/ardd-implement`.

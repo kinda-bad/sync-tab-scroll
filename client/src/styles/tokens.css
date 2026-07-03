@@ -14,6 +14,7 @@
   --bg: #0a0a0a;
   --surface: #17171b;
   --surface-raised: #201f24;
+  --bar-surface: #2a2930;
   --ink: #f2f0e8;
   --ink-dim: rgba(242, 240, 232, 0.55);
   --riot: #ff2178;
@@ -34,6 +35,7 @@
   --bg: #e4e1d6;
   --surface: #d6d2c4;
   --surface-raised: #cac5b5;
+  --bar-surface: #bfb9a5;
   --ink: #131211;
   --ink-dim: rgba(19, 18, 17, 0.55);
   --riot: #c40855;
