@@ -1,5 +1,5 @@
-import { test, expect, type Browser } from '@playwright/test';
-import { readStoredSession, sendAsParticipant } from './helpers';
+import { test, expect } from '@playwright/test';
+import { createSessionAsHost, joinSessionAsMember, readStoredSession, sendAsParticipant } from './helpers';
 
 /**
  * SCOPE NOTE: Spotlight mode's core distinguishing behavior — forcing a
@@ -16,23 +16,11 @@ import { readStoredSession, sendAsParticipant } from './helpers';
  * local playback engine — this is the part `tasks-lobby-cursor-modes-0bea.md`'s
  * blocked T010 was also always capable of verifying regardless of audio.
  */
-async function joinAsMember(browser: Browser, code: string) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Member');
-  await page.getByLabel('Session code').fill(code);
-  await page.getByRole('button', { name: 'Join' }).click();
-  return { context, page };
-}
-
 test('song/part selection sync between host and member', async ({ page, browser }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
   const hostSession = await readStoredSession(page);
 
-  const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+  const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
 
   await page.getByRole('button', { name: 'Select' }).first().click();
   await expect(memberPage.locator('.song-name')).toHaveText('Synthetic Test Song', { timeout: 10_000 });
@@ -47,15 +35,13 @@ test('song/part selection sync between host and member', async ({ page, browser 
 });
 
 test('Spotlight mode: lobby cursor readout syncs to the member, and both fields auto-reset after Start', async ({ page, browser }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
   await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
   const hostSession = await readStoredSession(page);
 
-  const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+  const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's
   await memberPage.getByRole('button', { name: 'Close' }).click();
 
