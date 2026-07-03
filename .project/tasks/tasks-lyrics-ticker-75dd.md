@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-ticker-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: completed
 ---
 
 # Tasks
@@ -38,4 +38,5 @@ status: ready
 
 ## Phase 4: Full suite verification
 
-- [ ] T009 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test from Phases 1-3 passes alongside the existing suite, with no regressions. Report final test/file counts.
+- [x] T009 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test from Phases 1-3 passes alongside the existing suite, with no regressions. Report final test/file counts.
+  - Done: `test` (vitest) — 6 files, 25 tests, all pass. `test:ct` (Playwright CT) — 6 files, 13 tests, all pass (including all 3 in `lyrics-overlay.ct.spec.ts`). `test:e2e` (Playwright e2e) — 4 files, 9 tests, 8 pass / 1 fails: `multi-participant.spec.ts`'s "song/part selection sync between host and member" fails with a `.song-name` text mismatch ("Time Is Running Out" vs expected "Synthetic Test Song"). Verified this is **pre-existing, not a regression**: reproduced the identical failure on a clean worktree checked out at `975e09d` (the commit immediately before T001, i.e. before any lyrics-ticker code changed), same error, same locator mismatch. Not touched or explained further by this plan's scope.
