@@ -36,15 +36,25 @@ status: ready
 
   Read all three spec files' inline setups first — `multi-participant.spec.ts` and `host-controls.spec.ts`'s `joinAsMember(browser, code)` are structurally identical (new context/page, goto, fill Musician, fill Session code by label, click Join, return `{ context, page }`), so the shared `joinSessionAsMember` matches both exactly, just parameterizing the name too instead of hardcoding `'Member'`. No dedicated test added for T006 itself — T007/T008/T009/T010 are the tests that exercise these helpers end-to-end (verified together in T011), consistent with the task file's own phase structure.
 
-- [ ] T007 Update `client/e2e/single-participant.spec.ts` to call `createSessionAsHost(page, 'Host')` instead of its own inline goto+click+fill+click sequence (this also subsumes T001's chooser-step fix into the shared helper — the test itself gets simpler, not more complex).
+- [x] T007 Update `client/e2e/single-participant.spec.ts` to call `createSessionAsHost(page, 'Host')` instead of its own inline goto+click+fill+click sequence (this also subsumes T001's chooser-step fix into the shared helper — the test itself gets simpler, not more complex).
 
-- [ ] T008 [parallel] Update `client/e2e/song-part-modal.spec.ts` to call `createSessionAsHost(page, 'Host')` instead of its inline sequence.
+  Both tests now call `createSessionAsHost(page, 'Host')` in place of the 3-line inline sequence.
 
-- [ ] T009 [parallel] Update `client/e2e/multi-participant.spec.ts` to call `createSessionAsHost(page, 'Host')` and replace its own inline `joinAsMember` function with the shared `joinSessionAsMember(browser, 'Member', code)`, removing the now-redundant local function.
+- [x] T008 [parallel] Update `client/e2e/song-part-modal.spec.ts` to call `createSessionAsHost(page, 'Host')` instead of its inline sequence.
 
-- [ ] T010 [parallel] Update `client/e2e/host-controls.spec.ts` to call `createSessionAsHost(page, 'Host')` and replace its own inline `joinAsMember` function with the shared `joinSessionAsMember(browser, 'Member', code)`, removing the now-redundant local function.
+  All 3 tests updated identically.
 
-- [ ] T011 Run the full e2e suite (`pnpm --filter client test:e2e`) and confirm every spec file passes with the shared helpers, no regressions from the chooser step anywhere.
+- [x] T009 [parallel] Update `client/e2e/multi-participant.spec.ts` to call `createSessionAsHost(page, 'Host')` and replace its own inline `joinAsMember` function with the shared `joinSessionAsMember(browser, 'Member', code)`, removing the now-redundant local function.
+
+  Removed the local `joinAsMember` function and its now-unused `Browser` type import; both tests updated.
+
+- [x] T010 [parallel] Update `client/e2e/host-controls.spec.ts` to call `createSessionAsHost(page, 'Host')` and replace its own inline `joinAsMember` function with the shared `joinSessionAsMember(browser, 'Member', code)`, removing the now-redundant local function.
+
+  Same treatment as T009.
+
+- [x] T011 Run the full e2e suite (`pnpm --filter client test:e2e`) and confirm every spec file passes with the shared helpers, no regressions from the chooser step anywhere.
+
+  All 9 e2e tests pass (5 files: single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2).
 
 ## Phase 4: Full suite verification
 
