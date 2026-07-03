@@ -52,9 +52,7 @@ test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canv
 });
 
 test('Start closes the settings modal (plan-settings-modal-redesign T012)', async ({ page }) => {
-  await page.goto('http://localhost:4173/');
-  await page.getByPlaceholder('Musician').fill('Host');
-  await page.getByRole('button', { name: 'Create session' }).click();
+  await createSessionAsHost(page, 'Host');
 
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
