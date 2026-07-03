@@ -54,10 +54,10 @@ status: completed
 
 - [x] T011 Run the full e2e suite (`pnpm --filter client test:e2e`) and confirm every spec file passes with the shared helpers, no regressions from the chooser step anywhere.
 
-  All 9 e2e tests pass (5 files: single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2).
+  All 9 e2e tests pass (4 files: single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2).
 
 ## Phase 4: Full suite verification
 
 - [x] T012 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e` together. Confirm every test from Phases 1-3 passes alongside the existing suite, with no regressions. Report final test/file counts.
 
-  All green, no regressions: vitest 6 files/25 tests; CT 16 files/16 tests; e2e 5 files/9 tests (single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2) — same file/test counts as before this plan (this plan changed *how* the e2e setup happens, not how many tests exist). Total client: 27 files / 50 tests.
+  All green, no regressions: vitest 6 files/25 tests; CT 6 files/16 tests; e2e 4 files/9 tests (single-participant ×2, song-part-modal ×3, multi-participant ×2, host-controls ×2) — same file/test counts as before this plan (this plan changed *how* the e2e setup happens, not how many tests exist). Total client: 16 files / 50 tests.
