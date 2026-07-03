@@ -43,4 +43,8 @@ status: ready
 
 ## Phase 3: Full suite verification
 
-- [ ] T007 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test passes with no regressions. Report final test/file counts.
+- [x] T007 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test passes with no regressions. Report final test/file counts.
+
+  All green: `test` (vitest) — 6 files, 25 tests passed. `test:ct` — 21 tests passed (including both new/changed `playback-engine.ct.spec.ts` tests from T002/T003). `test:e2e` — 10 tests passed.
+
+  **Deviation/gotcha found while running this task:** the first `test:e2e` run failed 9/10 tests. Root cause: this worktree's own dev servers (started manually for the T006 attempt, client on :5173 and server on :8080 via plain `pnpm dev`, i.e. the real `catalog/` root) were still running when `test:e2e` ran, and the e2e Playwright config's `webServer` entry uses `reuseExistingServer: !process.env.CI` for the port-8080 server — so it silently reused my already-running server instead of starting its own with `CATALOG_ROOT=../client/test-fixtures/fixture-catalog`, causing the tests to run against the wrong (real, non-fixture) catalog data. Killed the manually-started servers (client :5173, server :8080) before rerunning; all 10 e2e tests then passed cleanly. Not a regression in this branch's code — a test-run hygiene issue caused by this session's own earlier manual dev-server usage.
