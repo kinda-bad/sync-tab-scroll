@@ -39,26 +39,38 @@ verification.
 
 ## Technical Approach
 
-**Cursor + click-to-seek — likely shared root cause, to confirm during
-implementation, not asserted here as fact:** `client/src/tab-renderer.ts`
-sets the deprecated `settings.player.enablePlayer = true`
-(`@coderline/alphatab`'s own type declaration marks this
-`@deprecated — Use playerMode instead`, `@defaultValue false`; the
-compiled package has zero runtime references to `enablePlayer`, meaning
-it is likely a type-only, no-op legacy alias in this alphaTab version).
-`enableCursor`'s own docs state "Enabling the cursor also requires the
-player to be active" — if `enablePlayer` no-ops, the player may never be
-truly "active" via `playerMode`, which would explain both the missing
-cursor (`enableCursor` defaults `true` *if the player is active*) and
-non-functional click-to-seek (`enableUserInteraction`, already correctly
-toggled by `playback-engine.ts`'s host/paused gating, likely has the same
-"requires active player" dependency). First implementation task is to
-confirm this against the actual behavior, then switch to the documented
-`settings.player.playerMode = at.PlayerMode.EnabledSynthesizer` (matching
-this app's soundfont-driven synthesis, not a backing track). If cursor
-and seek turn out to have *different* root causes once this is fixed,
-handle each on its own merits rather than assuming this single change
-resolves both.
+**Cursor + click-to-seek — revised after implementation-time
+investigation disproved the original hypothesis.** The original
+hypothesis (deprecated `settings.player.enablePlayer` no-op'ing,
+leaving `playerMode`/`enableCursor`/`enableUserInteraction` effectively
+off) was checked empirically against a real alphaTab instance and
+**disproven**: `enablePlayer = true` correctly maps to
+`playerMode: EnabledAutomatic`, and `enableCursor`/`enableUserInteraction`
+are both already `true`. The cursor DOM elements (`.at-cursors` >
+`.at-cursor-bar`/`.at-cursor-beat`/`.at-selection`) genuinely exist with
+real positioning styles immediately after render.
+
+**Actual root cause, confirmed empirically:** alphaTab's `createCursors()`
+builds these elements as bare `<div>`s with *only* positioning/transform
+inline styles — no color, background, or opacity. alphaTab ships no
+companion CSS at all; styling the cursor is documented as the consuming
+app's responsibility. This app has never added any `.at-cursor-bar`/
+`.at-cursor-beat`/`.at-selection` CSS (confirmed: zero matches anywhere
+in `client/src/`). Computed styles on a live-rendered cursor confirm
+`background-color: rgba(0, 0, 0, 0)` (fully transparent) on all three —
+not a contrast problem, no fill at all. `brand.md` already earmarks
+`--riot` for exactly this use ("CTAs, cursor, 'live'/active state") — the
+design intent exists, it was simply never wired into CSS. This also
+plausibly explains the click-to-seek complaint as a side effect, not a
+separate bug: seeking (`enableUserInteraction`) already works, but with
+no visible cursor a user gets no feedback that a seek landed anywhere,
+reading as broken.
+
+**Fix**: add CSS for `.at-cursor-bar`/`.at-cursor-beat`/`.at-selection`
+(wherever the app's tab-container-adjacent styles already live) using
+`--riot`/`--hazard`, with opacity tuned visually against
+`brand-colors.ts`'s `darkTabColors` (staff-line/glyph colors) — not a
+settings or `tab-renderer.ts` logic change.
 
 **Lyrics overlay positioning**: `client/src/lyrics-overlay.ts` currently
 appends its `.lyrics-overlay` div as a plain sibling inside the tab
@@ -94,20 +106,21 @@ precedent to follow).
 ## Phase Breakdown
 
 ### Phase 1: Cursor + click-to-seek investigation and fix
-- Confirm whether `enablePlayer` is genuinely a no-op in the installed
-  `@coderline/alphatab` version (e.g. inspect `api.settings.player.playerMode`
-  at runtime after the current `enablePlayer = true` assignment).
-  [addresses feedback: cursor-not-visible, click-to-seek-broken]
-- Switch `client/src/tab-renderer.ts` to
-  `settings.player.playerMode = at.PlayerMode.EnabledSynthesizer`.
-- Verify in a real browser: cursor overlay appears during playback;
-  host can click-to-seek while paused. If either remains broken after
-  this change, diagnose that one independently rather than assuming a
-  shared cause.
-- **[artifacts: ui]** No revision needed unless the fix reveals the
-  documented mechanism itself was wrong (currently it accurately
-  describes the *intended* behavior) — only revise if implementation
-  surfaces a genuine documentation gap, not the already-known defect.
+- ~~Confirm whether `enablePlayer` is genuinely a no-op~~ — checked and
+  disproven; settings were already correct. [addresses feedback:
+  cursor-not-visible, click-to-seek-broken]
+- Add CSS coloring `.at-cursor-bar`/`.at-cursor-beat`/`.at-selection`
+  using `--riot`/`--hazard`, tuned against `darkTabColors` — the actual
+  confirmed root cause (alphaTab ships these with zero color/opacity;
+  the app never styled them).
+- Verify in a real browser: cursor is now visibly colored and tracks
+  the playing beat; host can click-to-seek while paused (likely already
+  worked — just imperceptible without a visible cursor). If seeking is
+  still broken independent of cursor visibility, that's genuinely
+  separate — diagnose independently rather than assuming a shared cause.
+- **[artifacts: ui]** No revision needed — the documented mechanism
+  (alphaTab's native cursor overlay) was accurate; only its styling was
+  missing, which `ui.md` doesn't get into at that level of detail.
 
 ### Phase 2: Lyrics overlay positioning
 - Add `position: relative` to the tab container and
