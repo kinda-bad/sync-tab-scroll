@@ -13,6 +13,7 @@ import { readStoredSession, sendAsParticipant } from './helpers';
  */
 test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({ page }) => {
   await page.goto('http://localhost:4173/');
+  await page.getByRole('button', { name: 'Create a session' }).click();
   await page.getByPlaceholder('Musician').fill('Host');
   await page.getByRole('button', { name: 'Create session' }).click();
 
@@ -39,6 +40,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
 
 test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canvas', async ({ page }) => {
   await page.goto('http://localhost:4173/');
+  await page.getByRole('button', { name: 'Create a session' }).click();
   await page.getByPlaceholder('Musician').fill('Host');
   await page.getByRole('button', { name: 'Create session' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
