@@ -1,0 +1,37 @@
+---
+plan: plan-playback-sync-fixes-2026-07-03.md
+generated: 2026-07-03
+status: ready
+---
+
+# Tasks
+
+## Phase 1: Server-side tick relay
+
+- [ ] T001 [artifacts: datamodel] Add `{ type: 'playback-tick-report'; tickPosition: number }` to the `ClientMessage` union in `packages/shared/src/messages.ts` (currently a `|`-chain ending in `| { type: 'song-select'; songId: string };` — append the new variant before the closing semicolon, same shape convention as the existing `lobby-cursor-set` variant).
+
+- [ ] T002 [artifacts: infrastructure] Write a test first (Principle VII), mirroring `server/src/handlers/spotlight-mode-set.test.ts`'s exact structure (fake socket/ctx helpers, `ctx.connections.send`/`broadcast` overridden to capture calls): create `server/src/handlers/playback-tick-report.test.ts` with two cases — (1) a non-host's report is rejected with an `error` message (`'Only the host can report tick position'`), `session.playbackState.tickPosition` unchanged; (2) the host's report updates `session.playbackState.tickPosition` to the reported value and `session.playbackState.serverTimestamp` to a fresh timestamp, then broadcasts one `session-state` message. Confirm this test fails (the handler doesn't exist yet — it won't even compile/import).
+
+- [ ] T003 [artifacts: infrastructure] Add `server/src/handlers/playback-tick-report.ts`, copying `lobby-cursor-set.ts`'s exact shape (same `ctx`/`socket`/`message` signature, same host-check pattern via `session.hostId !== conn.participantId` with the rejection message `'Only the host can report tick position'`, same broadcast call). On success: set `session.playbackState.tickPosition = message.tickPosition` and `session.playbackState.serverTimestamp = Date.now()`, then broadcast `{ type: 'session-state', session, selfParticipantId }` via `ctx.connections.broadcast`. Wire the new case into `server/src/dispatch.ts`'s switch (add the import and a `case 'playback-tick-report': return handlePlaybackTickReport(ctx, socket, message);` line, following the exact pattern of the other cases). Run T002's test and confirm it now passes.
+
+- [ ] T004 [artifacts: infrastructure, datamodel] Revise `.project/artifacts/infrastructure.md`'s Session & Real-Time Sync section: replace the framing that "the server owns... is the source of truth for tick position" with a description of host-client authority — the host's client periodically self-reports its real `tickPosition` (via the new `playback-tick-report` message), the server just stores and relays it through the existing unchanged periodic broadcast; the server cannot compute `tickPosition` itself since it never parses the GP file (no tempo/PPQ knowledge). Note `serverTimestamp`-based latency-compensation as a deferred future refinement, not part of the current mechanism. Also revise `.project/artifacts/datamodel.md`'s `Session.playbackState`/`PlaybackState.tickPosition` field notes to match (host-authoritative, not server-computed). Bump `last_updated` on both, set `diagram_status: stale` (unless already `unrendered`).
+
+## Phase 2: Client-side periodic reporting
+
+- [ ] T005 [artifacts: infrastructure] Write a test first (Principle VII): extend `client/src/playback-engine.ct.spec.ts` using the existing `PlaybackEngineHarness`'s fake `wsClient`. New test: drive `clientStore` to `isHost: true` and `session.playbackState.status: 'running'`, advance fake timers past the reporter's interval (~1s), and assert `__sentMessages` (or whatever the harness's existing captured-message array is named — check the file) contains a `{ type: 'playback-tick-report', tickPosition: <api.tickPosition> }` entry. Add a second assertion/test: no such message is sent when `isHost` is `false`, and none when `status` isn't `'running'`. Confirm both fail against the current code (no reporter exists yet).
+
+- [ ] T006 [artifacts: infrastructure] In `client/src/playback-engine.ts`, add a periodic timer (established once per engine instance, alongside the existing drift-correction `clientStore.subscribe` logic) that sends `{ type: 'playback-tick-report', tickPosition: api.tickPosition }` via `wsClient.send` roughly every 1 second, gated on a fresh check (each tick, via the same `clientStore` subscription pattern already used for drift correction — not a one-time computed condition) of `isHost && session.playbackState.status === 'running'`. Deliberately do not gate on `api.isReadyForPlayback` (that flag never resolves under browser automation, per the project's known, accepted limitation — gating on it would make this logic untestable in CT for the same reason; in real production the host has already passed the readiness flow by the time status is `'running'`, so this is a non-issue in practice). Run T005's tests and confirm they pass.
+
+- [ ] T007 Manual verification in a real browser: with dev servers running, start a two-participant session, have the host start playback, and confirm the cursor now advances continuously without rubberbanding to its starting position — for both the host and the other participant (whose `correctDrift()` now corrects against a genuinely moving server value instead of a frozen one).
+
+## Phase 3: Session code visibility
+
+- [ ] T008 [artifacts: ui] Fix `client/src/App.svelte`'s `identity()` snippet (currently `{#if catalogSong} <song/artist> {:else} Join code: {session.code} {/if}`, meaning the join code disappears entirely once a song is selected): change it to always render `Join code: {session.code}`, and render the song name/artist alongside it (not instead of it) once `catalogSong` is set.
+
+- [ ] T009 Write a test first (Principle VII): extend `client/e2e/single-participant.spec.ts` (or add a small new assertion to an existing flow in it) asserting the join-code text is visible in the persistent Bar both before song selection and after a song and part are selected. Confirm it fails against the current code (join code text disappears post-selection), then confirm it passes after T008.
+
+- [ ] T010 [artifacts: ui] Add a brief note to `.project/artifacts/ui.md`'s existing persistent-bar mention (Lobby View section): the join code is always shown in the bar's identity area, alongside song identity once a song is selected. Bump `last_updated`.
+
+## Phase 4: Full suite verification
+
+- [ ] T011 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, `pnpm --filter client test:e2e`, and `pnpm --filter server test`. Confirm every test from Phases 1-3 passes alongside the existing suite (102 tests total as of the last full count, from `test-coverage-backfill`/`playwright-client-coverage`/`ui-polish-pass`), with no regressions. Report final test/file counts per package.
