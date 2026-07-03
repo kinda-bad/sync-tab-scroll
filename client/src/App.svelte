@@ -163,9 +163,16 @@
 
 <style>
   .app-content.with-bar {
-    /* Clears the persistent Bar (its own height + the hazard strip above
-       it) so bottom content isn't hidden behind it. */
-    padding-bottom: calc(var(--bar-height) + var(--space-8));
+    /* The hazard strip now pins to the very top of the viewport
+       (Bar.svelte's .hazard-wrap) instead of sitting above the nav bar —
+       clear it here so top content isn't hidden behind it. HazardBar
+       itself renders at ~0.625rem tall (0.5rem height + 1px border each
+       side); --space-6 gives a bit of breathing room beyond that. */
+    padding-top: var(--space-6);
+    /* Clears the persistent, bottom-pinned Bar's own height alone now —
+       it no longer needs to also account for the hazard strip's height,
+       since that moved out from above it to the top of the viewport. */
+    padding-bottom: var(--bar-height);
   }
 
   .engine-containers,
