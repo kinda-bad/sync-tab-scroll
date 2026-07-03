@@ -1,14 +1,14 @@
 ---
 plan: plan-test-coverage-2026-07-02.md
 generated: 2026-07-02
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Client test infrastructure
 
-- [ ] T001 Add `vitest` as a `client` dev dependency, pinned to the same `^2.1.9` used in `server/package.json` (avoid version drift between the two packages: run `pnpm --filter client add -D vitest@^2.1.9`). Add a `"test": "vitest run"` script to `client/package.json`, matching `server/package.json`'s existing script. Confirm `pnpm --filter client test` runs (even with zero test files, vitest should report "no test files found" rather than erroring) before moving on.
+- [x] T001 Add `vitest` as a `client` dev dependency, pinned to the same `^2.1.9` used in `server/package.json` (avoid version drift between the two packages: run `pnpm --filter client add -D vitest@^2.1.9`). Add a `"test": "vitest run"` script to `client/package.json`, matching `server/package.json`'s existing script. Confirm `pnpm --filter client test` runs (even with zero test files, vitest should report "no test files found" rather than erroring) before moving on.
 
 ## Phase 2: Client pure-logic test backfill
 
