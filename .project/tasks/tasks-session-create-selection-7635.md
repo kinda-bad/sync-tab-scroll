@@ -26,7 +26,9 @@ status: ready
 
 ## Phase 2: Join-code placeholder fix
 
-- [ ] T005 [artifacts: ui] In `Landing.svelte`'s join form (from T002), fix the "Session code" `TextInput`'s placeholder from `"ABC123"` to a 4-character example (e.g. `"AB12"`), matching `server/src/session-store.ts`'s `generateJoinCode()` (session-store.ts:9, generates exactly 4 characters).
+- [x] T005 [artifacts: ui] In `Landing.svelte`'s join form (from T002), fix the "Session code" `TextInput`'s placeholder from `"ABC123"` to a 4-character example (e.g. `"AB12"`), matching `server/src/session-store.ts`'s `generateJoinCode()` (session-store.ts:9, generates exactly 4 characters).
+
+  No test task declared for this in the plan/task file — a one-line placeholder-string change with no behavioral branch to assert on, so no new test added (nothing in the e2e suite asserts on this placeholder's exact text). Also updated `TextInput.stories.svelte`'s `JoinCode` story placeholder from `"ABC123"` to `"AB12"` for consistency, since it was the only other place the stale 6-char example lived.
 
 ## Phase 3: Shared e2e helpers + fallout fixes
 

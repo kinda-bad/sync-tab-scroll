@@ -47,7 +47,7 @@
     {:else if mode === 'join'}
       <form onsubmit={(e) => { e.preventDefault(); joinSession(); }}>
         <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
-        <TextInput label="Session code" placeholder="ABC123" uppercase bind:value={joinCode} />
+        <TextInput label="Session code" placeholder="AB12" uppercase bind:value={joinCode} />
         <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode} />
         <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
       </form>
