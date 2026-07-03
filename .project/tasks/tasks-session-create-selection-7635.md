@@ -20,7 +20,9 @@ status: ready
 
   Confirmed: all 7 tests across the 3 files fail identically — `locator.fill`/`locator.click` timeout waiting on `getByPlaceholder('Musician')` (or the downstream "Create session" button), because the name field no longer exists until the new "Create a session" chooser button is clicked first. No other selector breakage observed. Fixed properly in Phase 3 (T006-T010).
 
-- [ ] T004 [artifacts: ui] Revise `.project/artifacts/ui.md`'s Landing View section to describe the new chooser → form flow (initial "Create a session" / "Join a session" choice, each leading to its own form with its own name input and native-form Enter-to-submit) in place of the current "Create a new session or join an existing one by code" single-card description. Bump `last_updated`.
+- [x] T004 [artifacts: ui] Revise `.project/artifacts/ui.md`'s Landing View section to describe the new chooser → form flow (initial "Create a session" / "Join a session" choice, each leading to its own form with its own name input and native-form Enter-to-submit) in place of the current "Create a new session or join an existing one by code" single-card description. Bump `last_updated`.
+
+  Docs-only task, no test required (constitution VII's documentation-change exception). `last_updated` was already `2026-07-03` (today); left as-is since it's already current.
 
 ## Phase 2: Join-code placeholder fix
 
