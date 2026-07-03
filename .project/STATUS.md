@@ -57,6 +57,12 @@ these fixes until the next `/ardd-verify` run confirms them against code.
 
 ## Plans
 
+- `plan-theme-persistence-2026-07-03.md` — **draft**, not yet tasked/approved.
+  Branch `theme-persistence` (current worktree). Fixes a live-browser-confirmed
+  bug: `ensurePlaybackEngine()` hardcodes a fresh engine's theme to `'dark'`
+  instead of reading the current/persisted value, so a light-mode preference
+  sticks for the app chrome but silently reverts to dark for the tab notation
+  on every fresh load.
 - `plan-settings-modal-redesign-2026-07-03.md`, `plan-session-create-selection-2026-07-03.md`,
   `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
   `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
@@ -70,32 +76,45 @@ these fixes until the next `/ardd-verify` run confirms them against code.
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
 test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
 playback-sync-fixes, lyrics-ticker, settings-modal-redesign,
-session-create-selection: complete**, all merged to `main`. Currently on
-`main`, worktree clean.
+session-create-selection: complete**, all merged to `main`.
+
+**theme-persistence: drafted, not yet approved/tasked.** Branch
+`theme-persistence` (separate worktree, off `main`).
 
 Full suite green on merged `main`: client vitest 6 files/25 tests, client
 CT 20/20, client e2e 10/10, server vitest 16 files/58 tests.
 
 **Unsigned commits — needs attention before any push.** Every commit
 across `settings-modal-redesign`, `session-create-selection`, their merge
-commits into `main`, the `/ardd-verify` pass, and this refine pass was
-made with `--no-gpg-sign` (1Password locked throughout). Re-sign the
-range once 1Password is available, before pushing.
+commits into `main`, the `/ardd-verify` pass, and the subsequent refine
+pass was made with `--no-gpg-sign` (1Password locked throughout). Re-sign
+the range once 1Password is available, before pushing.
 
-**Still needs a human's live-browser confirmation** (not automatable in
-this environment):
-- Two-participant no-rubberband playback (`playback-sync-fixes`).
-- Lyrics ticker scroll/center/resize + tab-scroll-padding clearance
-  (`lyrics-ticker`).
-- Hazard-strip top positioning and content top-padding clearance
-  (`settings-modal-redesign`).
-- Theme toggle reachable from both Lobby and Playback, changes both the
-  CSS palette and tab notation together, and persists across a refresh
-  (`settings-modal-redesign`).
+**Live-browser verification pass completed** (partially — see below):
+- ✅ Landing chooser/split-forms/Enter-to-submit, 4-char join code, hazard
+  strip's independent top-pinned position (confirmed via computed styles),
+  content top-padding clearance, Lobby-body hint's per-state text, Settings
+  modal (Participants + Settings tabs) reachable from both Lobby and
+  Playback, theme toggle changing CSS palette + tab notation together,
+  lyrics ticker's static single-line/no-wrap/clipped layout — all confirmed
+  working as designed.
+- 🐛 Found a new bug in the process: theme persistence across a refresh
+  doesn't reach the tab notation (see `plan-theme-persistence-2026-07-03.md`
+  above).
+- ❌ Genuinely **not verifiable in this environment**, confirmed by direct
+  measurement (not just assumption): the playback cursor's pixel position
+  was checked 4 seconds apart and found completely frozen — alphaTab's
+  player clock never starts because audio decode never resolves under
+  Chrome automation (the project's known, permanent limitation). This
+  blocks verifying both the two-participant no-rubberband playback fix
+  (`playback-sync-fixes`) and the lyrics ticker's live scroll/centering
+  behavior (`lyrics-ticker`) — these two still need a human, in a real
+  browser, with real audio.
 
 ## Recommended Next Step
 
-Run `/ardd-verify` once more to confirm the 5 defects above are now
-resolved and refresh `DEFECTS.md`'s all-clear state; then a manual
-live-browser pass over the four unconfirmed items; then re-sign the
-unsigned commit range before pushing `main`.
+Run `/ardd-tasks` against `plan-theme-persistence-2026-07-03.md` to
+approve and task it, then `/ardd-implement`. Separately: a human still
+needs to manually verify the two-participant playback and lyrics-ticker
+scroll/centering behavior in a real browser (not automatable here), and
+the unsigned commit range needs re-signing before `main` is pushed.
