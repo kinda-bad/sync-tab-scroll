@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: theme-persistence
 created: 2026-07-03
 features: []
