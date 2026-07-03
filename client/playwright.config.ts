@@ -30,6 +30,11 @@ export default defineConfig({
       testMatch: '**/*.ct.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
+        // alphaTab's soundFontLoaded event needs a running AudioContext,
+        // which Chrome's autoplay policy otherwise suspends without a
+        // user gesture — this is decode/load readiness, not playback, so
+        // this flag isn't the "no audio assertions" scope creeping in.
+        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
         ctPort: 3100,
         ctViteConfig: {
           plugins: [svelte()],
@@ -46,10 +51,22 @@ export default defineConfig({
             // Real server (not mocked) — tsx dev is functionally identical to
             // the compiled server for E2E purposes; only the client's build
             // artifact matters for "matches what a user gets" (below).
-            command: 'CATALOG_ROOT=../catalog pnpm --filter @sync-tab-scroll/server dev',
-            url: 'http://localhost:8080',
+            // `port` not `url`: the WS server 404s a bare GET / (it only
+            // serves /catalog static files and the WS upgrade), and
+            // Playwright's `url` check requires a 2xx response — a TCP-only
+            // check is what this server can actually satisfy.
+            // `pnpm --filter` cds into the matched package (server/) before
+            // running its script, regardless of this entry's own `cwd` —
+            // so the path is relative to server/, not the repo root.
+            // Points at the committed synthetic fixture catalog
+            // (client/test-fixtures/fixture-catalog), not the real (gitignored,
+            // real-commercial-content) catalog/ — so these tests are
+            // reproducible on a fresh clone/CI without local-only content.
+            command: 'CATALOG_ROOT=../client/test-fixtures/fixture-catalog pnpm --filter @sync-tab-scroll/server dev',
+            port: 8080,
             reuseExistingServer: !process.env.CI,
             cwd: '../',
+            timeout: 60_000,
           },
           {
             // Production build + preview, not the dev server — matches what
@@ -58,6 +75,7 @@ export default defineConfig({
             url: 'http://localhost:4173',
             reuseExistingServer: !process.env.CI,
             cwd: '../',
+            timeout: 120_000,
           },
         ],
 });

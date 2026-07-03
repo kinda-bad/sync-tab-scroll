@@ -99,6 +99,6 @@ Bring the codebase into compliance with constitution Principle VII (Test-First D
 Why: logged via `/ardd-verify` (see `DEFECTS.md`'s constitution.md entry) — Principle VII was added mid-implementation of `plan-lobby-cursor-modes-2026-07-03.md` specifically because a task needed a test with no runner/harness to write it against. This entry tracks closing the resulting gap deliberately, rather than backfilling it ad hoc.
 
 ## Playwright client coverage
-_Slug: `playwright-client-coverage` · Status: tasked · Logged 2026-07-02 · Plan: plan-playwright-coverage-2026-07-02.md · Tasks: tasks-playwright-coverage-c1d3.md_
+_Slug: `playwright-client-coverage` · Status: implemented · Logged 2026-07-02 · Plan: plan-playwright-coverage-2026-07-02.md · Tasks: tasks-playwright-coverage-c1d3.md_
 Covers `client`'s DOM/alphaTab/WebSocket-coupled modules (`tab-renderer`, `headless-player`, `lyrics-overlay`, `playback-engine`, `ws-client`, `store`, `main`) with Playwright, completing the Principle VII backfill that `test-coverage-backfill` explicitly left out.
 Why: `jsdom` can't render alphaTab's canvas/SVG output or play audio, and heavy mocking risks testing the mock instead of the real behavior — `plan-test-coverage-2026-07-02.md`'s Open Questions flagged this as needing its own deliberately-scoped plan rather than folding it into the vitest pass.

@@ -28,8 +28,13 @@ None — no `[OPEN]` placeholders in any artifact.
 
 ## Constitution Compliance
 
-No new violations found this pass beyond what's already tracked in
-`DEFECTS.md` (Principle VI inline-retyping of `Theme` in `Playback.svelte`).
+No new violations found this pass. `DEFECTS.md`'s Principle VII entry is
+now partially stale relative to code — `test-coverage-backfill` closed
+most of the gap it describes (server handlers, `session-store`,
+`connections`, and client pure-logic modules are now covered by vitest).
+The remaining, still-accurate gap is exactly what
+`plan-playwright-coverage-2026-07-02.md` targets. Not corrected here;
+`/ardd-verify` owns `DEFECTS.md`.
 
 ## Diagrams
 
@@ -39,44 +44,44 @@ No new violations found this pass beyond what's already tracked in
 
 ## Code-vs-Artifact Defects
 
-6 known defects — see `DEFECTS.md`, last checked 2026-07-02. Run
-`/ardd-verify` to refresh.
+1 known defect — see `DEFECTS.md`, last checked 2026-07-02 (partially
+stale, see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
 ## Feedback
 
-No open feedback files. `feedback-lobby-cursor-mode-e13b.md` was consumed by
-`plan-lobby-cursor-modes-2026-07-03.md` and is now `status: planned`.
+No open feedback files.
 
 ## Feature Backlog
 
-4 backlogged · 0 planned · 0 tasked · 0 implemented — see
-`.project/artifacts/features.md`. Target a backlogged slug with
-`/ardd-plan <slug>`.
+4 backlogged · 1 planned · 0 tasked · 1 implemented — see
+`.project/artifacts/features.md`.
 
 ## Plans
 
-- `plan-lobby-cursor-modes-2026-07-03.md` — **approved**, not yet tasked.
-  Introduces host-only `Session.spotlightMode`, gating the lobby cursor's
-  force-follow effect (which doesn't exist in code yet and this plan
-  builds). Artifact revisions to `datamodel.md`/`ui.md`/`features.md` are
-  deferred to implementation (Phases 1 and 4).
-- `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md` — implemented,
-  merged to `main` (see Implementation Status below).
-- `plan-live-rendering-pivot-2026-07-01.md` — implemented, merged to `main`.
+- `plan-playwright-coverage-2026-07-02.md` — **approved**, not yet
+  tasked. Two Playwright projects (e2e, ct) covering client's
+  DOM/alphaTab/WebSocket-coupled modules; audio assertions explicitly
+  out of scope.
+- `plan-test-coverage-2026-07-02.md` — implemented, merged to `main`
+  (vitest backfill: 21 files, 81 tests across client/server).
+- `plan-lobby-cursor-modes-2026-07-03.md` — implemented and merged, except
+  `T010` (manual two-tab browser verification) which remains blocked on
+  a Chrome-extension typing glitch — `playwright-client-coverage`'s
+  `multi-participant.spec.ts` (Phase 4) is planned to supersede the need
+  for that manual step entirely.
+- `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
+  `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
+  `main`.
 
 ## Implementation Status
 
-**live-rendering-pivot: complete.** `tasks-live-rendering-pivot-d9c2.md` —
-27/27 tasks done, merged to `main`.
+**live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
+test-coverage-backfill: complete**, all merged to `main`.
 
-**song-catalog-selection: complete.** Both `tasks-song-catalog-selection-275d.md`
-and `tasks-song-catalog-selection-e8c3.md` fully checked and merged to `main`,
-including browser-verified client phases.
-
-**lobby-cursor-modes: not yet tasked.** Plan approved on branch
-`lobby-cursor-modes`; no tasks file generated yet.
+**playwright-client-coverage: approved, not yet tasked.** Branch
+`playwright-coverage`.
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-lobby-cursor-modes-2026-07-03.md` to generate
-its task list, then `/ardd-implement` to build it.
+Run `/ardd-tasks` against `plan-playwright-coverage-2026-07-02.md` to
+generate its task list, then `/ardd-implement`.

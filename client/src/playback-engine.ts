@@ -161,6 +161,11 @@ export function toggleOverlay(): void {
   state.overlay?.setVisible(state.showOverlay);
 }
 
+/** Test-only accessor — not used by app code. Exposes the module's private engine state (specifically its alphaTab `api`) so component tests can assert on real drift-correction/Spotlight-mode/seek behavior without duplicating the wiring. */
+export function __getEngineStateForTesting(): { api: AlphaTabApi } | undefined {
+  return state;
+}
+
 export function toggleTheme(): Theme {
   if (!state) return 'dark';
   state.theme = state.theme === 'dark' ? 'light' : 'dark';
