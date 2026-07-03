@@ -31,11 +31,54 @@ status: ready
 
 ## Phase 2: Theme control (Settings tab)
 
+**BLOCKER — paused before starting Phase 2, see T008's note below.** Phase 1
+(T001-T005) is complete and committed. Do not resume Phase 2 until the open
+question below is resolved with the user; starting T006/T007 blind risks
+rework since the design decision affects `theme.ts`'s shape and T010's UI.
+
 - [ ] T006 [artifacts: infrastructure] Write a test first (Principle VII): add `client/src/theme.ct.spec.ts` (or a vitest unit test if no DOM/localStorage dependency requires CT — check whether `localStorage`/`document.documentElement` are available under vitest's environment in this project first, matching whichever existing test file's setup is closest) asserting: `applyTheme('light')` sets `document.documentElement.dataset.theme` to `'light'`; `persistTheme('light')` followed by `loadStoredTheme()` returns `'light'`; `loadStoredTheme()` returns `undefined` with nothing stored. Confirm it fails — `client/src/theme.ts` doesn't exist yet.
 
 - [ ] T007 [artifacts: infrastructure] Add `client/src/theme.ts`, mirroring `client/src/session-persistence.ts`'s shape: a `StoredTheme = 'dark' | 'light'` type (reuse `tab-renderer.ts`'s existing `Theme` type rather than redeclaring it, if convenient), `loadStoredTheme(): StoredTheme | undefined` (reads a new `localStorage` key, e.g. `'sync-tab-scroll:theme'`), `persistTheme(theme: StoredTheme): void` (writes it), and `applyTheme(theme: StoredTheme): void` (sets `document.documentElement.dataset.theme = theme`). Run T006's test and confirm it passes.
 
 - [ ] T008 [artifacts: infrastructure] In `client/src/playback-engine.ts`, refactor the existing (currently unused/dead — nothing calls it) `toggleTheme()` export into an explicit `setEngineTheme(theme: Theme): void` that sets `state.theme = theme` and calls `tab-renderer.ts`'s `setTheme(state.api, theme)` when `!state.isLyricsPart` (same guard logic `toggleTheme()` already had, just taking the target value directly instead of flipping the current one). Update `theme.ts`'s `applyTheme()` to also call `setEngineTheme(theme)` (import from `playback-engine.ts`) so the document-level palette and the tab-notation colors change together, per brand.md's "toggling theme anywhere in the app switches both at once." Grep the codebase first to confirm nothing else calls the old `toggleTheme()` name before renaming it (expected: nothing does, per the plan's own finding) — if something unexpectedly does, stop and report rather than silently breaking a caller.
+
+  **BLOCKER (found during implementation, not guessed past):** the grep
+  this task itself asks for turned up a real caller. `client/src/views/Playback.svelte`
+  (lines 2, 22-32) imports `toggleTheme as engineToggleTheme` and wires it to a
+  live "Light mode / Dark mode" button in the Playback view's own controls —
+  it also sets `document.documentElement.dataset.theme` itself, inline,
+  independent of the new `theme.ts` module this plan introduces. This
+  falsifies three of the plan's stated premises, not just T008's:
+  - Plan Scope: "today theme is only switchable via `data-theme` in test
+    harnesses/Storybook, never from the running app" — false; `Playback.svelte`
+    already does this live, in production.
+  - Plan Technical Approach: "nothing in `App.svelte` currently calls it, so
+    it's dead code today" — true that `App.svelte` doesn't call it, but
+    `Playback.svelte` does, so `toggleTheme()` is not actually dead code.
+  - T010's framing ("this app has no other theme control to match
+    stylistically yet") — false; `Playback.svelte`'s toggle is exactly that,
+    just not persisted and not wired to `theme.ts`.
+
+  Per this task's own instruction, stopping here rather than silently
+  breaking that caller or guessing a fix. Renaming `toggleTheme()` to
+  `setEngineTheme(theme)` is mechanically simple (update `Playback.svelte`'s
+  local `toggleTheme()` to compute the flipped value itself and call
+  `setEngineTheme(next)`), but the right shape depends on decisions only the
+  user can make:
+  1. Keep both a Playback-view toggle and the new Settings-tab toggle, or
+     consolidate to one control?
+  2. `Playback.svelte`'s toggle sets `data-theme` directly and does not
+     persist across a refresh; `theme.ts`'s `applyTheme()`/`persistTheme()`
+     does. Migrate the Playback toggle to call into `theme.ts` too (so both
+     controls, if both are kept, persist consistently), or leave it as its
+     own separate, non-persisting mechanism?
+  3. Depending on 1-2, whether `Playback.svelte` needs its own code changes
+     as part of T008/T010, or whether this plan's scope should be revised
+     (a re-plan of Phase 2, not just an in-flight patch) to explicitly cover
+     the pre-existing control it didn't know about.
+
+  Work stopped at this point in the task list; Phases 1 is complete/committed,
+  Phase 2 (T006 onward) not started. See the note above Phase 2's heading.
 
 - [ ] T009 In `client/src/main.ts`, call `applyTheme(loadStoredTheme() ?? 'dark')` once on startup (before or alongside `startSessionPersistence()` — order doesn't matter, they're independent), matching `tokens.css`'s existing default (`:root, :root[data-theme='dark']` share styles, i.e. dark is the implicit default today).
 
