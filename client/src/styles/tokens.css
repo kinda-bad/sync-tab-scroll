@@ -61,6 +61,12 @@
   --space-8: 2rem;
 
   --bar-height: 3.5rem;
+  /* Covers .lyrics-overlay's single-line ticker strip: two lots of
+     --space-2 vertical padding (0.5rem each) plus one line of its
+     0.9375rem mono text (line-height ~1.2 => ~1.125rem), rounded up with
+     headroom rather than measured to the pixel — the old multi-line
+     `max-height: 40%` bound no longer applies to a fixed single-line strip. */
+  --lyrics-strip-height: 3rem;
 }
 
 * {

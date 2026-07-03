@@ -164,7 +164,7 @@
   left: 0;
   right: 0;
   bottom: calc(var(--bar-height, 0px) + var(--space-4));
-  height: var(--lyrics-strip-height, 3rem);
+  height: var(--lyrics-strip-height);
   display: flex;
   align-items: center;
   white-space: nowrap;
