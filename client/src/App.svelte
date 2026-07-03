@@ -91,7 +91,7 @@
 
 <div class="engine-containers" class:visible={hasPart && !isLyricsPart}>
   <div bind:this={tabContainer} class="tab-container"></div>
-  <div bind:this={overlayContainer}></div>
+  <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
 
@@ -139,6 +139,12 @@
   .engine-containers.visible,
   .full-lyrics-view.visible {
     display: block;
+  }
+  .engine-containers {
+    /* Positioning context for .lyrics-overlay-container, so the overlay
+       renders on top of the tab notation instead of stacking below it
+       in normal document flow. */
+    position: relative;
   }
   .tab-container {
     background: var(--canvas-bg, #0a0a0a);

@@ -29,3 +29,14 @@ test('highlights the correct syllable as tick position advances', async ({ mount
   await drive(page, 999);
   await expect(highlighted()).toHaveText('before ');
 });
+
+test('overlays on top of the tab notation (viewport-fixed) instead of stacking below it', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+
+  // Fixed, not absolute-within-container: .engine-containers spans the
+  // entire (often multi-screen-tall) rendered score in the real app, so an
+  // absolutely-positioned band anchored to its bottom would sit far below
+  // the fold — verified live in a real browser, not just reasoned about.
+  const overlayPosition = await page.locator('.lyrics-overlay').evaluate((el) => getComputedStyle(el).position);
+  expect(overlayPosition).toBe('fixed');
+});

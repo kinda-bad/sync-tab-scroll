@@ -37,4 +37,6 @@
   });
 </script>
 
-<div bind:this={container} data-testid="overlay-container"></div>
+<div style="position: relative; width: 400px; height: 300px;" data-testid="engine-containers-stub">
+  <div bind:this={container} class="lyrics-overlay-container" data-testid="overlay-container"></div>
+</div>
