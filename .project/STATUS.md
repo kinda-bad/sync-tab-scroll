@@ -42,13 +42,9 @@ No violations found in the last full `/ardd-verify` re-survey. Principle I
 
 5 known defects — see `DEFECTS.md`, last checked 2026-07-03. All 5 have
 since had corrective `/ardd-refine` passes applied to `ui.md`, `brand.md`,
-and `datamodel.md` (dropping the stale "host can remove participants"
-claim, documenting the settings-cog's actual Lobby+Playback reachability,
-adding the missing "Connecting…" Lobby-body case, correcting the
-hazard-strip's now-independent top-pinned position, and correcting the
-`lyricLineBreaks` consumption claim) — but `DEFECTS.md` itself is
-`/ardd-verify`'s sole write surface, so its defect list won't reflect
-these fixes until the next `/ardd-verify` run confirms them against code.
+and `datamodel.md` — but `DEFECTS.md` itself is `/ardd-verify`'s sole
+write surface, so its defect list won't reflect these fixes until the
+next `/ardd-verify` run confirms them against code.
 
 ## Feature Backlog
 
@@ -57,6 +53,14 @@ these fixes until the next `/ardd-verify` run confirms them against code.
 
 ## Plans
 
+- `plan-hazard-bar-progress-2026-07-03.md` — **draft**, not yet
+  tasked/approved. Branch `hazard-bar-progress` (current worktree).
+  Replaces the Playback view's hardcoded hazard-strip fill (`1`, "live")
+  with real song-position tracking via alphaTab's `playerPositionChanged`.
+- `plan-theme-persistence-2026-07-03.md` — **implemented**, not yet
+  merged to `main`. Lives on the separate `theme-persistence` worktree/
+  branch. Fixes a fresh playback engine always hardcoding its theme to
+  `'dark'` instead of reading the persisted/current value.
 - `plan-settings-modal-redesign-2026-07-03.md`, `plan-session-create-selection-2026-07-03.md`,
   `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
   `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
@@ -70,32 +74,45 @@ these fixes until the next `/ardd-verify` run confirms them against code.
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
 test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
 playback-sync-fixes, lyrics-ticker, settings-modal-redesign,
-session-create-selection: complete**, all merged to `main`. Currently on
-`main`, worktree clean.
+session-create-selection: complete**, all merged to `main`.
 
-Full suite green on merged `main`: client vitest 6 files/25 tests, client
-CT 20/20, client e2e 10/10, server vitest 16 files/58 tests.
+**theme-persistence: implemented** (5/5 tasks, full suite green — client
+vitest 6/25, CT 8 files/21 tests, e2e 4 files/10 tests), on its own
+worktree/branch, not yet merged to `main`.
+
+**hazard-bar-progress: drafted, not yet tasked.** Branch
+`hazard-bar-progress` (current worktree).
 
 **Unsigned commits — needs attention before any push.** Every commit
-across `settings-modal-redesign`, `session-create-selection`, their merge
-commits into `main`, the `/ardd-verify` pass, and this refine pass was
-made with `--no-gpg-sign` (1Password locked throughout). Re-sign the
-range once 1Password is available, before pushing.
+across `settings-modal-redesign`, `session-create-selection`,
+`theme-persistence`, their merge commits, and every `/ardd-verify`/refine/
+plan pass since was made with `--no-gpg-sign` (1Password locked
+throughout this whole session). Re-sign the full range once 1Password is
+available, before pushing anything.
 
-**Still needs a human's live-browser confirmation** (not automatable in
-this environment):
-- Two-participant no-rubberband playback (`playback-sync-fixes`).
-- Lyrics ticker scroll/center/resize + tab-scroll-padding clearance
-  (`lyrics-ticker`).
-- Hazard-strip top positioning and content top-padding clearance
-  (`settings-modal-redesign`).
-- Theme toggle reachable from both Lobby and Playback, changes both the
-  CSS palette and tab notation together, and persists across a refresh
-  (`settings-modal-redesign`).
+**Live-browser verification status:**
+- ✅ Confirmed working: Landing chooser/split-forms, 4-char join code,
+  hazard strip's independent top-pinned position, content padding
+  clearance, Lobby-body hint states, Settings modal reachable from both
+  Lobby and Playback, theme toggle changing CSS palette + tab notation
+  together, lyrics ticker's static single-line layout.
+- ✅ `theme-persistence`'s fix addresses the one bug that live pass found
+  (tab notation not picking up the persisted theme on a fresh load).
+- ❌ Still **not verifiable in this environment** (confirmed by direct
+  pixel-position measurement, not assumption): the playback cursor never
+  advances at all under Chrome browser automation — audio decode never
+  resolves, so alphaTab's player clock never starts. Blocks verifying the
+  two-participant no-rubberband playback fix (`playback-sync-fixes`) and
+  the lyrics ticker's live scroll/centering (`lyrics-ticker`). Also
+  relevant to `hazard-bar-progress`'s own Phase 2 — worth attempting
+  anyway since `playerPositionChanged` may fire from alphaTab's internal
+  transport clock independent of real audio output, but not guaranteed.
 
 ## Recommended Next Step
 
-Run `/ardd-verify` once more to confirm the 5 defects above are now
-resolved and refresh `DEFECTS.md`'s all-clear state; then a manual
-live-browser pass over the four unconfirmed items; then re-sign the
-unsigned commit range before pushing `main`.
+Run `/ardd-tasks` against `plan-hazard-bar-progress-2026-07-03.md`. Once
+implemented, merge `theme-persistence` and `hazard-bar-progress` to
+`main` together with an `/ardd-analyze` pass. Separately: a human still
+needs to manually verify the two-participant playback and lyrics-ticker
+scroll/centering behavior in a real browser, and the unsigned commit
+range needs re-signing before anything is pushed.
