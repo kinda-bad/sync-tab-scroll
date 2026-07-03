@@ -40,3 +40,25 @@ test('overlays on top of the tab notation (viewport-fixed) instead of stacking b
   const overlayPosition = await page.locator('.lyrics-overlay').evaluate((el) => getComputedStyle(el).position);
   expect(overlayPosition).toBe('fixed');
 });
+
+test('centers the active syllable horizontally within the strip', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+
+  await drive(page, 150); // activates "you"
+
+  // .lyrics-track's transform is CSS-transitioned (motifs.css, 0.25s ease)
+  // so the centered position isn't reflected in layout the instant the
+  // style is set — wait for the transition to settle before measuring.
+  await page.waitForTimeout(300);
+
+  const activeBox = await page.locator('.lyric-syllable.at-highlight').boundingBox();
+  const overlayBox = await page.locator('.lyrics-overlay').boundingBox();
+
+  expect(activeBox).not.toBeNull();
+  expect(overlayBox).not.toBeNull();
+
+  const activeCenter = activeBox!.x + activeBox!.width / 2;
+  const overlayCenter = overlayBox!.x + overlayBox!.width / 2;
+
+  expect(Math.abs(activeCenter - overlayCenter)).toBeLessThanOrEqual(2);
+});
