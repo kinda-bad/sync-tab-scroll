@@ -49,15 +49,20 @@ test('constructs the engine and renders real tab output without crashing', async
  * `state.theme` (and the `theme` passed to `createTabRenderer()`) to
  * `'dark'`, ignoring `document.documentElement.dataset.theme` — the same
  * attribute `theme.ts`'s `applyTheme()` sets from the persisted preference
- * at app startup, before any engine exists. Sets that attribute via
- * `addInitScript` (so it's in place before `PlaybackEngineHarness.svelte`'s
+ * at app startup, before any engine exists. Sets that attribute directly via
+ * `page.evaluate` (so it's in place before `PlaybackEngineHarness.svelte`'s
  * `onMount` calls `ensurePlaybackEngine`) and asserts the rendered tab's
  * glyph color matches `lightTabColors.foreground`, not the dark default —
  * mirroring `tab-renderer.ct.spec.ts`'s "setTheme visibly changes rendered
  * resource colors" test's computed-style-on-`svg text` assertion style.
  */
 test('a freshly-created engine picks up the document theme instead of hardcoding dark', async ({ mount, page }) => {
-  await page.addInitScript(() => {
+  // Playwright CT's `page` fixture has already navigated to the mount
+  // index page by the time the test body runs, so `addInitScript` (which
+  // only affects *future* navigations) is too late here — set the
+  // attribute directly instead, before `mount()` injects/mounts the
+  // component into that already-loaded document.
+  await page.evaluate(() => {
     document.documentElement.dataset.theme = 'light';
   });
 
