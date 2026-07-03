@@ -53,8 +53,8 @@ next `/ardd-verify` run confirms them against code.
 
 ## Plans
 
-- `plan-hazard-bar-progress-2026-07-03.md` — **draft**, not yet
-  tasked/approved. Branch `hazard-bar-progress` (current worktree).
+- `plan-hazard-bar-progress-2026-07-03.md` — **approved**, tasked (7
+  tasks, 3 phases). Branch `hazard-bar-progress` (current worktree).
   Replaces the Playback view's hardcoded hazard-strip fill (`1`, "live")
   with real song-position tracking via alphaTab's `playerPositionChanged`.
 - `plan-theme-persistence-2026-07-03.md` — **implemented**, not yet
@@ -80,7 +80,7 @@ session-create-selection: complete**, all merged to `main`.
 vitest 6/25, CT 8 files/21 tests, e2e 4 files/10 tests), on its own
 worktree/branch, not yet merged to `main`.
 
-**hazard-bar-progress: drafted, not yet tasked.** Branch
+**hazard-bar-progress: approved and tasked, not yet implemented.** Branch
 `hazard-bar-progress` (current worktree).
 
 **Unsigned commits — needs attention before any push.** Every commit
@@ -110,7 +110,7 @@ available, before pushing anything.
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-hazard-bar-progress-2026-07-03.md`. Once
+Run `/ardd-implement` against `tasks-hazard-bar-progress-9622.md`. Once
 implemented, merge `theme-persistence` and `hazard-bar-progress` to
 `main` together with an `/ardd-analyze` pass. Separately: a human still
 needs to manually verify the two-participant playback and lyrics-ticker
