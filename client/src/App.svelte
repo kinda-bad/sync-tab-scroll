@@ -118,11 +118,10 @@
 {#if showBar && session}
   <Bar progress={barProgress}>
     {#snippet identity()}
+      <span class="bar-artist">Join code: {session.code}</span>
       {#if catalogSong}
         <strong class="bar-title">{catalogSong.name}</strong>
         <span class="bar-artist"> — {catalogSong.artist}</span>
-      {:else}
-        <span class="bar-artist">Join code: {session.code}</span>
       {/if}
     {/snippet}
     {#snippet controls()}

@@ -26,6 +26,12 @@ silently rejoin.
 
 ## Lobby View
 
+The persistent Bar's identity area always shows the session's join code
+(`Session.code`), regardless of whether a song has been selected yet —
+once a song is picked, its name/artist render alongside the join code,
+not in place of it, so participants can still read off the code to invite
+others after song selection.
+
 Song and part selection happens in a modal, not inline in the Lobby body
 — opened via a "Song & part" control in the persistent nav bar, and
 opened automatically (non-dismissibly, while either is unset) whenever

@@ -15,9 +15,18 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
   await page.goto('http://localhost:4173/');
   await page.getByPlaceholder('Musician').fill('Host');
   await page.getByRole('button', { name: 'Create session' }).click();
+
+  // Join code stays visible in the persistent Bar before song selection too
+  // (plan-playback-sync-fixes: the identity() snippet used to replace it
+  // entirely once a song/part was picked).
+  await expect(page.getByText(/Join code:/)).toBeVisible();
+
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
   await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+
+  // Still visible after song and part selection.
+  await expect(page.getByText(/Join code:/)).toBeVisible();
 
   const session = await readStoredSession(page);
   await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });

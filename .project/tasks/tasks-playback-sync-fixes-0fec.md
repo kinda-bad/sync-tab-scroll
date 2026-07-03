@@ -40,11 +40,17 @@ status: ready
 
 ## Phase 3: Session code visibility
 
-- [ ] T008 [artifacts: ui] Fix `client/src/App.svelte`'s `identity()` snippet (currently `{#if catalogSong} <song/artist> {:else} Join code: {session.code} {/if}`, meaning the join code disappears entirely once a song is selected): change it to always render `Join code: {session.code}`, and render the song name/artist alongside it (not instead of it) once `catalogSong` is set.
+- [x] T008 [artifacts: ui] Fix `client/src/App.svelte`'s `identity()` snippet (currently `{#if catalogSong} <song/artist> {:else} Join code: {session.code} {/if}`, meaning the join code disappears entirely once a song is selected): change it to always render `Join code: {session.code}`, and render the song name/artist alongside it (not instead of it) once `catalogSong` is set.
 
-- [ ] T009 Write a test first (Principle VII): extend `client/e2e/single-participant.spec.ts` (or add a small new assertion to an existing flow in it) asserting the join-code text is visible in the persistent Bar both before song selection and after a song and part are selected. Confirm it fails against the current code (join code text disappears post-selection), then confirm it passes after T008.
+  Executed after T009 per Principle VII (test written and confirmed red first — see T009's note on execution order). Join code now always renders first, with song name/artist appended when `catalogSong` is set. Confirmed via T009's e2e test going green after a full rebuild.
 
-- [ ] T010 [artifacts: ui] Add a brief note to `.project/artifacts/ui.md`'s existing persistent-bar mention (Lobby View section): the join code is always shown in the bar's identity area, alongside song identity once a song is selected. Bump `last_updated`.
+- [x] T009 Write a test first (Principle VII): extend `client/e2e/single-participant.spec.ts` (or add a small new assertion to an existing flow in it) asserting the join-code text is visible in the persistent Bar both before song selection and after a song and part are selected. Confirm it fails against the current code (join code text disappears post-selection), then confirm it passes after T008.
+
+  **Execution order note**: written and confirmed red *before* T008's fix (Principle VII requires this), even though T008 is numbered first in this file — the plan's own tasks list has them in "fix, then test" order, which would let the test arrive already-green and never actually prove Principle VII was followed. Added two assertions to the existing instrument-part flow: join code visible right after session creation, and again after song+part selection+modal close. Confirmed red against pre-T008 code (second assertion timed out — join code had disappeared once `catalogSong` was set). Confirmed green after T008 (rebuilt via the e2e project's own `build && preview` webServer command, so the fix was actually served, not a stale build).
+
+- [x] T010 [artifacts: ui] Add a brief note to `.project/artifacts/ui.md`'s existing persistent-bar mention (Lobby View section): the join code is always shown in the bar's identity area, alongside song identity once a song is selected. Bump `last_updated`.
+
+  `ui.md`'s Lobby View section had no existing persistent-bar mention to append to (checked — none found), so added a new short paragraph at the top of that section instead. `last_updated` was already `2026-07-03` (bumped earlier today by `ui-polish-pass`), so no further bump needed — already current.
 
 ## Phase 4: Full suite verification
 
