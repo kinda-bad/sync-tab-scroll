@@ -141,6 +141,26 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
     wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: e.currentTick });
   });
+
+  // Host-only periodic tick-report (infrastructure.md Session & Real-Time
+  // Sync): the server can't compute tickPosition itself (it never parses
+  // the GP file), so the host's client periodically self-reports its own
+  // real, continuously-advancing api.tickPosition while playback is
+  // running. Checked fresh each tick against latestSession/latestSelfId
+  // (set above, before the isReadyForPlayback gate) — deliberately NOT
+  // folded into the clientStore.subscribe block above, since that block
+  // early-returns whenever !api.isReadyForPlayback, which never becomes
+  // true under browser automation (per this file's CT test's scope note);
+  // gating the reporter on it too would make it untestable in CT for the
+  // same reason. Also deliberately not gated on isReadyForPlayback for the
+  // same reason — in real production the host has already passed the
+  // readiness flow by the time status is 'running', so this is a
+  // non-issue in practice.
+  setInterval(() => {
+    if (!latestSession || latestSession.hostId !== latestSelfId) return;
+    if (latestSession.playbackState.status !== 'running') return;
+    wsClient.send({ type: 'playback-tick-report', tickPosition: api.tickPosition });
+  }, 1000);
 }
 
 /**

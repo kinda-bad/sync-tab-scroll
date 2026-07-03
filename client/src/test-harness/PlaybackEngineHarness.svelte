@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { ensurePlaybackEngine, __getEngineStateForTesting } from '../playback-engine';
+  import { clientStore } from '../store';
   import type { CatalogSong } from '@sync-tab-scroll/shared';
   import type { WsClient } from '../ws-client';
 
@@ -17,6 +18,10 @@
     (window as unknown as { __sentMessages: unknown[]; __wsClient: WsClient; __getApi: () => unknown }).__sentMessages = sent;
     (window as unknown as { __wsClient: WsClient }).__wsClient = wsClient;
     (window as unknown as { __getApi: () => unknown }).__getApi = () => __getEngineStateForTesting()?.api;
+    // Test-only: exposes the real clientStore so a CT test can drive
+    // isHost/playbackState.status without a real WS server — the reporter
+    // timer under test (playback-engine.ts) reads this store directly.
+    (window as unknown as { __clientStore: typeof clientStore }).__clientStore = clientStore;
 
     const song: CatalogSong = {
       id: 'creep',
