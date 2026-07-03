@@ -5,6 +5,8 @@
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
 
+  let mode: 'choice' | 'create' | 'join' = 'choice';
+
   let displayName = '';
   let joinCode = '';
 
@@ -31,14 +33,25 @@
     </h1>
     <p class="landing-tagline">Live session viewer</p>
 
-    <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
-
-    <Button variant="riot" label="Create session" disabled={!displayName} onclick={createSession} />
-
-    <div class="landing-join">
-      <TextInput label="Session code" placeholder="ABC123" uppercase bind:value={joinCode} />
-      <Button variant="ghost" label="Join" disabled={!displayName || !joinCode} onclick={joinSession} />
-    </div>
+    {#if mode === 'choice'}
+      <div class="landing-choice">
+        <Button variant="riot" label="Create a session" onclick={() => (mode = 'create')} />
+        <Button variant="ghost" label="Join a session" onclick={() => (mode = 'join')} />
+      </div>
+    {:else if mode === 'create'}
+      <form onsubmit={(e) => { e.preventDefault(); createSession(); }}>
+        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
+        <Button variant="riot" type="submit" label="Create session" disabled={!displayName} />
+        <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
+      </form>
+    {:else if mode === 'join'}
+      <form onsubmit={(e) => { e.preventDefault(); joinSession(); }}>
+        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
+        <TextInput label="Session code" placeholder="ABC123" uppercase bind:value={joinCode} />
+        <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode} />
+        <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
+      </form>
+    {/if}
   </div>
 </section>
 
@@ -80,15 +93,32 @@
     margin: 0 0 var(--space-2);
   }
 
-  .landing-join {
+  .landing-choice {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
     gap: var(--space-2);
-    border-top: 1px solid var(--border);
-    padding-top: var(--space-4);
   }
 
-  .landing-join :global(.field) {
-    flex: 1;
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .landing-back {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+
+  .landing-back:hover {
+    color: var(--ink);
   }
 </style>

@@ -2,10 +2,11 @@
   export let variant: 'ghost' | 'riot' | 'hazard' = 'ghost';
   export let label: string;
   export let disabled = false;
+  export let type: 'button' | 'submit' = 'button';
   export let onclick: (() => void) | undefined = undefined;
 </script>
 
-<button class="btn btn-{variant}" {disabled} {onclick}>
+<button class="btn btn-{variant}" {type} {disabled} {onclick}>
   {label}
 </button>
 
