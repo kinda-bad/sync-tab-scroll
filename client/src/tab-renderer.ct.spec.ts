@@ -28,3 +28,17 @@ test('setTheme visibly changes rendered resource colors', async ({ mount, page }
 
   await expect.poll(async () => component.locator('svg text').first().evaluate((el) => getComputedStyle(el).fill)).not.toBe(darkFill);
 });
+
+test('the playback cursor is actually colored, not fully transparent', async ({ mount }) => {
+  // alphaTab ships .at-cursor-bar/.at-cursor-beat/.at-selection with only
+  // positioning inline styles — zero color/opacity of its own. Styling
+  // them is the consuming app's job (brand.md designates --riot for
+  // exactly this). Confirmed empirically this app never did.
+  const component = await mount(TabRendererHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  for (const selector of ['.at-cursor-bar', '.at-cursor-beat', '.at-selection']) {
+    const backgroundColor = await component.locator(selector).evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(backgroundColor, `${selector} should not be fully transparent`).not.toBe('rgba(0, 0, 0, 0)');
+  }
+});

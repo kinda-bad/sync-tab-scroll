@@ -113,3 +113,21 @@
     transition: none;
   }
 }
+
+/* ── alphaTab playback cursor ────────────────────────────────────────────
+   alphaTab ships .at-cursor-bar/.at-cursor-beat/.at-selection with only
+   positioning inline styles — zero color/opacity of its own; styling
+   them is documented as the consuming app's job. Not scoped to a
+   specific component (these are alphaTab-injected DOM wherever a visible
+   instance renders, including test harnesses), so this lives in global
+   CSS rather than a component's scoped <style> block. */
+.at-cursor-bar {
+  background: var(--riot-dim);
+}
+.at-cursor-beat {
+  background: var(--riot);
+  opacity: 0.6;
+}
+.at-selection {
+  background: var(--hazard-dim);
+}
