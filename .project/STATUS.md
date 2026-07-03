@@ -29,9 +29,9 @@ None — no `[OPEN]` placeholders in any artifact.
 ## Constitution Compliance
 
 No new violations found this pass. `DEFECTS.md`'s Principle VII entry has
-not been re-verified since `test-coverage-backfill` and
-`playwright-client-coverage` were implemented and merged — likely stale,
-but that's `/ardd-verify`'s call to make, not this pass's.
+not been re-verified since `test-coverage-backfill`, `playwright-client-coverage`,
+`playback-sync-fixes`, and `lyrics-ticker` were implemented and merged —
+likely stale, but that's `/ardd-verify`'s call to make, not this pass's.
 
 ## Diagrams
 
@@ -46,13 +46,11 @@ see Constitution Compliance above). Run `/ardd-verify` to refresh.
 
 ## Feedback
 
-No open feedback files on this branch (`playback-sync-fixes`). All 3
-present here are `status: planned`: `feedback-lobby-cursor-mode-e13b.md`,
-`feedback-playback-sync-f03d.md`, `feedback-ui-polish-pass-e180.md`.
-
-Note: `feedback-lyrics-ticker-bfd9.md` exists only on the separate,
-unmerged `lyrics-ticker` branch — not visible from here, which is expected
-branch scoping, not a gap.
+1 open feedback file — `feedback-settings-modal-redesign-7e73.md` (on the
+current branch, `settings-modal-redesign`): a cog-opened settings modal
+(Participants/Settings tabs), "Start" closing all open modals without
+affecting the lyrics overlay, and moving the hazard-tape bar to the top
+of the view. Will be picked up by the next `/ardd-plan`.
 
 ## Feature Backlog
 
@@ -61,35 +59,32 @@ branch scoping, not a gap.
 
 ## Plans
 
-- `plan-playback-sync-fixes-2026-07-03.md` — **approved**, not yet tasked.
-  Branch `playback-sync-fixes` (current). Fixes the playback-rubberband
-  bug via host-authoritative `tickPosition` reporting, and makes the
-  session join code always visible in the persistent bar.
-- `plan-lyrics-ticker-2026-07-03.md` — **approved**, not yet tasked. Lives
-  on the separate `lyrics-ticker` branch, not visible from here. Redesigns
-  the in-tab lyrics overlay as a single-line, snap-to-active-syllable,
-  bottom-pinned scrolling ticker.
-- `plan-ui-polish-pass-2026-07-03.md`,
-  `plan-playwright-coverage-2026-07-02.md`,
-  `plan-test-coverage-2026-07-02.md`,
-  `plan-lobby-cursor-modes-2026-07-03.md`,
+- `plan-playback-sync-fixes-2026-07-03.md`, `plan-lyrics-ticker-2026-07-03.md`,
+  `plan-ui-polish-pass-2026-07-03.md`, `plan-playwright-coverage-2026-07-02.md`,
+  `plan-test-coverage-2026-07-02.md`, `plan-lobby-cursor-modes-2026-07-03.md`,
   `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
+- No plan yet exists for the open `settings-modal-redesign` feedback.
 
 ## Implementation Status
 
 **live-rendering-pivot, song-catalog-selection, lobby-cursor-modes,
-test-coverage-backfill, playwright-client-coverage, ui-polish-pass:
-complete**, all merged to `main`.
+test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
+playback-sync-fixes, lyrics-ticker: complete**, all merged to `main`.
 
-**playback-sync-fixes: approved, not yet tasked.** Branch
-`playback-sync-fixes` (current).
+Two items from `playback-sync-fixes`/`lyrics-ticker` still await a human's
+live-browser confirmation (not automatable in this environment): the
+two-participant no-rubberband playback check, and the lyrics ticker's
+scroll/center/resize behavior plus tab-scroll-padding clearance.
 
-**lyrics-ticker: approved, not yet tasked.** Branch `lyrics-ticker`
-(separate, unmerged).
+**settings-modal-redesign: feedback captured, not yet planned.** Current
+branch `settings-modal-redesign` (renamed from the now-merged
+`playback-sync-fixes`, which was rebased onto `main` and is otherwise
+identical to it).
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` against `plan-playback-sync-fixes-2026-07-03.md` to
-generate its task list, then `/ardd-implement`.
+Run `/ardd-plan` to draft a plan from `feedback-settings-modal-redesign-7e73.md`
+(the cog/tabbed-settings-modal, Start-closes-modals, and hazard-bar-position
+items).
