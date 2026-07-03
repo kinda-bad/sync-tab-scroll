@@ -57,14 +57,18 @@ test('host removing a participant removes them from the other participant list',
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinAsMember(browser, hostSession.code);
+
+  // The participant list now lives behind the settings-cog modal's
+  // Participants tab (SettingsModal.svelte), not inline in the Lobby body.
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText('Member', { exact: true })).toBeVisible({ timeout: 10_000 });
 
-  // Lobby.svelte doesn't currently render a host-facing remove-participant
-  // button — the host-remove-participant handler exists server-side
-  // (server/src/handlers/host-remove-participant.ts, covered in
-  // tasks-test-coverage-bfe8.md's T018) but nothing sends that message from
-  // the UI. Drive it directly via the same real WS message a future UI
-  // control would send, rather than skip this scenario entirely.
+  // Lobby.svelte (and now SettingsModal.svelte) doesn't currently render a
+  // host-facing remove-participant button — the host-remove-participant
+  // handler exists server-side (server/src/handlers/host-remove-participant.ts,
+  // covered in tasks-test-coverage-bfe8.md's T018) but nothing sends that
+  // message from the UI. Drive it directly via the same real WS message a
+  // future UI control would send, rather than skip this scenario entirely.
   await sendAsParticipant(hostSession, { type: 'host-remove-participant', participantId: (await readStoredSession(memberPage)).participantId });
 
   await expect(page.getByText('Member', { exact: true })).toHaveCount(0, { timeout: 10_000 });

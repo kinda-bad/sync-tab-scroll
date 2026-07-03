@@ -59,10 +59,15 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's
   await memberPage.getByRole('button', { name: 'Close' }).click();
 
+  // Lobby cursor / Spotlight controls now live behind the settings-cog
+  // modal's Participants tab (SettingsModal.svelte), not inline in the
+  // Lobby body.
+  await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('spinbutton').fill('500');
   await page.getByRole('button', { name: 'Set lobby cursor' }).click();
 
   await expect(page.getByText('Host is pointing at tick 500')).toBeVisible();
+  await memberPage.getByRole('button', { name: 'Settings' }).click();
   await expect(memberPage.getByText('Host is pointing at tick 500')).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Spotlight mode:/ }).click();
@@ -72,12 +77,17 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   const memberSession = await readStoredSession(memberPage);
   await sendAsParticipant(memberSession, { type: 'readiness-update', readiness: 'ready' });
 
+  // Close the settings modal before Start (Phase 3 verifies Start itself
+  // closes it; closing explicitly here keeps this test independent of that).
+  await page.getByRole('button', { name: 'Close' }).click();
+
   await expect(page.getByRole('button', { name: 'Start' })).toBeEnabled({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Start' }).click();
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: /Pause|Stop/ }).last().click(); // stop back to Lobby
   await page.waitForTimeout(500);
 
+  await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText('No lobby cursor set.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Spotlight mode: off' })).toBeVisible();
 
