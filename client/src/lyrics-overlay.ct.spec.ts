@@ -11,7 +11,7 @@ test('highlights the correct syllable as tick position advances', async ({ mount
 
   const highlighted = () => page.locator('.lyric-syllable.at-highlight');
 
-  await expect(highlighted()).toHaveCount(0);
+  await expect(highlighted()).toHaveText('… ');
 
   await drive(page, 0);
   await expect(highlighted()).toHaveText('When ');
@@ -60,5 +60,31 @@ test('centers the active syllable horizontally within the strip', async ({ mount
   const activeCenter = activeBox!.x + activeBox!.width / 2;
   const overlayCenter = overlayBox!.x + overlayBox!.width / 2;
 
+  expect(Math.abs(activeCenter - overlayCenter)).toBeLessThanOrEqual(2);
+});
+
+/**
+ * Regression test for the pre-singing state (feedback-lyrics-pre-singing-1fa6,
+ * tasks-lyrics-pre-singing-e09e T001-T006): before any syllable activates,
+ * a centered, highlighted "…" placeholder must be shown — not a
+ * left-aligned/uncentered track (the original bug this plan fixes).
+ */
+test('shows a centered, highlighted placeholder before any syllable activates', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+
+  // Same transition-settle wait as the "centers the active syllable" test
+  // above — the initial centering pass (T005) is CSS-transitioned too.
+  await page.waitForTimeout(300);
+
+  const highlighted = page.locator('.lyric-syllable.at-highlight');
+  await expect(highlighted).toHaveText('… ');
+
+  const activeBox = await highlighted.boundingBox();
+  const overlayBox = await page.locator('.lyrics-overlay').boundingBox();
+  expect(activeBox).not.toBeNull();
+  expect(overlayBox).not.toBeNull();
+
+  const activeCenter = activeBox!.x + activeBox!.width / 2;
+  const overlayCenter = overlayBox!.x + overlayBox!.width / 2;
   expect(Math.abs(activeCenter - overlayCenter)).toBeLessThanOrEqual(2);
 });

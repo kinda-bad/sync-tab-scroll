@@ -200,12 +200,19 @@ identically regardless of which one they're on:
   right-to-left, snapping (not continuously gliding) so the currently
   active syllable, styled via alphaTab's `.at-highlight` role, is
   re-centered on each syllable change; the centering uses plain DOM
-  measurement (`offsetLeft`/`offsetWidth`) against the ticker's own
-  rendered layout, not an alphaTab bounds lookup, and is recomputed on
-  window resize. This overlay is custom client logic, not alphaTab's
-  native lyrics rendering — alphaTab only draws lyric text natively on
-  the track that actually carries it, which usually isn't the instrument
-  track a participant is viewing.
+  measurement (`getBoundingClientRect()` against the ticker's own
+  rendered layout, not an alphaTab bounds lookup) and is recomputed on
+  window resize. Before any real syllable has activated — from the
+  ticker's very first render, e.g. while still in the Lobby — a centered,
+  highlighted "…" placeholder is shown instead of a left-aligned/empty
+  strip, so there's no initial jump once the first syllable actually
+  activates. This is a one-way transition: once the first real syllable
+  activates the placeholder is hidden permanently for that participant's
+  session, never shown again even if playback is later paused mid-song.
+  This overlay is custom client logic, not alphaTab's native lyrics
+  rendering — alphaTab only draws lyric text natively on the track that
+  actually carries it, which usually isn't the instrument track a
+  participant is viewing.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. Full lyric text is
