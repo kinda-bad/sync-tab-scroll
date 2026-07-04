@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: host-transfer
 created: 2026-07-03
 features: [host-delegation, request-to-become-host]

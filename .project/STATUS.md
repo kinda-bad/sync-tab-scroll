@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post `/ardd-plan` on branch `host-transfer` — reconciled `host-delegation` + `request-to-become-host` into one combined plan). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-tasks` on branch `host-transfer` — plan approved, tasks generated). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -54,8 +54,12 @@ passing.
 
 ## Feature Backlog
 
-5 backlogged · 0 planned · 0 tasked · 2 implemented (`test-coverage-backfill`,
-`playwright-client-coverage`) — see `.project/artifacts/features.md`.
+3 backlogged (`metronome-toggle`, `count-in-toggle`,
+`consented-song-submission`) · 0 planned · 2 tasked (`host-delegation`,
+`request-to-become-host`, both via `plan-host-transfer-2026-07-03.md` /
+`tasks-host-transfer-55dd.md`) · 2 implemented
+(`test-coverage-backfill`, `playwright-client-coverage`) — see
+`.project/artifacts/features.md`.
 
 ## Plans
 
@@ -73,19 +77,19 @@ passing.
   (the sole `DEFECTS.md` finding). Tasks:
   `tasks-fix-lyric-css-colors-dead-code-257c.md` — **completed**, 3/3
   tasks. No `features:` bound to this plan.
-- `plan-host-transfer-2026-07-03.md` — **draft**, on branch
+- `plan-host-transfer-2026-07-03.md` — **approved**, on branch
   `host-transfer`. Targets `features: [host-delegation,
-  request-to-become-host]`. Combines both into one design (a shared
-  `transferHost()` helper in `host-succession.ts`, reused by a direct
-  `host-delegate` message and a consent-based `request-host`/
-  `host-request-decline` pair) after two independently-planned drafts —
-  `plan-host-delegation-2026-07-03.md` (branch `host-delegation`) and
-  `plan-request-to-become-host-2026-07-03.md` (branch
-  `request-to-become-host`) — were found to duplicate the same
+  request-to-become-host]` (both now `tasked`). Combines both into one
+  design (a shared `transferHost()` helper in `host-succession.ts`,
+  reused by a direct `host-delegate` message and a consent-based
+  `request-host`/`host-request-decline` pair) after two
+  independently-planned drafts — `plan-host-delegation-2026-07-03.md`
+  (branch `host-delegation`) and `plan-request-to-become-host-2026-07-03.md`
+  (branch `request-to-become-host`) — were found to duplicate the same
   hostId/role-swap logic and edit the same insertion points in
   `infrastructure.md`/`ui.md`. Both of those are now **superseded** (see
-  their own branches). 5 phases, 8 tasks' worth of work outlined; not yet
-  run through `/ardd-tasks`.
+  their own branches). Tasks: `tasks-host-transfer-55dd.md` — **ready**,
+  4 phases, 8 tasks.
 - Also drafted this session, independently, no conflicts found:
   `plan-metronome-count-in-toggle-2026-07-03.md` (branch
   `metronome-count-in-toggle`, targets `metronome-toggle` +
@@ -140,14 +144,13 @@ pushing anything.
 
 ## Recommended Next Step
 
-Four backlogged features now have draft plans awaiting `/ardd-tasks`:
-`host-transfer` (covering both `host-delegation` and
-`request-to-become-host`), `metronome-count-in-toggle`, and
-`consented-song-submission`. Merge `fix-lyric-css-colors-dead-code` back
-to `main` first (its work is complete and `DEFECTS.md` is all-clear), then
-run `/ardd-tasks` on whichever plan to work next — `host-transfer` is
-already fully reconciled with no known cross-plan conflicts remaining.
-Separately, and not blocking any of this: attempt a live-browser check of
-the two-participant no-rubberband playback fix and the lyrics ticker's
-scroll/centering behavior, and re-sign the full unsigned commit range
-before pushing anything.
+`host-transfer` has tasks ready (`tasks-host-transfer-55dd.md`, 8 tasks) —
+run `/ardd-implement` to start Phase 1 (extracting `transferHost()`).
+`metronome-count-in-toggle` and `consented-song-submission` still have
+draft plans awaiting their own `/ardd-tasks` pass. Merge
+`fix-lyric-css-colors-dead-code` back to `main` first (its work is
+complete and `DEFECTS.md` is all-clear). Separately, and not blocking any
+of this: attempt a live-browser check of the two-participant
+no-rubberband playback fix and the lyrics ticker's scroll/centering
+behavior, and re-sign the full unsigned commit range before pushing
+anything.
