@@ -48,8 +48,12 @@
 
   .bar {
     display: flex;
+    /* Phone widths: sections wrap upward (the wrap is anchored to the
+       bottom-pinned .bar-wrap) instead of the trailing status chips being
+       clipped off the right edge invisibly. */
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-2) var(--space-4);
     min-height: var(--bar-height);
     padding: var(--space-2) var(--space-4) var(--space-3);
     background: var(--bar-surface);
@@ -66,16 +70,21 @@
   }
 
   .bar-identity {
-    flex: 1;
+    /* The 12rem basis keeps the join code / song identity readable: when
+       the controls don't fit beside it (phone widths), they wrap to their
+       own row instead of the identity ellipsizing down to nothing. */
+    flex: 1 1 12rem;
     overflow: hidden;
   }
 
   .bar-controls {
     flex-shrink: 0;
+    flex-wrap: wrap;
   }
 
   .bar-status {
     flex-shrink: 0;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
 </style>

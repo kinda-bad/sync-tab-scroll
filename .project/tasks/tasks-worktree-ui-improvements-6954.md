@@ -139,7 +139,7 @@ rather than unit tests.
   edit covers both. Toggle rendered in the Preferences tab for
   **every** participant (not host-gated), effective immediately without
   restart, surviving refresh.
-- [ ] T012 [artifacts: datamodel, infrastructure, ui] Artifact
+- [x] T012 [artifacts: datamodel, infrastructure, ui] Artifact
   revisions for the reversal: `datamodel.md` — drop `metronomeEnabled`
   from the `Session` table and fix `spotlightMode`'s "same pattern as
   `metronomeEnabled`/`countInEnabled`" note (now `countInEnabled` only);

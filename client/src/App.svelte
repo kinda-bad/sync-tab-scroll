@@ -129,7 +129,7 @@
 {#if showBar && session}
   <Bar progress={barProgress}>
     {#snippet identity()}
-      <span class="bar-artist">Join code: {session.code}</span>
+      <span class="bar-artist bar-code">Join code: {session.code}</span>
       {#if catalogSong}
         <strong class="bar-title">{catalogSong.name}</strong>
         <span class="bar-artist"> — {catalogSong.artist}</span>
@@ -215,5 +215,20 @@
   .bar-artist {
     color: var(--ink-dim);
     font-size: 0.8125rem;
+  }
+  /* Identity text truncates on one line each instead of wrapping mid-word
+     and being clipped by .bar-identity's overflow:hidden on phone widths. */
+  .bar-title,
+  .bar-artist {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  /* The join code is the one identity element that must never truncate
+     (ui.md: participants read it off this bar to invite others) — it's
+     short and fixed-length; let the song title/artist give way instead. */
+  .bar-code {
+    flex-shrink: 0;
   }
 </style>
