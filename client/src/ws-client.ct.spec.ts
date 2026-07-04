@@ -98,3 +98,36 @@ test('connectionStatus becomes disconnected when the socket never connects at al
 
   await expect(component.getByTestId('connection-status')).toHaveText('disconnected', { timeout: 10_000 });
 });
+
+test('reconnects and recovers to connected after the server comes back, without a new createWsClient() call', async ({ mount }) => {
+  const component = await mount(WsClientHarness, {
+    props: { url: `ws://localhost:${port}`, reconnectDelayMs: 50 },
+  });
+  await expect(component.getByTestId('connection-status')).toHaveText('connected');
+
+  for (const client of wss.clients) client.terminate();
+  await expect(component.getByTestId('connection-status')).toHaveText('disconnected');
+
+  // The harness's WsClientHarness never re-mounts and never calls
+  // createWsClient again — recovery must come from ws-client's own retry.
+  await expect(component.getByTestId('connection-status')).toHaveText('connected', { timeout: 10_000 });
+});
+
+test('retries repeatedly against a server that is down at load time, connecting once it starts listening', async ({ mount }) => {
+  const deadPort = port + 1;
+  const component = await mount(WsClientHarness, {
+    props: { url: `ws://localhost:${deadPort}`, reconnectDelayMs: 50 },
+  });
+  await expect(component.getByTestId('connection-status')).toHaveText('disconnected', { timeout: 10_000 });
+
+  // Bring a server up on the previously-dead port and confirm the retry
+  // loop (already running) picks it up without any new client action.
+  const secondWss = new WebSocketServer({ port: deadPort });
+  try {
+    await new Promise<void>((resolve) => secondWss.once('listening', resolve));
+    await expect(component.getByTestId('connection-status')).toHaveText('connected', { timeout: 10_000 });
+  } finally {
+    for (const client of secondWss.clients) client.terminate();
+    await new Promise<void>((resolve) => secondWss.close(() => resolve()));
+  }
+});
