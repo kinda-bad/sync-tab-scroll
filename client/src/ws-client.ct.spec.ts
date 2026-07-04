@@ -113,6 +113,40 @@ test('reconnects and recovers to connected after the server comes back, without 
   await expect(component.getByTestId('connection-status')).toHaveText('connected', { timeout: 10_000 });
 });
 
+test('resends session-join to reattach after a reconnect, but not on the first connection', async ({ mount }) => {
+  const receivedTypes: string[] = [];
+  wss.on('connection', (socket) => {
+    socket.on('message', (data) => receivedTypes.push(JSON.parse(data.toString()).type));
+    socket.send(
+      JSON.stringify({
+        type: 'session-state',
+        session: {
+          code: 'WXYZ',
+          selectedSong: null,
+          availableParts: [],
+          participants: [{ id: 'p1', displayName: 'Alice', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 }],
+          hostId: 'p1',
+          playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
+          countInEnabled: false,
+          metronomeEnabled: false,
+          lobbyCursorTick: null,
+          spotlightMode: false,
+        },
+        selfParticipantId: 'p1',
+      }),
+    );
+  });
+
+  const component = await mount(WsClientHarness, { props: { url: `ws://localhost:${port}`, reconnectDelayMs: 50 } });
+  await expect(component.getByTestId('session-code')).toHaveText('WXYZ');
+  expect(receivedTypes).not.toContain('session-join');
+
+  for (const client of wss.clients) client.terminate();
+  await expect(component.getByTestId('connection-status')).toHaveText('connected', { timeout: 10_000 });
+
+  await expect.poll(() => receivedTypes).toContain('session-join');
+});
+
 test('retries repeatedly against a server that is down at load time, connecting once it starts listening', async ({ mount }) => {
   const deadPort = port + 1;
   const component = await mount(WsClientHarness, {

@@ -1,3 +1,4 @@
+import { get } from 'svelte/store';
 import type { ClientMessage, ServerMessage } from '@sync-tab-scroll/shared';
 import { clientStore } from './store';
 import { toastStore } from './toast-store';
@@ -24,12 +25,34 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
   // below always read this variable, so the returned WsClient object's
   // identity (and clientStore.wsClient) never needs to change.
   let socket: WebSocket;
+  // False only for the very first open — the caller's own connect() already
+  // sends session-create/session-join for that one. Every later open is a
+  // reconnect after a drop, where the server has no memory of this socket at
+  // all, so re-sending session-join is what reattaches it to the
+  // participant record via session-join.ts's existing reclaim-by-id branch
+  // (the same path used for page-refresh reconnects) — no second mechanism.
+  let hasOpenedBefore = false;
 
   function attachSocket() {
     socket = new WebSocket(url);
 
     socket.addEventListener('open', () => {
       clientStore.update((s) => ({ ...s, connectionStatus: 'connected' }));
+
+      if (hasOpenedBefore) {
+        const state = get(clientStore);
+        const displayName = state.session?.participants.find((p) => p.id === state.selfParticipantId)?.displayName;
+        if (state.session && state.selfParticipantId && displayName) {
+          // Sent ahead of the pending flush below — a message queued during
+          // the outage must not reach the server before this reattaches the
+          // socket to its participant.
+          socket.send(
+            JSON.stringify({ type: 'session-join', code: state.session.code, participantId: state.selfParticipantId, displayName }),
+          );
+        }
+      }
+      hasOpenedBefore = true;
+
       for (const message of pending.splice(0)) socket.send(JSON.stringify(message));
     });
 
