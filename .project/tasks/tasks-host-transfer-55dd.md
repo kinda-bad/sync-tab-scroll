@@ -80,7 +80,7 @@ status: in-progress
 
 ## Phase 3: Client UI (depends on T003, T004, T005, T006)
 
-- [ ] T007 [artifacts: ui] In `client/src/components/SettingsModal.svelte`'s
+- [x] T007 [artifacts: ui] In `client/src/components/SettingsModal.svelte`'s
   Participants tab, add: (a) a host-only "Make host" button on every
   participant row except the viewer's own (visible only when the local
   client is host — reuse the existing `isHost` reactive), sending `{
