@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (`config-env-convention` merged to `main`: Principle VIII implemented and verified — server/.env + server/.env.example, client/.env + client/.env.example, a test-first shape-lint script wired into pre-commit, both dev/test port schemes (6000/6001/6080/6081) confirmed unaffected, including the build-time `import.meta.env` port-baking path the principle's motivating bug hit; CI wiring flagged as an open human decision, no CI provider exists yet. New feedback logged: server-unreachable UI has no indication/banner — plan drafted (`plan-server-failure-banner-2026-07-04.md`, branch `server-failure-banner`), `/ardd-tasks` next. New backlog item logged: `participant-selected-part`. 4 other feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (new feedback logged: lyrics-only view renders nothing; `config-env-convention` merged to `main`: Principle VIII implemented and verified — server/.env + server/.env.example, client/.env + client/.env.example, a test-first shape-lint script wired into pre-commit, both dev/test port schemes (6000/6001/6080/6081) confirmed unaffected, including the build-time `import.meta.env` port-baking path the principle's motivating bug hit; CI wiring flagged as an open human decision, no CI provider exists yet. Server-unreachable-banner feedback planned and tasked on branch `server-failure-banner` (`/ardd-implement` in progress there — that branch's own feedback-file copy is `status: planned`, this checkout's copy still shows `open` until the branch merges). New backlog item logged: `participant-selected-part`. 4 other feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -133,11 +133,19 @@ independently reviewed and approved this session:
   documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
   that plan's work.
 
-`feedback-server-failure-banner-f225.md` — **`status: open`**, new this
-pass: 1 Bug — the UI has no indication when the server is unreachable
+`feedback-server-failure-banner-f225.md` — **`status: open`** on this
+checkout (this branch's copy is `status: planned` on `server-failure-banner`,
+where `/ardd-implement` is in progress — will sync once that branch
+merges): 1 Bug — the UI has no indication when the server is unreachable
 (WS never connects, or drops with no server-side error message); should
 show a persistent error banner until contact is restored. Tagged
-`[artifacts: ui, infrastructure]`. Not yet planned.
+`[artifacts: ui, infrastructure]`.
+
+`feedback-lyrics-only-view-d7d8.md` — **`status: open`**, new this pass:
+1 Bug — the lyrics-only view (a participant following the tab-less
+"Lyrics" part) renders nothing; ui.md's documented "Full-screen synced
+lyrics view" feature is blank in practice. Tagged `[artifacts: ui]`. Not
+yet planned.
 
 0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,
 `feedback-lobby-cursor-mode-e13b.md`, `feedback-lyrics-ticker-bfd9.md`,
