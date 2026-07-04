@@ -76,11 +76,11 @@ The host picks a song from the server's loaded catalog in the lobby, which sets 
 Why: the catalog was already loaded server-side (`catalog-loader.ts`) but never exposed to clients, and no song-selection message existed; this also required the server's first HTTP static-file surface, since catalog `.gp`/`.lrc` assets previously had no client-fetchable URL.
 
 ## Host delegation
-_Slug: `host-delegation` · Status: tasked · Logged 2026-07-01 · Plan: plan-host-transfer-2026-07-03.md · Tasks: tasks-host-transfer-55dd.md_
+_Slug: `host-delegation` · Status: implemented · Logged 2026-07-01 · Plan: plan-host-transfer-2026-07-03.md · Tasks: tasks-host-transfer-55dd.md_
 The current host can manually hand off host privileges to another connected participant in the lobby, without needing to disconnect.
 
 ## Request to become host
-_Slug: `request-to-become-host` · Status: tasked · Logged 2026-07-01 · Plan: plan-host-transfer-2026-07-03.md · Tasks: tasks-host-transfer-55dd.md_
+_Slug: `request-to-become-host` · Status: implemented · Logged 2026-07-01 · Plan: plan-host-transfer-2026-07-03.md · Tasks: tasks-host-transfer-55dd.md_
 A non-host participant can ask the current host to hand off host privileges to them, rather than only the host being able to initiate a handoff.
 
 ## Metronome toggle

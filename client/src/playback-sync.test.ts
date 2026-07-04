@@ -72,6 +72,7 @@ describe('applyPlaybackSettings', () => {
       metronomeEnabled: false,
       lobbyCursorTick: null,
       spotlightMode: false,
+      pendingHostRequest: null,
       ...overrides,
     };
   }

@@ -1,7 +1,7 @@
 ---
 plan: plan-host-transfer-2026-07-03.md
 generated: 2026-07-03
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -107,7 +107,7 @@ status: in-progress
 
 ## Phase 4: End-to-end confirmation (depends on T007)
 
-- [ ] T008 [artifacts: ui] Extend `client/e2e/host-controls.spec.ts` (or
+- [x] T008 [artifacts: ui] Extend `client/e2e/host-controls.spec.ts` (or
   `client/e2e/multi-participant.spec.ts` if that proves the better home —
   check both before choosing) with three scenarios driving real
   multi-participant sessions: (1) the host clicks "Make host" on another
