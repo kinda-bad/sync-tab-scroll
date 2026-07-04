@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (branch `consented-song-submission`, post `/ardd-plan`). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (branch `consented-song-submission`, post `/ardd-tasks` — plan approved, 9 tasks generated). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -77,22 +77,21 @@ and a new plan.
 
 ## Feature Backlog
 
-`consented-song-submission` targeted by this plan but still shows
-`Status: backlogged` in `features.md` — it flips to `planned` when
-`/ardd-tasks` selects and approves `plan-consented-song-submission-
-2026-07-03.md`, not before. Feature-backlog counts otherwise unchanged
-from the parent branch.
+4 backlogged · 0 planned · 1 tasked (`consented-song-submission`) · 2
+implemented — see `.project/artifacts/features.md`.
+`consented-song-submission` flipped `backlogged` → `tasked` in this run
+(plan approved and tasks generated in the same pass, per `/ardd-tasks`
+step 3 then step 7).
 
 ## Plans
 
-- `plan-consented-song-submission-2026-07-03.md` — **draft**, on branch
-  `consented-song-submission`. Single-feature plan, 3 phases, 9 tasks.
-  Run `/ardd-tasks` to approve and generate tasks.
+- `plan-consented-song-submission-2026-07-03.md` — **approved**, on
+  branch `consented-song-submission`. 3 phases, 9 tasks. Tasks:
+  `tasks-consented-song-submission-0f36.md` (`ready`, 0/9 complete).
 
 ## Recommended Next Step
 
-Run `/ardd-tasks` to approve `plan-consented-song-submission-2026-07-03.md`
-and generate its task list, or review the plan's Open Questions first if
-any of the three resolved defaults (per-song consent, CLI-not-web
-submission, placeholder ToS) need a different call before implementation
-starts.
+Run `/ardd-implement` on `tasks-consented-song-submission-0f36.md`, or
+review the plan's Open Questions first if any of the three resolved
+defaults (per-song consent, CLI-not-web submission, placeholder ToS) need
+a different call before implementation starts.

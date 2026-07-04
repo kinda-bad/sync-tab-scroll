@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: consented-song-submission
 created: 2026-07-03
 features: [consented-song-submission]
