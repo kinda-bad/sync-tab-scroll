@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (Principle VIII implementation planned: `plan-config-env-convention-2026-07-04.md` drafted on branch `config-env-convention`, covering server/.env, client/.env, a shape-lint script, and pre-commit wiring — CI wiring flagged as an open human decision, no CI provider exists yet; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (Principle VIII implemented and verified on branch `config-env-convention`: server/.env + server/.env.example, client/.env + client/.env.example, a test-first shape-lint script wired into pre-commit, both dev/test port schemes (6000/6001/6080/6081) confirmed unaffected — including the build-time `import.meta.env` port-baking path the principle's motivating bug hit. CI wiring flagged as an open human decision, no CI provider exists yet. 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -53,16 +53,39 @@ via `.env`, Synced by Example) — app config read from a single git-ignored
 lockstep (same key shape), checked pre-commit and in CI. Motivated by a
 real bug this session: `VITE_BACKEND_PORT=6081` prefixing only the
 `build` half of a `build && preview` shell command left `preview` silently
-using the wrong default. **Now planned, not yet implemented**:
-`plan-config-env-convention-2026-07-04.md` (branch `config-env-convention`)
-covers migrating `server/src/config.ts` (via Node's native
-`--env-file-if-exists`, no new dependency) and `client/vite.config.ts` (via
-Vite's `loadEnv()`), a test-first shape-lint script, and pre-commit wiring —
-with the existing dev/test port scheme (6000/6001/6080/6081) preserved
-exactly, precedence (shell-set vars beat `.env`) verified empirically
-before the plan was written. CI wiring is an explicit open question (no
-CI provider/workflow/remote exists in this repo yet) rather than an
-invented one. Next: `/ardd-tasks` against this plan.
+using the wrong default. **Implemented and verified, 2026-07-04**
+(`plan-config-env-convention-2026-07-04.md` /
+`tasks-config-env-convention-9a7e.md`, branch `config-env-convention`, 14/14
+tasks complete): `server/.env`/`server/.env.example` (`PORT`,
+`CATALOG_ROOT`, `HOST_REASSIGN_GRACE_MS`, `REQUIRE_SONG_CONSENT`),
+`client/.env`/`client/.env.example` (`VITE_BACKEND_PORT`), server config
+loaded via Node's native `--env-file-if-exists` (no new dependency),
+client's `vite.config.ts` proxy target loaded via Vite's `loadEnv()`
+(imported from `vite`, not `vitest/config` — the latter doesn't re-export
+it, caught by this work's own no-`.env` verification pass), and a
+test-first `scripts/check-env-parity.mjs` wired into `.githooks/pre-commit`
+via a new `pnpm check:env`. Both dev/test port schemes (6000/6001/6080/6081)
+confirmed unaffected: full suite passes with no `.env` present (this
+worktree's real state), and with `.env` populated (`PORT`/
+`VITE_BACKEND_PORT=6080`) plus ambient dev servers already occupying
+6000/6080, e2e still correctly targets 6081/6001 and passes. Critically,
+also verified directly against a built bundle (`grep`-checked, not just
+end-to-end-inferred) that a shell-set `VITE_BACKEND_PORT` still wins over
+`.env` for the *baked* `ws://…` URL in `client/src/ws-client.ts` — the
+exact `import.meta.env` mechanism the principle's motivating bug hit, which
+the e2e run alone couldn't distinguish from a wrong-but-passing false
+positive (a stray ambient server on the wrong port would have masked it).
+**Not implemented, by explicit design deferral**: the "and in CI" half —
+this repo has no CI provider, no `.github/workflows`, and no configured
+remote; see `DEFECTS.md`'s constitution.md entry for the human decision
+this needs, plus a noted design tension (the parity check is structurally
+a no-op in CI regardless of provider, since `.env` is git-ignored and
+absent there by design). Also noted in `DEFECTS.md`: `config.ts`'s inline
+defaults are an intentional boot fallback, not scattered sourcing, but
+duplicate the same default *values* as `.env.example` with no
+value-level drift check (key-shape only) — acceptable at today's scale.
+5 commits on this branch, all unsigned (`--no-gpg-sign`, 1Password locked)
+— needs re-signing before push. Not pushed, not merged.
 
 No other violations. Principle II (No Dead Architecture): the
 `host-delegation`/`request-to-become-host` merge reused one shared
@@ -82,13 +105,17 @@ features.
 
 ## Code-vs-Artifact Defects
 
-0 known defects — see `DEFECTS.md`, last checked 2026-07-03. All-clear:
-the 3 `ui.md` defects surfaced by the post-merge `/ardd-verify` pass (a
-dropped "connected" precondition on "Make host", and two paragraph-order/
-phrasing mismatches, all from manually resolving the `host-transfer` ↔
-`metronome-count-in-toggle` merge conflict) are fixed — the Participants
-tab bullet now matches `SettingsModal.svelte`'s actual render order and
-behavior exactly.
+1 known defect — see `DEFECTS.md`, last checked 2026-07-04 (scoped to
+Principle VIII, per the config-env-convention work it was run to confirm;
+other artifacts unchanged since the 2026-07-03 all-clear pass, not
+re-surveyed this run). The defect: Principle VIII's "run ... in CI" half
+is unmet — no CI provider/workflow/remote exists in this repo — an
+explicitly deferred human decision, not a silent gap. Two further notes
+recorded (not defects): the parity check is structurally a no-op in CI
+regardless of provider (`.env` is git-ignored/absent there by design), and
+`server/src/config.ts`'s inline defaults duplicate `.env.example`'s default
+*values* with no value-level drift check (key-shape only) — acceptable at
+today's scale.
 
 ## Feedback
 
@@ -145,11 +172,11 @@ gap; `tasks-lyrics-pre-singing-e09e.md` caught a test assertion that breaks
 under the new design; `tasks-settings-modal-followup-bbd2.md` reordered a
 phase to satisfy constitution Principle VII test-first).
 
-**1 new plan (2026-07-04), `status: approved` with a `status: ready` tasks
-file:** `plan-config-env-convention-2026-07-04.md` →
-`tasks-config-env-convention-9a7e.md` (14 tasks, 4 phases), on branch
-`config-env-convention` (a separate worktree from the four plans above).
-Implements constitution Principle VIII. Not started.
+**1 new plan (2026-07-04), `status: approved` with a `status: completed`
+tasks file (14/14):** `plan-config-env-convention-2026-07-04.md` →
+`tasks-config-env-convention-9a7e.md`, on branch `config-env-convention` (a
+separate worktree from the four plans above). Implements constitution
+Principle VIII — done, see Constitution Compliance above.
 
 ## Implementation Status
 
@@ -235,9 +262,8 @@ re-confirmed live.
 3. Re-sign the full unsigned commit range before pushing anything to a
    remote — every commit this entire session was made with
    `--no-gpg-sign` (1Password locked throughout).
-4. Implement Principle VIII (config via `.env`/`.env.example`, pre-commit +
-   CI shape lint) — tasked and ready
-   (`tasks-config-env-convention-9a7e.md`, branch
-   `config-env-convention`); run `/ardd-implement` against it next.
+4. Principle VIII is implemented and verified (branch
+   `config-env-convention`, not yet merged) — decide the CI-provider
+   question (see `DEFECTS.md`), then re-sign and merge.
 5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.
