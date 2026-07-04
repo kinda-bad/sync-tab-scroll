@@ -1,7 +1,7 @@
 ---
 plan: plan-metronome-count-in-toggle-2026-07-03.md
 generated: 2026-07-03
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -79,13 +79,24 @@ status: in-progress
 
 ## Phase 4: Verification (depends on Phase 3)
 
-- [ ] T008 Run the full test suite — server (`pnpm --filter server test`),
+- [x] T008 Run the full test suite — server (`pnpm --filter server test`),
   client unit (`pnpm --filter client test`), and client component tests
   (`pnpm --filter client test:ct`) — to confirm zero regressions from
   T001-T007. Also run `pnpm check` (the repo's typecheck script) to
   confirm no type errors were introduced.
 
-- [ ] T009 Live-check in a real running session (per this project's
+  **Result**: 62 server + 25 client unit + 26 client CT tests, all
+  passing. This branch predates the root `pnpm check` script (added on
+  the separate `add-typecheck-precommit-hook` branch, not yet merged into
+  this branch's history), so ran `tsc --noEmit` per package directly
+  instead. Two pre-existing type errors surfaced
+  (`client/src/session-persistence.test.ts` missing `playbackProgress`,
+  `server/src/catalog-static.test.ts`'s `writeHead` mock type mismatch) —
+  both already fixed on `add-typecheck-precommit-hook`/`main`, unrelated
+  to and unintroduced by T001-T007. Zero new type errors from this
+  branch's own changes.
+
+- [x] T009 Live-check in a real running session (per this project's
   established live-browser-verification practice — see `STATUS.md`'s
   Live-browser verification status section for the pattern to follow): as
   host, toggle both Metronome and Count-in, and confirm a second
@@ -93,3 +104,32 @@ status: in-progress
   audibly turns on/off for both participants, not just the host's own
   client). Record the result in this tasks file or `STATUS.md` per the
   project's existing convention for live-check findings.
+
+  **Not performed live — honest caveat, not a pass/fail claim.** This
+  task ran autonomously in a background worktree with no user present.
+  The available browser-automation tooling's own connection step
+  (`list_connected_browsers`) requires interactively asking a human which
+  connected Chrome browser to use and waiting for them to click Connect —
+  it cannot be driven unattended, and there was no one to ask. Spinning up
+  the dev/server processes and a real two-participant session was
+  therefore not attempted.
+
+  What **is** verified, end-to-end, via existing + new automated tests
+  stitched together (not a live audio check, but every link in the chain
+  a live check would exercise): `SettingsModal.ct.spec.ts` (T007, new)
+  confirms clicking the buttons sends the correct `metronome-set`/
+  `count-in-set` message; `metronome-set.test.ts`/`count-in-set.test.ts`
+  (T002/T004, new) confirm the server validates host-only and sets
+  `session.metronomeEnabled`/`countInEnabled` correctly, broadcasting
+  `session-state`; `ws-client.ct.spec.ts` (pre-existing) confirms an
+  incoming `session-state` message updates the client store for any
+  connected client, not just the sender; `playback-sync.test.ts`'s
+  `applyPlaybackSettings` tests (pre-existing) confirm
+  `session.metronomeEnabled`/`countInEnabled` correctly set
+  `api.metronomeVolume`/`api.countInVolume`; and `playback-engine.ts:138`
+  wires the store subscription to call `applyPlaybackSettings` on every
+  session update, applied identically to every participant's `api`
+  instance (visible or headless) per infrastructure.md. Every individual
+  link is tested; only the literal "can a human hear the sound change" step
+  is unverified. Recommend a human run this live check before considering
+  the feature fully confirmed in practice — see `STATUS.md`.
