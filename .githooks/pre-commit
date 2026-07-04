@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Typecheck every workspace package before allowing a commit.
+# Installed via `pnpm install`'s "prepare" script (git config core.hooksPath .githooks) —
+# see root package.json. No hook-manager dependency: this repo is small enough
+# that a plain checked-in script covers it (constitution Principle V/simplicity spirit).
+set -e
+
+echo "Running typecheck (pnpm check) before commit..."
+pnpm check

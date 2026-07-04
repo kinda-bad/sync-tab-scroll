@@ -34,7 +34,7 @@ function fakeRes() {
     statusCode = code;
     headers = hdrs;
     return stream;
-  }) as ServerResponse['writeHead'];
+  }) as unknown as typeof stream.writeHead;
   Object.defineProperty(stream, 'statusCode', { get: () => statusCode });
   Object.defineProperty(stream, 'headers', { get: () => headers });
   Object.defineProperty(stream, 'chunks', { get: () => chunks });

@@ -6,6 +6,8 @@
   },
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev"
+    "dev": "pnpm -r --parallel dev",
+    "check": "pnpm -r --if-present run check",
+    "prepare": "git config core.hooksPath .githooks"
   }
 }
