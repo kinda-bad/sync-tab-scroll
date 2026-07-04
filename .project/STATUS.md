@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (constitution amended to 1.4.0 — new Principle VIII, config via `.env` synced by example, not yet implemented; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (Principle VIII implementation planned: `plan-config-env-convention-2026-07-04.md` drafted on branch `config-env-convention`, covering server/.env, client/.env, a shape-lint script, and pre-commit wiring — CI wiring flagged as an open human decision, no CI provider exists yet; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -53,13 +53,16 @@ via `.env`, Synced by Example) — app config read from a single git-ignored
 lockstep (same key shape), checked pre-commit and in CI. Motivated by a
 real bug this session: `VITE_BACKEND_PORT=6081` prefixing only the
 `build` half of a `build && preview` shell command left `preview` silently
-using the wrong default. **Not yet implemented** — no `.env`,
-`.env.example`, or shape-lint script exists yet; current config
-(`server/src/config.ts`'s `PORT`/`CATALOG_ROOT`/`HOST_REASSIGN_GRACE_MS`/
-`REQUIRE_SONG_CONSENT`, `client/vite.config.ts`'s `VITE_BACKEND_PORT`) is
-a known, not-yet-closed gap against this new principle — track via
-`/ardd-verify` once implementation is planned, not a violation to fix
-right now.
+using the wrong default. **Now planned, not yet implemented**:
+`plan-config-env-convention-2026-07-04.md` (branch `config-env-convention`)
+covers migrating `server/src/config.ts` (via Node's native
+`--env-file-if-exists`, no new dependency) and `client/vite.config.ts` (via
+Vite's `loadEnv()`), a test-first shape-lint script, and pre-commit wiring —
+with the existing dev/test port scheme (6000/6001/6080/6081) preserved
+exactly, precedence (shell-set vars beat `.env`) verified empirically
+before the plan was written. CI wiring is an explicit open question (no
+CI provider/workflow/remote exists in this repo yet) rather than an
+invented one. Next: `/ardd-tasks` against this plan.
 
 No other violations. Principle II (No Dead Architecture): the
 `host-delegation`/`request-to-become-host` merge reused one shared
@@ -141,6 +144,12 @@ text) before approval — see each plan's tasks file for verification notes
 gap; `tasks-lyrics-pre-singing-e09e.md` caught a test assertion that breaks
 under the new design; `tasks-settings-modal-followup-bbd2.md` reordered a
 phase to satisfy constitution Principle VII test-first).
+
+**1 new plan (2026-07-04), `status: approved` with a `status: ready` tasks
+file:** `plan-config-env-convention-2026-07-04.md` →
+`tasks-config-env-convention-9a7e.md` (14 tasks, 4 phases), on branch
+`config-env-convention` (a separate worktree from the four plans above).
+Implements constitution Principle VIII. Not started.
 
 ## Implementation Status
 
@@ -227,8 +236,8 @@ re-confirmed live.
    remote — every commit this entire session was made with
    `--no-gpg-sign` (1Password locked throughout).
 4. Implement Principle VIII (config via `.env`/`.env.example`, pre-commit +
-   CI shape lint) — not started; a `/ardd-feature` or `/ardd-plan` pass
-   would cover migrating `server/src/config.ts` and
-   `client/vite.config.ts`'s current ad hoc env vars.
+   CI shape lint) — tasked and ready
+   (`tasks-config-env-convention-9a7e.md`, branch
+   `config-env-convention`); run `/ardd-implement` against it next.
 5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.
