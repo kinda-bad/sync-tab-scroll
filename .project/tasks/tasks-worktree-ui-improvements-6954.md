@@ -27,10 +27,10 @@ rather than unit tests.
   `test.use({ ...devices['iPhone 13'] })` or equivalent with
   `isMobile: true`) so the meta tag is actually observable. Land
   T001+T002 together.
-- [ ] T002 Add `<meta name="viewport" content="width=device-width, initial-scale=1" />`
+- [x] T002 Add `<meta name="viewport" content="width=device-width, initial-scale=1" />`
   to `client/index.html` `<head>`. This is the root fix for "everything
   tiny on phone" (no viewport meta → ~980px virtual layout width).
-- [ ] T003 [artifacts: ui, brand] Make the modals fit phone widths.
+- [x] T003 [artifacts: ui, brand] Make the modals fit phone widths.
   Adviser-verified state of `client/src/components/Modal.svelte`: it
   already has `max-height: 80vh` and `.modal-body { overflow-y: auto }`,
   and the backdrop's `padding: var(--space-4)` + `width: 100%` already
