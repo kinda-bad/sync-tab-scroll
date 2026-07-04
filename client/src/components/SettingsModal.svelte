@@ -9,7 +9,10 @@
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
-  let activeTab: 'participants' | 'settings' = 'participants';
+  // Three semantic tabs (ui.md): Participants (who's here + host transfer),
+  // Session (host-broadcast controls everyone is affected by), Preferences
+  // (personal, this-device-only settings).
+  let activeTab: 'participants' | 'session' | 'preferences' = 'participants';
   let lobbyCursorInput = 0;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
 
@@ -59,7 +62,8 @@
 <Modal {open} {onClose} title="Settings">
   <div class="tab-strip">
     <Button variant={activeTab === 'participants' ? 'riot' : 'ghost'} label="Participants" onclick={() => (activeTab = 'participants')} />
-    <Button variant={activeTab === 'settings' ? 'riot' : 'ghost'} label="Settings" onclick={() => (activeTab = 'settings')} />
+    <Button variant={activeTab === 'session' ? 'riot' : 'ghost'} label="Session" onclick={() => (activeTab = 'session')} />
+    <Button variant={activeTab === 'preferences' ? 'riot' : 'ghost'} label="Preferences" onclick={() => (activeTab = 'preferences')} />
   </div>
 
   {#if activeTab === 'participants'}
@@ -86,7 +90,11 @@
           </ListRow>
         {/each}
       </ul>
-
+    {:else}
+      <p class="hint">Connecting…</p>
+    {/if}
+  {:else if activeTab === 'session'}
+    {#if session}
       <span class="section-label">Lobby cursor</span>
       {#if session.lobbyCursorTick !== null}
         <p class="hint">Host is pointing at tick {session.lobbyCursorTick}.</p>
@@ -94,7 +102,7 @@
         <p class="hint">No lobby cursor set.</p>
       {/if}
       {#if isHost}
-        <div class="cursor-controls">
+        <div class="control-row">
           <input type="number" bind:value={lobbyCursorInput} class="cursor-input" />
           <Button variant="ghost" label="Set lobby cursor" onclick={setLobbyCursor} />
           <Button variant="ghost" label="Clear" onclick={clearLobbyCursor} />
@@ -103,6 +111,13 @@
             label={session.spotlightMode ? 'Spotlight mode: on' : 'Spotlight mode: off'}
             onclick={toggleSpotlightMode}
           />
+        </div>
+        <p class="hint">
+          Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.
+        </p>
+
+        <span class="section-label">Playback audio</span>
+        <div class="control-row">
           <Button
             variant={session.metronomeEnabled ? 'riot' : 'ghost'}
             label={session.metronomeEnabled ? 'Metronome: On' : 'Metronome: Off'}
@@ -131,6 +146,15 @@
     margin-bottom: var(--space-4);
   }
 
+  /* Equal-width cells so the strip reads as one segmented control; the
+     section-label type size keeps all three labels on one line down to
+     360px-wide screens. */
+  .tab-strip > :global(.btn) {
+    flex: 1;
+    padding-inline: var(--space-1);
+    font-size: 0.6875rem;
+  }
+
   .section-label {
     display: block;
     font-family: var(--font-mono);
@@ -157,7 +181,7 @@
     font-size: 0.875rem;
   }
 
-  .cursor-controls {
+  .control-row {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);

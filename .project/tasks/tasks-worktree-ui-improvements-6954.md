@@ -52,7 +52,7 @@ rather than unit tests.
 
 ## Phase 2: Tab readability on small screens
 
-- [ ] T005 [artifacts: ui, infrastructure, constitution] Small-screen tab
+- [x] T005 [artifacts: ui, infrastructure, constitution] Small-screen tab
   scale in `client/src/tab-renderer.ts`: first check alphaTab's own
   responsive idioms (Principle V — `settings.display.scale` is the
   supported zoom mechanism; check also layout/`scale` interactions with
@@ -66,7 +66,7 @@ rather than unit tests.
   (`.at-cursor-bar`/`.at-cursor-beat`) and the lobby-cursor overlay
   still align with the scaled notation, and that no horizontal overflow
   is introduced.
-- [ ] T006 [parallel] [artifacts: ui] Verify/fix the lyrics surfaces at
+- [x] T006 [parallel] [artifacts: ui] Verify/fix the lyrics surfaces at
   phone widths: the bottom lyrics ticker (its DOM-measurement centering
   — `offsetLeft`/`offsetWidth` — must still center the active syllable
   after any scale/width change; it recomputes on window resize) and the
