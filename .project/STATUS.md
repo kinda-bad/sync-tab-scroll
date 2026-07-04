@@ -133,12 +133,13 @@ independently reviewed and approved this session:
   documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
   that plan's work.
 
-`feedback-server-failure-banner-f225.md` — now `status: planned`, →
-`plan-server-failure-banner-2026-07-04.md` (`status: draft`, not yet
-approved/tasked). Its 1 Bug item is resolved: the UI has no indication
-when the server is unreachable; the plan adds connection-state tracking,
-a fixed-interval reconnect that reuses the existing reconnect-by-
-participantId path (`session-join.ts`), and a persistent
+`feedback-server-failure-banner-f225.md` — `status: planned`, →
+`plan-server-failure-banner-2026-07-04.md` (`status: approved`) →
+`tasks-server-failure-banner-c97e.md` (`status: ready`, 10 tasks/6
+phases, not started). Its 1 Bug item is resolved: the UI has no
+indication when the server is unreachable; the plan adds connection-state
+tracking, a fixed-interval reconnect that reuses the existing reconnect-
+by-participantId path (`session-join.ts`), and a persistent
 `ConnectionBanner.svelte`.
 
 0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,

@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: server-failure-banner
 created: 2026-07-04
 features: []
