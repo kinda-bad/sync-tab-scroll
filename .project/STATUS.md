@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (on `main`, post-merge of `host-transfer`, `metronome-count-in-toggle`, and `consented-song-submission`). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-verify` full re-survey after the three-branch merge). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -36,9 +36,7 @@ None found this pass. All five features merged this session
 (`host-delegation`, `request-to-become-host`, `metronome-toggle`,
 `count-in-toggle`, `consented-song-submission`) are consistently named
 and cross-referenced across `datamodel.md`, `infrastructure.md`, and
-`ui.md`. `ui.md`'s Participants tab now documents Host Transfer controls
-and the Metronome/Count-in toggles together, in the same order they
-actually render (`SettingsModal.svelte`).
+`ui.md`.
 
 ## Within-Artifact Issues
 
@@ -67,11 +65,19 @@ features.
 
 ## Code-vs-Artifact Defects
 
-0 known defects as of the last full `/ardd-verify` pass (2026-07-03, on
-`fix-lyric-css-colors-dead-code`, since merged to `main`). Not re-run
-since three features' worth of code landed afterward — **recommend a
-fresh `/ardd-verify` pass now** to confirm `datamodel.md`,
-`infrastructure.md`, and `ui.md` still match the merged code exactly.
+3 known defects — see `DEFECTS.md`, last checked 2026-07-03 (full
+re-survey just run post-merge). All 3 are in `ui.md`'s Participants tab
+bullet, all introduced by my own manual resolution of the `host-transfer`
+↔ `metronome-count-in-toggle` merge conflict there (concatenating two
+independently-drafted descriptions rather than re-deriving the paragraph
+from the merged component): (1) "Make host" is documented as showing
+only for *connected* participants, but the code has no such check —
+drift; (2) the prose's paragraph order doesn't match the actual DOM
+render order (Host Transfer controls render before Spotlight/Metronome/
+Count-in, not after) — cosmetic; (3) Metronome/Count-in are described as
+"below" the lobby-cursor controls but are actually inline in the same
+flex row — cosmetic. `datamodel.md`, `pipeline.md`, `infrastructure.md`,
+`constitution.md`, and `brand.md` all verified clean.
 
 ## Feature Backlog
 
@@ -132,13 +138,11 @@ plumbing-verified.
 
 ## Recommended Next Step
 
-1. Run the full test suite (server, client unit, client CT, pipeline)
-   and `pnpm check` to confirm the merge is fully healthy before anything
-   else.
-2. Run a fresh `/ardd-verify` pass — three features' worth of code landed
-   since the last one.
-3. Re-sign the full unsigned commit range before pushing anything to a
+1. Fix the 3 `ui.md` defects (see Code-vs-Artifact Defects) — small,
+   docs-only corrections to the Participants tab bullet's wording/order,
+   no code change needed.
+2. Re-sign the full unsigned commit range before pushing anything to a
    remote.
-4. Separately, not blocking: attempt the outstanding live-browser checks
+3. Separately, not blocking: attempt the outstanding live-browser checks
    (playback-sync-fixes/lyrics-ticker scroll behavior, and
    metronome/count-in audible confirmation).
