@@ -12,7 +12,8 @@ export type ClientMessage =
   | { type: 'song-select'; songId: string }
   | { type: 'playback-tick-report'; tickPosition: number }
   | { type: 'host-delegate'; targetParticipantId: string }
-  | { type: 'request-host' };
+  | { type: 'request-host' }
+  | { type: 'host-request-decline' };
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }

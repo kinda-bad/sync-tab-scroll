@@ -13,6 +13,7 @@ import { handleSongSelect } from './handlers/song-select.js';
 import { handlePlaybackTickReport } from './handlers/playback-tick-report.js';
 import { handleHostDelegate } from './handlers/host-delegate.js';
 import { handleRequestHost } from './handlers/request-host.js';
+import { handleHostRequestDecline } from './handlers/host-request-decline.js';
 
 /**
  * Routes each incoming message to its own named handler (Principle IV) —
@@ -44,5 +45,7 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleHostDelegate(ctx, socket, message);
     case 'request-host':
       return handleRequestHost(ctx, socket, message);
+    case 'host-request-decline':
+      return handleHostRequestDecline(ctx, socket, message);
   }
 }

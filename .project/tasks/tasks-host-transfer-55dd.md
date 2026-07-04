@@ -57,7 +57,7 @@ status: in-progress
   nothing new to do). Implement to pass, then wire `case 'request-host'`
   into `dispatch.ts` (sequenced after T003 — same file).
 
-- [ ] T005 [artifacts: datamodel, infrastructure] Add `{ type:
+- [x] T005 [artifacts: datamodel, infrastructure] Add `{ type:
   'host-request-decline' }` to `ClientMessage` and a new
   `server/src/handlers/host-request-decline.ts` handler. Test-first:
   failing tests for: a successful decline (sent by the current host)
