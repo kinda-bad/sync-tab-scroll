@@ -73,31 +73,23 @@ part") and the Playback view (see Playback View, below) — the settings
 modal, and its theme toggle in particular, needs to be reachable
 regardless of whether playback has started:
 
-- **Participants**: the live participant list with readiness state, the
-  "lobby cursor" (lets the host point at a position in the score for
-  others to see before playback starts), a host-only "Spotlight
-  mode" toggle next to the lobby-cursor controls:
-  while it's on, the lobby cursor forces every participant's view to
-  follow it; while it's off, each participant is free to browse their own
-  rendered tab independently, and the lobby cursor's tick is shown only
-  as an informational readout (not applied to anyone's view). Spotlight
-  mode resets to off when playback starts, same as the lobby cursor
-  itself resetting to null. This is the default tab.
-
-  Also holds Host Transfer controls (infrastructure.md), which differ by
-  viewer and by row:
-  - **The host** sees a "Make host" control on every other connected
-    participant's row (never their own). Clicking it immediately
-    transfers host privileges to that participant, no confirmation
-    dialog — consistent with this app's existing pattern of treating host
-    actions as immediate and terse (e.g. re-selecting a song silently
-    resets every participant's part choice). If that row also happens to
-    have a pending request (below), clicking "Make host" grants it — there
-    is no separate "Accept" control, since granting a request and
-    delegating to that participant are the same action (infrastructure.md
-    Host Transfer). A row with a pending request additionally shows a
-    "Decline" control next to "Make host", for the host to reject the
-    request without transferring.
+- **Participants**: the live participant list with readiness state and
+  Host Transfer controls (infrastructure.md), which differ by viewer and
+  by row:
+  - **The host** sees a "Make host" control on every other participant's
+    row (never their own) — regardless of that participant's connection
+    status; a disconnected participant's row still shows it, and clicking
+    it is one of the ways a stale-target error (States, below) can
+    surface. Clicking it immediately transfers host privileges to that
+    participant, no confirmation dialog — consistent with this app's
+    existing pattern of treating host actions as immediate and terse
+    (e.g. re-selecting a song silently resets every participant's part
+    choice). If that row also happens to have a pending request (below),
+    clicking "Make host" grants it — there is no separate "Accept"
+    control, since granting a request and delegating to that participant
+    are the same action (infrastructure.md Host Transfer). A row with a
+    pending request additionally shows a "Decline" control next to "Make
+    host", for the host to reject the request without transferring.
   - **A non-host participant** sees a "Request to become host" control on
     their own row only. It's disabled (not hidden) while
     `Session.pendingHostRequest` is already set — to them or to anyone
@@ -115,21 +107,28 @@ regardless of whether playback has started:
     broadcast arrives — no local optimistic update needed on any of these
     actions.
 
-  Below the lobby-cursor controls, two more host-only toggles —
-  "Metronome" and "Count-in" — set `Session.metronomeEnabled`/
+  Below the participant list: the "lobby cursor" readout (lets the host
+  point at a position in the score for others to see before playback
+  starts) and, for the host only, one row of controls — set/clear the
+  lobby cursor, a "Spotlight mode" toggle, and two more host-only toggles,
+  "Metronome" and "Count-in", all side by side. While Spotlight mode is
+  on, the lobby cursor forces every participant's view to follow it;
+  while off, each participant is free to browse their own rendered tab
+  independently, and the lobby cursor's tick is shown only as an
+  informational readout (not applied to anyone's view). Spotlight mode
+  resets to off when playback starts, same as the lobby cursor itself
+  resetting to null. Metronome/Count-in set `Session.metronomeEnabled`/
   `countInEnabled` (datamodel.md; already wired to alphaTab's
   `metronomeVolume`/`countInVolume` in `playback-sync.ts`,
   infrastructure.md, but previously had no message/handler letting the
-  host actually set them). Same UI treatment as Spotlight mode: a
-  Button-style toggle visible and interactive only for the host, with no
-  separate readout shown to non-host participants — the audible effect
-  itself (or its absence) is every participant's confirmation that the
-  setting took, the same way Spotlight mode's effect is visible without a
-  redundant text readout. Grouped here rather than in the Settings tab
-  because, like Spotlight mode and the lobby cursor, they're host-
-  controlled *session* settings broadcast to everyone, not a personal
-  display preference — the Settings tab is reserved for the latter (theme,
-  below).
+  host actually set them). Same UI treatment as Spotlight mode: visible
+  and interactive only for the host, with no separate readout shown to
+  non-host participants — the audible effect itself (or its absence) is
+  every participant's confirmation that the setting took. Grouped here
+  rather than in the Settings tab because, like Spotlight mode and the
+  lobby cursor, they're host-controlled *session* settings broadcast to
+  everyone, not a personal display preference — the Settings tab is
+  reserved for the latter (theme, below). This is the default tab.
 - **Settings**: a dark/light theme toggle — the app's first in-app theme
   control (`client/src/theme.ts`); toggling it switches both the app's CSS
   palette and the tab notation's colors together, and the choice persists

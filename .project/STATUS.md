@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post `/ardd-verify` full re-survey after the three-branch merge). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post-fix — the 3 `ui.md` defects found by `/ardd-verify` are corrected). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -65,19 +65,13 @@ features.
 
 ## Code-vs-Artifact Defects
 
-3 known defects — see `DEFECTS.md`, last checked 2026-07-03 (full
-re-survey just run post-merge). All 3 are in `ui.md`'s Participants tab
-bullet, all introduced by my own manual resolution of the `host-transfer`
-↔ `metronome-count-in-toggle` merge conflict there (concatenating two
-independently-drafted descriptions rather than re-deriving the paragraph
-from the merged component): (1) "Make host" is documented as showing
-only for *connected* participants, but the code has no such check —
-drift; (2) the prose's paragraph order doesn't match the actual DOM
-render order (Host Transfer controls render before Spotlight/Metronome/
-Count-in, not after) — cosmetic; (3) Metronome/Count-in are described as
-"below" the lobby-cursor controls but are actually inline in the same
-flex row — cosmetic. `datamodel.md`, `pipeline.md`, `infrastructure.md`,
-`constitution.md`, and `brand.md` all verified clean.
+0 known defects — see `DEFECTS.md`, last checked 2026-07-03. All-clear:
+the 3 `ui.md` defects surfaced by the post-merge `/ardd-verify` pass (a
+dropped "connected" precondition on "Make host", and two paragraph-order/
+phrasing mismatches, all from manually resolving the `host-transfer` ↔
+`metronome-count-in-toggle` merge conflict) are fixed — the Participants
+tab bullet now matches `SettingsModal.svelte`'s actual render order and
+behavior exactly.
 
 ## Feature Backlog
 
@@ -138,11 +132,9 @@ plumbing-verified.
 
 ## Recommended Next Step
 
-1. Fix the 3 `ui.md` defects (see Code-vs-Artifact Defects) — small,
-   docs-only corrections to the Participants tab bullet's wording/order,
-   no code change needed.
-2. Re-sign the full unsigned commit range before pushing anything to a
-   remote.
-3. Separately, not blocking: attempt the outstanding live-browser checks
+1. Re-sign the full unsigned commit range before pushing anything to a
+   remote — every commit this entire session was made with
+   `--no-gpg-sign` (1Password locked throughout).
+2. Separately, not blocking: attempt the outstanding live-browser checks
    (playback-sync-fixes/lyrics-ticker scroll behavior, and
    metronome/count-in audible confirmation).
