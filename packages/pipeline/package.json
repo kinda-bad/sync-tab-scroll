@@ -9,7 +9,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit -p tsconfig.json",
-    "extract-lyrics": "tsx src/extract-lyrics.ts"
+    "test": "vitest run",
+    "extract-lyrics": "tsx src/extract-lyrics.ts",
+    "record-consent": "tsx src/record-consent.ts"
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.0",
@@ -21,6 +23,7 @@
     "@types/adm-zip": "^0.5.6",
     "@types/node": "^20.14.0",
     "tsx": "^4.16.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vitest": "^2.1.9"
   }
 }

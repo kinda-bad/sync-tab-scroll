@@ -1,6 +1,6 @@
 ---
 name: datamodel
-status: stable
+status: draft
 last_updated: 2026-07-03
 diagram_status: stale
 ---
@@ -124,7 +124,43 @@ and lrclib is sometimes consulted to place them (pipeline.md). Only
 produced when lyrics came from the GP-embedded path in the first place;
 the lrclib.net fallback has no GP track to point at.
 
+## Consent Record (Public Deployment Only)
+
+Not a field on `CatalogSong` and never sent to any client — it's an
+on-disk gate `catalog-loader.ts` reads at startup (infrastructure.md's
+Song Consent Gate), only when an operator has opted into
+`requireSongConsent`. Lives as a companion file in a song's own directory
+alongside its `.gp`/`.lrc`/`meta.json` (pipeline.md's Inputs & Outputs On
+Disk), one record per song — **[OPEN: per-song, not per-submitter]**
+chosen for this plan as the simpler shape (no separate submitter registry/
+entity to introduce, no cross-song identity to reconcile), accepting that
+a submitter contributing multiple songs re-records consent per song
+rather than once; revisit only if that duplication becomes real friction,
+not preemptively.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| submitterName | string | Free-text identifier the submitter gives (name/handle/contact) — not a validated or authenticated identity; this app has no auth (infrastructure.md Production Posture), so this is a record-keeping field, not an access-control key |
+| tosVersion | string | Which version/text of the distribution-license ToS clause was accepted — **[OPEN: exact ToS wording is a legal decision, not a design one]**, not resolved by this plan; a placeholder/dev version string is fine until an operator supplies real ToS text |
+| acceptedAt | number | Wall-clock timestamp consent was recorded |
+
+Written by a small companion CLI step to the existing lyrics-extraction
+pipeline (pipeline.md), not a web form — consistent with the pipeline's
+existing operator-driven, offline, source-controlled-inputs model
+(constitution Principle V spirit: no new mechanism built where the
+existing one already covers the workflow shape). **[OPEN: CLI-drop-in
+chosen over a web upload form]** — a web upload endpoint was considered
+and rejected for this pass: it would require a new HTTP surface accepting
+arbitrary file uploads from the public internet (a materially different
+threat model than this app's stated self-hosted/small-group posture,
+infrastructure.md), submitter-facing identity/session handling that
+doesn't otherwise exist, and file-size/validation/staging concerns with
+no current evidence of need. Revisit if operators report the CLI step is
+actually a submission bottleneck in practice.
+
 ## Indexes
 
 Not applicable — session state is in-memory only (infrastructure.md), with
-no persistence layer or query surface that would require an index.
+no persistence layer or query surface that would require an index. The
+Consent Record above is also not indexed — it's read once per song
+directory at catalog-load time, not queried.

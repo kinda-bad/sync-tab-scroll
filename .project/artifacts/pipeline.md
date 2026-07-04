@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-06-30
+last_updated: 2026-07-03
 ---
 
 # Lyrics Extraction Pipeline
@@ -139,6 +139,19 @@ song is one directory operation, not a cross-reference between separate
 input and output trees. No intermediate/scratch output is written to this
 tree — the prior pipeline's stale leftover `.mid` files (from the
 no-longer-used MIDI approach) are the cautionary example this avoids.
+
+## Consent Recording (Public Deployment Only)
+
+Additive, optional step in the same one-directory-per-song model above —
+not a second ingestion path. The pipeline's extraction/fallback/publish
+logic (Pipeline Stages, above) is unchanged and has no awareness of
+consent at all; a song intended for an operator's public deployment
+(infrastructure.md's Song Consent Gate) additionally gets a small
+companion CLI invocation writing the Consent Record (datamodel.md) into
+its existing `catalog/<song-slug>/` directory, alongside the `.gp`/`.lrc`/
+`meta.json` outputs already documented below. A song's directory with no
+consent record behaves exactly as it does today (fully supported, no
+gate) unless the operator has opted into `REQUIRE_SONG_CONSENT`.
 
 ## Dependencies
 
