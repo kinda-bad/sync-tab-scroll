@@ -1,7 +1,7 @@
 ---
 plan: plan-consented-song-submission-2026-07-03.md
 generated: 2026-07-03
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -53,7 +53,7 @@ status: in-progress
 
 ## Phase 2: Consent-recording CLI companion (pipeline)
 
-- [ ] T007 [artifacts: datamodel] [parallel] Write a failing test for a
+- [x] T007 [artifacts: datamodel] [parallel] Write a failing test for a
   new `record-consent` script (`packages/pipeline/src/record-consent.ts`
   or equivalent): given a song slug, submitter name, and ToS version, it
   writes a well-formed `ConsentRecord` file into that song's
@@ -63,7 +63,7 @@ status: in-progress
   shape) — independent of Phase 1's server-side files, so can run in
   parallel with T005/T006.
 
-- [ ] T008 [artifacts: datamodel] Implement the `record-consent` script
+- [x] T008 [artifacts: datamodel] Implement the `record-consent` script
   and wire it as a `package.json` bin/script entry in
   `packages/pipeline`, following the existing single-consolidated-script
   convention (pipeline.md's `extract-lyrics` is the model). Confirm
@@ -71,7 +71,7 @@ status: in-progress
 
 ## Phase 3: Documentation & production annotation
 
-- [ ] T009 [artifacts: constitution] Add a production annotation, per
+- [x] T009 [artifacts: constitution] Add a production annotation, per
   constitution's Development Workflow convention, at the point the
   placeholder `tosVersion` value/text lives in `record-consent`'s
   implementation (T008) — flagging that real ToS legal text must replace
