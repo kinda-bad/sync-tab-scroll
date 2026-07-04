@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (constitution amended to 1.4.0 — new Principle VIII, config via `.env` synced by example, not yet implemented; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (new feedback logged: server-unreachable UI has no indication/banner; new backlog item logged: `participant-selected-part`; constitution amended to 1.4.0 — new Principle VIII, config via `.env` synced by example, not yet implemented; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -103,6 +103,12 @@ independently reviewed and approved this session:
   documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
   that plan's work.
 
+`feedback-server-failure-banner-f225.md` — **`status: open`**, new this
+pass: 1 Bug — the UI has no indication when the server is unreachable
+(WS never connects, or drops with no server-side error message); should
+show a persistent error banner until contact is restored. Tagged
+`[artifacts: ui, infrastructure]`. Not yet planned.
+
 0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,
 `feedback-lobby-cursor-mode-e13b.md`, `feedback-lyrics-ticker-bfd9.md`,
 `feedback-playback-sync-f03d.md`, `feedback-session-create-selection-0411.md`,
@@ -112,12 +118,13 @@ earlier sessions).
 
 ## Feature Backlog
 
-0 backlogged · 0 planned · 0 tasked · 8 implemented
+1 backlogged · 0 planned · 0 tasked · 8 implemented
 (`test-coverage-backfill`, `playwright-client-coverage`,
 `host-delegation`, `request-to-become-host`, `metronome-toggle`,
 `count-in-toggle`, `consented-song-submission`) — see
-`.project/artifacts/features.md`. Every feature logged to date is now
-implemented.
+`.project/artifacts/features.md`. New: `participant-selected-part`
+(participant list shows each member's currently selected part) —
+target it with `/ardd-plan participant-selected-part` when ready.
 
 ## Plans
 
