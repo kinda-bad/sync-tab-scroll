@@ -10,13 +10,11 @@
   onMount(() => {
     const api = createHeadlessPlayer(gpFilePath, trackIndex);
     (window as unknown as { __api: unknown }).__api = api;
-    // Not waitUntilReady (scoreLoaded + soundFontLoaded): Playwright CT's
-    // production-style build environment 404s alphaTab's audio-worklet
-    // worker (an environment-specific bundling gap, not a real-app issue —
-    // verified the real vite build/dev server doesn't hit this), so
-    // soundFontLoaded never fires here. This harness only needs to confirm
-    // score-loading/readiness plumbing works headlessly, not audio itself
-    // — consistent with the plan's existing no-audio-assertions scope.
+    // scoreLoaded only, not waitUntilReady (scoreLoaded + soundFontLoaded):
+    // this harness only needs to confirm score-loading plumbing works
+    // headlessly. (soundFontLoaded *does* fire under CT now that the synth
+    // worker assets are emitted — see playwright.config.ts — so tightening
+    // this to full readiness is possible if a test ever needs it.)
     api.scoreLoaded.on(() => {
       ready = true;
     });
