@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
-import type { WsClient } from './ws-client';
+import type { WsClient, ConnectionStatus } from './ws-client';
 
 export type ViewState = 'landing' | 'lobby' | 'playback';
 
@@ -16,6 +16,8 @@ export interface ClientState {
   wsClient: WsClient | null;
   /** Real playback position (0–1), local to this participant's own alphaTab instance — updated by playback-engine.ts's `playerPositionChanged` subscription. Read by App.svelte's hazard-strip fill while in the Playback view. */
   playbackProgress: number;
+  /** Real WS connection state (ws-client.ts) — drives `ConnectionBanner.svelte`. Defaults to `'connecting'`, since a `WsClient` doesn't exist until `connect()` runs, but the very first connection attempt is already underway by the time anything could read this. */
+  connectionStatus: ConnectionStatus;
 }
 
 function createClientStore() {
@@ -26,6 +28,7 @@ function createClientStore() {
     catalog: [],
     wsClient: null,
     playbackProgress: 0,
+    connectionStatus: 'connecting',
   });
   return { subscribe, set, update };
 }

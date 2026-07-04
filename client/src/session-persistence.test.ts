@@ -14,7 +14,7 @@ function fakeLocalStorage() {
 
 beforeEach(() => {
   (globalThis as unknown as { localStorage: ReturnType<typeof fakeLocalStorage> }).localStorage = fakeLocalStorage();
-  clientStore.set({ view: 'landing', session: null, selfParticipantId: null, catalog: [], wsClient: null, playbackProgress: 0 });
+  clientStore.set({ view: 'landing', session: null, selfParticipantId: null, catalog: [], wsClient: null, playbackProgress: 0, connectionStatus: 'connected' });
 });
 
 describe('loadStoredSession', () => {
@@ -57,6 +57,7 @@ describe('startSessionPersistence', () => {
       catalog: [],
       wsClient: null,
       playbackProgress: 0,
+      connectionStatus: 'connected',
     });
 
     expect(loadStoredSession()).toEqual({ code: 'WXYZ', displayName: 'Alice', participantId: 'p1' });

@@ -6,6 +6,9 @@ export interface WsClient {
   send(message: ClientMessage): void;
 }
 
+/** Real WS connection state (constitution Principle VI, one named type — `ClientState.connectionStatus` reads this same type rather than retyping it inline). `'disconnected'` covers both "never connected yet" and "connected, then dropped" — `ConnectionBanner.svelte` treats both identically. */
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
+
 /** Connects to the server and updates the single client store as ServerMessages arrive. */
 export function createWsClient(url: string): WsClient {
   const socket = new WebSocket(url);
