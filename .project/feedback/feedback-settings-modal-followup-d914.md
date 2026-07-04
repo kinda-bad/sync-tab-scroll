@@ -1,7 +1,7 @@
 ---
-status: open      # open -> planned (blocked: Reconsidered item below still needs user confirmation)
+status: planned   # UX item via plan-settings-modal-followup-2026-07-04.md (now superseded); Reconsidered item confirmed by user 2026-07-04 and consumed by the superseding plan below, which also carries the UX item's work forward
 created: 2026-07-04
-plan: plan-settings-modal-followup-2026-07-04.md
+plan: plan-worktree-ui-improvements-2026-07-04.md
 ---
 
 # Feedback
@@ -21,5 +21,7 @@ the already-implemented `settings-modal-redesign` and
 
 ## Reconsidered
 
-- [ ] Metronome should be toggleable per participant rather than forced by
+- [x] Metronome should be toggleable per participant rather than forced by
   the host for everyone. Low priority. [artifacts: ui, datamodel]
+  (User confirmed the override 2026-07-04 — metronome becomes a personal
+  per-participant setting; count-in stays host-controlled session-wide.)

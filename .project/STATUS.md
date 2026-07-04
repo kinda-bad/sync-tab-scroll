@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (`plan-worktree-ui-improvements-2026-07-04.md` approved with tasks generated — `tasks-worktree-ui-improvements-6954.md`, 14 tasks / 5 phases, adviser review in flight, implementation next; it supersedes `plan-settings-modal-followup-2026-07-04.md`; user confirmed metronome-per-participant; 0 feedback files open; 3 other plans from earlier today remain approved/ready, none implemented). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -75,19 +75,28 @@ behavior exactly.
 
 ## Feedback
 
+**0 open feedback files.** The last two were consumed by
+`plan-worktree-ui-improvements-2026-07-04.md` (2026-07-04):
+- `feedback-ui-improvements-69bb.md` — 6 UX items (small-screen
+  adaptation, tab readability, modal overflow, settings regrouping into
+  semantic tabs, frontend-design-skill approach note) — all planned.
+- `feedback-settings-modal-followup-d914.md` — now planned: its
+  Reconsidered item (metronome per-participant instead of
+  host-controlled) was **confirmed by the user 2026-07-04** and is in
+  the new plan as a schema-removal + artifact-revision phase; its UX
+  item's work (control-row split, Spotlight hint copy) carries forward
+  from the superseded followup plan.
+
 `feedback-manual-verification-pass-4b3c.md` (`status: split`, 2026-07-04)
 was split into 4 group-specific files for parallel planning, each
 independently reviewed and approved this session:
 - `feedback-session-lifecycle-6876.md` — planned, → `plan-session-lifecycle-2026-07-04.md` → `tasks-session-lifecycle-836f.md` (ready)
 - `feedback-lobby-cursor-race-4262.md` — planned, → `plan-lobby-cursor-race-2026-07-04.md` → `tasks-lobby-cursor-race-c9f8.md` (ready)
 - `feedback-lyrics-pre-singing-1fa6.md` — planned, → `plan-lyrics-pre-singing-2026-07-04.md` → `tasks-lyrics-pre-singing-e09e.md` (ready)
-- `feedback-settings-modal-followup-d914.md` — **still `status: open`**: its
-  layout-regroup item is planned/tasked (→ `plan-settings-modal-followup-2026-07-04.md`
-  → `tasks-settings-modal-followup-bbd2.md`, ready), but its Reconsidered
-  item (metronome per-participant vs. host-controlled) is deliberately
-  unresolved pending the user's explicit confirmation — it would reverse
-  documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
-  that plan's work.
+- `feedback-settings-modal-followup-d914.md` — planned (see above; its
+  original plan `plan-settings-modal-followup-2026-07-04.md` and tasks
+  file `tasks-settings-modal-followup-bbd2.md` are now **superseded** by
+  `plan-worktree-ui-improvements-2026-07-04.md` — do not implement them).
 
 0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,
 `feedback-lobby-cursor-mode-e13b.md`, `feedback-lyrics-ticker-bfd9.md`,
@@ -98,12 +107,13 @@ earlier sessions).
 
 ## Feature Backlog
 
-0 backlogged · 0 planned · 0 tasked · 8 implemented
+0 backlogged · 0 planned · 0 tasked · 7 implemented
 (`test-coverage-backfill`, `playwright-client-coverage`,
 `host-delegation`, `request-to-become-host`, `metronome-toggle`,
 `count-in-toggle`, `consented-song-submission`) — see
-`.project/artifacts/features.md`. Every feature logged to date is now
-implemented.
+`.project/artifacts/features.md`. Every status-tracked feature logged to
+date is implemented (17 earlier entries predate status tracking and are
+shipped baseline features).
 
 ## Plans
 
@@ -117,10 +127,16 @@ to `main`: `plan-fix-lyric-css-colors-dead-code-2026-07-03.md`,
 `superseded`, kept as historical record on their own now-fully-merged
 branches).
 
-**4 new plans (2026-07-04), all `status: approved` with a `status: ready`
+**3 plans (2026-07-04) `status: approved` with a `status: ready`
 tasks file, none implemented yet:** `plan-session-lifecycle-2026-07-04.md`,
-`plan-lobby-cursor-race-2026-07-04.md`, `plan-lyrics-pre-singing-2026-07-04.md`,
-`plan-settings-modal-followup-2026-07-04.md`. Each was independently
+`plan-lobby-cursor-race-2026-07-04.md`, `plan-lyrics-pre-singing-2026-07-04.md`.
+A fourth, `plan-settings-modal-followup-2026-07-04.md`, was **superseded
+later the same day** by `plan-worktree-ui-improvements-2026-07-04.md`
+(now `status: approved`, branch `worktree-ui-improvements`, tasks:
+`tasks-worktree-ui-improvements-6954.md`, ready), which folds its
+work into the small-screen/settings-redesign plan and adds the
+user-confirmed metronome-per-participant reversal. Each of the four was
+independently
 reviewed by a background agent against the live codebase (not just its own
 text) before approval — see each plan's tasks file for verification notes
 (e.g. `tasks-session-lifecycle-836f.md` confirmed a genuine `WsClient.close()`
@@ -202,15 +218,20 @@ re-confirmed live.
 
 ## Recommended Next Step
 
-1. Run `/ardd-implement` against any of the 4 new `status: ready` tasks
-   files (`tasks-session-lifecycle-836f.md`,
-   `tasks-lobby-cursor-race-c9f8.md`, `tasks-lyrics-pre-singing-e09e.md`,
-   `tasks-settings-modal-followup-bbd2.md`) — all four are approved and
-   waiting, none started.
-2. Decide the metronome-per-participant question (low priority, no rush) —
+1. Run `/ardd-implement` against `tasks-worktree-ui-improvements-6954.md`
+   (14 tasks, 5 phases) once the adviser review completes — work lives in
+   the `ui-improvements` worktree (branch `worktree-ui-improvements`).
+   Note it also revises `datamodel.md`/`infrastructure.md`/`ui.md`
+   (metronome becomes a client-local personal preference).
+2. Run `/ardd-implement` against any of the 3 remaining `status: ready`
+   tasks files (`tasks-session-lifecycle-836f.md`,
+   `tasks-lobby-cursor-race-c9f8.md`, `tasks-lyrics-pre-singing-e09e.md`)
+   — approved and waiting, none started.
+   (`tasks-settings-modal-followup-bbd2.md` is superseded — skip it.)
+3. Decide the metronome-per-participant question (low priority, no rush) —
    see `feedback-settings-modal-followup-d914.md`'s Reconsidered item.
-3. Re-sign the full unsigned commit range before pushing anything to a
+4. Re-sign the full unsigned commit range before pushing anything to a
    remote — every commit this entire session was made with
    `--no-gpg-sign` (1Password locked throughout).
-4. Separately, not blocking: attempt the remaining outstanding
+5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.

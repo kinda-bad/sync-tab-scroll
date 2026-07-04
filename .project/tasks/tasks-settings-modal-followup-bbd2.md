@@ -1,7 +1,7 @@
 ---
 plan: plan-settings-modal-followup-2026-07-04.md
 generated: 2026-07-04
-status: ready
+status: superseded   # plan superseded by plan-worktree-ui-improvements-2026-07-04.md; do not implement
 ---
 
 # Tasks
