@@ -44,9 +44,10 @@ const DRIFT_THRESHOLD_TICKS = 50;
  * (including metronome/count-in clicks) between the reset point and
  * wherever playback had already reached, which is what surfaced as "very
  * slow, janky playback" plus "metronome retriggering constantly". The
- * status-transition branches below (start/pause) still apply to the host —
- * those come from the host's own Start/Pause actions round-tripping back as
- * a `status` change, not from a tick-value comparison, so they're safe.
+ * status-transition branches below (start/pause/stop) still apply to the
+ * host — those come from the host's own Start/Pause/Stop actions
+ * round-tripping back as a `status` change, not from a tick-value
+ * comparison, so they're safe.
  */
 export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void): number | null {
   if (!api.isReadyForPlayback) return null;
@@ -59,6 +60,19 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
     return playbackState.tickPosition;
   } else if (playbackState.status !== 'running' && isPlaying) {
     api.pause();
+  }
+
+  // A full Stop (server always resets tickPosition to 0, playback-control.ts)
+  // resets position for every client, host included — this is a one-shot
+  // reaction to an explicit status transition, not a continuous tick-drift
+  // comparison against a stale self-report, so it doesn't reintroduce the
+  // host-echo bug the isHost guard below exists to prevent. Guarded on
+  // tickPosition already being 0 rather than the isPlaying transition above,
+  // since Stop can arrive from either Playing or already-Paused.
+  if (playbackState.status === 'stopped' && api.tickPosition !== 0) {
+    onApply?.(0);
+    api.tickPosition = 0;
+    return 0;
   }
 
   if (isHost) return null;

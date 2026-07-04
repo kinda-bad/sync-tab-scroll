@@ -72,6 +72,35 @@ describe('correctDrift', () => {
     expect(api.tickPosition).toBe(5000);
     expect(result).toBeNull();
   });
+
+  it('resets tickPosition to 0 on a full Stop while playing, host included', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 5000 });
+    const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
+    expect(api.pause).toHaveBeenCalledOnce();
+    expect(api.tickPosition).toBe(0);
+    expect(result).toBe(0);
+  });
+
+  it('resets tickPosition to 0 on a full Stop from an already-paused state, host included', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 5000 });
+    const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
+    expect(api.pause).not.toHaveBeenCalled();
+    expect(api.tickPosition).toBe(0);
+    expect(result).toBe(0);
+  });
+
+  it('resets tickPosition to 0 on a full Stop for a non-host too', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 5000 });
+    const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), false);
+    expect(api.tickPosition).toBe(0);
+    expect(result).toBe(0);
+  });
+
+  it('does not repeatedly reset once tickPosition is already 0 while stopped', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 0 });
+    const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
+    expect(result).toBeNull();
+  });
 });
 
 describe('applyPlaybackSettings', () => {
