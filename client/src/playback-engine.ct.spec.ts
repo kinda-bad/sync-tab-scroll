@@ -162,6 +162,61 @@ test('does not report tickPosition when not host', async ({ mount, page }) => {
   expect(reports).toEqual([]);
 });
 
+/**
+ * Hazard-bar real playback progress (plan-hazard-bar-progress): a third,
+ * narrowly-scoped `playerPositionChanged` subscription (distinct from the
+ * lrc-line-matching and seek-broadcast ones already covered above) writes
+ * `currentTime / endTime` to `clientStore.playbackProgress` on every real
+ * alphaTab instance, unconditionally (no host/session gating).
+ *
+ * DRIVING NOTE (deviation from the task's original approach): the task
+ * expected `api.tickPosition = <value>` to fire `playerPositionChanged`
+ * with a real, nonzero `currentTime`/`endTime` (the same mechanism
+ * `correctDrift` relies on). Empirically under this CT environment that
+ * premise doesn't hold — real position broadcasts require alphaTab's synth
+ * worker to actually be running its playback loop, which (like
+ * `isReadyForPlayback`/`soundFontLoaded` per this file's other SCOPE NOTE)
+ * never happens under browser automation; setting `tickPosition` directly
+ * only ever re-fires the stale, all-zero initial event. Instead this test
+ * calls `api.playerPositionChanged.trigger(...)` directly — the exact same
+ * public method alphaTab's own worker-message handler uses internally to
+ * fire this event (confirmed in `node_modules/@coderline/alphatab/dist/
+ * alphaTab.js`) — to inject a known `currentTime`/`endTime` pair and assert
+ * the production handler computes the expected ratio from it. This tests
+ * the same production code path (the `.on()` handler in
+ * `playback-engine.ts`) without depending on real audio/synth-loop
+ * emission, consistent with this file's established "test what CT can
+ * drive, leave real emission to manual verification" pattern.
+ */
+async function readPlaybackProgress(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const store = (window as unknown as { __clientStore: { subscribe: (fn: (s: unknown) => void) => () => void } }).__clientStore;
+    let value: unknown;
+    const unsub = store.subscribe((s) => {
+      value = (s as { playbackProgress: number }).playbackProgress;
+    });
+    unsub();
+    return value as number;
+  });
+}
+
+test('tracks real playbackProgress in clientStore from playerPositionChanged', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  expect(await readPlaybackProgress(page)).toBe(0);
+
+  await page.evaluate(() => {
+    const api = (window as unknown as {
+      __getApi: () => { playerPositionChanged: { trigger: (e: unknown) => void } };
+    }).__getApi();
+    api.playerPositionChanged.trigger({ currentTime: 5, endTime: 10, currentTick: 0, endTick: 0, isSeek: false, originalTempo: 120, modifiedTempo: 120 });
+  });
+
+  await expect.poll(() => readPlaybackProgress(page), { timeout: 5_000 }).toBeGreaterThan(0);
+  expect(await readPlaybackProgress(page)).toBe(0.5);
+});
+
 test('does not report tickPosition when status is not running', async ({ mount, page }) => {
   const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });

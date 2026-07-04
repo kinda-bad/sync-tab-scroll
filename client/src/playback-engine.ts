@@ -92,6 +92,19 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     });
   }
 
+  // Hazard-bar real playback progress (plan-hazard-bar-progress): a third,
+  // narrowly-scoped playerPositionChanged subscription, distinct from the
+  // lrc-line-matching and seek-broadcast ones elsewhere in this function.
+  // Registered unconditionally (not gated on host/session role) since this
+  // is a purely local "how far along is my own view" readout, not a
+  // cross-participant sync concern — each participant's own instance
+  // already advances independently, consistent with how the cursor itself
+  // works.
+  api.playerPositionChanged.on((e) => {
+    const ratio = e.endTime > 0 ? e.currentTime / e.endTime : 0;
+    clientStore.update((s) => ({ ...s, playbackProgress: ratio }));
+  });
+
   // Drift correction + metronome/count-in settings (infrastructure.md) — runs
   // for the lifetime of the engine, not gated on which view is showing.
   // Also gates host-only, paused-only seek (ui.md) and tracks the last tick
