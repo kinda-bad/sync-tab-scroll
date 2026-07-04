@@ -65,7 +65,11 @@
     border: 1px solid var(--border);
     width: 100%;
     max-width: 32rem;
+    /* dvh, not vh: on phones vh includes the collapsed URL-bar area, so a
+       vh-sized panel can extend under the browser chrome. Fallback first
+       for engines without dvh. */
     max-height: 80vh;
+    max-height: 85dvh;
     display: flex;
     flex-direction: column;
   }

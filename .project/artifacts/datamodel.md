@@ -1,7 +1,7 @@
 ---
 name: datamodel
 status: draft
-last_updated: 2026-07-03
+last_updated: 2026-07-04
 diagram_status: stale
 ---
 
@@ -49,9 +49,8 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | hostId | string | Participant id with host privileges |
 | playbackState | PlaybackState | Clock state the server stores and relays; `tickPosition` itself is host-client-authoritative, not server-computed (infrastructure.md) |
 | countInEnabled | boolean | |
-| metronomeEnabled | boolean | |
 | lobbyCursorTick | number \| null | MIDI tick position the host is pointing at pre-playback (same unit as `PlaybackState.tickPosition`); null once playback starts. Only force-follows every participant's view while `spotlightMode` is true — otherwise each participant browses their own rendered tab independently |
-| spotlightMode | boolean | Host-only toggle (default false), same pattern as `metronomeEnabled`/`countInEnabled`. Gates `lobbyCursorTick`'s force-follow effect. Resets to false when playback starts, same as `lobbyCursorTick` resetting to null |
+| spotlightMode | boolean | Host-only toggle (default false), same pattern as `countInEnabled`. Gates `lobbyCursorTick`'s force-follow effect. Resets to false when playback starts, same as `lobbyCursorTick` resetting to null |
 | pendingHostRequest | string \| null | `Participant.id` of a non-host participant who has asked to become host; null when no request is outstanding. Set by a `request-host` message; cleared either by the current host declining it (`host-request-decline`), by the host granting *any* host transfer that resolves it (accepting this request is not a separate action from `host-delegate` targeting the same participant — see infrastructure.md's Host Transfer), or by the requester disconnecting before the host responds. At most one outstanding request at a time — a second `request-host` while one is already pending is rejected as an error, not queued |
 
 ### Participant

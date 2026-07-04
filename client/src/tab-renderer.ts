@@ -1,5 +1,6 @@
 import * as at from '@coderline/alphatab';
 import { darkTabColors, lightTabColors } from './brand-colors';
+import { tabScaleForViewportWidth } from './tab-scale';
 
 export type Theme = 'dark' | 'light';
 
@@ -55,6 +56,10 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // silent no-op with workers enabled, worked immediately with them off.
   settings.core.useWorkers = false;
   settings.display.layoutMode = at.LayoutMode.Page;
+  // Phone screens get a larger render scale so notation is legible without
+  // pinch-zoom (see tab-scale.ts) — Page layout re-wraps bars to the
+  // container, so this can't introduce horizontal overflow.
+  settings.display.scale = tabScaleForViewportWidth(window.innerWidth);
   // No settings.display.barsPerRow pin — auto-wrap by default (someday:
   // host-mandated bars-per-row and participant-preferred horizontal layout
   // are deferred future direction, not built now).

@@ -2,6 +2,7 @@ import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
+import { loadStoredMetronome } from './metronome-preference';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
@@ -79,6 +80,11 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   const theme: Theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
+
+  // Metronome is a client-local personal preference (ui.md Preferences
+  // tab), not session state — applied once at creation and thereafter via
+  // setEngineMetronome() when the user toggles it.
+  api.metronomeVolume = loadStoredMetronome() ? 1 : 0;
 
   state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
 
@@ -291,4 +297,10 @@ export function setEngineTheme(theme: Theme): void {
   if (!state) return;
   state.theme = theme;
   if (!state.isLyricsPart) setTheme(state.api, state.theme);
+}
+
+/** Applies the personal metronome preference to the live engine (visible or headless alike); no-op when no engine is active — same contract as setEngineTheme. */
+export function setEngineMetronome(enabled: boolean): void {
+  if (!state) return;
+  state.api.metronomeVolume = enabled ? 1 : 0;
 }

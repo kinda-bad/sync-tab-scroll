@@ -49,15 +49,16 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's, auto-closes the modal
 
-  // Lobby cursor / Spotlight controls now live behind the settings-cog
-  // modal's Participants tab (SettingsModal.svelte), not inline in the
-  // Lobby body.
+  // Lobby cursor / Spotlight controls live behind the settings-cog modal's
+  // Session tab (SettingsModal.svelte), not inline in the Lobby body.
   await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Session', exact: true }).click();
   await page.getByRole('spinbutton').fill('500');
   await page.getByRole('button', { name: 'Set lobby cursor' }).click();
 
   await expect(page.getByText('Host is pointing at tick 500')).toBeVisible();
   await memberPage.getByRole('button', { name: 'Settings' }).click();
+  await memberPage.getByRole('button', { name: 'Session', exact: true }).click();
   await expect(memberPage.getByText('Host is pointing at tick 500')).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Spotlight mode:/ }).click();
@@ -78,6 +79,7 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   await page.waitForTimeout(500);
 
   await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Session', exact: true }).click();
   await expect(page.getByText('No lobby cursor set.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Spotlight mode: off' })).toBeVisible();
 

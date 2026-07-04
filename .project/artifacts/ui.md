@@ -79,7 +79,12 @@ a dropped socket.
 A second, separate modal — opened via a settings-cog control in the
 persistent nav bar — holds everything that used to render inline in the
 Lobby body. Unlike the song/part modal, it's a plain freely-openable/
-dismissible modal with no forced-open gating, and it has two tabs. The
+dismissible modal with no forced-open gating, and it has three tabs,
+split by who a control affects: **Participants** (who's here + host
+transfer), **Session** (host-broadcast controls everyone is affected
+by), and **Preferences** (personal, this-device-only settings). The tab
+strip renders as an equal-width segmented row at the section-label type
+size, so all three tabs fit on one line down to 360px-wide screens. The
 cog itself is reachable from both the Lobby view (alongside "Song &
 part") and the Playback view (see Playback View, below) — the settings
 modal, and its theme toggle in particular, needs to be reachable
@@ -119,40 +124,50 @@ regardless of whether playback has started:
     broadcast arrives — no local optimistic update needed on any of these
     actions.
 
-  Below the participant list: the "lobby cursor" readout (lets the host
-  point at a position in the score for others to see before playback
-  starts), then two separate host-only control groups, not one crammed
-  row:
-  - **"Lobby cursor"**: the tick input, "Set lobby cursor", "Clear", and
-    a "Spotlight mode" toggle, plus an in-UI hint directly beneath
-    explaining the relationship in plain language ("Spotlight mode forces
-    every participant's view to follow the lobby cursor. Off: it's just a
+  This is the default tab, and it holds only the participant list — the
+  lobby-cursor and audio controls that used to sit below it moved to the
+  Session tab.
+- **Session**: host-controlled *session* settings broadcast to everyone
+  (not personal display preferences — those are Preferences, below), in
+  two labeled groups:
+  - **Lobby cursor**: the readout (lets the host point at a position in
+    the score for others to see before playback starts — visible to every
+    participant) and, for the host only, a wrapping control row: tick
+    input, "Set lobby cursor", "Clear", and the "Spotlight mode" toggle.
+    While Spotlight mode is on, the lobby cursor forces every
+    participant's view to follow it; while off, each participant is free
+    to browse their own rendered tab independently, and the lobby
+    cursor's tick is shown only as an informational readout (not applied
+    to anyone's view). Spotlight mode resets to off when playback starts,
+    same as the lobby cursor itself resetting to null. This relationship
+    is no longer explained only here: a host-only hint paragraph under
+    the controls carries it in-UI ("Spotlight mode forces every
+    participant's view to follow the lobby cursor. Off: it's just a
     marker — cursor position and Spotlight state both reset when playback
-    starts.") — this hint is now the primary place a participant learns
-    what Spotlight mode actually does; this artifact section is the
-    secondary/detailed reference. While Spotlight mode is on, the lobby
-    cursor forces every participant's view to follow it; while off, each
-    participant is free to browse their own rendered tab independently,
-    and the lobby cursor's tick is shown only as an informational readout
-    (not applied to anyone's view). Spotlight mode resets to off when
-    playback starts, same as the lobby cursor itself resetting to null.
-  - **"Playback audio"**: "Metronome" and "Count-in" toggles, set
-    `Session.metronomeEnabled`/`countInEnabled` (datamodel.md; already
-    wired to alphaTab's `metronomeVolume`/`countInVolume` in
-    `playback-sync.ts`, infrastructure.md). Visible and interactive only
-    for the host, with no separate readout shown to non-host
-    participants — the audible effect itself (or its absence) is every
-    participant's confirmation that the setting took. A separate group
-    from "Lobby cursor" purely because it was previously implemented by
-    reusing that row's div, not because the two are conceptually related —
-    both groups are still host-controlled *session* settings broadcast to
-    everyone, not a personal display preference, so both stay out of the
-    Settings tab, which is reserved for the latter (theme, below). This is
-    the default tab.
-- **Settings**: a dark/light theme toggle — the app's first in-app theme
-  control (`client/src/theme.ts`); toggling it switches both the app's CSS
-  palette and the tab notation's colors together, and the choice persists
-  across a refresh.
+    starts.").
+  - **Playback audio**: the host-only "Count-in" toggle, setting
+    `Session.countInEnabled` (datamodel.md; wired to alphaTab's
+    `countInVolume` in `playback-sync.ts`, infrastructure.md). Visible
+    and interactive only for the host, with no separate readout shown to
+    non-host participants — the audible effect itself (or its absence)
+    is every participant's confirmation that the setting took. The
+    metronome is deliberately *not* here — it's a personal preference
+    (Preferences, below), a user-confirmed reversal (2026-07-04) of the
+    original host-controlled `Session.metronomeEnabled` design: each
+    participant's own alphaTab instance generates the clicks locally, so
+    nobody else is affected and the server has no reason to know.
+- **Preferences**: personal, this-device-only settings, none of which
+  touch the server:
+  - a dark/light theme toggle — the app's first in-app theme control
+    (`client/src/theme.ts`); toggling it switches both the app's CSS
+    palette and the tab notation's colors together, and the choice
+    persists across a refresh.
+  - a personal "Metronome" toggle, visible to **every** participant (not
+    host-gated): persisted client-side like the theme choice
+    (`client/src/metronome-preference.ts`, default off), applied to this
+    participant's own alphaTab instance immediately (`metronomeVolume`)
+    whether visible or headless, with a hint making the scope plain
+    ("Only you hear your metronome.").
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle
@@ -226,17 +241,60 @@ identically regardless of which one they're on:
   display this view wants.
 
 Both renderings share alphaTab's native metronome and count-in
-(`metronomeVolume`, `countInVolume` — off by default, toggled via
-`Session.metronomeEnabled`/`countInEnabled`), so the audio is identical
+(`metronomeVolume`, `countInVolume` — both off by default; count-in is
+toggled via `Session.countInEnabled`, the metronome via the personal
+client-local preference above), so the audio is identical
 whether or not the participant's alphaTab instance has a visible staff.
 Host controls start/pause/resume/seek; a count-in countdown can precede
 playback start. The host's view exposes seek (click-to-position) when
 paused; participants' views don't.
 
 The settings-cog control (Lobby View, above) remains in the persistent
-nav bar here too, so the Settings tab's theme toggle stays reachable
+nav bar here too, so the Preferences tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view. "Leave session" (Lobby View, above) is likewise always present.
+
+## Small Screens
+
+The app is a responsive web app, phone-first down to ~360px CSS width
+(added 2026-07-04; before this, `client/index.html` had no
+`<meta name="viewport">` at all, so phones rendered a ~980px virtual
+layout scaled down to illegibility — that meta tag is the foundation
+every rule below assumes):
+
+- **The invariant: no horizontal scrolling, anywhere.** Vertical scroll
+  inside a modal body is fine; horizontal scroll is never acceptable —
+  in the document *or* inside any scrollable descendant (an
+  `overflow-y: auto` modal body silently computes `overflow-x: auto`
+  too, so document-level checks alone miss it). Enforced by
+  `client/e2e/small-screen.spec.ts` + `helpers.ts`'s
+  `expectNoHorizontalOverflow`, which also asserts the layout viewport
+  is device width (<500px) — catching a dropped viewport meta. These
+  tests must run under **mobile emulation** (`isMobile`), not just a
+  narrow desktop window: desktop Chromium ignores the viewport meta
+  entirely.
+- **Layouts wrap rather than breakpoint.** Preference order: intrinsic
+  fluidity (flex-wrap, `min()`, `max-width: 100%`) over `@media`
+  queries. Control rows in the settings modal, `ListRow`'s trailing
+  controls, and the persistent Bar's sections all wrap. The Bar is
+  `position: fixed`, so overflowing it clips *invisibly* (fixed
+  elements don't contribute to document scroll size) — wrapping is the
+  only acceptable behavior there. Bar identity text truncates with
+  ellipsis, except the join code, which never truncates (participants
+  read it off the bar to invite others); the song title/artist give
+  way instead.
+- **Tab notation scales up on phones**: alphaTab `display.scale` 1.3
+  below 500px viewport width (`client/src/tab-scale.ts`), chosen so
+  fret numbers are legible without pinch-zoom. `LayoutMode.Page`
+  re-wraps bars to the container, so a larger scale means fewer bars
+  per row, never horizontal overflow. Fixed at renderer creation — a
+  deliberate non-adjustable default; revisit only if it proves wrong
+  in live use.
+- **Modals**: the shell clamps to viewport width (backdrop padding +
+  `width: 100%`), caps height at `85dvh` (`dvh`, not `vh`, so mobile
+  URL-bar chrome doesn't eat the panel), and scrolls vertically inside
+  `.modal-body`. Content must genuinely fit the width — wrapping child
+  rows, not `overflow-x` guards.
 
 ## States
 
