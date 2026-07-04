@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (`plan-worktree-ui-improvements-2026-07-04.md` approved with tasks generated — `tasks-worktree-ui-improvements-6954.md`, 14 tasks / 5 phases, adviser review in flight, implementation next; it supersedes `plan-settings-modal-followup-2026-07-04.md`; user confirmed metronome-per-participant; 0 feedback files open; 3 other plans from earlier today remain approved/ready, none implemented). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (**`plan-worktree-ui-improvements-2026-07-04.md` fully implemented** — all 14 tasks of `tasks-worktree-ui-improvements-6954.md` completed on branch `worktree-ui-improvements`, adviser-reviewed pre-implementation; small-screen/phone support + 3-tab settings modal + metronome-per-participant reversal shipped; artifacts (`ui.md`, `datamodel.md`) revised to match. 3 other plans from earlier today remain approved/ready, none implemented. Most commits on this branch are unsigned — re-sign before pushing.) Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -132,10 +132,11 @@ tasks file, none implemented yet:** `plan-session-lifecycle-2026-07-04.md`,
 `plan-lobby-cursor-race-2026-07-04.md`, `plan-lyrics-pre-singing-2026-07-04.md`.
 A fourth, `plan-settings-modal-followup-2026-07-04.md`, was **superseded
 later the same day** by `plan-worktree-ui-improvements-2026-07-04.md`
-(now `status: approved`, branch `worktree-ui-improvements`, tasks:
-`tasks-worktree-ui-improvements-6954.md`, ready), which folds its
-work into the small-screen/settings-redesign plan and adds the
-user-confirmed metronome-per-participant reversal. Each of the four was
+(approved, branch `worktree-ui-improvements`, tasks:
+`tasks-worktree-ui-improvements-6954.md` — **completed 14/14, fully
+implemented on that branch**), which folded its work into the
+small-screen/settings-redesign plan and added the user-confirmed
+metronome-per-participant reversal. Each of the four was
 independently
 reviewed by a background agent against the live codebase (not just its own
 text) before approval — see each plan's tasks file for verification notes
@@ -218,20 +219,22 @@ re-confirmed live.
 
 ## Recommended Next Step
 
-1. Run `/ardd-implement` against `tasks-worktree-ui-improvements-6954.md`
-   (14 tasks, 5 phases) once the adviser review completes — work lives in
-   the `ui-improvements` worktree (branch `worktree-ui-improvements`).
-   Note it also revises `datamodel.md`/`infrastructure.md`/`ui.md`
-   (metronome becomes a client-local personal preference).
+1. Merge `worktree-ui-improvements` to `main` (all 14 tasks implemented,
+   all suites green: 33 unit / 37 CT / 55 e2e / server 86) — **re-sign
+   its unsigned commits first** (all but the first commit on the branch
+   were made with `--no-gpg-sign`; 1Password was locked). Note for the
+   merge: the 3 other ready tasks files below touch some of the same
+   files (`SettingsModal.svelte`, `Bar.svelte`, `lyrics-overlay.ts`) —
+   the adviser flagged these collisions; implement them *after* this
+   branch lands, on a shared sequence, not in parallel with it.
 2. Run `/ardd-implement` against any of the 3 remaining `status: ready`
    tasks files (`tasks-session-lifecycle-836f.md`,
    `tasks-lobby-cursor-race-c9f8.md`, `tasks-lyrics-pre-singing-e09e.md`)
    — approved and waiting, none started.
    (`tasks-settings-modal-followup-bbd2.md` is superseded — skip it.)
-3. Decide the metronome-per-participant question (low priority, no rush) —
-   see `feedback-settings-modal-followup-d914.md`'s Reconsidered item.
-4. Re-sign the full unsigned commit range before pushing anything to a
-   remote — every commit this entire session was made with
-   `--no-gpg-sign` (1Password locked throughout).
+3. Run `/ardd-render ui` / `/ardd-render datamodel` — both diagrams
+   remain stale and both artifacts changed substantially today.
+4. Metronome-per-participant: **resolved and implemented** (2026-07-04) —
+   no longer an open question.
 5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.
