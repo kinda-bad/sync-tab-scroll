@@ -75,14 +75,28 @@ regardless of whether playback has started:
 
 - **Participants**: the live participant list with readiness state, the
   "lobby cursor" (lets the host point at a position in the score for
-  others to see before playback starts), and a host-only "Spotlight
+  others to see before playback starts), a host-only "Spotlight
   mode" toggle next to the lobby-cursor controls:
   while it's on, the lobby cursor forces every participant's view to
   follow it; while it's off, each participant is free to browse their own
   rendered tab independently, and the lobby cursor's tick is shown only
   as an informational readout (not applied to anyone's view). Spotlight
   mode resets to off when playback starts, same as the lobby cursor
-  itself resetting to null. This is the default tab.
+  itself resetting to null. Below the lobby-cursor controls, two more
+  host-only toggles — "Metronome" and "Count-in" — set
+  `Session.metronomeEnabled`/`countInEnabled` (datamodel.md; already wired
+  to alphaTab's `metronomeVolume`/`countInVolume` in `playback-sync.ts`,
+  infrastructure.md, but previously had no message/handler letting the
+  host actually set them). Same UI treatment as Spotlight mode: a
+  Button-style toggle visible and interactive only for the host, with no
+  separate readout shown to non-host participants — the audible effect
+  itself (or its absence) is every participant's confirmation that the
+  setting took, the same way Spotlight mode's effect is visible without a
+  redundant text readout. Grouped here rather than in the Settings tab
+  because, like Spotlight mode and the lobby cursor, they're host-
+  controlled *session* settings broadcast to everyone, not a personal
+  display preference — the Settings tab is reserved for the latter (theme,
+  below). This is the default tab.
 - **Settings**: a dark/light theme toggle — the app's first in-app theme
   control (`client/src/theme.ts`); toggling it switches both the app's CSS
   palette and the tab notation's colors together, and the choice persists

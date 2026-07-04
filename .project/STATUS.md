@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post `/ardd-implement` — `lyricCssColors` defect fixed and closed out). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-plan` on branch `metronome-count-in-toggle` — plan drafted for metronome-toggle + count-in-toggle). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -73,6 +73,16 @@ passing.
   (the sole `DEFECTS.md` finding). Tasks:
   `tasks-fix-lyric-css-colors-dead-code-257c.md` — **completed**, 3/3
   tasks. No `features:` bound to this plan.
+- `plan-metronome-count-in-toggle-2026-07-03.md` — **draft**, on branch
+  `metronome-count-in-toggle`. Targets `metronome-toggle` and
+  `count-in-toggle` (both `backlogged` in `features.md` still — flips to
+  `planned` when `/ardd-tasks` selects this plan). 4 phases, 9 tasks
+  planned. Confirmed via alphaTab's type definitions that no library-
+  native toggle/session-sync mechanism exists to defer to (constitution
+  Principle V) — two new messages (`metronome-set`, `count-in-set`)
+  mirroring the existing `spotlight-mode-set` pattern is the design.
+  `ui.md` already updated (Participants tab gains two host-only toggles
+  below Spotlight mode).
 
 ## Implementation Status
 
@@ -121,11 +131,9 @@ pushing anything.
 
 ## Recommended Next Step
 
-Merge `fix-lyric-css-colors-dead-code` back to `main` (or continue stacking
-work on it) — its work is complete and `DEFECTS.md` is all-clear.
-Separately, and not blocking that: attempt a live-browser check of the
-two-participant no-rubberband playback fix and the lyrics ticker's
-scroll/centering behavior — the hazard-bar-progress finding suggests these
-might be checkable after all, contrary to earlier assumptions — and
-re-sign the full unsigned commit range (including this branch's commit)
-before pushing anything.
+On this branch (`metronome-count-in-toggle`): run `/ardd-tasks` to approve
+`plan-metronome-count-in-toggle-2026-07-03.md` and generate its task list.
+Separately, and not blocking that: merge `fix-lyric-css-colors-dead-code`
+back to `main`, attempt a live-browser check of the two-participant
+no-rubberband playback fix and the lyrics ticker's scroll/centering
+behavior, and re-sign all unsigned commits before pushing anything.
