@@ -1,21 +1,21 @@
 ---
 plan: plan-consented-song-submission-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Consent-gated catalog loading (server)
 
-- [ ] T001 [artifacts: infrastructure] Write a failing test for
+- [x] T001 [artifacts: infrastructure] Write a failing test for
   `loadConfig()` (`server/src/config.test.ts`) confirming
   `REQUIRE_SONG_CONSENT=true` sets `ServerConfig.requireSongConsent` to
   `true`, and that it defaults to `false` when the env var is unset —
   matching the existing `HOST_REASSIGN_GRACE_MS`/`hostReassignGraceMs`
   pattern in the same file. Confirm it fails (Principle VII, test-first).
 
-- [ ] T002 [artifacts: infrastructure] Add `requireSongConsent: boolean`
+- [x] T002 [artifacts: infrastructure] Add `requireSongConsent: boolean`
   to `ServerConfig` and wire `REQUIRE_SONG_CONSENT` parsing into
   `loadConfig()` (`server/src/config.ts`), following the exact
   `hostReassignGraceMs` pattern already there. Confirm T001's test now
