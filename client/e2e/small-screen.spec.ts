@@ -116,4 +116,27 @@ test('playback view fits a phone screen', async ({ page }) => {
   await expect(page.locator('svg').first()).toBeVisible({ timeout: 15_000 });
 
   await expectNoHorizontalOverflow(page, 'playback view (instrument part)');
+
+  // The in-tab lyrics ticker strip must also fit (it clips/scrolls its own
+  // content programmatically — overflow:hidden — but the strip itself must
+  // not widen the page).
+  await page.getByRole('button', { name: 'Toggle lyrics' }).click();
+  await expectNoHorizontalOverflow(page, 'playback view with lyrics ticker');
+});
+
+test('full-lyrics view (lyrics part) fits a phone screen', async ({ page }) => {
+  await createSessionAsHost(page, 'Host');
+  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last part row
+  await page.getByRole('button', { name: 'Close' }).click();
+
+  const session = await readStoredSession(page);
+  await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });
+
+  await expect(page.getByRole('button', { name: 'Start' })).toBeEnabled({ timeout: 10_000 });
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.waitForTimeout(1000); // full-lyrics view renders no svg; give it a beat
+  await expect(page.locator('svg')).toHaveCount(0);
+
+  await expectNoHorizontalOverflow(page, 'full-lyrics view');
 });

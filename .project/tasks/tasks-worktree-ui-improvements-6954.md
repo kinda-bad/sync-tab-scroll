@@ -43,7 +43,7 @@ rather than unit tests.
   row gets properly restructured in T008 — here just ensure no modal
   child forces horizontal scroll at 390px). T001's modal-open assertions
   go green.
-- [ ] T004 [artifacts: ui, brand] Audit and fix the app shell at
+- [x] T004 [artifacts: ui, brand] Audit and fix the app shell at
   360–430px CSS widths: persistent Bar (`Bar.svelte`) contents must wrap
   or truncate rather than overflow, `HazardBar.svelte`, `Toasts.svelte`,
   the landing view's create/join forms, and the lobby hint line. T001's
