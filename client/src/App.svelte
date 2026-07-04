@@ -11,6 +11,7 @@
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
+  import { leaveSession } from './leave-session';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -150,6 +151,7 @@
           <Button variant="ghost" label="Stop" onclick={stopPlayback} />
         {/if}
       {/if}
+      <Button variant="ghost" label="Leave session" onclick={leaveSession} />
     {/snippet}
     {#snippet status()}
       {#if participant}

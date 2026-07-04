@@ -1,19 +1,25 @@
 ---
 plan: plan-session-lifecycle-2026-07-04.md
 generated: 2026-07-04
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Leave session control
 
-- [ ] T001 [artifacts: ui] Add a `close()` method to the `WsClient` interface and its `createWsClient()` implementation in `client/src/ws-client.ts` — closes the underlying `WebSocket` (`socket.close()`). This is currently missing entirely; the interface only exposes `send()`.
-- [ ] T002 In `client/src/session-persistence.ts`, add an exported `clearStoredSession()` function: `localStorage.removeItem(STORAGE_KEY)`.
-- [ ] T003 [artifacts: ui] Add a `leaveSession()` function (new file `client/src/leave-session.ts`, or alongside `session-persistence.ts` — pick based on existing file-per-concern conventions) that: (1) calls `clientStore`'s current `wsClient?.close()` (T001), (2) calls `clearStoredSession()` (T002), (3) resets `clientStore` back to its initial state (`view: 'landing'`, `session: null`, `selfParticipantId: null`, `wsClient: null` — match the exact initial shape in `client/src/store.ts`'s store creation, don't hand-roll a partial reset that drifts from it).
-- [ ] T004 [artifacts: ui] [parallel] Add a "Leave session" `Button` (ghost variant, per `brand.md`) to `client/src/components/Bar.svelte`'s `bar-controls` section (present in both Lobby and Playback per the persistent-Bar design — this is the only place already reachable from every session-scoped view, so it wins over adding a new Settings-modal entry) that calls `leaveSession()` from T003.
-- [ ] T005 Write a component test (`client/src/components/Bar.ct.spec.ts` — extend if it exists, or check whichever harness pattern other Bar-adjacent tests use) covering: clicking "Leave session" calls `wsClient.close()`, clears the `sync-tab-scroll:session` localStorage key, and resets `clientStore.view` to `'landing'`. Write this test first and confirm it fails red before T003/T004 exist (constitution Principle VII).
-- [ ] T006 [artifacts: ui] Revise `ui.md`'s Lobby View and Playback View sections (wherever the persistent Bar's controls are enumerated) to document the "Leave session" control's location (the Bar, not Settings) and behavior (closes the connection, clears local identity, returns to Landing — no server-side "left" notification, reuses the existing disconnect path). Bump `last_updated` to 2026-07-04 and set `diagram_status: stale` if not already.
+- [x] T001 [artifacts: ui] Add a `close()` method to the `WsClient` interface and its `createWsClient()` implementation in `client/src/ws-client.ts` — closes the underlying `WebSocket` (`socket.close()`). This is currently missing entirely; the interface only exposes `send()`.
+  - Done. Also updated `PlaybackEngineHarness.svelte`/`SettingsModalHarness.svelte`'s inline `WsClient` object literals (now a TS error otherwise) with a no-op `close`.
+- [x] T002 In `client/src/session-persistence.ts`, add an exported `clearStoredSession()` function: `localStorage.removeItem(STORAGE_KEY)`.
+  - Done.
+- [x] T003 [artifacts: ui] Add a `leaveSession()` function (new file `client/src/leave-session.ts`, or alongside `session-persistence.ts` — pick based on existing file-per-concern conventions) that: (1) calls `clientStore`'s current `wsClient?.close()` (T001), (2) calls `clearStoredSession()` (T002), (3) resets `clientStore` back to its initial state (`view: 'landing'`, `session: null`, `selfParticipantId: null`, `wsClient: null` — match the exact initial shape in `client/src/store.ts`'s store creation, don't hand-roll a partial reset that drifts from it).
+  - Done as `client/src/leave-session.ts` (new file, matching the file-per-concern convention `session-persistence.ts` already established). Resets all 6 `ClientState` fields to match `createClientStore()`'s literal exactly (including `catalog: []`/`playbackProgress: 0`, not just the 4 named in this task).
+- [x] T004 [artifacts: ui] [parallel] Add a "Leave session" `Button` (ghost variant, per `brand.md`) to `client/src/components/Bar.svelte`'s `bar-controls` section (present in both Lobby and Playback per the persistent-Bar design — this is the only place already reachable from every session-scoped view, so it wins over adding a new Settings-modal entry) that calls `leaveSession()` from T003.
+  - Done, with a placement correction: `Bar.svelte` itself has no control logic — it's a pure layout shell rendering an App.svelte-provided `controls` Snippet (same place "Song & part"/"Settings"/"Start"/"Pause"/"Stop" already live). Added the button to that snippet in `App.svelte`, which is what actually populates Bar's `bar-controls` div.
+- [x] T005 Write a component test (`client/src/components/Bar.ct.spec.ts` — extend if it exists, or check whichever harness pattern other Bar-adjacent tests use) covering: clicking "Leave session" calls `wsClient.close()`, clears the `sync-tab-scroll:session` localStorage key, and resets `clientStore.view` to `'landing'`. Write this test first and confirm it fails red before T003/T004 exist (constitution Principle VII).
+  - Deviation, documented: `Bar.svelte` has zero knowledge of `leaveSession()`/`wsClient`/localStorage (see T004's note) — a `Bar.ct.spec.ts` component test would only prove a button renders and calls a passed-in callback, not the actual behavior this task cares about. Instead wrote `client/src/leave-session.test.ts`, a plain vitest unit test in the same style as the existing `session-persistence.test.ts` (fake localStorage, direct `clientStore` assertions) — covers exactly the three behaviors this task lists (wsClient.close() called once, `STORAGE_KEY` cleared, store reset to the exact initial shape), plus a no-active-client no-op-safe case. Written first, confirmed red (`leave-session` module didn't exist), then made green by T001-T003. 2/2 passing.
+- [x] T006 [artifacts: ui] Revise `ui.md`'s Lobby View and Playback View sections (wherever the persistent Bar's controls are enumerated) to document the "Leave session" control's location (the Bar, not Settings) and behavior (closes the connection, clears local identity, returns to Landing — no server-side "left" notification, reuses the existing disconnect path). Bump `last_updated` to 2026-07-04 and set `diagram_status: stale` if not already.
+  - Done. `diagram_status` was already `stale` from an earlier session.
 
 ## Phase 2: Silent render-failure fix + loading indicator
 

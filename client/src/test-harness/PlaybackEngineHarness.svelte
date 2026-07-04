@@ -14,7 +14,7 @@
 
   onMount(() => {
     const sent: unknown[] = [];
-    const wsClient: WsClient = { send: (m) => sent.push(m) };
+    const wsClient: WsClient = { send: (m) => sent.push(m), close: () => {} };
     (window as unknown as { __sentMessages: unknown[]; __wsClient: WsClient; __getApi: () => unknown }).__sentMessages = sent;
     (window as unknown as { __wsClient: WsClient }).__wsClient = wsClient;
     (window as unknown as { __getApi: () => unknown }).__getApi = () => __getEngineStateForTesting()?.api;

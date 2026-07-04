@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-04
 diagram_status: stale
 ---
 
@@ -63,6 +63,18 @@ which is only present when the song's lyrics came from the source GP file
 directly — a song whose `.lrc` came from the lrclib.net fallback has the
 Lyrics part selectable but no in-tab overlay available on any instrument
 part (pipeline.md).
+
+The persistent nav bar also always carries a "Leave session" control
+(present in both Lobby and Playback, alongside "Song & part" and the
+settings cog) — clicking it closes the WebSocket connection, clears the
+participant's persisted local identity (the code/displayName/participantId
+`session-persistence.ts` stores for refresh-reconnect), and returns to the
+Landing view so the participant can join or create a different session.
+There is no separate server-side "left the session" protocol message —
+this reuses the existing disconnect path (the same cleanup a lost
+connection already triggers: readiness/host-succession handling,
+infrastructure.md), just triggered deliberately by the client instead of
+a dropped socket.
 
 A second, separate modal — opened via a settings-cog control in the
 persistent nav bar — holds everything that used to render inline in the
@@ -209,7 +221,7 @@ paused; participants' views don't.
 The settings-cog control (Lobby View, above) remains in the persistent
 nav bar here too, so the Settings tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
-one view.
+one view. "Leave session" (Lobby View, above) is likewise always present.
 
 ## States
 

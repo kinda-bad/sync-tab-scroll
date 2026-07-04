@@ -4,6 +4,7 @@ import { toastStore } from './toast-store';
 
 export interface WsClient {
   send(message: ClientMessage): void;
+  close(): void;
 }
 
 /** Connects to the server and updates the single client store as ServerMessages arrive. */
@@ -47,6 +48,9 @@ export function createWsClient(url: string): WsClient {
       } else {
         pending.push(message);
       }
+    },
+    close() {
+      socket.close();
     },
   };
 }
