@@ -10,7 +10,8 @@ export type ClientMessage =
   | { type: 'lobby-cursor-set'; tickPosition: number | null }
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'song-select'; songId: string }
-  | { type: 'playback-tick-report'; tickPosition: number };
+  | { type: 'playback-tick-report'; tickPosition: number }
+  | { type: 'host-delegate'; targetParticipantId: string };
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }

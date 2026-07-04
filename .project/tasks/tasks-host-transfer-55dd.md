@@ -29,7 +29,7 @@ status: in-progress
 
 ## Phase 2: Server handlers (depends on T001, T002)
 
-- [ ] T003 [artifacts: datamodel, infrastructure] Add `{ type:
+- [x] T003 [artifacts: datamodel, infrastructure] Add `{ type:
   'host-delegate'; targetParticipantId: string }` to the `ClientMessage`
   union in `packages/shared/src/messages.ts`, and a new
   `server/src/handlers/host-delegate.ts` handler (model its shape on
