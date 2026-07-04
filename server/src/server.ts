@@ -16,7 +16,7 @@ export function createServer(config: ServerConfig): WebSocketServer {
   const ctx: HandlerContext = {
     sessionStore: new SessionStore(config.hostReassignGraceMs),
     connections: new ConnectionRegistry(),
-    catalog: loadCatalog(config.catalogRoot),
+    catalog: loadCatalog(config.catalogRoot, config.requireSongConsent),
   };
 
   // WS upgrade and the catalog's static-file serving share one http.Server

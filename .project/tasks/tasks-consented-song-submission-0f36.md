@@ -34,7 +34,7 @@ status: in-progress
   of T001/T002 (different module, no shared state) so can run in parallel
   with them.
 
-- [ ] T005 [artifacts: infrastructure, datamodel] Write a failing test for
+- [x] T005 [artifacts: infrastructure, datamodel] Write a failing test for
   `catalog-loader.ts`: when `requireSongConsent` is `true`, a song
   directory lacking a valid consent record is excluded from the returned
   `CatalogSong[]`; when `false` (the default), every song directory loads
@@ -42,7 +42,7 @@ status: in-progress
   absence. Confirm it fails. Depends on T002 and T004 (needs both
   `ServerConfig.requireSongConsent` and `hasConsent` to exist).
 
-- [ ] T006 [artifacts: infrastructure, datamodel] Wire the `hasConsent`
+- [x] T006 [artifacts: infrastructure, datamodel] Wire the `hasConsent`
   check into `catalog-loader.ts`, gated on
   `ServerConfig.requireSongConsent`, logging a startup line naming any
   song directory skipped for missing consent (not a silent skip — mirror

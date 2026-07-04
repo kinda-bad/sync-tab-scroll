@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { CatalogPart, CatalogSong } from '@sync-tab-scroll/shared';
+import { hasConsent } from './consent.js';
 
 interface SongMeta {
   name: string;
@@ -44,14 +45,24 @@ function loadSong(catalogRoot: string, dirName: string): CatalogSong {
  * logged and skipped rather than thrown — one bad catalog entry shouldn't
  * take down the whole server's startup (infrastructure.md Song Catalog
  * Delivery).
+ *
+ * `requireSongConsent` (infrastructure.md Song Consent Gate, off by
+ * default) additionally skips any song directory lacking a valid consent
+ * record — logged, not silently dropped, same as any other skipped
+ * directory above.
  */
-export function loadCatalog(catalogRoot: string): CatalogSong[] {
+export function loadCatalog(catalogRoot: string, requireSongConsent = false): CatalogSong[] {
   if (!fs.existsSync(catalogRoot)) return [];
 
   const songDirs = fs.readdirSync(catalogRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
 
   const songs: CatalogSong[] = [];
   for (const dir of songDirs) {
+    const songDir = path.join(catalogRoot, dir.name);
+    if (requireSongConsent && !hasConsent(songDir)) {
+      console.log(`[catalog-loader] skipping "${dir.name}": no consent record (REQUIRE_SONG_CONSENT is enabled)`);
+      continue;
+    }
     try {
       songs.push(loadSong(catalogRoot, dir.name));
     } catch (err) {

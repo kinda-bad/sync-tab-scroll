@@ -86,4 +86,32 @@ describe('loadCatalog', () => {
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
+
+  it('loads every song regardless of consent.json when requireSongConsent is false (default)', () => {
+    writeSong('creep');
+
+    const songs = loadCatalog(catalogRoot, false);
+
+    expect(songs.map((s) => s.id)).toEqual(['creep']);
+  });
+
+  it('excludes a song directory lacking a valid consent record when requireSongConsent is true', () => {
+    writeSong('creep');
+
+    const songs = loadCatalog(catalogRoot, true);
+
+    expect(songs).toEqual([]);
+  });
+
+  it('includes a song directory with a valid consent record when requireSongConsent is true', () => {
+    const songDir = writeSong('creep');
+    fs.writeFileSync(
+      path.join(songDir, 'consent.json'),
+      JSON.stringify({ submitterName: 'Alice', tosVersion: 'dev-placeholder', acceptedAt: 1 }),
+    );
+
+    const songs = loadCatalog(catalogRoot, true);
+
+    expect(songs.map((s) => s.id)).toEqual(['creep']);
+  });
 });
