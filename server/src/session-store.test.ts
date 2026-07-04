@@ -28,6 +28,22 @@ describe('SessionStore.create', () => {
   });
 });
 
+describe('SessionStore.get case-insensitivity', () => {
+  it('finds a session regardless of the lookup code\'s case', () => {
+    const store = new SessionStore();
+    const session = store.create('host-1');
+
+    expect(store.get(session.code.toLowerCase())).toBe(session);
+    expect(store.get(session.code.toUpperCase())).toBe(session);
+    // Mixed case, e.g. a code like "AB12" typed as "aB12".
+    const mixed = session.code
+      .split('')
+      .map((c, i) => (i % 2 === 0 ? c.toLowerCase() : c.toUpperCase()))
+      .join('');
+    expect(store.get(mixed)).toBe(session);
+  });
+});
+
 describe('SessionStore grace-period timers', () => {
   beforeEach(() => {
     vi.useFakeTimers();

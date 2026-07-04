@@ -44,8 +44,17 @@ export class SessionStore {
     return session;
   }
 
+  /**
+   * Join codes are generated uppercase-only (generateJoinCode), but the
+   * client's entry box only visually uppercases input via CSS
+   * (text-transform), not the underlying typed value — a code typed in
+   * lowercase or mixed case previously failed to find its session even
+   * though it was displayed correctly. Normalizing the lookup here (the
+   * single source of truth for code matching, constitution Principle I)
+   * fixes this regardless of what case any caller sends.
+   */
   get(code: string): Session | undefined {
-    return this.sessions.get(code);
+    return this.sessions.get(code.toUpperCase());
   }
 
   all(): Session[] {

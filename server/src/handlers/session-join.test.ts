@@ -27,6 +27,18 @@ describe('session-join', () => {
     expect(sent).toEqual([{ type: 'error', message: 'Session NOPE not found' }]);
   });
 
+  it('finds the session regardless of the join code\'s case (entry box only visually uppercases input)', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    const socket = fakeSocket();
+    ctx.connections.broadcast = () => {};
+
+    handleSessionJoin(ctx, socket, { type: 'session-join', code: session.code.toLowerCase(), displayName: 'Bob' });
+
+    expect(session.participants).toHaveLength(1);
+    expect(session.participants[0]).toMatchObject({ displayName: 'Bob' });
+  });
+
   it('adds a new participant and broadcasts session-state', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
