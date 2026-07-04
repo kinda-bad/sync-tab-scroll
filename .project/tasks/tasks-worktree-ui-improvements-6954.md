@@ -155,7 +155,7 @@ rather than unit tests.
 
 ## Phase 5: Full small-screen design pass + artifact sync
 
-- [ ] T013 [artifacts: ui, brand] Frontend-design skill pass over the
+- [x] T013 [artifacts: ui, brand] Frontend-design skill pass over the
   remaining views at phone widths (360–430px): landing chooser + forms,
   lobby, `SongPartModal.svelte` (catalog list + part picker), playback
   view chrome. Both themes, `prefers-reduced-motion` respected, no

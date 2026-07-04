@@ -235,6 +235,48 @@ nav bar here too, so the Preferences tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view.
 
+## Small Screens
+
+The app is a responsive web app, phone-first down to ~360px CSS width
+(added 2026-07-04; before this, `client/index.html` had no
+`<meta name="viewport">` at all, so phones rendered a ~980px virtual
+layout scaled down to illegibility — that meta tag is the foundation
+every rule below assumes):
+
+- **The invariant: no horizontal scrolling, anywhere.** Vertical scroll
+  inside a modal body is fine; horizontal scroll is never acceptable —
+  in the document *or* inside any scrollable descendant (an
+  `overflow-y: auto` modal body silently computes `overflow-x: auto`
+  too, so document-level checks alone miss it). Enforced by
+  `client/e2e/small-screen.spec.ts` + `helpers.ts`'s
+  `expectNoHorizontalOverflow`, which also asserts the layout viewport
+  is device width (<500px) — catching a dropped viewport meta. These
+  tests must run under **mobile emulation** (`isMobile`), not just a
+  narrow desktop window: desktop Chromium ignores the viewport meta
+  entirely.
+- **Layouts wrap rather than breakpoint.** Preference order: intrinsic
+  fluidity (flex-wrap, `min()`, `max-width: 100%`) over `@media`
+  queries. Control rows in the settings modal, `ListRow`'s trailing
+  controls, and the persistent Bar's sections all wrap. The Bar is
+  `position: fixed`, so overflowing it clips *invisibly* (fixed
+  elements don't contribute to document scroll size) — wrapping is the
+  only acceptable behavior there. Bar identity text truncates with
+  ellipsis, except the join code, which never truncates (participants
+  read it off the bar to invite others); the song title/artist give
+  way instead.
+- **Tab notation scales up on phones**: alphaTab `display.scale` 1.3
+  below 500px viewport width (`client/src/tab-scale.ts`), chosen so
+  fret numbers are legible without pinch-zoom. `LayoutMode.Page`
+  re-wraps bars to the container, so a larger scale means fewer bars
+  per row, never horizontal overflow. Fixed at renderer creation — a
+  deliberate non-adjustable default; revisit only if it proves wrong
+  in live use.
+- **Modals**: the shell clamps to viewport width (backdrop padding +
+  `width: 100%`), caps height at `85dvh` (`dvh`, not `vh`, so mobile
+  URL-bar chrome doesn't eat the panel), and scrolls vertically inside
+  `.modal-body`. Content must genuinely fit the width — wrapping child
+  rows, not `overflow-x` guards.
+
 ## States
 
 - **Loading**: per part, loading now means alphaTab initializing and
