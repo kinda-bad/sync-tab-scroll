@@ -113,6 +113,11 @@
             label={session.spotlightMode ? 'Spotlight mode: on' : 'Spotlight mode: off'}
             onclick={toggleSpotlightMode}
           />
+        </div>
+        <p class="hint">Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.</p>
+
+        <span class="section-label">Playback audio</span>
+        <div class="cursor-controls">
           <Button
             variant={session.metronomeEnabled ? 'riot' : 'ghost'}
             label={session.metronomeEnabled ? 'Metronome: On' : 'Metronome: Off'}

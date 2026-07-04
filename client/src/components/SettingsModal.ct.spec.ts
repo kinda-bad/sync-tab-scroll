@@ -153,3 +153,16 @@ test('rapidly clicking "Set lobby cursor" debounces to a single lobby-cursor-set
   const cursorSets = sent.filter((m) => m.type === 'lobby-cursor-set');
   expect(cursorSets).toEqual([{ type: 'lobby-cursor-set', tickPosition: 300 }]);
 });
+
+/**
+ * Regression test for the crammed-controls/unclear-Spotlight-relationship
+ * feedback (feedback-settings-modal-followup-d914,
+ * tasks-settings-modal-followup-bbd2 T001-T003).
+ */
+test('shows a Spotlight-mode hint under the Lobby cursor group', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+
+  await expect(
+    component.getByText('Spotlight mode forces every participant\'s view to follow the lobby cursor', { exact: false }),
+  ).toBeVisible();
+});

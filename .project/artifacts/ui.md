@@ -121,26 +121,34 @@ regardless of whether playback has started:
 
   Below the participant list: the "lobby cursor" readout (lets the host
   point at a position in the score for others to see before playback
-  starts) and, for the host only, one row of controls — set/clear the
-  lobby cursor, a "Spotlight mode" toggle, and two more host-only toggles,
-  "Metronome" and "Count-in", all side by side. While Spotlight mode is
-  on, the lobby cursor forces every participant's view to follow it;
-  while off, each participant is free to browse their own rendered tab
-  independently, and the lobby cursor's tick is shown only as an
-  informational readout (not applied to anyone's view). Spotlight mode
-  resets to off when playback starts, same as the lobby cursor itself
-  resetting to null. Metronome/Count-in set `Session.metronomeEnabled`/
-  `countInEnabled` (datamodel.md; already wired to alphaTab's
-  `metronomeVolume`/`countInVolume` in `playback-sync.ts`,
-  infrastructure.md, but previously had no message/handler letting the
-  host actually set them). Same UI treatment as Spotlight mode: visible
-  and interactive only for the host, with no separate readout shown to
-  non-host participants — the audible effect itself (or its absence) is
-  every participant's confirmation that the setting took. Grouped here
-  rather than in the Settings tab because, like Spotlight mode and the
-  lobby cursor, they're host-controlled *session* settings broadcast to
-  everyone, not a personal display preference — the Settings tab is
-  reserved for the latter (theme, below). This is the default tab.
+  starts), then two separate host-only control groups, not one crammed
+  row:
+  - **"Lobby cursor"**: the tick input, "Set lobby cursor", "Clear", and
+    a "Spotlight mode" toggle, plus an in-UI hint directly beneath
+    explaining the relationship in plain language ("Spotlight mode forces
+    every participant's view to follow the lobby cursor. Off: it's just a
+    marker — cursor position and Spotlight state both reset when playback
+    starts.") — this hint is now the primary place a participant learns
+    what Spotlight mode actually does; this artifact section is the
+    secondary/detailed reference. While Spotlight mode is on, the lobby
+    cursor forces every participant's view to follow it; while off, each
+    participant is free to browse their own rendered tab independently,
+    and the lobby cursor's tick is shown only as an informational readout
+    (not applied to anyone's view). Spotlight mode resets to off when
+    playback starts, same as the lobby cursor itself resetting to null.
+  - **"Playback audio"**: "Metronome" and "Count-in" toggles, set
+    `Session.metronomeEnabled`/`countInEnabled` (datamodel.md; already
+    wired to alphaTab's `metronomeVolume`/`countInVolume` in
+    `playback-sync.ts`, infrastructure.md). Visible and interactive only
+    for the host, with no separate readout shown to non-host
+    participants — the audible effect itself (or its absence) is every
+    participant's confirmation that the setting took. A separate group
+    from "Lobby cursor" purely because it was previously implemented by
+    reusing that row's div, not because the two are conceptually related —
+    both groups are still host-controlled *session* settings broadcast to
+    everyone, not a personal display preference, so both stay out of the
+    Settings tab, which is reserved for the latter (theme, below). This is
+    the default tab.
 - **Settings**: a dark/light theme toggle — the app's first in-app theme
   control (`client/src/theme.ts`); toggling it switches both the app's CSS
   palette and the tab notation's colors together, and the choice persists
