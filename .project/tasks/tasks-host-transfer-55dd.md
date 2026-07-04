@@ -19,7 +19,7 @@ status: in-progress
   `host-succession.test.ts` and confirm its existing promotion tests
   still pass unchanged as the confirming check.
 
-- [ ] T002 [artifacts: datamodel] [parallel] Add `pendingHostRequest:
+- [x] T002 [artifacts: datamodel] [parallel] Add `pendingHostRequest:
   string | null` to the shared `Session` type
   (`packages/shared/src/index.ts`) and to `server/src/session-store.ts`'s
   session-creation default (`null`). Test-first (constitution Principle

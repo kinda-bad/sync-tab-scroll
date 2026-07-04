@@ -38,6 +38,7 @@ export class SessionStore {
       metronomeEnabled: false,
       lobbyCursorTick: null,
       spotlightMode: false,
+      pendingHostRequest: null,
     };
     this.sessions.set(code, session);
     return session;
