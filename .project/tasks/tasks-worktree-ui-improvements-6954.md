@@ -75,7 +75,7 @@ rather than unit tests.
 
 ## Phase 3: Settings modal semantic redesign (frontend-design skill)
 
-- [ ] T007 [artifacts: ui, constitution] Update
+- [x] T007 [artifacts: ui, constitution] Update
   `client/src/components/SettingsModal.ct.spec.ts` (and
   `SettingsModalHarness.svelte` as needed) FIRST for the new three-tab
   structure — **Participants** (participant list, readiness, Host
@@ -89,7 +89,7 @@ rather than unit tests.
   starts."), Session-tab host-only visibility rules match today's
   per-control rules, and a no-horizontal-overflow assertion at a 390px
   viewport. Tests fail against the current two-tab modal.
-- [ ] T008 [artifacts: ui, brand] Invoke the **frontend-design skill**
+- [x] T008 [artifacts: ui, brand] Invoke the **frontend-design skill**
   and restructure `client/src/components/SettingsModal.svelte` to the
   three tabs above (tab names/count may be adjusted during the design
   pass within the ≤4 budget — update T007's specs in the same commit if
