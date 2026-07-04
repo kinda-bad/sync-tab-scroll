@@ -8,6 +8,14 @@ import { lightTabColors } from './brand-colors';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
 const gpBuffer = fs.readFileSync(GP_PATH);
+// 87 BPM variant (generated from synthetic-song.gp via alphaTab's
+// Gp7Exporter) for real-playback tempo assertions: the base fixture is
+// 120 BPM, the same value as `PlaybackState.bpm`'s hardcoded default, so
+// a tempo read off it can't distinguish "real tempo" from "nobody ever
+// read the tempo" — the exact coincidence that masked the shipped
+// hardcoded-120 bug.
+const GP_87_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song-87bpm.gp');
+const gp87Buffer = fs.readFileSync(GP_87_PATH);
 
 let pageErrors: string[];
 
@@ -18,21 +26,20 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * SCOPE NOTE: `playback-engine.ts`'s clientStore subscription (drift
- * correction, Spotlight-mode force-follow, host-only paused-only seek) is
- * entirely gated on `api.isReadyForPlayback`. That flag never becomes
- * true under any browser-automation context this project has tried
- * (Playwright CT included) — confirmed empirically it stays `false`
- * indefinitely, matching this project's already-documented "Full
- * live-audio verification blocked by Chrome's autoplay policy in
- * browser-automation testing" limitation (not a new CT-specific bug).
- * That gated logic is therefore untestable here; it stays covered at the
- * pure-function level by `playback-sync.test.ts`
- * (test-coverage-backfill), and at the real-user level only by manual
- * browser testing — same status as `tasks-lobby-cursor-modes-0bea.md`'s
- * still-blocked T010. This test covers what *is* verifiable: the engine
- * constructs against a real alphaTab instance and renders real tab
- * output without crashing.
+ * SCOPE NOTE (rewritten 2026-07-04): this file previously documented that
+ * `api.isReadyForPlayback` "never becomes true under browser automation"
+ * (blamed on Chrome's autoplay policy). That diagnosis was wrong: the
+ * synth worker was dying on a silent 404 of `/assets/alphaTab.worker.mjs`
+ * because (a) ct-core only honors `ctViteConfig` from `projects[0]` and
+ * (b) alphaTab's ESM worker files were never emitted into the CT bundle —
+ * both fixed in playwright.config.ts. Real synth playback now runs under
+ * headless CT: `isReadyForPlayback` resolves in ~2s and `play()` produces
+ * genuine ticking `playerPositionChanged` events (see the real-playback
+ * test below). The clientStore-subscription logic gated on
+ * `isReadyForPlayback` (drift correction, Spotlight force-follow,
+ * host-only paused-only seek) is therefore now testable here — currently
+ * still covered at the pure-function level by `playback-sync.test.ts`;
+ * porting it to real-playback CT coverage is an open follow-up.
  */
 test('constructs the engine and renders real tab output without crashing', async ({ mount, page }) => {
   const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
@@ -169,24 +176,14 @@ test('does not report tickPosition when not host', async ({ mount, page }) => {
  * `currentTime / endTime` to `clientStore.playbackProgress` on every real
  * alphaTab instance, unconditionally (no host/session gating).
  *
- * DRIVING NOTE (deviation from the task's original approach): the task
- * expected `api.tickPosition = <value>` to fire `playerPositionChanged`
- * with a real, nonzero `currentTime`/`endTime` (the same mechanism
- * `correctDrift` relies on). Empirically under this CT environment that
- * premise doesn't hold — real position broadcasts require alphaTab's synth
- * worker to actually be running its playback loop, which (like
- * `isReadyForPlayback`/`soundFontLoaded` per this file's other SCOPE NOTE)
- * never happens under browser automation; setting `tickPosition` directly
- * only ever re-fires the stale, all-zero initial event. Instead this test
- * calls `api.playerPositionChanged.trigger(...)` directly — the exact same
- * public method alphaTab's own worker-message handler uses internally to
- * fire this event (confirmed in `node_modules/@coderline/alphatab/dist/
- * alphaTab.js`) — to inject a known `currentTime`/`endTime` pair and assert
- * the production handler computes the expected ratio from it. This tests
- * the same production code path (the `.on()` handler in
- * `playback-engine.ts`) without depending on real audio/synth-loop
- * emission, consistent with this file's established "test what CT can
- * drive, leave real emission to manual verification" pattern.
+ * DRIVING NOTE: this test injects a known `currentTime`/`endTime` pair via
+ * `api.playerPositionChanged.trigger(...)` (the same public method
+ * alphaTab's worker-message handler uses internally) so the expected
+ * ratio is exact and deterministic. It is *not* because real emission is
+ * impossible — the real-playback test below drives the genuine synth
+ * loop. (A previous version of this note claimed real position broadcasts
+ * "never happen under browser automation"; that was the dead-synth-worker
+ * config bug described in the SCOPE NOTE above, not a real limitation.)
  */
 async function readPlaybackProgress(page: import('@playwright/test').Page) {
   return page.evaluate(() => {
@@ -215,6 +212,55 @@ test('tracks real playbackProgress in clientStore from playerPositionChanged', a
 
   await expect.poll(() => readPlaybackProgress(page), { timeout: 5_000 }).toBeGreaterThan(0);
   expect(await readPlaybackProgress(page)).toBe(0.5);
+});
+
+/**
+ * Real synth playback, end to end: waits for `isReadyForPlayback`, calls
+ * `api.play()`, and asserts on events emitted by alphaTab's actual
+ * playback loop — no `trigger()` injection anywhere. Uses the 87 BPM
+ * fixture (see top of file) so the tempo assertion cannot pass by
+ * coinciding with a hardcoded 120 default. This is the regression guard
+ * for the shipped never-read-the-real-tempo bug class: any future path
+ * that fakes or defaults tempo instead of reading it from the score
+ * fails the `originalTempo === 87` assertion.
+ */
+test('real playback emits real tempo and drives playbackProgress', async ({ mount, page }) => {
+  await page.route('**/fixture-87.gp', (route) => route.fulfill({ body: gp87Buffer, contentType: 'application/octet-stream' }));
+
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture-87.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate(() => {
+    const api = (window as unknown as {
+      __getApi: () => { playerPositionChanged: { on: (fn: (e: unknown) => void) => void } };
+    }).__getApi();
+    const events: unknown[] = [];
+    (window as unknown as { __posEvents: unknown[] }).__posEvents = events;
+    api.playerPositionChanged.on((e) => {
+      const ev = e as { currentTime: number; endTime: number; originalTempo: number };
+      events.push({ currentTime: ev.currentTime, endTime: ev.endTime, originalTempo: ev.originalTempo });
+    });
+  });
+
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { isReadyForPlayback: boolean } }).__getApi().isReadyForPlayback), {
+      timeout: 15_000,
+    })
+    .toBe(true);
+
+  await page.evaluate(() => (window as unknown as { __getApi: () => { play: () => boolean } }).__getApi().play());
+
+  await expect.poll(() => readPlaybackProgress(page), { timeout: 10_000 }).toBeGreaterThan(0);
+
+  // Skip the stale all-zero events alphaTab re-fires before the loop ticks.
+  const realEvents = await page.evaluate(
+    () => ((window as unknown as { __posEvents: { currentTime: number; endTime: number; originalTempo: number }[] }).__posEvents ?? []).filter((e) => e.currentTime > 0),
+  );
+  expect(realEvents.length).toBeGreaterThan(0);
+  expect(realEvents[0].originalTempo).toBe(87);
+  expect(realEvents[0].endTime).toBeGreaterThan(0);
+
+  await page.evaluate(() => (window as unknown as { __getApi: () => { stop: () => void } }).__getApi().stop());
 });
 
 test('does not report tickPosition when status is not running', async ({ mount, page }) => {
