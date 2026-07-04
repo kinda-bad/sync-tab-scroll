@@ -14,6 +14,11 @@ export function loadStoredSession(): StoredSession | undefined {
   return JSON.parse(raw);
 }
 
+/** Clears the persisted session identity (leaveSession.ts) so a later join/create starts fresh. */
+export function clearStoredSession(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 /**
  * Persists {code, displayName, participantId} once a session exists,
  * covering both create and join uniformly (a single writer, rather than

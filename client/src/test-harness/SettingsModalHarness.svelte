@@ -10,11 +10,11 @@
 
   onMount(() => {
     const sent: unknown[] = [];
-    const wsClient: WsClient = { send: (m) => sent.push(m) };
+    const wsClient: WsClient = { send: (m) => sent.push(m), close: () => {} };
     (window as unknown as { __sentMessages: unknown[] }).__sentMessages = sent;
     (window as unknown as { __clientStore: typeof clientStore }).__clientStore = clientStore;
 
-    clientStore.set({ view: 'lobby', session, selfParticipantId, catalog: [], wsClient, playbackProgress: 0 });
+    clientStore.set({ view: 'lobby', session, selfParticipantId, catalog: [], wsClient, playbackProgress: 0, engineReady: false });
   });
 </script>
 
