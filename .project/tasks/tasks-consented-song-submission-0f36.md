@@ -21,14 +21,14 @@ status: in-progress
   `hostReassignGraceMs` pattern already there. Confirm T001's test now
   passes.
 
-- [ ] T003 [artifacts: datamodel] Write a failing test for a new
+- [x] T003 [artifacts: datamodel] Write a failing test for a new
   `hasConsent(songDir: string): boolean` helper: returns `false` when the
   song directory's consent-record file is absent or malformed, `true`
   when present and matches the `ConsentRecord` shape (datamodel.md's
   Consent Record section: `submitterName`, `tosVersion`, `acceptedAt`).
   Confirm it fails.
 
-- [ ] T004 [artifacts: datamodel] [parallel] Implement the `ConsentRecord`
+- [x] T004 [artifacts: datamodel] [parallel] Implement the `ConsentRecord`
   type and the `hasConsent` helper in a new `server/src/consent.ts`
   module. Confirm T003's test now passes. This task is file-independent
   of T001/T002 (different module, no shared state) so can run in parallel
