@@ -34,17 +34,17 @@ status: in-progress
 
 ## Phase 2: Server `.env` convention
 
-- [ ] T005 [artifacts: constitution] [parallel] Create `server/.env.example`
+- [x] T005 [artifacts: constitution] [parallel] Create `server/.env.example`
   (committed) with `PORT=6080`, `CATALOG_ROOT=./catalog`,
   `HOST_REASSIGN_GRACE_MS=120000`, `REQUIRE_SONG_CONSENT=false` — same
   defaults `server/src/config.ts` currently falls back to — plus a comment
   noting `PORT` must stay equal to client's `VITE_BACKEND_PORT` (both encode
   the dev backend port).
-- [ ] T006 [artifacts: constitution] Create `server/.env` locally (not
+- [x] T006 [artifacts: constitution] Create `server/.env` locally (not
   committed — already covered by `.gitignore` line 3) with the same four
   keys, for exercising this change locally. Confirm `scripts/check-env-parity.mjs
   server/.env server/.env.example` passes.
-- [ ] T007 [artifacts: constitution] Update `server/package.json`'s `dev`,
+- [x] T007 [artifacts: constitution] Update `server/package.json`'s `dev`,
   `start`, and `test` scripts to load `--env-file-if-exists=.env` (via
   direct flag on `tsx`/`node`/`vitest` invocation, confirmed empirically to
   be forwarded correctly by `tsx` including `tsx watch`; use a
@@ -53,7 +53,7 @@ status: in-progress
   `server/src/config.ts`'s `loadConfig()` logic — its `process.env.X ??
   default` shape is unchanged; only where `process.env.X` gets populated
   from changes.
-- [ ] T008 [artifacts: constitution] Confirm/extend
+- [x] T008 [artifacts: constitution] Confirm/extend
   `server/src/config.test.ts`: add or verify a test that `loadConfig()`
   still returns all documented defaults when no env vars are set, and a
   test that explicit `process.env` values still override them — both
