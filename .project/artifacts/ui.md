@@ -133,18 +133,29 @@ regardless of whether playback has started:
     participant's view to follow the lobby cursor. Off: it's just a
     marker — cursor position and Spotlight state both reset when playback
     starts.").
-  - **Playback audio**: the host-only "Metronome" and "Count-in" toggles,
-    setting `Session.metronomeEnabled`/`countInEnabled` (datamodel.md;
-    wired to alphaTab's `metronomeVolume`/`countInVolume` in
-    `playback-sync.ts`, infrastructure.md). Visible and interactive only
-    for the host, with no separate readout shown to non-host participants
-    — the audible effect itself (or its absence) is every participant's
-    confirmation that the setting took.
-- **Preferences**: personal, this-device-only settings. Currently a
-  dark/light theme toggle — the app's first in-app theme control
-  (`client/src/theme.ts`); toggling it switches both the app's CSS
-  palette and the tab notation's colors together, and the choice persists
-  across a refresh.
+  - **Playback audio**: the host-only "Count-in" toggle, setting
+    `Session.countInEnabled` (datamodel.md; wired to alphaTab's
+    `countInVolume` in `playback-sync.ts`, infrastructure.md). Visible
+    and interactive only for the host, with no separate readout shown to
+    non-host participants — the audible effect itself (or its absence)
+    is every participant's confirmation that the setting took. The
+    metronome is deliberately *not* here — it's a personal preference
+    (Preferences, below), a user-confirmed reversal (2026-07-04) of the
+    original host-controlled `Session.metronomeEnabled` design: each
+    participant's own alphaTab instance generates the clicks locally, so
+    nobody else is affected and the server has no reason to know.
+- **Preferences**: personal, this-device-only settings, none of which
+  touch the server:
+  - a dark/light theme toggle — the app's first in-app theme control
+    (`client/src/theme.ts`); toggling it switches both the app's CSS
+    palette and the tab notation's colors together, and the choice
+    persists across a refresh.
+  - a personal "Metronome" toggle, visible to **every** participant (not
+    host-gated): persisted client-side like the theme choice
+    (`client/src/metronome-preference.ts`, default off), applied to this
+    participant's own alphaTab instance immediately (`metronomeVolume`)
+    whether visible or headless, with a hint making the scope plain
+    ("Only you hear your metronome.").
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle
@@ -211,8 +222,9 @@ identically regardless of which one they're on:
   display this view wants.
 
 Both renderings share alphaTab's native metronome and count-in
-(`metronomeVolume`, `countInVolume` — off by default, toggled via
-`Session.metronomeEnabled`/`countInEnabled`), so the audio is identical
+(`metronomeVolume`, `countInVolume` — both off by default; count-in is
+toggled via `Session.countInEnabled`, the metronome via the personal
+client-local preference above), so the audio is identical
 whether or not the participant's alphaTab instance has a visible staff.
 Host controls start/pause/resume/seek; a count-in countdown can precede
 playback start. The host's view exposes seek (click-to-position) when

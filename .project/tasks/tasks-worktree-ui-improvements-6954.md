@@ -107,7 +107,7 @@ rather than unit tests.
 
 ## Phase 4: Metronome per-participant (user-confirmed reversal, 2026-07-04)
 
-- [ ] T010 [artifacts: datamodel, infrastructure, constitution] Remove
+- [x] T010 [artifacts: datamodel, infrastructure, constitution] Remove
   the session-level metronome plumbing, tests first: update/remove
   `server/src/handlers/metronome-set.test.ts`, then delete
   `server/src/handlers/metronome-set.ts`, its `dispatch.ts` import/case,
@@ -126,7 +126,7 @@ rather than unit tests.
   `playback-engine.ct.spec.ts:118`, `ws-client.ct.spec.ts:54`,
   `session-persistence.test.ts:51`, `store.ct.spec.ts:21`. `client/e2e/`
   has zero metronome references.
-- [ ] T011 [artifacts: ui, constitution] Client-local metronome
+- [x] T011 [artifacts: ui, constitution] Client-local metronome
   preference, CT test first: a persisted personal setting following the
   `client/src/theme.ts` localStorage pattern (`persistTheme`/read-back),
   default off (matches the old server default), applied to the local
