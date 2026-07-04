@@ -298,3 +298,31 @@ auth-adjacent code should still resolve "who is this participant" in one
 place rather than scattering that assumption across handlers, so that
 adding auth later is additive rather than a rewrite — but auth and rate
 limiting themselves are out of scope for this build.
+
+## Song Consent Gate (Public Deployment Only)
+
+Off by default (`ServerConfig.requireSongConsent`, env
+`REQUIRE_SONG_CONSENT`, default `false`), mirroring the existing
+`hostReassignGraceMs`/`HOST_REASSIGN_GRACE_MS` config pattern
+(`server/src/config.ts`). This distinguishes the two deployment modes the
+`consented-song-submission` feature is scoped around: a personal/local
+deployment (default — every song directory under `catalog/` loads exactly
+as it does today, no consent concept in play at all) versus an operator's
+public-facing deployment (`REQUIRE_SONG_CONSENT=true`), where
+`catalog-loader.ts` additionally requires a valid consent record
+(datamodel.md's Consent Record) to be present in a song's directory before
+including it in the published `CatalogSong[]` — a song directory lacking
+one is skipped entirely at load time (logged once at startup, not silently
+dropped) rather than partially served. This is a load-time filter, not a
+per-request or per-client check: there is no mechanism to identify "the
+submitter's own connecting client" distinct from anyone else's (this app
+has no auth, per the Production Posture note above), so a song without
+recorded consent is excluded from the catalog for every client uniformly,
+including its own submitter, rather than selectively visible to them —
+see datamodel.md's Consent Record section for why this is the resolved
+reading of the feature's "not served to clients other than its own
+submitter" framing, not a narrower literal implementation of it. A
+submitter previews their own not-yet-consented song by running the app
+against their own local/personal deployment (the already-fully-supported,
+gate-off case) before deciding to submit it for public distribution — not
+by connecting to the public deployment itself.
