@@ -11,7 +11,8 @@ export type ClientMessage =
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'song-select'; songId: string }
   | { type: 'playback-tick-report'; tickPosition: number }
-  | { type: 'host-delegate'; targetParticipantId: string };
+  | { type: 'host-delegate'; targetParticipantId: string }
+  | { type: 'request-host' };
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }

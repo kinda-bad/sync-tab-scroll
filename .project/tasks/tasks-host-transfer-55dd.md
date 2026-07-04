@@ -45,7 +45,7 @@ status: in-progress
   'host-delegate'` into `server/src/dispatch.ts` following the existing
   one-line-per-case pattern (Principle IV).
 
-- [ ] T004 [artifacts: datamodel, infrastructure] Add `{ type:
+- [x] T004 [artifacts: datamodel, infrastructure] Add `{ type:
   'request-host' }` to `ClientMessage` and a new
   `server/src/handlers/request-host.ts` handler. Test-first: failing
   tests for: a successful request sets `Session.pendingHostRequest` to
