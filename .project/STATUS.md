@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post `/ardd-tasks` — plan approved, tasks generated for the `lyricCssColors` defect). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-implement` — `lyricCssColors` defect fixed and closed out). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -28,12 +28,13 @@ None — no `[OPEN]` placeholders in any artifact.
 
 ## Constitution Compliance
 
-One violation found in the `/ardd-verify` re-survey just run: Principle II
-("No Dead Architecture") — `client/src/brand-colors.ts`'s unused
-`lyricCssColors` export (see Code-vs-Artifact Defects). Principles I
-(single client store), III (bootstrap files), IV (handler routing), V
-(library idioms), VI (named types), and VII (test-first) all spot-checked
-clean against current code.
+No violations. The one open violation (Principle II, "No Dead
+Architecture" — `client/src/brand-colors.ts`'s unused `lyricCssColors`
+export) was fixed on the `fix-lyric-css-colors-dead-code` branch and
+confirmed resolved (see Code-vs-Artifact Defects). Principles I (single
+client store), III (bootstrap files), IV (handler routing), V (library
+idioms), VI (named types), and VII (test-first) all spot-checked clean
+against current code in the same-day full re-survey.
 
 ## Diagrams
 
@@ -43,14 +44,13 @@ clean against current code.
 
 ## Code-vs-Artifact Defects
 
-1 known defect — see `DEFECTS.md`, last checked 2026-07-03 (full re-survey
-just run). The 5 previously-listed defects (`ui.md` x3, `brand.md`,
-`datamodel.md`) are confirmed resolved — the corrective doc commits held
-up against a fresh code read. One new defect surfaced: `client/src/
-brand-colors.ts` exports `lyricCssColors`, which is unused anywhere in
-the codebase and whose values have drifted from the token actually
-driving that role (`--riot`) — a Principle II ("No Dead Architecture")
-violation, unrelated to any artifact's own claims.
+0 known defects — see `DEFECTS.md`, last checked 2026-07-03. All-clear:
+the 5 defects from the pre-refine pass were confirmed resolved by doc
+corrections, and the 1 defect surfaced by the subsequent full re-survey
+(`lyricCssColors` dead code) has now been fixed in code (`fix-lyric-css-
+colors-dead-code` branch, commit `8457a52`, unsigned — 1Password locked)
+and reverified: zero remaining references, 25 unit + 22 component tests
+passing.
 
 ## Feature Backlog
 
@@ -68,10 +68,11 @@ violation, unrelated to any artifact's own claims.
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
 - `plan-fix-lyric-css-colors-dead-code-2026-07-03.md` — **approved**, on
-  branch `fix-lyric-css-colors-dead-code`. Single-phase cleanup: delete the
-  unused `lyricCssColors` export from `client/src/brand-colors.ts` (the
-  sole `DEFECTS.md` finding). Tasks: `tasks-fix-lyric-css-colors-dead-code-257c.md`
-  (`ready`, 3 tasks, 1 phase). No `features:` bound to this plan.
+  branch `fix-lyric-css-colors-dead-code`. Single-phase cleanup: deleted
+  the unused `lyricCssColors` export from `client/src/brand-colors.ts`
+  (the sole `DEFECTS.md` finding). Tasks:
+  `tasks-fix-lyric-css-colors-dead-code-257c.md` — **completed**, 3/3
+  tasks. No `features:` bound to this plan.
 
 ## Implementation Status
 
@@ -79,13 +80,18 @@ violation, unrelated to any artifact's own claims.
 test-coverage-backfill, playwright-client-coverage, ui-polish-pass,
 playback-sync-fixes, lyrics-ticker, settings-modal-redesign,
 session-create-selection, theme-persistence, hazard-bar-progress:
-complete**, all merged to `main`. Currently on `main`, worktree clean.
+complete**, all merged to `main`.
+
+**fix-lyric-css-colors-dead-code: complete**, on its own unmerged branch
+(commit `8457a52`), not yet merged to `main`. Deleted the unused
+`lyricCssColors` export; 25 unit + 22 component tests still passing.
 
 **Unsigned commits — needs attention before any push.** Every commit
 made across this entire session (`settings-modal-redesign` onward,
-including all merge commits) was made with `--no-gpg-sign` (1Password
-locked throughout). Re-sign the full range once 1Password is available,
-before pushing anything.
+including all merge commits, and the `fix-lyric-css-colors-dead-code`
+commit above) was made with `--no-gpg-sign` (1Password locked
+throughout). Re-sign the full range once 1Password is available, before
+pushing anything.
 
 **Live-browser verification status:**
 - ✅ Confirmed working: Landing chooser/split-forms, 4-char join code,
@@ -115,10 +121,11 @@ before pushing anything.
 
 ## Recommended Next Step
 
-Run `/ardd-implement` on `tasks-fix-lyric-css-colors-dead-code-257c.md`
-(3 tasks, ready) to close out the `lyricCssColors` defect. Separately, and
-not blocking that: attempt a live-browser check of the two-participant
-no-rubberband playback fix and the lyrics ticker's scroll/centering
-behavior — the hazard-bar-progress finding suggests these might be
-checkable after all, contrary to earlier assumptions — and re-sign the
-full unsigned commit range before pushing `main`.
+Merge `fix-lyric-css-colors-dead-code` back to `main` (or continue stacking
+work on it) — its work is complete and `DEFECTS.md` is all-clear.
+Separately, and not blocking that: attempt a live-browser check of the
+two-participant no-rubberband playback fix and the lyrics ticker's
+scroll/centering behavior — the hazard-bar-progress finding suggests these
+might be checkable after all, contrary to earlier assumptions — and
+re-sign the full unsigned commit range (including this branch's commit)
+before pushing anything.
