@@ -4,13 +4,11 @@ import { createSessionAsHost, joinSessionAsMember, readStoredSession, sendAsPart
 test('host Start/Pause/Resume/Stop transitions are reflected for a joined member', async ({ page, browser }) => {
   await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click();
-  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — selecting a part auto-closes the modal
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
-  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics
-  await memberPage.getByRole('button', { name: 'Close' }).click();
+  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — auto-closes the modal
 
   // Drive readiness past the audio-decode gate (see single-participant.spec.ts's scope note).
   await sendAsParticipant(hostSession, { type: 'readiness-update', readiness: 'ready' });
@@ -42,12 +40,10 @@ test('host removing a participant removes them from the other participant list',
   await createSessionAsHost(page, 'Host');
   // The song/part modal is forced open (non-dismissible) until this
   // participant has both a song and a part — which also blocks the
-  // settings-cog control behind its backdrop. Select both first so the
-  // modal can be dismissed and the cog reached, same pattern the other
-  // host-controls test already uses.
+  // settings-cog control behind its backdrop. Select both first — picking
+  // a part auto-closes the modal — so the cog can be reached.
   await page.getByRole('button', { name: 'Select' }).first().click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click();
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);

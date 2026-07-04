@@ -4,13 +4,11 @@ import { createSessionAsHost, joinSessionAsMember, readStoredSession } from './h
 async function setUpHostAndMember(page: import('@playwright/test').Page, browser: import('@playwright/test').Browser) {
   await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click();
-  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — auto-closes the modal
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
-  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics
-  await memberPage.getByRole('button', { name: 'Close' }).click();
+  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — auto-closes the modal
 
   return { memberContext, memberPage, hostSession };
 }

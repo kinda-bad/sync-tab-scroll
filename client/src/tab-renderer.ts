@@ -119,3 +119,21 @@ export function setTheme(api: at.AlphaTabApi, theme: Theme): void {
   api.updateSettings();
   api.render();
 }
+
+/**
+ * Switches which track alphaTab renders/plays without reloading the GP file
+ * or recreating the api instance — used when a participant changes their
+ * selected instrument part mid-session (previously a no-op: the engine was
+ * created once and never updated on a later part-select, so the pink
+ * "selected" state in the part picker changed but the rendered tab never
+ * did). Mirrors the staveProfile/rhythmMode setup `createTabRenderer`'s own
+ * `scoreLoaded` handler applies for the initial track.
+ */
+export function switchTrack(api: at.AlphaTabApi, score: at.model.Score, trackIndex: number): void {
+  const track = score.tracks[trackIndex];
+  const isPercussion = track.isPercussion;
+  api.settings.display.staveProfile = isPercussion ? at.StaveProfile.Score : at.StaveProfile.TabMixed;
+  if (!isPercussion) api.settings.notation.rhythmMode = at.TabRhythmMode.ShowWithBars;
+  api.updateSettings();
+  api.renderTracks([track]);
+}

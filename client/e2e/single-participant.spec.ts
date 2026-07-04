@@ -20,8 +20,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
   await expect(page.getByText(/Join code:/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
 
   // Still visible after song and part selection.
   await expect(page.getByText(/Join code:/)).toBeVisible();
@@ -38,8 +37,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
 test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canvas', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
-  await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list
-  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+  await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list — auto-closes the modal
 
   const session = await readStoredSession(page);
   await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });
@@ -55,8 +53,7 @@ test('Start closes the settings modal (plan-settings-modal-redesign T012)', asyn
   await createSessionAsHost(page, 'Host');
 
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
 
   const session = await readStoredSession(page);
   await sendAsParticipant(session, { type: 'readiness-update', readiness: 'ready' });

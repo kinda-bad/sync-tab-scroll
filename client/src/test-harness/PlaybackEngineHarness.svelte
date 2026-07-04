@@ -28,7 +28,10 @@
       name: 'Creep',
       artist: 'Radiohead',
       gpFilePath,
-      parts: [{ instrumentName: 'Guitar', trackIndex }],
+      parts: [
+        { instrumentName: 'Guitar', trackIndex: 0 },
+        { instrumentName: 'Bass', trackIndex: 1 },
+      ],
       lyricsLrc: null,
       lyricsTrackIndex: 0,
       lyricsLineIndex: 0,
@@ -36,6 +39,13 @@
     };
 
     ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, false);
+
+    // Test-only: mirrors App.svelte's reactive re-invocation of
+    // ensurePlaybackEngine when a participant's selectedPart changes —
+    // lets a CT test simulate a part switch without a real session/store.
+    (window as unknown as { __switchPart: (newTrackIndex: number) => void }).__switchPart = (newTrackIndex: number) => {
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, newTrackIndex, false);
+    };
   });
 </script>
 

@@ -16,11 +16,18 @@ const gpBuffer = fs.readFileSync(GP_PATH);
 // hardcoded-120 bug.
 const GP_87_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song-87bpm.gp');
 const gp87Buffer = fs.readFileSync(GP_87_PATH);
+// Two real, distinct-content tracks (track 0: frets 3/5, track 1: frets
+// 8/10 — same notes shifted, not a byte-identical clone) for the
+// part-switch regression test below: a single-track fixture can't tell
+// "re-rendered the new track" apart from "rendered nothing new at all".
+const GP_TWO_TRACK_PATH = path.resolve(__dirname, '../test-fixtures/two-track-song.gp');
+const gpTwoTrackBuffer = fs.readFileSync(GP_TWO_TRACK_PATH);
 
 let pageErrors: string[];
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/fixture.gp', (route) => route.fulfill({ body: gpBuffer, contentType: 'application/octet-stream' }));
+  await page.route('**/two-track.gp', (route) => route.fulfill({ body: gpTwoTrackBuffer, contentType: 'application/octet-stream' }));
   pageErrors = [];
   page.on('pageerror', (err) => pageErrors.push(err.message));
 });
@@ -280,4 +287,32 @@ test('does not report tickPosition when status is not running', async ({ mount, 
     (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-tick-report'),
   );
   expect(reports).toEqual([]);
+});
+
+/**
+ * Regression test: switching parts previously changed which row showed the
+ * pink "selected" state in the Song & part modal, but never re-rendered the
+ * tab, because `ensurePlaybackEngine` short-circuited unconditionally
+ * (`if (state) return;`) on any call after the first — including a later
+ * call with a genuinely different trackIndex. Uses a real two-track
+ * fixture with distinct content per track (not a clone), since a
+ * single-track fixture can't distinguish "re-rendered the new track" from
+ * "rendered nothing new at all."
+ */
+test('switching parts (a later ensurePlaybackEngine call with a different trackIndex) re-renders the new track', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/two-track.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  const svgBefore = await component.getByTestId('tab-container').locator('svg').first().evaluate((el) => el.outerHTML);
+  expect(svgBefore).toContain('>3<');
+  expect(svgBefore).not.toContain('>8<');
+
+  await page.evaluate(() => (window as unknown as { __switchPart: (t: number) => void }).__switchPart(1));
+
+  await expect
+    .poll(async () => component.getByTestId('tab-container').locator('svg').first().evaluate((el) => el.outerHTML))
+    .toContain('>8<');
+  const svgAfter = await component.getByTestId('tab-container').locator('svg').first().evaluate((el) => el.outerHTML);
+  expect(svgAfter).toContain('>10<');
+  expect(svgAfter).not.toContain('>3<');
 });

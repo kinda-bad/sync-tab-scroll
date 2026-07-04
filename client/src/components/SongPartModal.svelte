@@ -8,6 +8,15 @@
   export let dismissible: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
+  // "Change song" needs to show the catalog picker again without touching
+  // `session.selectedSong` until the host actually picks something —
+  // selectSong(session.selectedSong) was a same-song no-op (song-select.ts
+  // skips the part/readiness reset for the already-selected song), so it
+  // never actually showed the list. Local-only, not synced: reset whenever
+  // a real pick is made or the modal is closed, so reopening later starts
+  // back at the "song selected" summary rather than wherever it was left.
+  let browsingCatalog = false;
+
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: catalog = $clientStore.catalog;
@@ -17,16 +26,23 @@
 
   function selectSong(songId: string) {
     wsClient?.send({ type: 'song-select', songId });
+    browsingCatalog = false;
   }
 
   function selectPart(part: import('@sync-tab-scroll/shared').SelectedPart) {
     wsClient?.send({ type: 'part-select', part });
+    handleClose();
+  }
+
+  function handleClose() {
+    browsingCatalog = false;
+    onClose?.();
   }
 </script>
 
-<Modal {open} {dismissible} {onClose} title="Song & part">
+<Modal {open} {dismissible} onClose={handleClose} title="Song & part">
   {#if session}
-    {#if !session.selectedSong}
+    {#if !session.selectedSong || browsingCatalog}
       <span class="section-label">Catalog</span>
       <ul class="list">
         {#each catalog as song (song.id)}
@@ -44,7 +60,7 @@
           <p class="song-name">{selectedSong?.name ?? session.selectedSong}</p>
         </div>
         {#if isHost}
-          <Button variant="ghost" label="Change song" onclick={() => selectSong(session.selectedSong!)} />
+          <Button variant="ghost" label="Change song" onclick={() => (browsingCatalog = true)} />
         {/if}
       </div>
 

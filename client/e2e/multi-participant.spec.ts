@@ -33,8 +33,7 @@ test('song/part selection sync between host and member', async ({ page, browser 
   // (forced-open, non-dismissible-until-set) song/part modal — so the
   // member picks their own part too, to dismiss it and reach the cog.
   await page.getByRole('button', { name: 'Select' }).first().click(); // host: the (only) instrument part
-  await memberPage.getByRole('button', { name: 'Select' }).first().click(); // member: same part, just to dismiss their own modal
-  await memberPage.getByRole('button', { name: 'Close' }).click();
+  await memberPage.getByRole('button', { name: 'Select' }).first().click(); // member: same part, auto-closes their own modal
   await memberPage.getByRole('button', { name: 'Settings' }).click();
   await expect(memberPage.locator('.badge').first()).toHaveText('LOADING', { timeout: 10_000 });
 
@@ -44,13 +43,11 @@ test('song/part selection sync between host and member', async ({ page, browser 
 test('Spotlight mode: lobby cursor readout syncs to the member, and both fields auto-reset after Start', async ({ page, browser }) => {
   await createSessionAsHost(page, 'Host');
   await page.getByRole('button', { name: 'Select' }).first().click();
-  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part
-  await page.getByRole('button', { name: 'Close' }).click(); // song/part modal stays open until dismissed
+  await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — auto-closes the modal
   const hostSession = await readStoredSession(page);
 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
-  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's
-  await memberPage.getByRole('button', { name: 'Close' }).click();
+  await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's, auto-closes the modal
 
   // Lobby cursor / Spotlight controls now live behind the settings-cog
   // modal's Participants tab (SettingsModal.svelte), not inline in the

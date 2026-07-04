@@ -1,6 +1,7 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
+import type * as at from '@coderline/alphatab';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
-import { createTabRenderer, setTheme, type Theme } from './tab-renderer';
+import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
@@ -20,6 +21,9 @@ interface EngineState {
   api: AlphaTabApi;
   overlay?: LyricsOverlay;
   isLyricsPart: boolean;
+  trackIndex: number;
+  /** Only populated for the visible (non-lyrics-part) renderer, once its scoreLoaded fires — needed by switchTrack to re-render a different track without reloading the GP file. */
+  score?: at.model.Score;
   theme: Theme;
   showOverlay: boolean;
   scoreLoaded: boolean;
@@ -31,11 +35,27 @@ let state: EngineState | undefined;
  * Creates the alphaTab/headless instance the moment a participant's part is
  * known (song selected + selectedPart set) — in the Lobby, not on
  * Playback.svelte mount — so per-participant loading/readiness (ui.md) can
- * actually resolve before the host starts playback. Idempotent: a second
- * call while already created (or mid-creation) is a no-op.
+ * actually resolve before the host starts playback. A later call (the
+ * participant changed their part) re-renders the new track on the existing
+ * engine instead of a no-op — previously this short-circuited
+ * unconditionally on any second call, so the picker's "selected" state
+ * changed but the rendered tab never did. Switching to/from the special
+ * 'lyrics' part changes engine kind entirely (visible renderer vs. headless
+ * player), so that case tears down and recreates from scratch instead.
  */
 export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsClient, song: CatalogSong, trackIndex: number, isLyricsPart: boolean): void {
-  if (state) return;
+  if (state) {
+    if (state.isLyricsPart !== isLyricsPart) {
+      state.api.destroy();
+      state = undefined;
+    } else if (!isLyricsPart && state.trackIndex !== trackIndex) {
+      if (state.score) switchTrack(state.api, state.score, trackIndex);
+      state.trackIndex = trackIndex;
+      return;
+    } else {
+      return;
+    }
+  }
 
   wsClient.send({ type: 'readiness-update', readiness: 'loading' });
 
@@ -47,7 +67,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
 
-  state = { api, isLyricsPart, theme, showOverlay: true, scoreLoaded: false };
+  state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false };
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
@@ -56,9 +76,12 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // alphaTab skips that render ("width=0, element invisible") and never
   // re-renders on its own once the container is shown. Track load state so
   // `renderNowVisible` can force a real render once the Playback view
-  // actually shows the container.
-  api.scoreLoaded.on(() => {
+  // actually shows the container. Also captures the loaded score itself so
+  // a later part switch can re-render a different track (switchTrack)
+  // without reloading the GP file.
+  api.scoreLoaded.on((score) => {
     state!.scoreLoaded = true;
+    state!.score = score;
   });
 
   if (!isLyricsPart && song.lyricsTrackIndex !== null && song.lyricsLineIndex !== null && song.lyricLineBreaks) {
