@@ -9,7 +9,7 @@ export interface ServerConfig {
 
 export function loadConfig(): ServerConfig {
   return {
-    port: Number(process.env.PORT ?? 8080),
+    port: Number(process.env.PORT ?? 6080),
     catalogRoot: process.env.CATALOG_ROOT ?? './catalog',
     hostReassignGraceMs: Number(process.env.HOST_REASSIGN_GRACE_MS ?? 120_000),
     requireSongConsent: process.env.REQUIRE_SONG_CONSENT === 'true',

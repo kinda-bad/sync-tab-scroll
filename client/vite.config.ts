@@ -5,6 +5,15 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 // from the published 1.8.3 package — a packaging bug, not a config error
 // (verified: the file genuinely doesn't exist in node_modules). Configuring
 // asset handling manually instead; see tab-renderer.ts for font/worker setup.
+//
+// Ports: dev servers (a real person's own session) run on 6000/6080; e2e
+// spins up its own instances on 6001/6081 (playwright.config.ts's
+// webServer array) so the two never collide/reuse each other's server —
+// VITE_BACKEND_PORT lets this same config point the /catalog proxy at
+// whichever backend is relevant (ws-client.ts reads the same var, via
+// import.meta.env, for the WS URL baked into the client bundle).
+const backendPort = process.env.VITE_BACKEND_PORT ?? '6080';
+
 export default defineConfig({
   plugins: [svelte()],
   // The dep-optimizer's own bundling of alphaTab.worker.mjs never resolves
@@ -16,12 +25,28 @@ export default defineConfig({
     exclude: ['@coderline/alphatab']
   },
   server: {
+    port: 6000,
+    strictPort: true,
+    // Bind on all interfaces, not just localhost, so the dev server is
+    // reachable from another device on the LAN (e.g. a phone) via this
+    // machine's LAN IP — Vite defaults to localhost-only otherwise.
+    host: true,
     // Catalog asset URLs (CatalogSong.gpFilePath/lyricsLrc) are
-    // server-relative (/catalog/...), served by the WS server on :8080
+    // server-relative (/catalog/...), served by the WS server
     // (infrastructure.md). Proxying keeps them same-origin for the client
     // dev server instead of needing CORS headers on the server response.
+    // Proxy target stays localhost — this request is made by the Vite dev
+    // server process itself (same machine as the WS server), not by
+    // whatever device/origin the browser is on.
     proxy: {
-      '/catalog': 'http://localhost:8080'
+      '/catalog': `http://localhost:${backendPort}`
+    }
+  },
+  preview: {
+    port: 6001,
+    strictPort: true,
+    proxy: {
+      '/catalog': `http://localhost:${backendPort}`
     }
   },
   test: {

@@ -57,7 +57,11 @@ export function createWsClient(url: string): WsClient {
  * each view opening its own socket and session independently.
  */
 export function connect(displayName: string, joinCode?: string, participantId?: string): void {
-  const wsClient = createWsClient(`ws://${location.hostname}:8080`);
+  // VITE_BACKEND_PORT lets dev (6080) and e2e (6081) point the built client
+  // at different backend instances without touching source per environment
+  // (client/vite.config.ts sets the matching default for its /catalog proxy).
+  const backendPort = import.meta.env.VITE_BACKEND_PORT ?? '6080';
+  const wsClient = createWsClient(`ws://${location.hostname}:${backendPort}`);
   clientStore.update((s) => ({ ...s, wsClient }));
   if (joinCode) {
     wsClient.send({ type: 'session-join', code: joinCode, displayName, participantId });

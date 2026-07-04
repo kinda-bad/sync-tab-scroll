@@ -28,7 +28,7 @@ describe('loadConfig', () => {
   });
 
   it('falls back to documented defaults when unset', () => {
-    expect(loadConfig()).toEqual({ port: 8080, catalogRoot: './catalog', hostReassignGraceMs: 120_000, requireSongConsent: false });
+    expect(loadConfig()).toEqual({ port: 6080, catalogRoot: './catalog', hostReassignGraceMs: 120_000, requireSongConsent: false });
   });
 
   it('sets requireSongConsent to true when REQUIRE_SONG_CONSENT=true', () => {

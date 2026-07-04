@@ -14,7 +14,7 @@ export interface StoredSession {
  * chooser/split-form Landing restructure.
  */
 export async function createSessionAsHost(page: Page, name: string): Promise<void> {
-  await page.goto('http://localhost:4173/');
+  await page.goto('http://localhost:6001/');
   await page.getByRole('button', { name: 'Create a session' }).click();
   await page.getByPlaceholder('Musician').fill(name);
   await page.getByRole('button', { name: 'Create session' }).click();
@@ -33,7 +33,7 @@ export async function joinSessionAsMember(
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto('http://localhost:4173/');
+  await page.goto('http://localhost:6001/');
   await page.getByRole('button', { name: 'Join a session' }).click();
   await page.getByPlaceholder('Musician').fill(name);
   await page.getByLabel('Session code').fill(code);
@@ -69,7 +69,7 @@ export async function readStoredSession(page: Page): Promise<StoredSession> {
  * rather than adding any test-only hook to production code.
  */
 export async function sendAsParticipant(session: StoredSession, message: object): Promise<void> {
-  const ws = new WebSocket('ws://localhost:8080');
+  const ws = new WebSocket('ws://localhost:6081');
   await new Promise<void>((resolve, reject) => {
     ws.once('open', () => resolve());
     ws.once('error', reject);

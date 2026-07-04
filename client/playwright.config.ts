@@ -95,17 +95,33 @@ export default defineConfig({
             // (client/test-fixtures/fixture-catalog), not the real (gitignored,
             // real-commercial-content) catalog/ — so these tests are
             // reproducible on a fresh clone/CI without local-only content.
-            command: 'CATALOG_ROOT=../client/test-fixtures/fixture-catalog pnpm --filter @sync-tab-scroll/server dev',
-            port: 8080,
+            // Port 6081, distinct from a real dev session's 6080 (server's
+            // own default, server/src/config.ts) — a person's own dev
+            // servers running alongside a test run must never collide with
+            // (and get silently reused by, via reuseExistingServer below)
+            // this test-only instance serving different content.
+            command: 'PORT=6081 CATALOG_ROOT=../client/test-fixtures/fixture-catalog pnpm --filter @sync-tab-scroll/server dev',
+            port: 6081,
             reuseExistingServer: !process.env.CI,
             cwd: '../',
             timeout: 60_000,
           },
           {
             // Production build + preview, not the dev server — matches what
-            // a real user's browser actually receives.
-            command: 'pnpm --filter client build && pnpm --filter client preview --port 4173 --strictPort',
-            url: 'http://localhost:4173',
+            // a real user's browser actually receives. VITE_BACKEND_PORT
+            // points the built client's /catalog proxy and WS URL at this
+            // same 6081 test server (client/vite.config.ts, ws-client.ts),
+            // distinct from a real dev session's 6080/6000. Set on BOTH
+            // commands, not just build: `preview` re-reads vite.config.ts
+            // in its own process, so `VAR=x cmd1 && cmd2` (env only scopes
+            // to cmd1) would leave preview's own /catalog proxy silently
+            // falling back to the dev default (6080, wrong catalog) even
+            // though the client bundle itself (baked in at build time) was
+            // already pointed at 6081 correctly — confirmed empirically:
+            // this exact mismatch 404s GP fixture fetches with no visible
+            // error, so alphaTab never renders.
+            command: 'VITE_BACKEND_PORT=6081 pnpm --filter client build && VITE_BACKEND_PORT=6081 pnpm --filter client preview --port 6001 --strictPort',
+            url: 'http://localhost:6001',
             reuseExistingServer: !process.env.CI,
             cwd: '../',
             timeout: 120_000,
