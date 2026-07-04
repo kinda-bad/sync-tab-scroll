@@ -5,6 +5,7 @@
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
+  import { debounce } from '../debounce';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -23,8 +24,17 @@
     persistTheme(theme);
   }
 
+  // Debounced (plan-lobby-cursor-race-2026-07-04.md) so rapidly changing the
+  // input and clicking "Set" repeatedly collapses to one broadcast — created
+  // once per component instance, not per call, so repeated calls actually
+  // coalesce against the same timer. `clearLobbyCursor` stays undebounced:
+  // it's a single deliberate action, not a rapid-input path.
+  const debouncedSetLobbyCursor = debounce((tickPosition: number) => {
+    wsClient?.send({ type: 'lobby-cursor-set', tickPosition });
+  }, 150);
+
   function setLobbyCursor() {
-    wsClient?.send({ type: 'lobby-cursor-set', tickPosition: lobbyCursorInput });
+    debouncedSetLobbyCursor(lobbyCursorInput);
   }
 
   function clearLobbyCursor() {

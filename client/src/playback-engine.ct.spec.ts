@@ -364,3 +364,44 @@ test('clientStore.engineReady flips true only once the tab has actually rendered
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
   await expect.poll(() => readEngineReady(page), { timeout: 5_000 }).toBe(true);
 });
+
+/**
+ * Regression test for the rapid-click cursor-thrash bug
+ * (feedback-lobby-cursor-race-4262, tasks-lobby-cursor-race-c9f8 T002/T003):
+ * a burst of rapid host seeks must collapse into a single
+ * `playback-control` `seek` broadcast (the *last* tick), not one broadcast
+ * per click.
+ */
+test('debounces rapid host seeks into a single broadcast carrying the last tick', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'host-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'paused' }));
+
+  await page.evaluate(() => {
+    const api = (window as unknown as {
+      __getApi: () => { playerPositionChanged: { trigger: (e: unknown) => void } };
+    }).__getApi();
+    const trigger = (currentTick: number) =>
+      api.playerPositionChanged.trigger({ currentTime: 0, endTime: 10, currentTick, endTick: 0, isSeek: true, originalTempo: 120, modifiedTempo: 120 });
+    trigger(100);
+    trigger(200);
+    trigger(300);
+  });
+
+  await page.waitForTimeout(300);
+
+  const seeks = await page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string; action?: string; tickPosition?: number }[] }).__sentMessages.filter(
+      (m) => m.type === 'playback-control' && m.action === 'seek',
+    ),
+  );
+  expect(seeks).toHaveLength(1);
+  expect(seeks[0].tickPosition).toBe(300);
+});

@@ -9,6 +9,7 @@ import { waitUntilReady } from './readiness';
 import { correctDrift, applyPlaybackSettings } from './playback-sync';
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
+import { debounce } from './debounce';
 
 export interface EngineContainers {
   tabContainer: HTMLElement;
@@ -170,12 +171,20 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // feedback loop: correctDrift's own `api.tickPosition = ...` assignment
   // above fires this same event with `isSeek: true` — ignore any seek that
   // matches the tick we just applied ourselves rather than one the host
-  // actually clicked.
+  // actually clicked. The actual network send is debounced (plan-lobby-cursor-race-2026-07-04.md)
+  // so a rapid burst of clicks collapses to one broadcast after the host
+  // stops clicking, instead of every intermediate click force-resetting
+  // every other participant's view — the guards above still run
+  // synchronously per raw event (same-tick-sensitive against
+  // lastProgrammaticTick), only the send itself is coalesced.
+  const debouncedSendSeek = debounce((tickPosition: number) => {
+    wsClient.send({ type: 'playback-control', action: 'seek', tickPosition });
+  }, 150);
   api.playerPositionChanged.on((e) => {
     if (!e.isSeek) return;
     if (e.currentTick === lastProgrammaticTick) return;
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
-    wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: e.currentTick });
+    debouncedSendSeek(e.currentTick);
   });
 
   // Host-only periodic tick-report (infrastructure.md Session & Real-Time

@@ -126,3 +126,30 @@ test('a non-host, non-requesting viewer sees a plain pending label on the reques
   await expect(component.getByRole('button', { name: 'Make host' })).toHaveCount(0);
   await expect(component.getByText('Requesting host')).toBeVisible();
 });
+
+/**
+ * Regression test for the rapid-click cursor-thrash bug
+ * (feedback-lobby-cursor-race-4262, tasks-lobby-cursor-race-c9f8 T004/T005):
+ * repeatedly clicking "Set lobby cursor" with different input values must
+ * collapse into a single `lobby-cursor-set` broadcast (the last value), not
+ * one broadcast per click.
+ */
+test('rapidly clicking "Set lobby cursor" debounces to a single lobby-cursor-set send with the last value', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+
+  const input = component.locator('.cursor-input');
+  const setButton = component.getByRole('button', { name: 'Set lobby cursor' });
+
+  await input.fill('100');
+  await setButton.click();
+  await input.fill('200');
+  await setButton.click();
+  await input.fill('300');
+  await setButton.click();
+
+  await page.waitForTimeout(300);
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string; tickPosition?: number }[] }).__sentMessages);
+  const cursorSets = sent.filter((m) => m.type === 'lobby-cursor-set');
+  expect(cursorSets).toEqual([{ type: 'lobby-cursor-set', tickPosition: 300 }]);
+});
