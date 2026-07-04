@@ -10,6 +10,7 @@ import { handlePlaybackControl } from './handlers/playback-control.js';
 import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
 import { handleMetronomeSet } from './handlers/metronome-set.js';
+import { handleCountInSet } from './handlers/count-in-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
 import { handlePlaybackTickReport } from './handlers/playback-tick-report.js';
 
@@ -37,6 +38,8 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleSpotlightModeSet(ctx, socket, message);
     case 'metronome-set':
       return handleMetronomeSet(ctx, socket, message);
+    case 'count-in-set':
+      return handleCountInSet(ctx, socket, message);
     case 'song-select':
       return handleSongSelect(ctx, socket, message);
     case 'playback-tick-report':

@@ -38,12 +38,12 @@ status: in-progress
   handleMetronomeSet(ctx, socket, message);` in `server/src/dispatch.ts`,
   following the existing one-line-per-case pattern. Make T002's test pass.
 
-- [ ] T004 [artifacts: datamodel] [parallel] Write a failing test
+- [x] T004 [artifacts: datamodel] [parallel] Write a failing test
   `server/src/handlers/count-in-set.test.ts`, identical structure to
   T002 but asserting against `session.countInEnabled` and the
   `count-in-set` message type. Confirm it fails before T005.
 
-- [ ] T005 [artifacts: datamodel] Implement
+- [x] T005 [artifacts: datamodel] Implement
   `server/src/handlers/count-in-set.ts`, mirroring T003 exactly but for
   `session.countInEnabled` and the rejection message "Only the host can
   control count-in". Register `case 'count-in-set': return
