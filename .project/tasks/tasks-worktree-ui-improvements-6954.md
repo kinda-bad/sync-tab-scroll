@@ -1,7 +1,7 @@
 ---
 plan: plan-worktree-ui-improvements-2026-07-04.md
 generated: 2026-07-04
-status: in-progress   # generating -> ready -> in-progress -> completed
+status: completed   # generating -> ready -> in-progress -> completed
 ---
 
 # Tasks
@@ -162,7 +162,7 @@ rather than unit tests.
   horizontal overflow anywhere (T001 helper reused for any new
   assertions). Layout/spacing/type-scale refinement only — brand.md's
   palette, typography roles, and motifs are fixed inputs.
-- [ ] T014 [artifacts: ui] Document the app's responsive/small-screen
+- [x] T014 [artifacts: ui] Document the app's responsive/small-screen
   behavior in `ui.md` as a new subsection (viewport meta, modal
   scroll-within rules, tab scale behavior, no-horizontal-overflow
   invariant), bump `last_updated`, `diagram_status: stale`.
