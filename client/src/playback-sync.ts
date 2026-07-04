@@ -18,12 +18,42 @@ const DRIFT_THRESHOLD_TICKS = 50;
  * distinguish a real user seek from the drift correction's own assignment,
  * which alphaTab's `playerPositionChanged` fires identically (`isSeek: true`)
  * either way.
+ *
+ * `onApply` (if given) is invoked *synchronously before* each `tickPosition`
+ * assignment below, not after this function returns: assigning
+ * `api.tickPosition` fires `playerPositionChanged` synchronously, which a
+ * caller-side seek-broadcast listener also reacts to synchronously. A caller
+ * that only recorded this function's return value *after* it returned was
+ * one event too late — the listener would see the new tick, compare it
+ * against the *previous* call's recorded value, find no match, and
+ * broadcast the correction as if it were a real user seek. That round-tripped
+ * through the server and re-triggered another correction, forming a tight
+ * feedback loop.
+ *
+ * `isHost`: the host must never drift-correct against `playbackState`,
+ * because the host's own client *is* the source of `playbackState.tickPosition`
+ * (via its periodic tick-report, at most once/sec) — comparing the host's
+ * real, continuously-advancing local position against an echo of its own
+ * up-to-1s-stale self-report meant `drift` exceeded the threshold almost
+ * immediately after every report, hard-resetting the host's own real
+ * progress *backward* to that stale checkpoint many times a second.
+ * Confirmed live 2026-07-04: host's local tick climbed correctly (e.g.
+ * 413→448 in a couple ms of real audio) while the broadcast echo sat frozen
+ * (e.g. 393), and every ~50-tick overshoot snapped it straight back to 393 —
+ * repeatedly discarding real progress and replaying any MIDI events
+ * (including metronome/count-in clicks) between the reset point and
+ * wherever playback had already reached, which is what surfaced as "very
+ * slow, janky playback" plus "metronome retriggering constantly". The
+ * status-transition branches below (start/pause) still apply to the host —
+ * those come from the host's own Start/Pause actions round-tripping back as
+ * a `status` change, not from a tick-value comparison, so they're safe.
  */
-export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState): number | null {
+export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void): number | null {
   if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
   if (playbackState.status === 'running' && !isPlaying) {
+    onApply?.(playbackState.tickPosition);
     api.tickPosition = playbackState.tickPosition;
     api.play();
     return playbackState.tickPosition;
@@ -31,8 +61,11 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState): nu
     api.pause();
   }
 
+  if (isHost) return null;
+
   const drift = Math.abs(api.tickPosition - playbackState.tickPosition);
   if (drift > DRIFT_THRESHOLD_TICKS) {
+    onApply?.(playbackState.tickPosition);
     api.tickPosition = playbackState.tickPosition;
     return playbackState.tickPosition;
   }

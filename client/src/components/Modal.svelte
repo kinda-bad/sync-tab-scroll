@@ -54,7 +54,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 200;
+    /* Must exceed alphaTab's own internal .at-cursors z-index: 1000 (and
+       this app's lyrics-overlay z-index: 1001, see motifs.css) — a modal
+       has to stay on top of the persistent tab/lyrics engine regardless. */
+    z-index: 1010;
     padding: var(--space-4);
   }
   .modal-panel {

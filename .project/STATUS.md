@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post-fix — the 3 `ui.md` defects found by `/ardd-verify` are corrected). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -73,6 +73,29 @@ phrasing mismatches, all from manually resolving the `host-transfer` ↔
 tab bullet now matches `SettingsModal.svelte`'s actual render order and
 behavior exactly.
 
+## Feedback
+
+`feedback-manual-verification-pass-4b3c.md` (`status: split`, 2026-07-04)
+was split into 4 group-specific files for parallel planning, each
+independently reviewed and approved this session:
+- `feedback-session-lifecycle-6876.md` — planned, → `plan-session-lifecycle-2026-07-04.md` → `tasks-session-lifecycle-836f.md` (ready)
+- `feedback-lobby-cursor-race-4262.md` — planned, → `plan-lobby-cursor-race-2026-07-04.md` → `tasks-lobby-cursor-race-c9f8.md` (ready)
+- `feedback-lyrics-pre-singing-1fa6.md` — planned, → `plan-lyrics-pre-singing-2026-07-04.md` → `tasks-lyrics-pre-singing-e09e.md` (ready)
+- `feedback-settings-modal-followup-d914.md` — **still `status: open`**: its
+  layout-regroup item is planned/tasked (→ `plan-settings-modal-followup-2026-07-04.md`
+  → `tasks-settings-modal-followup-bbd2.md`, ready), but its Reconsidered
+  item (metronome per-participant vs. host-controlled) is deliberately
+  unresolved pending the user's explicit confirmation — it would reverse
+  documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
+  that plan's work.
+
+0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,
+`feedback-lobby-cursor-mode-e13b.md`, `feedback-lyrics-ticker-bfd9.md`,
+`feedback-playback-sync-f03d.md`, `feedback-session-create-selection-0411.md`,
+`feedback-settings-modal-redesign-7e73.md`, `feedback-theme-persistence-bed6.md`,
+`feedback-ui-polish-pass-e180.md` are all already `status: planned` from
+earlier sessions).
+
 ## Feature Backlog
 
 0 backlogged · 0 planned · 0 tasked · 8 implemented
@@ -84,8 +107,8 @@ implemented.
 
 ## Plans
 
-All plans drafted this session are now implemented and merged to `main`:
-`plan-fix-lyric-css-colors-dead-code-2026-07-03.md`,
+Plans from the prior (2026-07-03) session are all implemented and merged
+to `main`: `plan-fix-lyric-css-colors-dead-code-2026-07-03.md`,
 `plan-metronome-count-in-toggle-2026-07-03.md`,
 `plan-consented-song-submission-2026-07-03.md`, and
 `plan-host-transfer-2026-07-03.md` (which reconciled and superseded
@@ -93,6 +116,17 @@ All plans drafted this session are now implemented and merged to `main`:
 `plan-request-to-become-host-2026-07-03.md` — both still on disk marked
 `superseded`, kept as historical record on their own now-fully-merged
 branches).
+
+**4 new plans (2026-07-04), all `status: approved` with a `status: ready`
+tasks file, none implemented yet:** `plan-session-lifecycle-2026-07-04.md`,
+`plan-lobby-cursor-race-2026-07-04.md`, `plan-lyrics-pre-singing-2026-07-04.md`,
+`plan-settings-modal-followup-2026-07-04.md`. Each was independently
+reviewed by a background agent against the live codebase (not just its own
+text) before approval — see each plan's tasks file for verification notes
+(e.g. `tasks-session-lifecycle-836f.md` confirmed a genuine `WsClient.close()`
+gap; `tasks-lyrics-pre-singing-e09e.md` caught a test assertion that breaks
+under the new design; `tasks-settings-modal-followup-bbd2.md` reordered a
+phase to satisfy constitution Principle VII test-first).
 
 ## Implementation Status
 
@@ -122,19 +156,61 @@ across this entire session (all branches, all merges) was made with
 `--no-gpg-sign` (1Password locked throughout). Re-sign the full range
 once 1Password is available, before pushing anything.
 
-**Known unresolved from earlier work**: the two-participant
-no-rubberband playback fix and the lyrics ticker's live scroll/centering
-behavior haven't had a live-browser confirmation attempt yet.
-`metronome-count-in-toggle`'s live audio check (T009) also couldn't run
-unattended in a background agent — needs a human to confirm live audio
-behavior before treating that feature as fully confirmed, not just
-plumbing-verified.
+**Known unresolved from earlier work — updated 2026-07-04.** The user ran
+a manual-verification pass and confirmed two of these directly:
+`lyrics-ticker` T004 (centering) **failed** live — see that tasks file and
+`feedback-manual-verification-pass-4b3c.md`. `lyrics-ticker` T007 (scroll
+clearance) **failed then fixed and confirmed** — `padding-bottom` bumped
+from `var(--lyrics-strip-height)` to `calc(var(--lyrics-strip-height) * 2)`
+in `App.svelte`, user confirmed live 2026-07-04. `theme-persistence` T004
+**passed** live, 2026-07-04. `metronome-count-in-toggle` T009 and
+`playback-sync-fixes` T007 both **failed live then fixed**, 2026-07-04:
+count-in caused playback to start at the correct tempo, then go
+slow/janky once the countdown completed, with the metronome audibly
+retriggering rapidly. Root cause, confirmed empirically via live
+instrumentation (not guessed): `correctDrift()` (`client/src/playback-sync.ts`)
+was drift-correcting the **host's own client** against an echo of its own
+up-to-1s-stale tick-report — since the host's real position advances
+continuously between reports, drift exceeded the 50-tick threshold almost
+immediately every cycle, hard-resetting the host's own playback backward
+tens of times/sec (measured: real tempo should be ~1888 ticks/sec at this
+song's 118bpm; observed ~68 ticks/sec, ~3.6% of real speed, with ~86
+seek-broadcasts/sec). Fixed: `correctDrift` now takes an `isHost` flag and
+skips the tick-comparison drift-reset branch for the host entirely (still
+gets start/pause status transitions); the seek-broadcast guard's
+`lastProgrammaticTick` is now also updated synchronously before each
+`tickPosition` assignment, closing a secondary race. Verified live
+post-fix: host tick advances at exactly ~1888 ticks/sec with ~0.4
+seeks/sec. Full writeup in `tasks-metronome-count-in-toggle-eb7d.md` T009
+and `tasks-playback-sync-fixes-0fec.md` T007. The lyrics ticker's background
+stacking/contrast bug (visible-but-wrong in light mode, invisible in dark
+mode) is **fixed and confirmed live in both themes**, 2026-07-04: root
+cause was alphaTab's own `.at-cursors` wrapper carrying an inline
+`z-index: 1000`, which beat `.lyrics-overlay`'s `z-index: auto` regardless
+of DOM order, plus a hardcoded near-black background indistinguishable
+from `--canvas-bg` in dark mode specifically. Fixed in
+`client/src/styles/motifs.css` (`.lyrics-overlay` now `z-index: 1001` and
+a theme-aware `color-mix(..., var(--surface-raised) ...)` background);
+this also required bumping `Modal.svelte`/`Toasts.svelte` from
+`z-index: 200` to `1010` so they stay above alphaTab's layer too — see
+`tasks-lyrics-ticker-75dd.md` for the full note. `hazard-bar-progress`
+T006 is now corroborated by the user's own live pass, 2026-07-04 (hard to
+isolate from the other concurrent bugs, but behaving more or less
+correctly) — called good for now. All manual-verification markers this
+session had known about are now either passed, or failed-then-fixed and
+re-confirmed live.
 
 ## Recommended Next Step
 
-1. Re-sign the full unsigned commit range before pushing anything to a
+1. Run `/ardd-implement` against any of the 4 new `status: ready` tasks
+   files (`tasks-session-lifecycle-836f.md`,
+   `tasks-lobby-cursor-race-c9f8.md`, `tasks-lyrics-pre-singing-e09e.md`,
+   `tasks-settings-modal-followup-bbd2.md`) — all four are approved and
+   waiting, none started.
+2. Decide the metronome-per-participant question (low priority, no rush) —
+   see `feedback-settings-modal-followup-d914.md`'s Reconsidered item.
+3. Re-sign the full unsigned commit range before pushing anything to a
    remote — every commit this entire session was made with
    `--no-gpg-sign` (1Password locked throughout).
-2. Separately, not blocking: attempt the outstanding live-browser checks
-   (playback-sync-fixes/lyrics-ticker scroll behavior, and
-   metronome/count-in audible confirmation).
+4. Separately, not blocking: attempt the remaining outstanding
+   live-browser checks listed above.

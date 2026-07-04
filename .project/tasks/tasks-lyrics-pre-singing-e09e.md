@@ -1,0 +1,22 @@
+---
+plan: plan-lyrics-pre-singing-2026-07-04.md
+generated: 2026-07-04
+status: ready
+---
+
+# Tasks
+
+## Phase 1: Placeholder + initial centering
+
+- [ ] T001 [artifacts: ui] Write the test first (constitution Principle VII): in `client/src/lyrics-overlay.ct.spec.ts`, add a new test "shows a centered, highlighted placeholder before any syllable activates" — mount `LyricsOverlayHarness`, and (without calling `drive()` at all) assert: `.lyric-syllable.at-highlight` has text content matching an ellipsis placeholder (e.g. `'… '` or whatever exact literal is used in T002), and its bounding-box horizontal center is within 2px of `.lyrics-overlay`'s own bounding-box horizontal center (same tolerance/pattern as the existing "centers the active syllable horizontally" test — no `waitForTimeout` needed here since there's no transition to settle, the initial position is set synchronously). Confirm this test fails against the current code (today nothing is highlighted or centered before the first `drive()` call).
+- [ ] T002 [artifacts: ui] [parallel] Update the existing first test in `client/src/lyrics-overlay.ct.spec.ts` ("highlights the correct syllable as tick position advances"): its opening assertion `await expect(highlighted()).toHaveCount(0);` is no longer correct once a permanently-present placeholder exists pre-activation — change it to assert the placeholder specifically is highlighted at that point (e.g. `await expect(highlighted()).toHaveText('… ')` or equivalent, matching T003's exact placeholder text), not that nothing is highlighted.
+- [ ] T003 [artifacts: ui] In `client/src/lyrics-overlay.ts`'s `createLyricsOverlay()`: create one placeholder `<span class="lyric-syllable lyrics-placeholder">… </span>` (literal ellipsis + trailing space, matching the existing syllable-span text convention) and `track.appendChild()` it *before* the loop that appends the real syllable spans, so it's `.lyrics-track`'s first child. Keep a reference to it (e.g. `const placeholder = ...`).
+- [ ] T004 [artifacts: ui] In the same file, update `centerActiveSyllable()`: replace its current `if (activeIndex < 0) return;` early-return with logic that centers on `placeholder` when `activeIndex < 0` (same `translateX` formula, substituting `placeholder` for `activeSpan`), and on `spans[activeIndex]` otherwise.
+- [ ] T005 [artifacts: ui] In the same file, immediately after the placeholder is created and appended (in `createLyricsOverlay()`, before the function returns — this is the "call once synchronously at creation time" step, since today `centerActiveSyllable` is only ever invoked reactively from `updateActiveSyllable`/the resize handler): add `placeholder.classList.add('at-highlight')` and call `centerActiveSyllable()` once, so the very first paint (before any `playerPositionChanged` event fires) is already centered and highlighted.
+- [ ] T006 [artifacts: ui] In `updateActiveSyllable()`: the first time `index` transitions from `-1` to `>= 0` within a single call, permanently remove the placeholder's highlight and presence (e.g. `placeholder.classList.remove('at-highlight'); placeholder.style.display = 'none';` — one-way, never re-shown, per the plan's decision that pausing mid-song does not bring it back). Guard this so it only runs on that specific `-1 → >= 0` transition, not on every call once already hidden.
+- [ ] T007 Run `pnpm --filter client test:ct` scoped to `lyrics-overlay.ct.spec.ts` and confirm all 4 tests (T001's new one, T002's updated one, and the two pre-existing untouched tests) pass.
+- [ ] T008 Manual verification in a real browser (this plan's version of the original T004): with dev servers running, select an instrument part with lyrics, open the Playback view before clicking Start, and confirm the ticker shows a centered, highlighted "…" immediately (no left-alignment, no snap). Click Start and confirm it transitions smoothly to the first real syllable with no visible jump. Record the result in this file (pass/fail, with specifics if fail) — do not mark this task complete until verified live.
+
+## Phase 2: Artifact revision
+
+- [ ] T009 [artifacts: ui] Revise `ui.md`'s Playback View lyrics-overlay paragraph to document the new pre-singing placeholder state: a centered, highlighted "…" shown from first render until the first real syllable activates, and that this is a one-way transition (pausing/resuming mid-song afterward keeps showing the last-active real syllable, never reverts to the placeholder). Bump `last_updated` to today's date; set `diagram_status: stale` if not already.

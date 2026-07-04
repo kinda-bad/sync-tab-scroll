@@ -122,6 +122,43 @@ status: completed
   (T002/T004, new) confirm the server validates host-only and sets
   `session.metronomeEnabled`/`countInEnabled` correctly, broadcasting
   `session-state`; `ws-client.ct.spec.ts` (pre-existing) confirms an
+
+  **FAILED — live-browser verification by the user, 2026-07-04, then fixed.**
+  With both Metronome and Count-in on, a joined participant's playback
+  started at the correct tempo, then went slow/janky once the count-in
+  countdown completed, with the metronome audibly retriggering rapidly.
+  Reproduced live (two tabs, host + member) with instrumented logging.
+  **Root cause, confirmed empirically (not guessed):** `correctDrift`
+  (`client/src/playback-sync.ts`) ran its drift-correction logic against
+  *the host's own client too*. The host is the sole source of
+  `playbackState.tickPosition` (via its own once/sec tick-report), so
+  comparing the host's real, continuously-advancing local tick against an
+  echo of its own up-to-1s-stale self-report meant drift exceeded the
+  50-tick threshold almost immediately after every report — hard-resetting
+  the host's own real playback position *backward* to that stale
+  checkpoint, dozens of times per second (confirmed via direct
+  instrumentation: local tick climbing correctly, e.g. 413→448 in a couple
+  ms of real audio, while the broadcast echo sat frozen at e.g. 393; each
+  ~50-tick overshoot snapped straight back). This produced apparent
+  playback at roughly 3.6% of real speed (measured: ~68 ticks/sec against
+  an expected ~1888 ticks/sec at this song's 118bpm) and replayed
+  metronome/count-in MIDI events on every reset. A secondary, compounding
+  bug: the seek-broadcast guard (`lastProgrammaticTick`, in
+  `playback-engine.ts`) was checked *after* `correctDrift` returned, but
+  assigning `api.tickPosition` fires `playerPositionChanged` synchronously
+  — one event too late, so some of these self-corrections were also
+  rebroadcast to the server as if they were real user seeks. **Fix:**
+  `correctDrift` now takes an `isHost` flag and skips its drift-comparison
+  branch entirely for the host (the host still gets the start/pause
+  status-transition branches, just never the tick-value comparison against
+  its own echo); `onApply` is now invoked synchronously before each
+  `tickPosition` assignment so `lastProgrammaticTick` is never stale when
+  the resulting event fires. Verified live after the fix: host's tick
+  advanced at exactly ~1888 ticks/sec (matching the song's real tempo) with
+  only 2 seek messages sent in 5 seconds (down from ~430 in 5 seconds
+  before the fix); member tab stayed visually in sync. New unit tests in
+  `playback-sync.test.ts` lock in both the host-skip and the still-correct
+  non-host drift-reset behavior.
   incoming `session-state` message updates the client store for any
   connected client, not just the sender; `playback-sync.test.ts`'s
   `applyPlaybackSettings` tests (pre-existing) confirm

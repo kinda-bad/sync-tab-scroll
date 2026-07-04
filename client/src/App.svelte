@@ -195,7 +195,7 @@
        this is an accepted minor inefficiency (unused padding when lyrics
        are toggled off) rather than new reactive plumbing to reclaim it
        precisely. */
-    padding-bottom: var(--lyrics-strip-height);
+    padding-bottom: calc(var(--lyrics-strip-height) * 2);
   }
   .engine-containers {
     /* Positioning context for .lyrics-overlay-container, so the overlay

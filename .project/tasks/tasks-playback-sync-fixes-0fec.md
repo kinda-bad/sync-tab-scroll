@@ -38,6 +38,28 @@ status: completed
 
   **Not verified live in a real browser** — this session has no interactive browser access to drive a real two-participant playback session (browser-automation audio is also blocked by Chrome's autoplay policy per this project's known limitation, so even automated verification of live cursor movement isn't possible). Verified instead via code reading + the automatable pieces: (1) `server/src/handlers/playback-tick-report.ts` correctly updates `session.playbackState.tickPosition`/`serverTimestamp` and broadcasts (T002/T003's passing tests exercise this directly); (2) `client/src/playback-engine.ts`'s new reporter sends the host's real, live `api.tickPosition` roughly every 1s while running (T005/T006's passing CT tests confirm the message shape and gating); (3) `correctDrift()` (`client/src/playback-sync.ts`, unchanged by this plan) already snaps to whatever `playbackState.tickPosition` it's given whenever drift exceeds 50 ticks — since that value is now kept moving by (1)+(2) instead of frozen, the rubberbanding root cause (a static broadcast value) is structurally addressed. **Live-browser confirmation of the actual visual behavior (cursor advancing without rubberbanding, for both host and a second participant) is still pending human verification** — flagging this explicitly rather than claiming a visual confirmation that wasn't actually observed.
 
+  **FAILED — live-browser verification, 2026-07-04, then fixed.** Same root
+  cause as `tasks-metronome-count-in-toggle-eb7d.md` T009 (full empirical
+  writeup there): `correctDrift()` was applying its drift-reset logic to the
+  **host's own client**, hard-resetting the host's real, live playback
+  position backward to an echo of its own up-to-1s-stale tick-report every
+  time drift exceeded 50 ticks — which was almost immediately, every report
+  cycle, since the host's real position advances continuously between
+  reports. This is the actual rubberbanding this task set out to fix, just
+  directed at the host instead of a joining participant — the (3) reasoning
+  above missed it by assuming `correctDrift`'s snap-to-broadcast behavior
+  was harmless for whoever holds the "source of truth" role; it isn't,
+  since the host's own broadcast is never more current than its last
+  self-report. **Fix (`client/src/playback-sync.ts`/`playback-engine.ts`):**
+  `correctDrift` now takes an `isHost` flag and skips the tick-comparison
+  drift-reset branch for the host entirely (start/pause status transitions
+  still apply). Verified live: host tick advanced at exactly the song's
+  real tempo (~1888 ticks/sec at 118bpm) post-fix, vs. ~68 ticks/sec (~3.6%
+  of real speed) before it, with the seek-broadcast rate dropping from
+  ~86/sec to ~0.4/sec. Member-side drift correction (the actual
+  cross-participant sync this task addresses) is unchanged and still
+  applies normally to non-host participants.
+
 ## Phase 3: Session code visibility
 
 - [x] T008 [artifacts: ui] Fix `client/src/App.svelte`'s `identity()` snippet (currently `{#if catalogSong} <song/artist> {:else} Join code: {session.code} {/if}`, meaning the join code disappears entirely once a song is selected): change it to always render `Join code: {session.code}`, and render the song name/artist alongside it (not instead of it) once `catalogSong` is set.

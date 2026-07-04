@@ -133,8 +133,9 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
       lastAppliedInteraction = canSeek;
     }
 
-    const appliedTick = correctDrift(api, s.session.playbackState);
-    if (appliedTick !== null) lastProgrammaticTick = appliedTick;
+    correctDrift(api, s.session.playbackState, isHost, (tick) => {
+      lastProgrammaticTick = tick;
+    });
     applyPlaybackSettings(api, s.session);
 
     // Spotlight mode (ui.md "lobby cursor"): force this participant's view

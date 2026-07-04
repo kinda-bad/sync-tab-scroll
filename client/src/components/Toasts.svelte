@@ -18,7 +18,10 @@
     display: flex;
     flex-direction: column-reverse;
     gap: var(--space-2);
-    z-index: 200;
+    /* Must exceed alphaTab's own internal .at-cursors z-index: 1000 (and
+       this app's lyrics-overlay z-index: 1001, see motifs.css) — toasts
+       have to stay on top of the persistent tab/lyrics engine regardless. */
+    z-index: 1010;
     max-width: 20rem;
   }
 

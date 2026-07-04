@@ -1,0 +1,27 @@
+---
+plan: plan-session-lifecycle-2026-07-04.md
+generated: 2026-07-04
+status: ready
+---
+
+# Tasks
+
+## Phase 1: Leave session control
+
+- [ ] T001 [artifacts: ui] Add a `close()` method to the `WsClient` interface and its `createWsClient()` implementation in `client/src/ws-client.ts` — closes the underlying `WebSocket` (`socket.close()`). This is currently missing entirely; the interface only exposes `send()`.
+- [ ] T002 In `client/src/session-persistence.ts`, add an exported `clearStoredSession()` function: `localStorage.removeItem(STORAGE_KEY)`.
+- [ ] T003 [artifacts: ui] Add a `leaveSession()` function (new file `client/src/leave-session.ts`, or alongside `session-persistence.ts` — pick based on existing file-per-concern conventions) that: (1) calls `clientStore`'s current `wsClient?.close()` (T001), (2) calls `clearStoredSession()` (T002), (3) resets `clientStore` back to its initial state (`view: 'landing'`, `session: null`, `selfParticipantId: null`, `wsClient: null` — match the exact initial shape in `client/src/store.ts`'s store creation, don't hand-roll a partial reset that drifts from it).
+- [ ] T004 [artifacts: ui] [parallel] Add a "Leave session" `Button` (ghost variant, per `brand.md`) to `client/src/components/Bar.svelte`'s `bar-controls` section (present in both Lobby and Playback per the persistent-Bar design — this is the only place already reachable from every session-scoped view, so it wins over adding a new Settings-modal entry) that calls `leaveSession()` from T003.
+- [ ] T005 Write a component test (`client/src/components/Bar.ct.spec.ts` — extend if it exists, or check whichever harness pattern other Bar-adjacent tests use) covering: clicking "Leave session" calls `wsClient.close()`, clears the `sync-tab-scroll:session` localStorage key, and resets `clientStore.view` to `'landing'`. Write this test first and confirm it fails red before T003/T004 exist (constitution Principle VII).
+- [ ] T006 [artifacts: ui] Revise `ui.md`'s Lobby View and Playback View sections (wherever the persistent Bar's controls are enumerated) to document the "Leave session" control's location (the Bar, not Settings) and behavior (closes the connection, clears local identity, returns to Landing — no server-side "left" notification, reuses the existing disconnect path). Bump `last_updated` to 2026-07-04 and set `diagram_status: stale` if not already.
+
+## Phase 2: Silent render-failure fix + loading indicator
+
+- [ ] T007 Write a test first (Principle VII) in `client/src/playback-engine.ct.spec.ts` (or wherever the persistent-engine/`ensurePlaybackEngine` tests already live — check `tasks-live-rendering-pivot-d9c2.md` for the exact file) that reproduces the race: mount with the tab container hidden (`display: none`), delay `scoreLoaded` firing until *after* `renderNowVisible()` is called with `state.scoreLoaded` still `false` at call time (simulating the narrow window), then assert the tab canvas eventually renders (non-empty SVG output) without requiring a second `renderNowVisible()` call or a reload. Confirm this fails red against current code.
+- [ ] T008 [artifacts: infrastructure] Fix the race in `client/src/playback-engine.ts`'s `renderNowVisible()` and its interaction with `tab-renderer.ts`'s own unconditional `api.scoreLoaded.on(...) => api.render()` handler: make the render self-healing rather than order-dependent. Concretely — in `renderNowVisible()`, after checking `state.scoreLoaded`, also check whether the container was actually visible (non-zero `clientWidth`) at the moment `scoreLoaded` fired; if it wasn't (i.e. `tab-renderer.ts`'s own render call would have silently no-op'd), force `state.api.render()` regardless of the `scoreLoaded` flag's timing. Simplest correct approach: track a boolean in `EngineState` (e.g. `renderedWhileVisible: boolean`, set inside a new `playback-engine.ts`-owned `scoreLoaded` check of `containers.tabContainer.clientWidth > 0` at fire-time) and have `renderNowVisible()` force a render whenever that's `false`, not only when `scoreLoaded` itself hasn't fired yet. Run T007's test and confirm it passes.
+- [ ] T009 [artifacts: ui] [parallel] Add a loading indicator to the Playback view (`client/src/views/Playback.svelte` or equivalent — check current view file names) shown for both instrument and lyrics-part participants from the moment the view transitions to `'playback'` until the engine's render/init actually completes (reuse `EngineState.scoreLoaded` plus the T008 visibility-completion signal, exposed via a small store update or callback from `playback-engine.ts` — don't duplicate readiness logic that already exists for the Lobby's `ReadinessBadge`, wire into the same underlying completion signal if one already exists post-T008). Style consistent with `brand.md`'s existing loading/readiness visual language (check `ReadinessBadge.svelte` for the established pattern).
+- [ ] T010 [artifacts: ui] Revise `ui.md`'s States section to document the new Playback-view loading indicator (what triggers it, what clears it). Bump `last_updated` to 2026-07-04.
+
+## Phase 3: Regression pass
+
+- [ ] T011 Run `pnpm --filter client test`, `pnpm --filter client test:ct`, and `pnpm --filter client test:e2e`. Confirm every test passes with no regressions, specifically re-checking any existing persistent-engine/Lobby→Playback transition tests from `tasks-live-rendering-pivot-d9c2.md` still pass unchanged. Report final test/file counts.

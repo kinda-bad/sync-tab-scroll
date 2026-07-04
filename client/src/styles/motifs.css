@@ -161,6 +161,13 @@
 }
 .lyrics-overlay {
   position: fixed;
+  /* alphaTab injects its own `.at-cursors` wrapper (position: absolute)
+     with an inline z-index: 1000 around the cursor/selection highlight
+     elements — confirmed live, not assumed. Because that's an explicit
+     z-index (not auto), it wins the paint order over this fixed element
+     regardless of DOM order, so the highlight band painted over/through
+     our background regardless of theme. Must exceed 1000. */
+  z-index: 1001;
   left: 0;
   right: 0;
   bottom: calc(var(--bar-height, 0px) + var(--space-4));
@@ -169,7 +176,11 @@
   align-items: center;
   white-space: nowrap;
   padding: var(--space-2) var(--space-3);
-  background: rgba(10, 10, 10, 0.75);
+  /* Was a hardcoded rgba(10, 10, 10, 0.75) — near-invisible in dark mode
+     since --canvas-bg is #0a0a0a too (confirmed live: literally black on
+     black). --surface-raised is each theme's own contrasting-against-bg
+     surface tone, so this now actually shows up in both themes. */
+  background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
   font-family: var(--font-mono);
   font-size: 0.9375rem;
   color: var(--ink-dim);
