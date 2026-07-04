@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03. Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-tasks` — plan approved, tasks generated for the `lyricCssColors` defect). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -28,9 +28,12 @@ None — no `[OPEN]` placeholders in any artifact.
 
 ## Constitution Compliance
 
-No violations found in the last full `/ardd-verify` re-survey. Principle I
-(single client store), Principle IV (handler routing), and Principle VI
-(production annotations) all spot-checked clean against current code.
+One violation found in the `/ardd-verify` re-survey just run: Principle II
+("No Dead Architecture") — `client/src/brand-colors.ts`'s unused
+`lyricCssColors` export (see Code-vs-Artifact Defects). Principles I
+(single client store), III (bootstrap files), IV (handler routing), V
+(library idioms), VI (named types), and VII (test-first) all spot-checked
+clean against current code.
 
 ## Diagrams
 
@@ -40,11 +43,14 @@ No violations found in the last full `/ardd-verify` re-survey. Principle I
 
 ## Code-vs-Artifact Defects
 
-5 known defects — see `DEFECTS.md`, last checked 2026-07-03. All 5 have
-since had corrective `/ardd-refine` passes applied to `ui.md`, `brand.md`,
-and `datamodel.md` — but `DEFECTS.md` itself is `/ardd-verify`'s sole
-write surface, so its defect list won't reflect these fixes until the
-next `/ardd-verify` run confirms them against code.
+1 known defect — see `DEFECTS.md`, last checked 2026-07-03 (full re-survey
+just run). The 5 previously-listed defects (`ui.md` x3, `brand.md`,
+`datamodel.md`) are confirmed resolved — the corrective doc commits held
+up against a fresh code read. One new defect surfaced: `client/src/
+brand-colors.ts` exports `lyricCssColors`, which is unused anywhere in
+the codebase and whose values have drifted from the token actually
+driving that role (`--riot`) — a Principle II ("No Dead Architecture")
+violation, unrelated to any artifact's own claims.
 
 ## Feature Backlog
 
@@ -61,6 +67,11 @@ next `/ardd-verify` run confirms them against code.
   `plan-song-catalog-selection-2026-07-01.md`, `-2026-07-02.md`,
   `plan-live-rendering-pivot-2026-07-01.md` — all implemented, merged to
   `main`.
+- `plan-fix-lyric-css-colors-dead-code-2026-07-03.md` — **approved**, on
+  branch `fix-lyric-css-colors-dead-code`. Single-phase cleanup: delete the
+  unused `lyricCssColors` export from `client/src/brand-colors.ts` (the
+  sole `DEFECTS.md` finding). Tasks: `tasks-fix-lyric-css-colors-dead-code-257c.md`
+  (`ready`, 3 tasks, 1 phase). No `features:` bound to this plan.
 
 ## Implementation Status
 
@@ -104,8 +115,10 @@ before pushing anything.
 
 ## Recommended Next Step
 
-Attempt a live-browser check of the two-participant no-rubberband
-playback fix and the lyrics ticker's scroll/centering behavior — the
-hazard-bar-progress finding suggests these might be checkable after all,
-contrary to earlier assumptions. Separately: re-sign the full unsigned
-commit range before pushing `main`.
+Run `/ardd-implement` on `tasks-fix-lyric-css-colors-dead-code-257c.md`
+(3 tasks, ready) to close out the `lyricCssColors` defect. Separately, and
+not blocking that: attempt a live-browser check of the two-participant
+no-rubberband playback fix and the lyrics ticker's scroll/centering
+behavior — the hazard-bar-progress finding suggests these might be
+checkable after all, contrary to earlier assumptions — and re-sign the
+full unsigned commit range before pushing `main`.

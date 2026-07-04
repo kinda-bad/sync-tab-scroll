@@ -15,17 +15,3 @@ export const lightTabColors = {
   rulingDim: new at.model.Color(0, 114, 168, 115), // deep cyan-blue (0.45 alpha) — staff lines
   rulingMid: new at.model.Color(0, 114, 168, 153), // deep cyan-blue (0.60 alpha) — barlines
 };
-
-/**
- * Plain CSS colors for lyric/cursor DOM overlays (brand.md) — a separate
- * concern from the alphaTab `Color` instances above, which only apply to
- * `display.resources`. Pink = active/right-now (cursor, sung syllable),
- * yellow = base content, deliberately distinct from the anticipatory
- * lobby pointer (also yellow, per brand.md).
- */
-export const lyricCssColors = {
-  activeDark: '#ff2d78', // neon-pink
-  baseDark: '#ffe600', // neon-yellow
-  activeLight: '#a3134f', // deep rose
-  baseLight: '#8a6a00', // deep amber-gold
-};
