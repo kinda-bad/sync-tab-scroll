@@ -74,4 +74,6 @@ export interface Session {
   lobbyCursorTick: number | null;
   /** Host-only toggle; while true, lobbyCursorTick force-follows every participant's view. Resets to false when playback starts. */
   spotlightMode: boolean;
+  /** Participant.id of a non-host asking to become host; null when no request is outstanding. See infrastructure.md Host Transfer. */
+  pendingHostRequest: string | null;
 }

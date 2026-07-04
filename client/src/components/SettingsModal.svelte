@@ -42,6 +42,18 @@
   function toggleCountIn() {
     wsClient?.send({ type: 'count-in-set', enabled: !session?.countInEnabled });
   }
+
+  function delegateHost(targetParticipantId: string) {
+    wsClient?.send({ type: 'host-delegate', targetParticipantId });
+  }
+
+  function requestHost() {
+    wsClient?.send({ type: 'request-host' });
+  }
+
+  function declineHostRequest() {
+    wsClient?.send({ type: 'host-request-decline' });
+  }
 </script>
 
 <Modal {open} {onClose} title="Settings">
@@ -55,8 +67,22 @@
       <span class="section-label">Participants</span>
       <ul class="list">
         {#each session.participants as p (p.id)}
+          {@const isSelf = p.id === $clientStore.selfParticipantId}
+          {@const isPendingRow = session.pendingHostRequest === p.id}
           <ListRow label={p.displayName} sublabel={p.role === 'host' ? 'HOST' : undefined}>
-            <ReadinessBadge readiness={p.readiness} connected={p.connectionStatus === 'connected'} />
+            {#if isPendingRow && isHost}
+              <Button variant="ghost" label="Decline" onclick={declineHostRequest} />
+            {:else if isPendingRow}
+              <span class="hint">Requesting host</span>
+            {:else}
+              <ReadinessBadge readiness={p.readiness} connected={p.connectionStatus === 'connected'} />
+            {/if}
+            {#if isHost && !isSelf}
+              <Button variant="ghost" label="Make host" onclick={() => delegateHost(p.id)} />
+            {/if}
+            {#if !isHost && isSelf}
+              <Button variant="ghost" label="Request to become host" disabled={session.pendingHostRequest !== null} onclick={requestHost} />
+            {/if}
           </ListRow>
         {/each}
       </ul>

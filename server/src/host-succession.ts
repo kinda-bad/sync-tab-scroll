@@ -1,4 +1,23 @@
+import type { Session } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './handlers/context.js';
+
+/**
+ * Moves host privileges to `toParticipantId`: the outgoing host (if any)
+ * becomes a `'member'`, the target becomes `'host'`, and `Session.hostId`
+ * is updated. This is the one shared implementation of that field swap —
+ * used by `promoteNextHost` below and by the `host-delegate` handler
+ * (infrastructure.md Host Transfer) — rather than each caller
+ * reimplementing it independently (constitution Principle II).
+ */
+export function transferHost(session: Session, toParticipantId: string): void {
+  const outgoingHost = session.participants.find((p) => p.id === session.hostId);
+  const nextHost = session.participants.find((p) => p.id === toParticipantId);
+  if (!nextHost) return;
+
+  if (outgoingHost) outgoingHost.role = 'member';
+  nextHost.role = 'host';
+  session.hostId = nextHost.id;
+}
 
 /**
  * Promotes the longest-tenured currently-connected participant (other than
@@ -18,9 +37,7 @@ export function promoteNextHost(ctx: HandlerContext, code: string): void {
   if (candidates.length === 0) return;
 
   const nextHost = candidates.reduce((longest, p) => (p.joinedAt < longest.joinedAt ? p : longest));
-  if (host) host.role = 'member';
-  nextHost.role = 'host';
-  session.hostId = nextHost.id;
+  transferHost(session, nextHost.id);
 
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
 }

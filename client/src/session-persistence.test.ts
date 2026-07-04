@@ -51,6 +51,7 @@ describe('startSessionPersistence', () => {
         metronomeEnabled: false,
         lobbyCursorTick: null,
         spotlightMode: false,
+        pendingHostRequest: null,
       },
       selfParticipantId: 'p1',
       catalog: [],

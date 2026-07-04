@@ -82,10 +82,43 @@ regardless of whether playback has started:
   rendered tab independently, and the lobby cursor's tick is shown only
   as an informational readout (not applied to anyone's view). Spotlight
   mode resets to off when playback starts, same as the lobby cursor
-  itself resetting to null. Below the lobby-cursor controls, two more
-  host-only toggles — "Metronome" and "Count-in" — set
-  `Session.metronomeEnabled`/`countInEnabled` (datamodel.md; already wired
-  to alphaTab's `metronomeVolume`/`countInVolume` in `playback-sync.ts`,
+  itself resetting to null. This is the default tab.
+
+  Also holds Host Transfer controls (infrastructure.md), which differ by
+  viewer and by row:
+  - **The host** sees a "Make host" control on every other connected
+    participant's row (never their own). Clicking it immediately
+    transfers host privileges to that participant, no confirmation
+    dialog — consistent with this app's existing pattern of treating host
+    actions as immediate and terse (e.g. re-selecting a song silently
+    resets every participant's part choice). If that row also happens to
+    have a pending request (below), clicking "Make host" grants it — there
+    is no separate "Accept" control, since granting a request and
+    delegating to that participant are the same action (infrastructure.md
+    Host Transfer). A row with a pending request additionally shows a
+    "Decline" control next to "Make host", for the host to reject the
+    request without transferring.
+  - **A non-host participant** sees a "Request to become host" control on
+    their own row only. It's disabled (not hidden) while
+    `Session.pendingHostRequest` is already set — to them or to anyone
+    else — so the reason it's unavailable stays visible instead of the
+    control silently disappearing.
+  - **Every participant** (host or not) sees whichever row
+    `Session.pendingHostRequest` currently points to render a pending-
+    request indicator instead of that row's normal readiness display —
+    interactive ("Decline", per above) for the host, a plain
+    non-interactive label for everyone else. This follows from the
+    feature's reliance on the ordinary `session-state` broadcast
+    (Principle I) rather than a host-only side channel: everyone sees the
+    same state, only the host's row-level controls are actionable.
+  - The list updates for everyone the moment the resulting `session-state`
+    broadcast arrives — no local optimistic update needed on any of these
+    actions.
+
+  Below the lobby-cursor controls, two more host-only toggles —
+  "Metronome" and "Count-in" — set `Session.metronomeEnabled`/
+  `countInEnabled` (datamodel.md; already wired to alphaTab's
+  `metronomeVolume`/`countInVolume` in `playback-sync.ts`,
   infrastructure.md, but previously had no message/handler letting the
   host actually set them). Same UI treatment as Spotlight mode: a
   Button-style toggle visible and interactive only for the host, with no
@@ -96,7 +129,7 @@ regardless of whether playback has started:
   because, like Spotlight mode and the lobby cursor, they're host-
   controlled *session* settings broadcast to everyone, not a personal
   display preference — the Settings tab is reserved for the latter (theme,
-  below). This is the default tab.
+  below).
 - **Settings**: a dark/light theme toggle — the app's first in-app theme
   control (`client/src/theme.ts`); toggling it switches both the app's CSS
   palette and the tab notation's colors together, and the choice persists
@@ -197,7 +230,11 @@ one view.
   showing the catalog picker only; the part picker within it appears
   once `Session.selectedSong` is set.
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,
-  not-host action attempts — surfaced as toasts, not blocking modals.
+  not-host action attempts, host-delegation/decline targeting a
+  participant who's no longer connected or no longer valid (a race
+  between clicking a Host Transfer control and that participant's state
+  changing), and requesting host while a request is already pending —
+  surfaced as toasts, not blocking modals.
 
 Color, typography, tone, and motion are owned by `brand.md`, not this
 artifact.

@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (on `main`, post-merge of `metronome-count-in-toggle` and `consented-song-submission`). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (on `main`, post-merge of `host-transfer`, `metronome-count-in-toggle`, and `consented-song-submission`). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -22,27 +22,23 @@ _Updated: 2026-07-03 (on `main`, post-merge of `metronome-count-in-toggle` and `
   re-recording consent per song becomes real friction for a repeat
   submitter.
 - CLI drop-in vs. web upload form for submission — resolved as CLI,
-  matching the pipeline's existing operator-driven model; a web upload
-  endpoint was explicitly considered and rejected (new public HTTP
-  surface, no existing submitter identity/session concept, no evidence of
-  need).
+  matching the pipeline's existing operator-driven model.
 - Real ToS legal text — not a design decision; a placeholder/dev value is
   used (`record-consent`'s `tosVersion`, production-annotated) until an
   operator supplies real text.
 
 These are documented defaults, not blockers — `consented-song-submission`
-is fully implemented and merged with all three resolved as above; a human
-can override any of them later without re-planning.
+is fully implemented and merged with all three resolved as above.
 
 ## Cross-Artifact Issues
 
-None found this pass. The "Consent Record" concept (datamodel.md) is
-referenced consistently by infrastructure.md's Song Consent Gate and
-pipeline.md's Consent Recording section. The `requireSongConsent`/
-`REQUIRE_SONG_CONSENT` flag is named consistently everywhere it's
-mentioned. `metronome-set`/`count-in-set` follow the exact same
-message/handler shape as the pre-existing `spotlight-mode-set`, no drift
-introduced.
+None found this pass. All five features merged this session
+(`host-delegation`, `request-to-become-host`, `metronome-toggle`,
+`count-in-toggle`, `consented-song-submission`) are consistently named
+and cross-referenced across `datamodel.md`, `infrastructure.md`, and
+`ui.md`. `ui.md`'s Participants tab now documents Host Transfer controls
+and the Metronome/Count-in toggles together, in the same order they
+actually render (`SettingsModal.svelte`).
 
 ## Within-Artifact Issues
 
@@ -53,12 +49,15 @@ introduced.
 
 ## Constitution Compliance
 
-No violations. `requireSongConsent`'s dual-mode branch in
-`catalog-loader.ts` is recorded in `consented-song-submission`'s plan as a
-justified Complexity Tracking deviation (default behavior unchanged).
-Principle VII (test-first) upheld throughout both newly-merged features —
-every handler, helper, and UI control shipped with a failing-test-first
-pair.
+No violations. Principle II (No Dead Architecture): the
+`host-delegation`/`request-to-become-host` merge reused one shared
+`transferHost()` helper across `host-succession.ts`'s existing promotion
+and the new `host-delegate` handler, rather than the three independent
+copies the two originally-parallel plans would have produced — this was
+the specific defect the `host-transfer` reconciliation existed to
+prevent, and it held up: a single implementation of the field swap.
+Principle VII (test-first) upheld throughout all three newly-merged
+features.
 
 ## Diagrams
 
@@ -70,67 +69,76 @@ pair.
 
 0 known defects as of the last full `/ardd-verify` pass (2026-07-03, on
 `fix-lyric-css-colors-dead-code`, since merged to `main`). Not re-run
-since — recommend a fresh `/ardd-verify` pass once `host-transfer` also
-merges, to confirm the three newly-merged features' artifacts still match
-code exactly.
+since three features' worth of code landed afterward — **recommend a
+fresh `/ardd-verify` pass now** to confirm `datamodel.md`,
+`infrastructure.md`, and `ui.md` still match the merged code exactly.
 
 ## Feature Backlog
 
-2 backlogged (`host-delegation`, `request-to-become-host` — implemented
-and tested on the still-unmerged `host-transfer` branch; will flip once
-merged) · 0 planned · 0 tasked · 6 implemented
+0 backlogged · 0 planned · 0 tasked · 8 implemented
 (`test-coverage-backfill`, `playwright-client-coverage`,
-`metronome-toggle`, `count-in-toggle`, `consented-song-submission`, and
-now `host-delegation`/`request-to-become-host` pending merge) — see
-`.project/artifacts/features.md`.
+`host-delegation`, `request-to-become-host`, `metronome-toggle`,
+`count-in-toggle`, `consented-song-submission`) — see
+`.project/artifacts/features.md`. Every feature logged to date is now
+implemented.
 
 ## Plans
 
-- `plan-metronome-count-in-toggle-2026-07-03.md` and
-  `plan-consented-song-submission-2026-07-03.md` — **implemented and
-  merged to `main`** (this session).
-- `plan-host-transfer-2026-07-03.md` — **implemented**, all 8 tasks
-  complete on branch `host-transfer` (75 server + 25 client unit + 27 CT
-  + 3 e2e tests passing there), **not yet merged to `main`**. Reconciled
-  the now-superseded `plan-host-delegation-2026-07-03.md` and
-  `plan-request-to-become-host-2026-07-03.md` drafts into one design.
+All plans drafted this session are now implemented and merged to `main`:
+`plan-fix-lyric-css-colors-dead-code-2026-07-03.md`,
+`plan-metronome-count-in-toggle-2026-07-03.md`,
+`plan-consented-song-submission-2026-07-03.md`, and
+`plan-host-transfer-2026-07-03.md` (which reconciled and superseded
+`plan-host-delegation-2026-07-03.md` and
+`plan-request-to-become-host-2026-07-03.md` — both still on disk marked
+`superseded`, kept as historical record on their own now-fully-merged
+branches).
 
 ## Implementation Status
 
-**Merged to `main` this session**: `fix-lyric-css-colors-dead-code`,
+**All backlogged features from this session are implemented and merged
+to `main`**: `fix-lyric-css-colors-dead-code`,
 `add-typecheck-precommit-hook`, `metronome-count-in-toggle`,
-`consented-song-submission`. All verified post-merge: `pnpm check` clean,
-server (71 tests) + client unit (25) + client CT (26) all passing.
+`consented-song-submission`, `host-transfer` (covering both
+`host-delegation` and `request-to-become-host`).
 
-**Complete but not yet merged**: `host-transfer` (branch `host-transfer`)
-— implements both `host-delegation` and `request-to-become-host` via one
-shared `transferHost()` mechanism. Expect a merge conflict against
-`main`'s already-merged `metronome-count-in-toggle` work, since both
-touch `packages/shared/src/messages.ts`, `server/src/dispatch.ts`, and
-`client/src/components/SettingsModal.svelte` — this was anticipated when
-both were planned to run in parallel.
+**Merge conflict resolution note** (`host-transfer` → `main`): as
+anticipated when `host-transfer` and `metronome-count-in-toggle` were
+run in parallel, both touched `packages/shared/src/messages.ts`,
+`server/src/dispatch.ts`, and `client/src/components/SettingsModal.svelte`.
+`messages.ts` and `dispatch.ts` auto-merged cleanly (pure additive
+union/switch entries). `SettingsModal.svelte`'s markup also auto-merged
+cleanly; only its `<script>` block's new function declarations needed a
+one-line manual combine. The two branches' independently-created
+`SettingsModal.ct.spec.ts` and `SettingsModalHarness.svelte` (add/add
+conflict — both created the same new files) were manually reconciled:
+unified on the props-based mount pattern (`host-transfer`'s harness
+design, which avoids `page.evaluate` race conditions) and rewrote the
+metronome/count-in tests to use it, keeping both test suites' full
+coverage (9 component tests total) rather than dropping either side.
 
 **Unsigned commits — needs attention before any push.** Every commit
 across this entire session (all branches, all merges) was made with
 `--no-gpg-sign` (1Password locked throughout). Re-sign the full range
 once 1Password is available, before pushing anything.
 
-**Known unresolved from earlier sessions**: the two-participant
+**Known unresolved from earlier work**: the two-participant
 no-rubberband playback fix and the lyrics ticker's live scroll/centering
-behavior haven't had a live-browser confirmation attempt yet (see prior
-STATUS.md revisions for the hazard-bar-progress finding suggesting these
-are checkable). `metronome-count-in-toggle`'s T009 (live audio check)
-also couldn't run unattended — needs a human to confirm live audio
+behavior haven't had a live-browser confirmation attempt yet.
+`metronome-count-in-toggle`'s live audio check (T009) also couldn't run
+unattended in a background agent — needs a human to confirm live audio
 behavior before treating that feature as fully confirmed, not just
 plumbing-verified.
 
 ## Recommended Next Step
 
-Merge `host-transfer` into `main`, expecting to manually resolve the
-anticipated conflict in `messages.ts`/`dispatch.ts`/`SettingsModal.svelte`
-against the already-merged `metronome-count-in-toggle` work (both are
-additive changes to the same files/switch statements, not overlapping
-logic — should be a mechanical merge, not a design conflict). Then: run
-a fresh `/ardd-verify` pass to confirm all three newly-implemented
-features' artifacts still match code exactly, and re-sign the full
-unsigned commit range before pushing anything.
+1. Run the full test suite (server, client unit, client CT, pipeline)
+   and `pnpm check` to confirm the merge is fully healthy before anything
+   else.
+2. Run a fresh `/ardd-verify` pass — three features' worth of code landed
+   since the last one.
+3. Re-sign the full unsigned commit range before pushing anything to a
+   remote.
+4. Separately, not blocking: attempt the outstanding live-browser checks
+   (playback-sync-fixes/lyrics-ticker scroll behavior, and
+   metronome/count-in audible confirmation).

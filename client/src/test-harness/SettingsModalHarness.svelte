@@ -1,15 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { clientStore } from '../store';
   import SettingsModal from '../components/SettingsModal.svelte';
+  import { clientStore } from '../store';
+  import type { WsClient } from '../ws-client';
+  import type { Session } from '@sync-tab-scroll/shared';
 
-  const sent: unknown[] = [];
-  const fakeWsClient = { send: (m: unknown) => sent.push(m) };
+  export let session: Session;
+  export let selfParticipantId: string;
 
   onMount(() => {
+    const sent: unknown[] = [];
+    const wsClient: WsClient = { send: (m) => sent.push(m) };
+    (window as unknown as { __sentMessages: unknown[] }).__sentMessages = sent;
     (window as unknown as { __clientStore: typeof clientStore }).__clientStore = clientStore;
-    (window as unknown as { __fakeWsClient: unknown }).__fakeWsClient = fakeWsClient;
-    (window as unknown as { __sent: unknown[] }).__sent = sent;
+
+    clientStore.set({ view: 'lobby', session, selfParticipantId, catalog: [], wsClient, playbackProgress: 0 });
   });
 </script>
 

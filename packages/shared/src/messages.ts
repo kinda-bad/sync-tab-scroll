@@ -12,7 +12,10 @@ export type ClientMessage =
   | { type: 'metronome-set'; enabled: boolean }
   | { type: 'count-in-set'; enabled: boolean }
   | { type: 'song-select'; songId: string }
-  | { type: 'playback-tick-report'; tickPosition: number };
+  | { type: 'playback-tick-report'; tickPosition: number }
+  | { type: 'host-delegate'; targetParticipantId: string }
+  | { type: 'request-host' }
+  | { type: 'host-request-decline' };
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }

@@ -16,6 +16,7 @@ describe('SessionStore.create', () => {
     expect(session.metronomeEnabled).toBe(false);
     expect(session.lobbyCursorTick).toBeNull();
     expect(session.spotlightMode).toBe(false);
+    expect(session.pendingHostRequest).toBeNull();
     expect(session.playbackState).toMatchObject({ status: 'stopped', tickPosition: 0, bpm: 120 });
   });
 
