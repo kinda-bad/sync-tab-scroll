@@ -1,7 +1,7 @@
 ---
 plan: plan-config-env-convention-2026-07-04.md
 generated: 2026-07-04
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -84,13 +84,13 @@ status: in-progress
 
 ## Phase 4: Full verification
 
-- [ ] T012 [artifacts: constitution] With no `.env` present (this worktree's
+- [x] T012 [artifacts: constitution] With no `.env` present (this worktree's
   actual state, matching a fresh clone/CI), run `pnpm -r --if-present run
   check`, client vitest (`pnpm --filter client test`), server vitest
   (`pnpm --filter server test`), and `npx playwright test --project=ct`
   (from `client/`). All must pass using code defaults, since `.env` is
   legitimately absent.
-- [ ] T013 [artifacts: constitution] Populate `server/.env` (`PORT=6080`)
+- [x] T013 [artifacts: constitution] Populate `server/.env` (`PORT=6080`)
   and `client/.env` (`VITE_BACKEND_PORT=6080`) — the real-world scenario a
   populated `.env` on a developer's machine represents — start both dev
   servers (server on 6080, client on 6000), then run
@@ -99,7 +99,7 @@ status: in-progress
   passes, and does not collide with the concurrently-running dev servers.
   This is the actual regression scenario the prior port-scheme fix
   protects against and the one T012 alone would miss.
-- [ ] T014 [artifacts: constitution] Run the shape-lint check itself
+- [x] T014 [artifacts: constitution] Run the shape-lint check itself
   (`pnpm check:env`) with both `.env` files populated (from T006/T010) to
   confirm it passes, then deliberately remove one key from one side (e.g.
   comment out `CATALOG_ROOT` in `server/.env`) and confirm it fails with a

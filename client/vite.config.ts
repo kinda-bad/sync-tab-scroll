@@ -1,4 +1,5 @@
-import { defineConfig, loadEnv } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
+import { loadEnv } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
