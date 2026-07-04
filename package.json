@@ -8,6 +8,7 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "check": "pnpm -r --if-present run check",
+    "check:env": "node scripts/check-env-parity.mjs server/.env server/.env.example && node scripts/check-env-parity.mjs client/.env client/.env.example",
     "prepare": "git config core.hooksPath .githooks"
   }
 }

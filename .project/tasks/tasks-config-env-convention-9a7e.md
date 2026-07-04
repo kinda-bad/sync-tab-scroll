@@ -16,18 +16,18 @@ status: in-progress
   an absent `.env` file passes trivially (nothing to drift against — this
   is the real, expected state on a fresh clone/CI, since `.env` is
   git-ignored). Confirm all four fail (no implementation exists yet).
-- [ ] T002 [artifacts: constitution] Implement `scripts/check-env-parity.mjs`:
+- [x] T002 [artifacts: constitution] Implement `scripts/check-env-parity.mjs`:
   a Node script taking two file paths as CLI args (`.env` path,
   `.env.example` path), parsing each as `KEY=value` lines (skip blank lines
   and `#`-comments), computing the symmetric difference of key sets, and
   exiting non-zero with a listing of mismatched keys if any exist — zero
   and silent if the `.env` side is absent or the key sets match. Make T001's
   tests pass.
-- [ ] T003 [artifacts: constitution] [parallel] Add an npm script (e.g.
+- [x] T003 [artifacts: constitution] [parallel] Add an npm script (e.g.
   root `package.json`'s `"check:env"`) invoking
   `node scripts/check-env-parity.mjs server/.env server/.env.example &&
   node scripts/check-env-parity.mjs client/.env client/.env.example`.
-- [ ] T004 [artifacts: constitution] Extend `.githooks/pre-commit` to run
+- [x] T004 [artifacts: constitution] Extend `.githooks/pre-commit` to run
   `pnpm check:env` (or equivalent direct invocation) after the existing
   `pnpm check` step, so a key added to one file and forgotten in the other
   fails the commit.
