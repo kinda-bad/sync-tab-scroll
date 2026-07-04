@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (`config-env-convention` merged to `main`: Principle VIII implemented and verified — server/.env + server/.env.example, client/.env + client/.env.example, a test-first shape-lint script wired into pre-commit, both dev/test port schemes (6000/6001/6080/6081) confirmed unaffected, including the build-time `import.meta.env` port-baking path the principle's motivating bug hit; CI wiring flagged as an open human decision, no CI provider exists yet. New feedback logged: server-unreachable UI has no indication/banner — plan drafted (`plan-server-failure-banner-2026-07-04.md`, branch `server-failure-banner`), `/ardd-tasks` next. New backlog item logged: `participant-selected-part`. 4 other feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (`config-env-convention` merged to `main`: Principle VIII implemented and verified — server/.env + server/.env.example, client/.env + client/.env.example, a test-first shape-lint script wired into pre-commit, both dev/test port schemes (6000/6001/6080/6081) confirmed unaffected, including the build-time `import.meta.env` port-baking path the principle's motivating bug hit; CI wiring flagged as an open human decision, no CI provider exists yet. `plan-server-failure-banner-2026-07-04.md` approved, `tasks-server-failure-banner-c97e.md` generated at `status: ready` — 10 tasks/6 phases, on branch `server-failure-banner`, now proceeding to `/ardd-implement`. New backlog item logged: `participant-selected-part`. 4 other feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -133,11 +133,13 @@ independently reviewed and approved this session:
   documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
   that plan's work.
 
-`feedback-server-failure-banner-f225.md` — **`status: open`**, new this
-pass: 1 Bug — the UI has no indication when the server is unreachable
-(WS never connects, or drops with no server-side error message); should
-show a persistent error banner until contact is restored. Tagged
-`[artifacts: ui, infrastructure]`. Not yet planned.
+`feedback-server-failure-banner-f225.md` — now `status: planned`, →
+`plan-server-failure-banner-2026-07-04.md` (`status: draft`, not yet
+approved/tasked). Its 1 Bug item is resolved: the UI has no indication
+when the server is unreachable; the plan adds connection-state tracking,
+a fixed-interval reconnect that reuses the existing reconnect-by-
+participantId path (`session-join.ts`), and a persistent
+`ConnectionBanner.svelte`.
 
 0 other open feedback files (`feedback-hazard-bar-progress-4925.md`,
 `feedback-lobby-cursor-mode-e13b.md`, `feedback-lyrics-ticker-bfd9.md`,
@@ -179,11 +181,18 @@ gap; `tasks-lyrics-pre-singing-e09e.md` caught a test assertion that breaks
 under the new design; `tasks-settings-modal-followup-bbd2.md` reordered a
 phase to satisfy constitution Principle VII test-first).
 
-**1 new plan (2026-07-04), `status: approved` with a `status: completed`
-tasks file (14/14):** `plan-config-env-convention-2026-07-04.md` →
-`tasks-config-env-convention-9a7e.md`, on branch `config-env-convention` (a
-separate worktree from the four plans above). Implements constitution
-Principle VIII — done, see Constitution Compliance above.
+**1 plan (2026-07-04), `status: approved` with a `status: completed`
+tasks file (14/14), merged to `main`:** `plan-config-env-convention-2026-07-04.md`
+→ `tasks-config-env-convention-9a7e.md`, was on branch
+`config-env-convention` (a separate worktree from the four plans above).
+Implements constitution Principle VIII — done, see Constitution
+Compliance above.
+
+**1 new plan, `status: approved`, `status: ready` tasks file, not
+implemented:** `plan-server-failure-banner-2026-07-04.md` →
+`tasks-server-failure-banner-c97e.md` (connection-status tracking +
+reconnect-with-retry + `ConnectionBanner.svelte`, 10 tasks/6 phases, on
+branch `server-failure-banner`) — proceeding to `/ardd-implement`.
 
 ## Implementation Status
 
