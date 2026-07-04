@@ -39,9 +39,15 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   wsClient.send({ type: 'readiness-update', readiness: 'loading' });
 
-  const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex });
+  // Mirrors main.ts's own `loadStoredTheme() ?? 'dark'` fallback — both
+  // agree dark is the default absent any preference. Read directly off the
+  // document rather than importing from theme.ts, which already imports
+  // setEngineTheme from this module (a reverse import here would be circular).
+  const theme: Theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 
-  state = { api, isLyricsPart, theme: 'dark', showOverlay: true, scoreLoaded: false };
+  const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
+
+  state = { api, isLyricsPart, theme, showOverlay: true, scoreLoaded: false };
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 

@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import PlaybackEngineHarness from './test-harness/PlaybackEngineHarness.svelte';
+import { lightTabColors } from './brand-colors';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
@@ -40,6 +41,54 @@ test('constructs the engine and renders real tab output without crashing', async
 
   await page.waitForTimeout(500);
   expect(pageErrors).toEqual([]);
+});
+
+/**
+ * Regression test for the theme-persistence bug (feedback-theme-persistence-bed6):
+ * `ensurePlaybackEngine()` used to hardcode a freshly-created engine's
+ * `state.theme` (and the `theme` passed to `createTabRenderer()`) to
+ * `'dark'`, ignoring `document.documentElement.dataset.theme` — the same
+ * attribute `theme.ts`'s `applyTheme()` sets from the persisted preference
+ * at app startup, before any engine exists. Sets that attribute directly via
+ * `page.evaluate` (so it's in place before `PlaybackEngineHarness.svelte`'s
+ * `onMount` calls `ensurePlaybackEngine`) and asserts the rendered tab's
+ * glyph color matches `lightTabColors.foreground`, not the dark default —
+ * mirroring `tab-renderer.ct.spec.ts`'s "setTheme visibly changes rendered
+ * resource colors" test's computed-style-on-`svg text` assertion style.
+ */
+test('a freshly-created engine picks up the document theme instead of hardcoding dark', async ({ mount, page }) => {
+  // Playwright CT's `page` fixture has already navigated to the mount
+  // index page by the time the test body runs, so `addInitScript` (which
+  // only affects *future* navigations) is too late here — set the
+  // attribute directly instead, before `mount()` injects/mounts the
+  // component into that already-loaded document.
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = 'light';
+  });
+
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  // Resolve lightTabColors.foreground (an alphaTab Color instance, r/g/b/a
+  // fields) to the same canonical string format getComputedStyle returns,
+  // by round-tripping it through the browser's own CSS color parser rather
+  // than hand-formatting an "rgb(...)" literal that might not match
+  // however alphaTab actually serializes the fill.
+  const { r, g, b, a } = lightTabColors.foreground;
+  const expectedFill = await page.evaluate(
+    ({ r, g, b, a }) => {
+      const probe = document.createElement('div');
+      probe.style.color = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+      document.body.appendChild(probe);
+      const resolved = getComputedStyle(probe).color;
+      probe.remove();
+      return resolved;
+    },
+    { r, g, b, a },
+  );
+
+  const actualFill = await component.getByTestId('tab-container').locator('svg text').first().evaluate((el) => getComputedStyle(el).fill);
+  expect(actualFill).toBe(expectedFill);
 });
 
 /**
