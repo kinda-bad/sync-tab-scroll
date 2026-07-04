@@ -1,0 +1,27 @@
+import type { HandlerContext } from './handlers/context.js';
+import { promoteNextHost } from './host-succession.js';
+
+/**
+ * Handles a socket disconnect for a given session/participant: marks the
+ * participant disconnected, clears a pending host request if it was theirs
+ * (infrastructure.md Host Transfer — an unreachable participant shouldn't
+ * remain a live pending request), broadcasts the resulting session-state,
+ * and starts the host-succession grace timer if the outgoing host was the
+ * one who disconnected. A no-op if the session is already gone.
+ */
+export function handleDisconnect(ctx: HandlerContext, sessionCode: string, participantId: string): void {
+  const session = ctx.sessionStore.get(sessionCode);
+  if (!session) return;
+
+  const participant = session.participants.find((p) => p.id === participantId);
+  if (participant) participant.connectionStatus = 'disconnected';
+
+  if (session.pendingHostRequest === participantId) session.pendingHostRequest = null;
+
+  ctx.sessionStore.markPossiblyEmpty(sessionCode);
+  ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
+
+  if (participantId === session.hostId) {
+    ctx.sessionStore.scheduleHostReassignment(sessionCode, () => promoteNextHost(ctx, sessionCode));
+  }
+}

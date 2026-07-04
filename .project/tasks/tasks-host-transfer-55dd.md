@@ -67,7 +67,7 @@ status: in-progress
   rejected. Implement to pass, then wire `case 'host-request-decline'`
   into `dispatch.ts` (sequenced after T004 — same file).
 
-- [ ] T006 [artifacts: infrastructure] [parallel] Update
+- [x] T006 [artifacts: infrastructure] [parallel] Update
   `server/src/server.ts`'s `close` handler: when the disconnecting
   participant's id matches `Session.pendingHostRequest`, clear it to
   `null` as part of the existing disconnect-triggered `session-state`
