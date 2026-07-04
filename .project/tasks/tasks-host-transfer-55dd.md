@@ -1,14 +1,14 @@
 ---
 plan: plan-host-transfer-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Shared transfer mechanics + datamodel
 
-- [ ] T001 [artifacts: infrastructure] Extract the field swap currently
+- [x] T001 [artifacts: infrastructure] Extract the field swap currently
   inlined in `server/src/host-succession.ts`'s `promoteNextHost`
   (`host.role = 'member'; nextHost.role = 'host'; session.hostId =
   nextHost.id;`) into a new exported function
