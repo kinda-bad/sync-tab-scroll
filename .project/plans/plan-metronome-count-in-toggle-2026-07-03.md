@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: metronome-count-in-toggle
 created: 2026-07-03
 features: [metronome-toggle, count-in-toggle]
