@@ -115,6 +115,74 @@ This grace period is configurable (`ServerConfig.hostReassignGraceMs`,
 env `HOST_REASSIGN_GRACE_MS`) — mainly so it can be shortened for tests;
 production default is 2 minutes.
 
+## Host Transfer
+
+Besides Host Succession's disconnect-triggered fallback (above), a
+currently-connected host can also move `Session.hostId` deliberately,
+through two entry points that share one underlying mechanism rather than
+each reimplementing it:
+
+- **Direct delegation** — the host picks a specific connected participant
+  and hands off immediately, no consent step. Message: `host-delegate
+  { targetParticipantId }`, host-only (same authorization pattern as
+  `playback-control`/`song-select`: host id checked against the
+  connection's participant id). Rejected if the target isn't an existing,
+  currently-connected participant, or is the sender themselves (a no-op,
+  rejected rather than silently ignored so the UI can surface it as an
+  error).
+- **Participant-initiated request** — a non-host participant asks first,
+  and the host explicitly grants or declines. Message: `request-host` (no
+  payload beyond connection identity) sets `Session.pendingHostRequest`
+  (datamodel.md) to the requester's `Participant.id`, rejected if the
+  sender is already host or a different request is already pending — one
+  outstanding request at a time, first-come-first-served. The host
+  declines with `host-request-decline` (host-only, rejected if nothing is
+  pending), which just clears `pendingHostRequest` with no transfer.
+  Granting a pending request is **not** a separate accept message — the
+  host grants it by sending `host-delegate` targeting the requester, the
+  same message Direct Delegation uses. This is deliberate, not an
+  oversight: once a request is pending, "delegate to that participant" and
+  "accept their request" are the same action with the same effect, so
+  giving them separate messages would mean two code paths producing an
+  identical `hostId`/`role` outcome — exactly the duplication constitution
+  Principle II exists to prevent. `host-delegate`'s handler clears
+  `pendingHostRequest` to null as part of its transfer whenever the target
+  it just promoted matches the pending requester (a no-op if there was no
+  pending request, or if the host delegated to someone other than the
+  requester — in which case the original request is simply left pending,
+  still awaiting an explicit grant or decline).
+- **Shared transfer mechanics**: both entry points, and Host Succession's
+  own disconnect-triggered promotion, perform the identical field swap
+  (`Session.hostId` moves to the new host, their `role` becomes `'host'`,
+  the outgoing host's `role` becomes `'member'`, seat/`joinedAt` otherwise
+  unchanged) through one function (`transferHost(session, toParticipantId)`
+  in `server/src/host-succession.ts`, exported and reused by
+  `host-delegate`'s and Host Succession's own promotion handler alike) —
+  not three independently hand-written copies of the same swap.
+  `host-request-decline` never calls it, since declining performs no
+  transfer.
+
+If the requesting participant disconnects while their request is still
+pending, the server clears `Session.pendingHostRequest` as part of the
+same disconnect handling that marks them `disconnected` — an unreachable
+participant shouldn't remain as a live pending request the host could
+still act on. If the *host* disconnects while a request is pending,
+`pendingHostRequest` is left as-is and Host Succession's own promotion
+logic proceeds independently on its own schedule, regardless of
+`pendingHostRequest`'s value — the newly-promoted (or reconnected
+original) host can still grant or decline the same pending request
+afterward. No timeout auto-clears an unanswered request; this app's
+small-group trust model doesn't call for one, and an ignored requester
+isn't blocked from anything except submitting a second request while the
+first is still pending.
+
+Every mutation above (`host-delegate`, `request-host`,
+`host-request-decline`) broadcasts the updated `session-state` the normal
+way — no separate result message or side-channel notification, consistent
+with Principle I: every participant, not just the host, sees who's
+requesting and who currently holds host privileges from the same shared
+state.
+
 ## Song Catalog Delivery
 
 The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,
