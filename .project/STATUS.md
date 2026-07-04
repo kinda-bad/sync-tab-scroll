@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-03 (post `/ardd-tasks` on branch `metronome-count-in-toggle` — plan approved, tasks generated). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-03 (post `/ardd-implement` on branch `metronome-count-in-toggle` — all 9 tasks complete). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -54,9 +54,10 @@ passing.
 
 ## Feature Backlog
 
-3 backlogged · 0 planned · 2 tasked (`metronome-toggle`, `count-in-toggle`)
-· 2 implemented (`test-coverage-backfill`, `playwright-client-coverage`) —
-see `.project/artifacts/features.md`.
+3 backlogged · 0 planned · 0 tasked · 4 implemented
+(`test-coverage-backfill`, `playwright-client-coverage`,
+`metronome-toggle`, `count-in-toggle`) — see
+`.project/artifacts/features.md`.
 
 ## Plans
 
@@ -76,16 +77,19 @@ see `.project/artifacts/features.md`.
   tasks. No `features:` bound to this plan.
 - `plan-metronome-count-in-toggle-2026-07-03.md` — **approved**, on branch
   `metronome-count-in-toggle`. Targets `metronome-toggle` and
-  `count-in-toggle`, both now `tasked` in `features.md`. Tasks:
-  `tasks-metronome-count-in-toggle-eb7d.md` (`ready`, 9 tasks across 4
-  phases: shared message types → server handlers (2 test-first pairs,
-  parallel) → client UI + component test → full-suite + live-browser
-  verification). Confirmed via alphaTab's type definitions that no
-  library-native toggle/session-sync mechanism exists to defer to
-  (constitution Principle V) — two new messages (`metronome-set`,
-  `count-in-set`) mirroring the existing `spotlight-mode-set` pattern is
-  the design. `ui.md` already updated (Participants tab gains two
-  host-only toggles below Spotlight mode).
+  `count-in-toggle`, both now `implemented` in `features.md`. Tasks:
+  `tasks-metronome-count-in-toggle-eb7d.md` — **completed**, 9/9 tasks.
+  Two new messages (`metronome-set`, `count-in-set`) mirroring the
+  existing `spotlight-mode-set` handler pattern exactly; two new host-only
+  toggle buttons in `SettingsModal.svelte`'s Participants tab (new
+  `SettingsModal.ct.spec.ts` + harness, none existed before). Full test
+  suite green (62 server + 25 client unit + 26 client CT). T009's
+  live-browser audio check was **not performed** — it requires an
+  interactive Chrome-browser connection step no autonomous background run
+  can drive; every link in the chain up to actual audibility is covered
+  by unit/component tests instead (see the tasks file for the exact
+  breakdown). **Recommend a human run this live check** before treating
+  the feature as fully confirmed in practice.
 
 ## Implementation Status
 
@@ -134,9 +138,10 @@ pushing anything.
 
 ## Recommended Next Step
 
-On this branch (`metronome-count-in-toggle`): run `/ardd-implement` on
-`tasks-metronome-count-in-toggle-eb7d.md` to build the two toggles.
-Separately, and not blocking that: merge `fix-lyric-css-colors-dead-code`
-back to `main`, attempt a live-browser check of the two-participant
-no-rubberband playback fix and the lyrics ticker's scroll/centering
-behavior, and re-sign all unsigned commits before pushing anything.
+This branch (`metronome-count-in-toggle`) is implementation-complete and
+ready to merge to `main` once a human confirms the T009 live-audio check
+(see Plans, above). Separately, and not blocking that: merge
+`fix-lyric-css-colors-dead-code` back to `main` if not already done,
+attempt a live-browser check of the two-participant no-rubberband
+playback fix and the lyrics ticker's scroll/centering behavior, and
+re-sign all unsigned commits before pushing anything.
