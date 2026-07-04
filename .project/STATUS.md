@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (constitution amended to 1.4.0 — new Principle VIII, config via `.env` synced by example, not yet implemented; 4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -47,7 +47,21 @@ and cross-referenced across `datamodel.md`, `infrastructure.md`, and
 
 ## Constitution Compliance
 
-No violations. Principle II (No Dead Architecture): the
+**Constitution amended to 1.4.0, 2026-07-04**: new Principle VIII (Config
+via `.env`, Synced by Example) — app config read from a single git-ignored
+`.env` per app, with a lint-enforced `.env.example` companion kept in
+lockstep (same key shape), checked pre-commit and in CI. Motivated by a
+real bug this session: `VITE_BACKEND_PORT=6081` prefixing only the
+`build` half of a `build && preview` shell command left `preview` silently
+using the wrong default. **Not yet implemented** — no `.env`,
+`.env.example`, or shape-lint script exists yet; current config
+(`server/src/config.ts`'s `PORT`/`CATALOG_ROOT`/`HOST_REASSIGN_GRACE_MS`/
+`REQUIRE_SONG_CONSENT`, `client/vite.config.ts`'s `VITE_BACKEND_PORT`) is
+a known, not-yet-closed gap against this new principle — track via
+`/ardd-verify` once implementation is planned, not a violation to fix
+right now.
+
+No other violations. Principle II (No Dead Architecture): the
 `host-delegation`/`request-to-become-host` merge reused one shared
 `transferHost()` helper across `host-succession.ts`'s existing promotion
 and the new `host-delegate` handler, rather than the three independent
@@ -212,5 +226,9 @@ re-confirmed live.
 3. Re-sign the full unsigned commit range before pushing anything to a
    remote — every commit this entire session was made with
    `--no-gpg-sign` (1Password locked throughout).
-4. Separately, not blocking: attempt the remaining outstanding
+4. Implement Principle VIII (config via `.env`/`.env.example`, pre-commit +
+   CI shape lint) — not started; a `/ardd-feature` or `/ardd-plan` pass
+   would cover migrating `server/src/config.ts` and
+   `client/vite.config.ts`'s current ad hoc env vars.
+5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.

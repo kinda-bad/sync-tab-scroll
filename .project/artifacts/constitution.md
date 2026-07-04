@@ -36,12 +36,27 @@ resulting gap (client, shared, and nearly all of server currently
 untested) as a present violation, not a grandfathered one. Follow-up:
 run `/ardd-verify` to log the gap in `DEFECTS.md`, then backlog closing
 it via `/ardd-feature` or a `/ardd-plan` pass.
+
+Version change: 1.3.0 → 1.4.0
+Added: Core Principle VIII (Config via .env, Synced by Example). Rationale:
+config values (PORT, CATALOG_ROOT, VITE_BACKEND_PORT, HOST_REASSIGN_GRACE_MS,
+REQUIRE_SONG_CONSENT) are currently set ad hoc via shell env-var prefixes
+scattered across playwright.config.ts's webServer commands and package.json
+scripts, with no single file a developer can inspect for the full set —
+and this already caused a real bug this session: `VITE_BACKEND_PORT=6081`
+prefixed only the first half of a `build && preview` command, so `preview`
+silently re-read vite.config.ts with the var unset and proxied to the wrong
+backend, with no error anywhere. A single `.env` (git-ignored, since it may
+hold real secrets once a public-deployment posture is pursued) plus a
+lint-enforced `.env.example` closes exactly that class of drift going
+forward. Not yet implemented — no `.env`/`.env.example`/lint script exists
+yet; this records the intended design ahead of building it.
 -->
 
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-02
+last_updated: 2026-07-04
 ---
 
 # sync-tab-scroll Constitution
@@ -176,6 +191,40 @@ created: the current lack of coverage across `client`, `packages/shared`,
 and all of `server` except one handler is a real, present violation of this
 principle, not a pre-existing condition it grandfathers in.
 
+### VIII. Config via `.env`, Synced by Example
+
+Application config values (ports, feature flags, external URLs, and any
+future secrets) are read from a single `.env` file per app/package that
+needs one — not scattered `process.env.X ?? <inline default>` calls
+treated as the source of truth with no single file a developer can
+inspect for the full set. `.env` is git-ignored: it may eventually hold
+real secrets (e.g. once a public-deployment posture is pursued), and a
+config file that mixes committed and secret values invites a leak the
+moment one more key is added carelessly. A companion `.env.example` is
+committed and kept in lockstep: every key in `.env` has a matching key in
+`.env.example`, populated with a sensible default for a non-secret value
+or an obvious placeholder for a secret one — never a real secret value. A
+lint check enforces the two files have the same key shape (same keys
+present, neither missing any the other has), run both pre-commit and in
+CI, so a key added to one and forgotten in the other fails loudly instead
+of silently drifting.
+
+*Rationale*: config values (server's `PORT`/`CATALOG_ROOT`/
+`HOST_REASSIGN_GRACE_MS`/`REQUIRE_SONG_CONSENT`, client's
+`VITE_BACKEND_PORT`) are currently set ad hoc via shell env-var prefixes
+scattered across `playwright.config.ts`'s `webServer` commands and
+`package.json` scripts, with no single file holding the full set. This
+already produced a real, silent bug this session: `VITE_BACKEND_PORT=6081`
+prefixed only the `build` half of a `build && preview` shell command —
+env-var prefixes don't carry across `&&` — so the `preview` process
+silently re-read `vite.config.ts` with the var unset, falling back to the
+wrong backend port for its `/catalog` proxy, with no error surfaced
+anywhere; it only showed up as a test rendering nothing. A single,
+inspectable `.env` per app, with a lint-enforced example file, closes
+exactly this class of drift going forward — a scattered, inline-default
+config surface is a config-specific instance of Principle I's single-
+source-of-state requirement.
+
 ## Quality Standards
 
 - A `package.json`'s declared `name` and `scripts` must match the actual
@@ -208,4 +257,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.3.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-02
+**Version**: 1.4.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-04
