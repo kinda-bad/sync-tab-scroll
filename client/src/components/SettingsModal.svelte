@@ -34,6 +34,14 @@
   function toggleSpotlightMode() {
     wsClient?.send({ type: 'spotlight-mode-set', enabled: !session?.spotlightMode });
   }
+
+  function toggleMetronome() {
+    wsClient?.send({ type: 'metronome-set', enabled: !session?.metronomeEnabled });
+  }
+
+  function toggleCountIn() {
+    wsClient?.send({ type: 'count-in-set', enabled: !session?.countInEnabled });
+  }
 </script>
 
 <Modal {open} {onClose} title="Settings">
@@ -68,6 +76,16 @@
             variant={session.spotlightMode ? 'riot' : 'ghost'}
             label={session.spotlightMode ? 'Spotlight mode: on' : 'Spotlight mode: off'}
             onclick={toggleSpotlightMode}
+          />
+          <Button
+            variant={session.metronomeEnabled ? 'riot' : 'ghost'}
+            label={session.metronomeEnabled ? 'Metronome: On' : 'Metronome: Off'}
+            onclick={toggleMetronome}
+          />
+          <Button
+            variant={session.countInEnabled ? 'riot' : 'ghost'}
+            label={session.countInEnabled ? 'Count-in: On' : 'Count-in: Off'}
+            onclick={toggleCountIn}
           />
         </div>
       {/if}
