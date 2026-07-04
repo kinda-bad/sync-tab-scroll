@@ -62,13 +62,13 @@ status: in-progress
 
 ## Phase 3: Client `.env` convention
 
-- [ ] T009 [artifacts: constitution] [parallel] Create `client/.env.example`
+- [x] T009 [artifacts: constitution] [parallel] Create `client/.env.example`
   (committed) with `VITE_BACKEND_PORT=6080` and the same cross-reference
   comment as server's `.env.example`.
-- [ ] T010 [artifacts: constitution] Create `client/.env` locally (not
+- [x] T010 [artifacts: constitution] Create `client/.env` locally (not
   committed) with the same key. Confirm
   `scripts/check-env-parity.mjs client/.env client/.env.example` passes.
-- [ ] T011 [artifacts: constitution] Update `client/vite.config.ts` to call
+- [x] T011 [artifacts: constitution] Update `client/vite.config.ts` to call
   `loadEnv(mode, process.cwd(), '')` and read
   `process.env.VITE_BACKEND_PORT ?? fileEnv.VITE_BACKEND_PORT ?? '6080'` for
   the `/catalog` proxy target in both the `server.proxy` and

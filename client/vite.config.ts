@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, loadEnv } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
@@ -12,7 +12,14 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 // VITE_BACKEND_PORT lets this same config point the /catalog proxy at
 // whichever backend is relevant (ws-client.ts reads the same var, via
 // import.meta.env, for the WS URL baked into the client bundle).
-const backendPort = process.env.VITE_BACKEND_PORT ?? '6080';
+//
+// Vite only auto-injects .env into import.meta.env (browser/build-time
+// code, e.g. ws-client.ts) — this file itself runs in Node and needs
+// loadEnv() to see .env at all. A shell-set var (e.g. playwright.config.ts's
+// e2e override) must still win over a .env-supplied value, so it's checked
+// first, not merged over.
+const fileEnv = loadEnv('', process.cwd(), '');
+const backendPort = process.env.VITE_BACKEND_PORT ?? fileEnv.VITE_BACKEND_PORT ?? '6080';
 
 export default defineConfig({
   plugins: [svelte()],
