@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (4 feedback-derived plans reviewed and task-generated in parallel by independent background agents; 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (this worktree: 3 of 4 tasks files fully implemented and committed — session-lifecycle, lobby-cursor-race, settings-modal-followup; lyrics-pre-singing 8/9 done, one live-browser check blocked by a fixture-catalog gap. 1 feedback item — metronome-per-participant — still awaiting the user's go/no-go). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -76,14 +76,14 @@ behavior exactly.
 ## Feedback
 
 `feedback-manual-verification-pass-4b3c.md` (`status: split`, 2026-07-04)
-was split into 4 group-specific files for parallel planning, each
-independently reviewed and approved this session:
-- `feedback-session-lifecycle-6876.md` — planned, → `plan-session-lifecycle-2026-07-04.md` → `tasks-session-lifecycle-836f.md` (ready)
-- `feedback-lobby-cursor-race-4262.md` — planned, → `plan-lobby-cursor-race-2026-07-04.md` → `tasks-lobby-cursor-race-c9f8.md` (ready)
-- `feedback-lyrics-pre-singing-1fa6.md` — planned, → `plan-lyrics-pre-singing-2026-07-04.md` → `tasks-lyrics-pre-singing-e09e.md` (ready)
+was split into 4 group-specific files for parallel planning; all 4 are now
+implemented (in this worktree, `worktree-agent-a3742a2bf2ac7cfe1`):
+- `feedback-session-lifecycle-6876.md` — planned, → `plan-session-lifecycle-2026-07-04.md` → `tasks-session-lifecycle-836f.md` (**completed**)
+- `feedback-lobby-cursor-race-4262.md` — planned, → `plan-lobby-cursor-race-2026-07-04.md` → `tasks-lobby-cursor-race-c9f8.md` (**completed**)
+- `feedback-lyrics-pre-singing-1fa6.md` — planned, → `plan-lyrics-pre-singing-2026-07-04.md` → `tasks-lyrics-pre-singing-e09e.md` (**in-progress, 8/9** — T008 live-browser confirmation blocked, see Implementation Status below)
 - `feedback-settings-modal-followup-d914.md` — **still `status: open`**: its
-  layout-regroup item is planned/tasked (→ `plan-settings-modal-followup-2026-07-04.md`
-  → `tasks-settings-modal-followup-bbd2.md`, ready), but its Reconsidered
+  layout-regroup item is planned/tasked/**implemented** (→ `plan-settings-modal-followup-2026-07-04.md`
+  → `tasks-settings-modal-followup-bbd2.md`, **completed**), but its Reconsidered
   item (metronome per-participant vs. host-controlled) is deliberately
   unresolved pending the user's explicit confirmation — it would reverse
   documented decisions in `datamodel.md`/`ui.md`. Not blocking the rest of
@@ -117,8 +117,9 @@ to `main`: `plan-fix-lyric-css-colors-dead-code-2026-07-03.md`,
 `superseded`, kept as historical record on their own now-fully-merged
 branches).
 
-**4 new plans (2026-07-04), all `status: approved` with a `status: ready`
-tasks file, none implemented yet:** `plan-session-lifecycle-2026-07-04.md`,
+**4 plans from 2026-07-04, all `status: approved`, all implemented in
+worktree `worktree-agent-a3742a2bf2ac7cfe1`** (not yet merged to `main` —
+awaiting review): `plan-session-lifecycle-2026-07-04.md`,
 `plan-lobby-cursor-race-2026-07-04.md`, `plan-lyrics-pre-singing-2026-07-04.md`,
 `plan-settings-modal-followup-2026-07-04.md`. Each was independently
 reviewed by a background agent against the live codebase (not just its own
@@ -130,8 +131,42 @@ phase to satisfy constitution Principle VII test-first).
 
 ## Implementation Status
 
-**All backlogged features from this session are implemented and merged
-to `main`**: `fix-lyric-css-colors-dead-code`,
+**Worktree `worktree-agent-a3742a2bf2ac7cfe1` (branched from `main` @
+`1c7eec8`), 2026-07-04 — 4 tasks files implemented, awaiting review/merge:**
+- `tasks-session-lifecycle-836f.md` — **completed** (11/11). Commits:
+  `9badada` (T001-T006, Leave-session control), `40345fe` (T007-T011,
+  self-healing invisible-render fix + Playback loading indicator).
+- `tasks-lobby-cursor-race-c9f8.md` — **completed** (6/6). Commits:
+  `4f996f3` (T001-T005, debounce helper + both send sites), `9932cb0`
+  (T006, live two-participant verification notes).
+- `tasks-settings-modal-followup-bbd2.md` — **completed** (6/6). Commit:
+  `e4467ad`.
+- `tasks-lyrics-pre-singing-e09e.md` — **in-progress, 8/9**. Commit:
+  `e1f6d5a` (T001-T007, T009). T008 (live-browser confirmation of the
+  centered "…" placeholder) not done: the committed test-fixture catalog
+  (`client/test-fixtures/fixture-catalog`) has no lyrics wired
+  (`lyricsTrackIndex: null`), so the lyrics-overlay code path never
+  activates against it — needs the real (gitignored) catalog, which
+  belongs to a different, concurrently-running worktree/session. CT
+  coverage (4/4 tests, including 2 new ones) exercises the exact same
+  production code end-to-end against real DOM/CSS, but per this project's
+  convention that's not conflated with an actual live-browser visual
+  check.
+- Regression: full client suite re-run clean at the end — 8 unit test
+  files / 31 tests, 38 CT tests, all passing, no regressions across any
+  of the 4 tasks files' combined changes. e2e not re-run in this worktree
+  (a stale dev server from earlier manual verification work occupies port
+  8080/4173 outside this worktree's control — environment artifact, not a
+  code issue; see `tasks-session-lifecycle-836f.md` T011 for the same
+  finding).
+- **Note on the count-in fix's own tasks file**: `tasks-metronome-count-in-toggle-eb7d.md`
+  and `tasks-playback-sync-fixes-0fec.md` (the `correctDrift` host-echo
+  fix) were completed in the **main working directory**, not this
+  worktree — already merged into the commit this worktree branched from
+  (`1c7eec8`).
+
+**All backlogged features from the 2026-07-03 session are implemented and
+merged to `main`**: `fix-lyric-css-colors-dead-code`,
 `add-typecheck-precommit-hook`, `metronome-count-in-toggle`,
 `consented-song-submission`, `host-transfer` (covering both
 `host-delegation` and `request-to-become-host`).
@@ -152,9 +187,10 @@ metronome/count-in tests to use it, keeping both test suites' full
 coverage (9 component tests total) rather than dropping either side.
 
 **Unsigned commits — needs attention before any push.** Every commit
-across this entire session (all branches, all merges) was made with
-`--no-gpg-sign` (1Password locked throughout). Re-sign the full range
-once 1Password is available, before pushing anything.
+across this entire session (all branches, all merges, including all 5
+commits in this worktree) was made with `--no-gpg-sign` (1Password locked
+throughout). Re-sign the full range once 1Password is available, before
+pushing anything.
 
 **Known unresolved from earlier work — updated 2026-07-04.** The user ran
 a manual-verification pass and confirmed two of these directly:
@@ -202,15 +238,19 @@ re-confirmed live.
 
 ## Recommended Next Step
 
-1. Run `/ardd-implement` against any of the 4 new `status: ready` tasks
-   files (`tasks-session-lifecycle-836f.md`,
-   `tasks-lobby-cursor-race-c9f8.md`, `tasks-lyrics-pre-singing-e09e.md`,
-   `tasks-settings-modal-followup-bbd2.md`) — all four are approved and
-   waiting, none started.
-2. Decide the metronome-per-participant question (low priority, no rush) —
+1. Review and merge worktree `worktree-agent-a3742a2bf2ac7cfe1` into
+   `main` — 3 of 4 tasks files fully completed, the 4th 8/9 done with one
+   known, explained gap (T008 live-browser check, see Implementation
+   Status). All tests pass (31 unit + 38 CT), typecheck clean.
+2. After merging, do the one remaining live-browser check T008 needs
+   (real catalog with a lyrics-bearing song, not the fixture) — confirm
+   the centered "…" placeholder and its smooth transition to the first
+   real syllable.
+3. Decide the metronome-per-participant question (low priority, no rush) —
    see `feedback-settings-modal-followup-d914.md`'s Reconsidered item.
-3. Re-sign the full unsigned commit range before pushing anything to a
+4. Re-sign the full unsigned commit range before pushing anything to a
    remote — every commit this entire session was made with
-   `--no-gpg-sign` (1Password locked throughout).
-4. Separately, not blocking: attempt the remaining outstanding
+   `--no-gpg-sign` (1Password locked throughout), including this
+   worktree's 5 commits.
+5. Separately, not blocking: attempt the remaining outstanding
    live-browser checks listed above.
