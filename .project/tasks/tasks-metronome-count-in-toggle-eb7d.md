@@ -1,14 +1,14 @@
 ---
 plan: plan-metronome-count-in-toggle-2026-07-03.md
 generated: 2026-07-03
-status: ready
+status: in-progress
 ---
 
 # Tasks
 
 ## Phase 1: Shared message types
 
-- [ ] T001 [artifacts: datamodel] Add `'metronome-set'` and
+- [x] T001 [artifacts: datamodel] Add `'metronome-set'` and
   `'count-in-set'` variants to `ClientMessage` in
   `packages/shared/src/messages.ts`, each shaped `{ type: 'metronome-set';
   enabled: boolean }` / `{ type: 'count-in-set'; enabled: boolean }`,
@@ -19,7 +19,7 @@ status: ready
 
 ## Phase 2: Server handlers (depends on Phase 1)
 
-- [ ] T002 [artifacts: datamodel] [parallel] Write a failing test
+- [x] T002 [artifacts: datamodel] [parallel] Write a failing test
   `server/src/handlers/metronome-set.test.ts`, structured like
   `server/src/handlers/spotlight-mode-set.test.ts`: (a) a non-host sender
   gets an `{ type: 'error' }` message and `session.metronomeEnabled` is
@@ -28,7 +28,7 @@ status: ready
   broadcast triggered. Confirm it fails (no handler exists yet) before
   moving to T003, per constitution Principle VII.
 
-- [ ] T003 [artifacts: datamodel] Implement
+- [x] T003 [artifacts: datamodel] Implement
   `server/src/handlers/metronome-set.ts`: resolve the connection/session,
   reject with `{ type: 'error', message: 'Only the host can control the
   metronome' }` if `session.hostId !== conn.participantId`, otherwise set
