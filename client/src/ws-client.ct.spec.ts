@@ -74,3 +74,27 @@ test('an incoming error message pushes a toast', async ({ mount }) => {
 
   await expect(component.getByTestId('toasts')).toContainText('boom');
 });
+
+test('connectionStatus becomes connected once the socket opens', async ({ mount }) => {
+  const component = await mount(WsClientHarness, { props: { url: `ws://localhost:${port}` } });
+
+  await expect(component.getByTestId('connection-status')).toHaveText('connected');
+});
+
+test('connectionStatus becomes disconnected when the server closes the connection', async ({ mount }) => {
+  const component = await mount(WsClientHarness, { props: { url: `ws://localhost:${port}` } });
+  await expect(component.getByTestId('connection-status')).toHaveText('connected');
+
+  for (const client of wss.clients) client.terminate();
+
+  await expect(component.getByTestId('connection-status')).toHaveText('disconnected', { timeout: 10_000 });
+});
+
+test('connectionStatus becomes disconnected when the socket never connects at all (server down)', async ({ mount }) => {
+  // A closed port on localhost — nothing listening, matching the original
+  // feedback's "server is down" scenario.
+  const deadPort = port + 1;
+  const component = await mount(WsClientHarness, { props: { url: `ws://localhost:${deadPort}` } });
+
+  await expect(component.getByTestId('connection-status')).toHaveText('disconnected', { timeout: 10_000 });
+});

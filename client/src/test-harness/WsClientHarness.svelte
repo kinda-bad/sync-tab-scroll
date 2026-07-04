@@ -16,6 +16,7 @@
 </script>
 
 <div data-testid="session-code">{$clientStore.session?.code ?? ''}</div>
+<div data-testid="connection-status">{$clientStore.connectionStatus}</div>
 <ul data-testid="toasts">
   {#each $toastStore as t (t.id)}
     <li>{t.message}</li>

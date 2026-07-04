@@ -15,7 +15,21 @@ export function createWsClient(url: string): WsClient {
   const pending: ClientMessage[] = [];
 
   socket.addEventListener('open', () => {
+    clientStore.update((s) => ({ ...s, connectionStatus: 'connected' }));
     for (const message of pending.splice(0)) socket.send(JSON.stringify(message));
+  });
+
+  // Both 'error' and 'close' land here as 'disconnected' — a socket that
+  // never connects at all (server down) fires both; a socket that drops
+  // after connecting fires 'close' (browsers don't fire 'error' for a
+  // clean-ish server-side close). ConnectionBanner.svelte treats "never
+  // connected" and "connected, then dropped" identically, so one status
+  // value covers both; T003 adds the retry that clears it.
+  socket.addEventListener('error', () => {
+    clientStore.update((s) => ({ ...s, connectionStatus: 'disconnected' }));
+  });
+  socket.addEventListener('close', () => {
+    clientStore.update((s) => ({ ...s, connectionStatus: 'disconnected' }));
   });
 
   socket.addEventListener('message', (event) => {
