@@ -23,6 +23,18 @@ interface EngineState {
   theme: Theme;
   showOverlay: boolean;
   scoreLoaded: boolean;
+  /**
+   * Whether the container was actually visible (non-zero `clientWidth`) at
+   * the moment `scoreLoaded` fired — `tab-renderer.ts`'s own unconditional
+   * `api.render()` there silently no-ops if it wasn't (alphaTab's native
+   * `ResizeObserver`-driven `triggerResize()` does not reliably self-heal
+   * this in practice — confirmed empirically, not assumed, via
+   * `playback-engine.ct.spec.ts`'s "recovers from scoreLoaded firing while
+   * the container is still hidden" regression test). `renderNowVisible()`
+   * uses this (not just `scoreLoaded` itself) to know whether it still owes
+   * the engine a real render.
+   */
+  renderedWhileVisible: boolean;
 }
 
 let state: EngineState | undefined;
@@ -47,7 +59,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
 
-  state = { api, isLyricsPart, theme, showOverlay: true, scoreLoaded: false };
+  state = { api, isLyricsPart, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
@@ -56,9 +68,13 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // alphaTab skips that render ("width=0, element invisible") and never
   // re-renders on its own once the container is shown. Track load state so
   // `renderNowVisible` can force a real render once the Playback view
-  // actually shows the container.
+  // actually shows the container. Also snapshot whether the container was
+  // actually visible *at this exact moment* — `scoreLoaded` becoming `true`
+  // doesn't by itself mean a real (non-zero-width) render happened.
   api.scoreLoaded.on(() => {
     state!.scoreLoaded = true;
+    if (!isLyricsPart) state!.renderedWhileVisible = containers.tabContainer.clientWidth > 0;
+    markEngineReadyIfComplete();
   });
 
   if (!isLyricsPart && song.lyricsTrackIndex !== null && song.lyricsLineIndex !== null && song.lyricLineBreaks) {
@@ -185,14 +201,40 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
 /**
  * Forces a real alphaTab render once the tab container is actually shown
- * (App.svelte calls this on the Lobby→Playback transition). No-op for a
- * lyrics-part participant (no visible tab canvas) or if the score hasn't
- * loaded yet (the engine's own scoreLoaded render will succeed on its own
- * once it fires, since the container is visible by then).
+ * (App.svelte calls this once, right after the container becomes visible).
+ * No-op for a lyrics-part participant (no visible tab canvas). If the score
+ * hasn't loaded yet, this is a no-op too — but only because the engine's own
+ * `scoreLoaded` handler will still fire later and, per its own
+ * `renderedWhileVisible` check, render for real at that point (the
+ * container is already visible by then). If the score *has* already loaded
+ * — including the narrow-window case where `scoreLoaded` fired while the
+ * container was still hidden, silently no-opping its own render — this is
+ * the one remaining place that owes the engine a real render, so it forces
+ * one whenever `renderedWhileVisible` is false, not only when `scoreLoaded`
+ * itself hasn't fired yet (self-healing rather than order-dependent).
  */
 export function renderNowVisible(): void {
-  if (!state || state.isLyricsPart || !state.scoreLoaded) return;
-  state.api.render();
+  if (!state || state.isLyricsPart) return;
+  if (state.scoreLoaded && !state.renderedWhileVisible) {
+    state.renderedWhileVisible = true;
+    state.api.render();
+    markEngineReadyIfComplete();
+  }
+}
+
+/**
+ * Flips `clientStore.engineReady` once this participant's own tab/lyrics
+ * have actually rendered (T009, tasks-session-lifecycle-836f) — `scoreLoaded`
+ * plus, for an instrument part, a real render having happened while visible
+ * (`renderedWhileVisible`). Read by `Playback.svelte`'s loading indicator;
+ * distinct from the cross-participant `Participant.readiness` broadcast
+ * (which also folds in SoundFont load and is a different concern — see
+ * `ClientState.engineReady`'s doc comment in store.ts).
+ */
+function markEngineReadyIfComplete(): void {
+  if (state && state.scoreLoaded && state.renderedWhileVisible) {
+    clientStore.update((s) => (s.engineReady ? s : { ...s, engineReady: true }));
+  }
 }
 
 export function toggleOverlay(): void {
@@ -202,7 +244,7 @@ export function toggleOverlay(): void {
 }
 
 /** Test-only accessor — not used by app code. Exposes the module's private engine state (specifically its alphaTab `api`) so component tests can assert on real drift-correction/Spotlight-mode/seek behavior without duplicating the wiring. */
-export function __getEngineStateForTesting(): { api: AlphaTabApi } | undefined {
+export function __getEngineStateForTesting(): { api: AlphaTabApi; scoreLoaded: boolean } | undefined {
   return state;
 }
 

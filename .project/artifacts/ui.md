@@ -237,6 +237,17 @@ one view. "Leave session" (Lobby View, above) is likewise always present.
   actually observe everyone reach `ready` before starting; the renderer/
   headless instance and its containers persist across the Lobby→Playback
   transition rather than being torn down and recreated.
+
+  The Playback view additionally shows its own prominent, centered
+  "Loading tab…"/"Loading lyrics…" banner — distinct from the small
+  per-participant `ReadinessBadge` in the persistent Bar (easy to miss
+  once a participant is already on this view with nothing rendering).
+  This clears once the tab/lyrics have actually finished rendering, not
+  merely once the score has parsed — a real render can silently no-op if
+  it happens to occur while the tab container is momentarily hidden (a
+  narrow client-side timing window), so "loaded" and "actually visible"
+  are tracked as two separate conditions internally; the banner is keyed
+  off the latter; it's never a silent, indefinite stall.
 - **Empty**: no song selected yet — the song/part modal auto-opens
   showing the catalog picker only; the part picker within it appears
   once `Session.selectedSong` is set.

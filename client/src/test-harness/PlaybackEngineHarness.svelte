@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ensurePlaybackEngine, __getEngineStateForTesting } from '../playback-engine';
+  import { ensurePlaybackEngine, renderNowVisible, __getEngineStateForTesting } from '../playback-engine';
   import { clientStore } from '../store';
   import type { CatalogSong } from '@sync-tab-scroll/shared';
   import type { WsClient } from '../ws-client';
 
   export let gpFilePath: string;
   export let trackIndex: number;
+  export let startHidden = false;
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -18,10 +19,16 @@
     (window as unknown as { __sentMessages: unknown[]; __wsClient: WsClient; __getApi: () => unknown }).__sentMessages = sent;
     (window as unknown as { __wsClient: WsClient }).__wsClient = wsClient;
     (window as unknown as { __getApi: () => unknown }).__getApi = () => __getEngineStateForTesting()?.api;
+    (window as unknown as { __getEngineState: () => unknown }).__getEngineState = () => __getEngineStateForTesting();
     // Test-only: exposes the real clientStore so a CT test can drive
     // isHost/playbackState.status without a real WS server — the reporter
     // timer under test (playback-engine.ts) reads this store directly.
     (window as unknown as { __clientStore: typeof clientStore }).__clientStore = clientStore;
+    // Test-only hook for T007's render-race repro (tasks-session-lifecycle-836f.md):
+    // lets the test call the exact production function at a controlled instant,
+    // and separately lets the test flip visibility independent of any Svelte
+    // reactive block (App.svelte's own tick()+rAF safety net isn't present here).
+    (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible = renderNowVisible;
 
     const song: CatalogSong = {
       id: 'creep',
@@ -39,6 +46,6 @@
   });
 </script>
 
-<div bind:this={tabContainer} data-testid="tab-container"></div>
+<div bind:this={tabContainer} data-testid="tab-container" style={startHidden ? 'display: none' : ''}></div>
 <div bind:this={overlayContainer} data-testid="overlay-container"></div>
 <div bind:this={fullLyricsEl} data-testid="full-lyrics"></div>

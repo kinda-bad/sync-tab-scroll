@@ -281,3 +281,86 @@ test('does not report tickPosition when status is not running', async ({ mount, 
   );
   expect(reports).toEqual([]);
 });
+
+/**
+ * Regression test for the silent-render-failure bug (feedback-session-lifecycle-6876,
+ * tasks-session-lifecycle-836f T007/T008): reproduces the narrow race where
+ * `scoreLoaded` fires (and `tab-renderer.ts`'s own unconditional `api.render()`
+ * silently no-ops) while the tab container is still `display: none`. Mirrors
+ * App.svelte's real usage exactly: the container becomes visible, then
+ * `renderNowVisible()` is called exactly once afterward (App.svelte's own
+ * `tick().then(rAF(...))` one-shot, triggered by that same visibility
+ * change) — never called while still hidden, since real usage couldn't do
+ * that (visibility and the call are driven by the same reactive value).
+ * Isolates whether alphaTab's own native `ResizeObserver`-driven
+ * `triggerResize()` (confirmed present in
+ * `node_modules/@coderline/alphatab/dist/alphaTab.js`'s `AlphaTabApi`
+ * constructor: `this.container.resize.on(throttle(() => { if
+ * (this.container.width !== this._renderer.width) this.triggerResize() }))`)
+ * already self-heals this on its own in a real browser engine (Playwright
+ * CT) — empirically it does not — or whether it genuinely needs T008's
+ * explicit fix.
+ */
+test('recovers from scoreLoaded firing while the container is still hidden', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, startHidden: true } });
+
+  // Confirm the premise: scoreLoaded fires while hidden, and its own render is a no-op (no SVG yet).
+  await page.waitForFunction(
+    () => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true,
+    { timeout: 20_000 },
+  );
+  await expect(component.getByTestId('tab-container').locator('svg')).toHaveCount(0);
+
+  // Now make the container visible, then call renderNowVisible() exactly once — matching App.svelte's real, single call site.
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="tab-container"]')!.setAttribute('style', '');
+  });
+  await page.evaluate(() => (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible());
+
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+});
+
+function readEngineReady(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    let value: unknown;
+    const unsub = (window as unknown as { __clientStore: { subscribe: (fn: (s: unknown) => void) => () => void } }).__clientStore.subscribe(
+      (s) => (value = (s as { engineReady: boolean }).engineReady),
+    );
+    unsub();
+    return value as boolean;
+  });
+}
+
+/**
+ * Regression test for the loading-indicator signal (T009,
+ * tasks-session-lifecycle-836f): `clientStore.engineReady` must stay false
+ * until the tab has actually rendered, then flip true — this is exactly
+ * what `Playback.svelte`'s loading banner keys off. Not a Svelte-component
+ * test of `Playback.svelte` itself (its `{#if !$clientStore.engineReady}`
+ * is a one-line conditional with no logic of its own worth a dedicated
+ * harness for) — this covers the actual production logic
+ * (`markEngineReadyIfComplete`) that drives it, end-to-end against a real
+ * alphaTab render.
+ */
+test('clientStore.engineReady flips true only once the tab has actually rendered', async ({ mount, page }) => {
+  // Deliberately hidden at mount: proves engineReady only flips once a real,
+  // visible render actually happens (T008's renderedWhileVisible gate), not
+  // merely once scoreLoaded fires — the fixture is small enough that
+  // scoreLoaded (and, if this gate didn't exist, engineReady) could
+  // otherwise flip before this test even gets to check.
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, startHidden: true } });
+
+  await page.waitForFunction(
+    () => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true,
+    { timeout: 20_000 },
+  );
+  expect(await readEngineReady(page)).toBe(false);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="tab-container"]')!.setAttribute('style', '');
+  });
+  await page.evaluate(() => (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible());
+
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => readEngineReady(page), { timeout: 5_000 }).toBe(true);
+});

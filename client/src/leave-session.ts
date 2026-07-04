@@ -19,5 +19,6 @@ export function leaveSession(): void {
     catalog: [],
     wsClient: null,
     playbackProgress: 0,
+    engineReady: false,
   });
 }
