@@ -18,7 +18,6 @@ test('a mounted component re-renders when clientStore.set is called', async ({ m
         hostId: 'p1',
         playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
         countInEnabled: false,
-        metronomeEnabled: false,
         lobbyCursorTick: null,
         spotlightMode: false,
       },

@@ -14,7 +14,6 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     hostId: 'host-1',
     playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
     countInEnabled: false,
-    metronomeEnabled: false,
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,
@@ -59,19 +58,18 @@ test('Session tab: a member sees the lobby-cursor readout but no host controls',
   await expect(component.getByText(/pointing at tick 960/)).toBeVisible();
   await expect(component.getByText('Set lobby cursor')).toHaveCount(0);
   await expect(component.getByText(/Spotlight mode/)).toHaveCount(0);
-  await expect(component.getByText('Metronome:')).toHaveCount(0);
   await expect(component.getByText('Count-in:')).toHaveCount(0);
 });
 
-test('Session tab: the host sees lobby-cursor, Spotlight, Metronome, and Count-in controls', async ({ mount }) => {
+test('Session tab: the host sees lobby-cursor, Spotlight, and Count-in controls (metronome is personal, not here)', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
 
   await component.getByRole('button', { name: 'Session' }).click();
   await expect(component.getByText('Set lobby cursor')).toBeVisible();
   await expect(component.getByText('Clear')).toBeVisible();
   await expect(component.getByText(/Spotlight mode:/)).toBeVisible();
-  await expect(component.getByText(/Metronome:/)).toBeVisible();
   await expect(component.getByText(/Count-in:/)).toBeVisible();
+  await expect(component.getByText(/Metronome:/)).toHaveCount(0);
 });
 
 test('Session tab: the Spotlight hint copy renders for the host', async ({ mount }) => {
@@ -85,26 +83,31 @@ test('Session tab: the Spotlight hint copy renders for the host', async ({ mount
   ).toBeVisible();
 });
 
-test('button label/variant reflects metronomeEnabled/countInEnabled', async ({ mount }) => {
+test('button label reflects countInEnabled', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
-    props: { session: baseSession({ metronomeEnabled: false, countInEnabled: true }), selfParticipantId: 'host-1' },
+    props: { session: baseSession({ countInEnabled: true }), selfParticipantId: 'host-1' },
   });
 
   await component.getByRole('button', { name: 'Session' }).click();
-  await expect(component.getByText('Metronome: Off')).toBeVisible();
   await expect(component.getByText('Count-in: On')).toBeVisible();
 });
 
-test('clicking Metronome sends metronome-set with the flipped value', async ({ mount, page }) => {
-  const component = await mount(SettingsModalHarness, {
-    props: { session: baseSession({ metronomeEnabled: false }), selfParticipantId: 'host-1' },
-  });
+// --- Preferences tab: personal, this-device settings -----------------------
 
-  await component.getByRole('button', { name: 'Session' }).click();
+test('Preferences tab: any participant sees the personal metronome toggle; clicking it persists locally and sends nothing', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByText('Metronome: Off')).toBeVisible();
+
   await component.getByText('Metronome: Off').click();
+  await expect(component.getByText('Metronome: On')).toBeVisible();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:metronome'));
+  expect(stored).toBe('on');
 
   const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
-  expect(sent).toContainEqual({ type: 'metronome-set', enabled: true });
+  expect(sent).toEqual([]);
 });
 
 test('clicking Count-in sends count-in-set with the flipped value', async ({ mount, page }) => {

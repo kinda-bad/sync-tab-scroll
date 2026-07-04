@@ -99,7 +99,7 @@ rather than unit tests.
   Layout must be easy to use and good-looking at both phone and desktop
   widths, vertical scroll OK, never horizontal; both themes; respect
   `prefers-reduced-motion`. T007 goes green.
-- [ ] T009 [artifacts: ui] Revise `ui.md`'s settings-modal section
+- [x] T009 [artifacts: ui] Revise `ui.md`'s settings-modal section
   (currently "two tabs": Participants/Settings) to describe the new tab
   structure, which controls live where and their host-visibility rules,
   and note the Spotlight hint is now in-UI copy. Bump `last_updated`,

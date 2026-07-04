@@ -69,7 +69,6 @@ export interface Session {
   hostId: string;
   playbackState: PlaybackState;
   countInEnabled: boolean;
-  metronomeEnabled: boolean;
   /** MIDI tick position the host is pointing at pre-playback; null once playback starts. Only force-follows participants' views while spotlightMode is true. */
   lobbyCursorTick: number | null;
   /** Host-only toggle; while true, lobbyCursorTick force-follows every participant's view. Resets to false when playback starts. */

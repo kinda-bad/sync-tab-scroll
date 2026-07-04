@@ -51,7 +51,6 @@ test('an incoming session-state message updates the client store', async ({ moun
           hostId: 'p1',
           playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
           countInEnabled: false,
-          metronomeEnabled: false,
           lobbyCursorTick: null,
           spotlightMode: false,
         },

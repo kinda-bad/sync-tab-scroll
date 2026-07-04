@@ -5,6 +5,8 @@
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
+  import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
+  import { setEngineMetronome } from '../playback-engine';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -15,6 +17,7 @@
   let activeTab: 'participants' | 'session' | 'preferences' = 'participants';
   let lobbyCursorInput = 0;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
+  let metronome = loadStoredMetronome();
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
@@ -38,8 +41,12 @@
     wsClient?.send({ type: 'spotlight-mode-set', enabled: !session?.spotlightMode });
   }
 
+  // Personal, this-device-only (ui.md Preferences tab): persists like the
+  // theme choice and applies to the live engine immediately; never a WS send.
   function toggleMetronome() {
-    wsClient?.send({ type: 'metronome-set', enabled: !session?.metronomeEnabled });
+    metronome = !metronome;
+    persistMetronome(metronome);
+    setEngineMetronome(metronome);
   }
 
   function toggleCountIn() {
@@ -119,11 +126,6 @@
         <span class="section-label">Playback audio</span>
         <div class="control-row">
           <Button
-            variant={session.metronomeEnabled ? 'riot' : 'ghost'}
-            label={session.metronomeEnabled ? 'Metronome: On' : 'Metronome: Off'}
-            onclick={toggleMetronome}
-          />
-          <Button
             variant={session.countInEnabled ? 'riot' : 'ghost'}
             label={session.countInEnabled ? 'Count-in: On' : 'Count-in: Off'}
             onclick={toggleCountIn}
@@ -136,6 +138,16 @@
   {:else}
     <span class="section-label">Theme</span>
     <Button variant="ghost" label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleTheme} />
+
+    <span class="section-label">Playback audio</span>
+    <div class="control-row">
+      <Button
+        variant={metronome ? 'riot' : 'ghost'}
+        label={metronome ? 'Metronome: On' : 'Metronome: Off'}
+        onclick={toggleMetronome}
+      />
+    </div>
+    <p class="hint">Only you hear your metronome.</p>
   {/if}
 </Modal>
 

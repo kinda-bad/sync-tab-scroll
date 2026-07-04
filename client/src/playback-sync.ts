@@ -73,11 +73,12 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
 }
 
 /**
- * Wires Session.metronomeEnabled/countInEnabled to alphaTab's native
- * metronome/count-in (ui.md) — applied identically whether the
- * participant's alphaTab instance is visible or headless.
+ * Wires Session.countInEnabled to alphaTab's native count-in (ui.md) —
+ * applied identically whether the participant's alphaTab instance is
+ * visible or headless. The metronome is deliberately not here: it's a
+ * client-local personal preference (metronome-preference.ts), applied by
+ * playback-engine at engine creation and via setEngineMetronome().
  */
 export function applyPlaybackSettings(api: AlphaTabApi, session: Session): void {
-  api.metronomeVolume = session.metronomeEnabled ? 1 : 0;
   api.countInVolume = session.countInEnabled ? 1 : 0;
 }

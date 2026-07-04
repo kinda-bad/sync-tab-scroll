@@ -115,7 +115,6 @@ function makeSession(overrides: { hostId: string; status: 'stopped' | 'running' 
     hostId: overrides.hostId,
     playbackState: { status: overrides.status, tickPosition: 0, bpm: 120, serverTimestamp: Date.now() },
     countInEnabled: false,
-    metronomeEnabled: false,
     lobbyCursorTick: null,
     spotlightMode: false,
   };

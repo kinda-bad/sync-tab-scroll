@@ -13,7 +13,6 @@ describe('SessionStore.create', () => {
     expect(session.availableParts).toEqual([]);
     expect(session.participants).toEqual([]);
     expect(session.countInEnabled).toBe(false);
-    expect(session.metronomeEnabled).toBe(false);
     expect(session.lobbyCursorTick).toBeNull();
     expect(session.spotlightMode).toBe(false);
     expect(session.pendingHostRequest).toBeNull();

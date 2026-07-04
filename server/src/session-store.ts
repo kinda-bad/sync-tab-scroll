@@ -35,7 +35,6 @@ export class SessionStore {
       hostId,
       playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: Date.now() },
       countInEnabled: false,
-      metronomeEnabled: false,
       lobbyCursorTick: null,
       spotlightMode: false,
       pendingHostRequest: null,
