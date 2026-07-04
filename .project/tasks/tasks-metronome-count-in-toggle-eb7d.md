@@ -52,7 +52,7 @@ status: in-progress
 
 ## Phase 3: Client UI (depends on Phase 2)
 
-- [ ] T006 [artifacts: ui] Add "Metronome" and "Count-in" host-only toggle
+- [x] T006 [artifacts: ui] Add "Metronome" and "Count-in" host-only toggle
   `<Button>` controls to `client/src/components/SettingsModal.svelte`'s
   Participants tab, placed immediately below the existing Spotlight-mode
   toggle. Each button: visible only when `isHost` (reuse the existing
@@ -66,7 +66,7 @@ status: in-progress
   `session-state` broadcast, same as every other session-wide toggle in
   this component.
 
-- [ ] T007 [artifacts: ui] [parallel] Before writing T006's markup, check
+- [x] T007 [artifacts: ui] [parallel] Before writing T006's markup, check
   whether `SettingsModal.svelte` already has a `.ct.spec.ts` covering the
   Spotlight-mode toggle (if none exists, this task creates one following
   `Bar.ct.spec.ts`'s harness pattern). Write a failing component test
