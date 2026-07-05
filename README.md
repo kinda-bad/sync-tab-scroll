@@ -15,46 +15,55 @@ erDiagram
     CatalogSong ||--o{ CatalogPart : "parts"
     CatalogSong ||--o{ Session : "selectedSong"
     CatalogPart ||--o{ Participant : "selectedPart"
+    CatalogSong ||--o| ConsentRecord : "consent (public deployment only)"
 
     Session {
         string code
-        string selectedSong
+        string selectedSong "CatalogSong.id or null"
         string hostId
         boolean countInEnabled
-        boolean metronomeEnabled
-        number lobbyCursorTick
+        number lobbyCursorTick "null once playback starts"
+        boolean spotlightMode
+        string pendingHostRequest "Participant.id or null"
     }
 
     Participant {
         string id
         string displayName
-        string role
-        string connectionStatus
-        string selectedPart
-        string readiness
+        string role "host | member"
+        string connectionStatus "connected | disconnected"
+        string selectedPart "trackIndex | 'lyrics' | null"
+        string readiness "no-part | loading | ready"
+        number joinedAt
     }
 
     CatalogSong {
+        string id "song slug"
         string name
         string artist
-        string gpFilePath
-        string lyricsLrc
-        number lyricsTrackIndex
-        number lyricsLineIndex
-        number_array lyricLineBreaks
+        string gpFilePath "client-fetchable URL"
+        string lyricsLrc "URL or null"
+        number lyricsTrackIndex "null on lrclib fallback"
+        number lyricsLineIndex "lyric channel, usually 0"
+        number_array lyricLineBreaks "syllables per line"
     }
 
     CatalogPart {
-        string id
         string instrumentName
-        number trackIndex
+        number trackIndex "stable id for instrument parts"
     }
 
     PlaybackState {
-        string status
-        number tickPosition
-        number bpm
+        string status "stopped | running | paused"
+        number tickPosition "host-client-authoritative"
+        number bpm "informational only"
         number serverTimestamp
+    }
+
+    ConsentRecord {
+        string submitterName
+        string tosVersion
+        number acceptedAt
     }
 ```
 
@@ -62,51 +71,76 @@ erDiagram
 
 ```mermaid
 graph TD
-    GP[Guitar Pro Source Files]
-    Pipeline[Lyrics Extraction Pipeline]
-    Catalog[(Per-Song Catalog Directory<br/>.gp + .lrc + meta.json)]
-    Server[Node + ws WebSocket Server]
-    Client[Svelte Client]
-    AlphaTab[alphaTab: renders tab + plays audio]
-    SoundFont[(SoundFont Asset)]
+    GP[Guitar Pro source files]
+    Lrclib[lrclib.net<br/>external lyrics source]
+    Pipeline[Offline lyrics-extraction pipeline<br/>alphaTab in Node]
+    Catalog[(Per-song catalog directory<br/>.gp + .lrc + meta.json + consent record)]
+    Server[Node + ws server<br/>in-memory sessions, host succession/transfer,<br/>consent gate at catalog load]
+    HTTP[Static HTTP route<br/>/catalog/...]
+    Client[Svelte client<br/>single store, reconnect-by-identity,<br/>2s retry on connection loss]
+    AlphaTab[alphaTab instance per participant<br/>visible renderer or headless<br/>renders tab + plays audio + native cursor]
+    SoundFont[(SoundFont asset<br/>multi-MB, part of load readiness)]
 
     GP --> Pipeline
+    Lrclib -->|line breaks or full .lrc fallback| Pipeline
     Pipeline -->|writes .gp, .lrc, meta.json| Catalog
-    Server -->|reads catalog| Catalog
-    Client <-->|WebSocket: playback control, PlaybackState| Server
-    Client -->|loads .gp + catalog meta| AlphaTab
-    SoundFont -->|loaded for audio playback| AlphaTab
-    AlphaTab -->|tickPosition/timePosition drift correction| Client
+    Catalog -->|loaded once at startup,<br/>paths rewritten to URLs| Server
+    Server --- HTTP
+    HTTP -->|.gp and .lrc fetches| Client
+    Client <-->|WebSocket: session-state broadcasts,<br/>playback-control, song-select, host transfer| Server
+    Client -->|host only: playback-tick-report ~1/s| Server
+    Server -->|periodic PlaybackState broadcast<br/>drift correction against 50-tick threshold| Client
+    Client --> AlphaTab
+    SoundFont --> AlphaTab
 ```
 
 ## UI
 
 ```mermaid
 graph TD
-    App[App / View Router]
-    Landing[Landing View]
-    Lobby[Lobby View]
-    Playback[Playback View]
-    PartPicker[Song / Part Picker]
-    ParticipantList[Participant List]
-    LobbyCursor[Lobby Cursor Pointer]
-    InstrumentView[Instrument Part Rendering]
-    LyricsView[Lyrics Part Rendering]
-    AlphaTabVisible[Visible alphaTab Renderer + Native Cursor]
-    LyricsOverlay[In-Tab Lyrics Overlay]
-    AlphaTabHeadless[Headless alphaTab Instance]
-    FullLyrics[Full Lyrics Text View]
+    App[App / view-state router<br/>single client store]
+    Banner[Connection-lost banner<br/>all views, non-dismissing]
+    Bar[Persistent bar<br/>join code + song, Song & part,<br/>settings cog, Leave session]
+    Toasts[Error toasts]
+    Landing[Landing view<br/>create / join forms]
+    Lobby[Lobby view<br/>state-dependent hint line]
+    Playback[Playback view]
 
+    SongPartModal[Song & part modal<br/>forced-open until both set]
+    CatalogPicker[Catalog picker - host only]
+    PartPicker[Part picker incl. Lyrics option]
+
+    SettingsModal[Settings modal]
+    TabParticipants[Participants tab<br/>list + host transfer controls]
+    TabSession[Session tab<br/>lobby cursor + Spotlight mode,<br/>host Count-in toggle]
+    TabPreferences[Preferences tab<br/>theme toggle, personal metronome]
+
+    InstrumentView[Instrument part rendering]
+    AlphaTabVisible[Visible alphaTab renderer<br/>native cursor overlay]
+    Ticker[In-tab lyrics ticker<br/>single-line, snap-centered syllable]
+    LyricsView[Lyrics part rendering]
+    AlphaTabHeadless[Headless alphaTab instance<br/>audio + shared clock only]
+    FullLyrics[Full lyrics text view<br/>.lrc line timestamps]
+    LoadingBanner[Loading tab/lyrics banner]
+
+    App --> Banner
+    App --> Bar
+    App --> Toasts
     App --> Landing
     App --> Lobby
     App --> Playback
-    Lobby --> PartPicker
-    Lobby --> ParticipantList
-    Lobby --> LobbyCursor
+    Bar --> SongPartModal
+    Bar --> SettingsModal
+    SongPartModal --> CatalogPicker
+    SongPartModal --> PartPicker
+    SettingsModal --> TabParticipants
+    SettingsModal --> TabSession
+    SettingsModal --> TabPreferences
+    Playback --> LoadingBanner
     Playback --> InstrumentView
     Playback --> LyricsView
     InstrumentView --> AlphaTabVisible
-    InstrumentView -.->|optional toggle| LyricsOverlay
+    InstrumentView -.->|optional toggle| Ticker
     LyricsView --> AlphaTabHeadless
     LyricsView --> FullLyrics
 ```

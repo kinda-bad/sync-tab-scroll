@@ -1,13 +1,24 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (`/ardd-refine datamodel`: fixed the one cross-artifact drift the prior `/ardd-analyze` pass found — `Participant.selectedPart`'s note now correctly attributes only the shared *clock* to the lyrics part's headless alphaTab instance, with the metronome described as this participant's own personal preference applied locally, not a session-level setting. `datamodel.md` stays `status: draft` (its 3 pre-existing open questions — consent-record shape, ToS text, CLI-vs-web submission — are documented defaults with rationale, unrelated to this fix, left untouched). Two minor, non-blocking notes from that `/ardd-analyze` pass remain outstanding (see Cross-Artifact Issues): `features.md`'s stale "Metronome toggle" entry, and a same-name-different-concept note between `ui.md`'s "Connection lost" state and `datamodel.md`'s `Participant.connectionStatus`. 0 open feedback files. `DEFECTS.md`'s last pass was scoped to the lyrics-only-view fix and Principle VIII only — most of this session's other work has not had a code-vs-artifact `/ardd-verify` pass yet. Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-05 (`/ardd-analyze` after fixing the count-in cursor bug:
+the beat cursor no longer slides during the count-in bar —
+`installCountInCursorGuard` in `client/src/playback-sync.ts` wraps
+alphaTab's public `customCursorHandler` extension point, degrading cursor
+transitions to plain placements while the count-in window is open.
+Committed as `75e2a43` on `main`; the repo is currently checked out on
+branch `lyrics-ticker-font-size` (which contains that commit) with
+uncommitted `/ardd-verify` + `/ardd-plan` outputs in the working tree:
+modified `DEFECTS.md`/`STATUS.md`, the two untracked draft plans, and the
+consumed `feedback-defects-followup-743b.md`. All 280 commits in history
+now verify as signed — the earlier "re-sign before pushing" item is
+resolved._
 
 ## Artifact Status
 
 | Artifact | Status | Open questions |
 |---|---|---|
 | constitution.md | stable ✅ | 0 |
-| datamodel.md | draft ⚠️ | 3 |
+| datamodel.md | draft ⚠️ | 4 |
 | pipeline.md | stable ✅ | 0 |
 | infrastructure.md | stable ✅ | 0 |
 | ui.md | stable ✅ | 0 |
@@ -26,22 +37,39 @@ _Updated: 2026-07-04 (`/ardd-refine datamodel`: fixed the one cross-artifact dri
 - Real ToS legal text — not a design decision; a placeholder/dev value is
   used (`record-consent`'s `tosVersion`, production-annotated) until an
   operator supplies real text.
+- Whether `CatalogSong.lyricLineBreaks` is worth keeping — computed and
+  unit-tested, but the current single-line ticker overlay never uses the
+  grouped line boundaries for layout (flagged in the field's own notes as
+  "an open question for a future pass").
 
 These are documented defaults, not blockers.
 
 ## Cross-Artifact Issues
 
-- [MINOR] `features.md`'s "Metronome toggle" entry (logged 2026-07-02)
-  still describes the original host-controlled `Session.metronomeEnabled`
-  design — fully superseded. `features.md` is owned by
-  `/ardd-feature`/`/ardd-plan`/`/ardd-tasks`/`/ardd-implement`/
-  `/ardd-converge`, not this skill — flagged for a future pass.
-- [GAP] `ui.md`'s new "Connection lost" state (client's own WS
-  reachability) and `datamodel.md`'s `Participant.connectionStatus` field
-  (server's per-participant socket state) share a name but describe
-  different concepts. Not contradictory — each artifact is internally
-  correct — but worth a one-line disambiguation in either doc if it causes
-  confusion later. Not blocking.
+- [MINOR] `features.md`'s "Metronome toggle" and "Count-in toggle" entries
+  (logged 2026-07-02) still carry their original logging-time descriptions
+  — `Session.metronomeEnabled` as a session-level flag, and "nothing
+  currently lets the host set the flag" — both superseded by the
+  implemented design (metronome is a client-local preference,
+  `metronome-preference.ts`; count-in has a host toggle in the Settings
+  modal). `features.md` is owned by `/ardd-feature`/`/ardd-plan`/
+  `/ardd-tasks`/`/ardd-implement`/`/ardd-converge`, not this skill —
+  flagged for a future pass.
+- [GAP] `ui.md`'s "Connection lost" state (client's own WS reachability)
+  and `datamodel.md`'s `Participant.connectionStatus` field (server's
+  per-participant socket state) share a name but describe different
+  concepts. Not contradictory — each artifact is internally correct — but
+  worth a one-line disambiguation in either doc if it causes confusion
+  later. Not blocking.
+- [GAP — new, from the count-in cursor fix] `ui.md`'s Playback View
+  describes the beat cursor as "alphaTab's own native cursor overlay" and
+  neither `ui.md` nor `infrastructure.md` mentions
+  `installCountInCursorGuard` (`client/src/playback-sync.ts`), which now
+  supplies a `customCursorHandler` mirroring alphaTab's default handler
+  except that the cursor is pinned in place while the count-in bar plays.
+  The cursor elements and render-pass claim still hold; this is
+  undocumented drift for the next `/ardd-verify` to confirm/record, not a
+  contradiction.
 
 ## Within-Artifact Issues
 
@@ -49,22 +77,21 @@ These are documented defaults, not blockers.
 - [OPEN] Per-song vs. per-submitter consent (see above)
 - [OPEN] CLI drop-in vs. web upload form (see above)
 - [OPEN] Real ToS legal text (see above)
+- [OPEN] `lyricLineBreaks` retention (see above)
 
 ## Constitution Compliance
 
-No violations found this pass. Principle I (Single Source of State): the
-new client-local metronome preference (localStorage, read once at
-startup, applied directly to the engine) follows the same already-
-established pattern as `theme.ts`'s persisted preference — genuinely
-personal, not shared cross-module state, so not a violation. Principle
-III (one connection entry point) upheld by `server-failure-banner`'s
-reconnect mechanism, which reuses the existing reconnect-by-participantId
-path (`session-join.ts`) rather than adding a second one. No shortcuts
-found lacking a production annotation this pass.
+No violations found this pass. The count-in cursor guard uses alphaTab's
+public `customCursorHandler` extension point (Principle V: defer to
+alphaTab's own mechanisms rather than building a parallel cursor) and
+mirrors the built-in handler's behavior byte-for-byte outside the count-in
+window; it carries unit tests (Principle VII). Principle I (Single Source
+of State): the guard's window state is local to the installed handler, not
+shared cross-module state.
 
 Principle VIII (Config via `.env`, Synced by Example) remains implemented
-and merged — see `DEFECTS.md` for the one open, explicitly-deferred item
-(CI provider decision).
+— see `DEFECTS.md` for the one open, explicitly-deferred item (CI provider
+decision).
 
 ## Diagrams
 
@@ -74,19 +101,36 @@ and merged — see `DEFECTS.md` for the one open, explicitly-deferred item
 
 ## Code-vs-Artifact Defects
 
-1 known defect — see `DEFECTS.md`, last checked 2026-07-04. That pass was
-scoped to `feedback-lyrics-only-view-d7d8`'s fix (worker/build config,
-`infrastructure.md`'s Font & Worker Setup section, `ui.md`'s lyrics-view
-section) plus Principle VIII — **not** a full survey. `datamodel.md`,
-`pipeline.md`, `brand.md`, and the rest of `ui.md` have not been checked
-against the code since 2026-07-03, despite substantial work landing on
-`main` since (host-transfer, settings-modal restructure, pre-singing
-lyrics placeholder, small-screen responsiveness, leave-session,
-metronome-as-preference, lobby-cursor debounce, connection-loss banner).
-A full unscoped `/ardd-verify` pass is recommended soon — not assumed
-clean by omission. The one known defect: Principle VIII's "run ... in CI"
-half is unmet (no CI provider/workflow/remote exists in this repo) — an
-explicitly deferred human decision, not a silent gap.
+5 known defects — see `DEFECTS.md`, last checked 2026-07-05 (first full
+unscoped pass across all six artifacts; note the working-tree copy of
+`DEFECTS.md` on this branch is uncommitted). Summary:
+
+- `infrastructure.md` — cosmetic: percussion detection is described as
+  reading track metadata but actually reads `track.isPercussion` directly
+  (`client/src/tab-renderer.ts:106`); conclusion unaffected.
+- `infrastructure.md` — drift: undocumented small-screen render-scaling
+  (`tabScaleForViewportWidth`, `client/src/tab-renderer.ts:59-62`).
+- `infrastructure.md` — drift: `host-remove-participant` is a fully
+  implemented server message/handler with no client-side entry point and
+  no documentation. User decision recorded: finish the client UI (planned
+  in `plan-lyrics-ticker-font-size-defects-2026-07-05.md`).
+- `pipeline.md` — drift: wording implies GP owns the lyric text even in
+  the lrclib-assisted-line-break branch; actually lrclib supplies the
+  text there, GP only supplies timestamps/line-break counts.
+- `constitution.md` — drift (pre-existing, re-confirmed): Principle VIII's
+  "run ... in CI" half is unmet (no CI provider/workflow/remote exists) —
+  an explicitly deferred human decision, not a silent gap.
+
+`datamodel.md`, `ui.md`, `brand.md` came back fully clean that pass. The
+count-in cursor guard (added after it) is flagged above as a new
+documentation-drift candidate for the next `/ardd-verify`.
+
+## Feedback
+
+0 open feedback files. (`feedback-defects-followup-743b.md` is
+`status: planned`, consumed by
+`plan-lyrics-ticker-font-size-defects-2026-07-05.md` — the file itself is
+still untracked in git.)
 
 ## Feature Backlog
 
@@ -97,16 +141,20 @@ target it with `/ardd-plan participant-selected-part` when ready.
 
 ## Recommended Next Step
 
-1. Run a full unscoped `/ardd-verify` pass — the current `DEFECTS.md`
-   excludes most of this session's merged work.
-2. Manually validate the metronome-per-participant implementation in the
-   running app (design confirmed by the user; implementation not yet
-   exercised live).
-3. Re-sign the full unsigned commit range before pushing anything to a
-   remote — every commit this session was made with `--no-gpg-sign`
-   (1Password locked throughout).
+1. Commit the outstanding `.project/` working-tree changes on
+   `lyrics-ticker-font-size` (modified `DEFECTS.md`/`STATUS.md`, the two
+   draft plans, `feedback-defects-followup-743b.md`) — they're the durable
+   record of today's `/ardd-verify` + `/ardd-plan` runs.
+2. Run `/ardd-tasks` to approve one or both draft plans on this branch:
+   `plan-lyrics-ticker-font-size-2026-07-05.md` (ticker font-size CSS fix)
+   and/or `plan-lyrics-ticker-font-size-defects-2026-07-05.md`
+   (host-remove-participant UI + the three doc-wording fixes).
+3. Have the user listen through a real count-in once (cursor should hold
+   at the start until the clicks finish — fix verified by automation and
+   unit tests, but the automated environment's audio pipeline is
+   unreliable, so one human ear-check closes the loop).
 4. Decide the CI-provider question for constitution Principle VIII
    whenever a remote/CI system exists.
-5. Not blocking: `/ardd-render` the three artifacts marked stale above;
-   the two minor cross-artifact notes above (`features.md`'s stale
-   metronome-toggle entry, `connectionStatus` naming overlap).
+5. Not blocking: `/ardd-render` the three stale diagrams; the minor
+   cross-artifact notes above (`features.md`'s stale toggle entries,
+   `connectionStatus` naming overlap, count-in cursor guard doc drift).
