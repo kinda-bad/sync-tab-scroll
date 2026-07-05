@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
-import type { WsClient } from './ws-client';
+import type { WsClient, ConnectionStatus } from './ws-client';
 
 export type ViewState = 'landing' | 'lobby' | 'playback';
 
@@ -27,6 +27,8 @@ export interface ClientState {
    * signal, read by `Playback.svelte`'s loading indicator.
    */
   engineReady: boolean;
+  /** Real WS connection state (ws-client.ts) — drives `ConnectionBanner.svelte`. Defaults to `'connecting'`, since a `WsClient` doesn't exist until `connect()` runs, but the very first connection attempt is already underway by the time anything could read this. */
+  connectionStatus: ConnectionStatus;
 }
 
 function createClientStore() {
@@ -38,6 +40,7 @@ function createClientStore() {
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
+    connectionStatus: 'connecting',
   });
   return { subscribe, set, update };
 }

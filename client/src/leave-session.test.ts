@@ -45,6 +45,7 @@ describe('leaveSession', () => {
       wsClient: fakeWsClient,
       playbackProgress: 0.5,
       engineReady: true,
+      connectionStatus: 'connected',
     });
 
     leaveSession();
@@ -62,11 +63,21 @@ describe('leaveSession', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      connectionStatus: 'connecting',
     });
   });
 
   it('is a no-op-safe call when there is no active wsClient', () => {
-    clientStore.set({ view: 'landing', session: null, selfParticipantId: null, catalog: [], wsClient: null, playbackProgress: 0, engineReady: false });
+    clientStore.set({
+      view: 'landing',
+      session: null,
+      selfParticipantId: null,
+      catalog: [],
+      wsClient: null,
+      playbackProgress: 0,
+      engineReady: false,
+      connectionStatus: 'connecting',
+    });
     expect(() => leaveSession()).not.toThrow();
   });
 });

@@ -20,5 +20,6 @@ export function leaveSession(): void {
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
+    connectionStatus: 'connecting',
   });
 }

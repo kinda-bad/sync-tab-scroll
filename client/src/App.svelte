@@ -6,6 +6,7 @@
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
   import Toasts from './components/Toasts.svelte';
+  import ConnectionBanner from './components/ConnectionBanner.svelte';
   import Bar from './components/Bar.svelte';
   import Button from './components/Button.svelte';
   import ReadinessBadge from './components/ReadinessBadge.svelte';
@@ -165,6 +166,7 @@
 <SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
 
 <Toasts />
+<ConnectionBanner />
 
 <style>
   .app-content.with-bar {
