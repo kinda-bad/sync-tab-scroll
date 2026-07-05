@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-only-view-fix-2026-07-04.md
 generated: 2026-07-04
-status: in-progress   # generating -> ready -> in-progress -> completed
+status: completed   # generating -> ready -> in-progress -> completed
 ---
 
 # Tasks
@@ -33,4 +33,4 @@ status: in-progress   # generating -> ready -> in-progress -> completed
 - [x] T014 [parallel] Run `pnpm --filter server test` (server vitest) — must pass clean. **Passed: 22 files, 88 tests.**
 - [x] T015 Run `npx playwright test --project=ct` (from `client/`) — must pass clean, including the pre-existing lyrics rendering-logic CT coverage. **Passed: 44 tests.**
 - [x] T016 Run `npx playwright test --project=e2e` (from `client/`), including the new test from T006/T007 — must pass clean. **Passed: 21 tests, including the new `lyrics-only-view.spec.ts`.**
-- [ ] T017 Run `/ardd-verify` then `/ardd-analyze` to close the loop on the artifact corrections from Phase 3.
+- [x] T017 Run `/ardd-verify` then `/ardd-analyze` to close the loop on the artifact corrections from Phase 3. **Done** — scoped `/ardd-verify` pass (infrastructure.md, ui.md) found no defects in the corrected/confirmed sections; `DEFECTS.md` and `STATUS.md` updated.
