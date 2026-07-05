@@ -1,5 +1,5 @@
 ---
-status: approved
+status: superseded   # by plan-worktree-ui-improvements-2026-07-04.md, which folds this plan's layout split, Spotlight hint copy, and test updates into the semantic-tab settings redesign (user confirmed 2026-07-04)
 branch: settings-modal-followup-d914
 created: 2026-07-04
 features: []

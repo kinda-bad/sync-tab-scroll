@@ -122,7 +122,6 @@ function makeSession(overrides: { hostId: string; status: 'stopped' | 'running' 
     hostId: overrides.hostId,
     playbackState: { status: overrides.status, tickPosition: 0, bpm: 120, serverTimestamp: Date.now() },
     countInEnabled: false,
-    metronomeEnabled: false,
     lobbyCursorTick: null,
     spotlightMode: false,
   };
@@ -315,4 +314,139 @@ test('switching parts (a later ensurePlaybackEngine call with a different trackI
   const svgAfter = await component.getByTestId('tab-container').locator('svg').first().evaluate((el) => el.outerHTML);
   expect(svgAfter).toContain('>10<');
   expect(svgAfter).not.toContain('>3<');
+});
+
+/**
+ * Regression test for the silent-render-failure bug (feedback-session-lifecycle-6876,
+ * tasks-session-lifecycle-836f T007/T008): reproduces the narrow race where
+ * `scoreLoaded` fires (and `tab-renderer.ts`'s own unconditional `api.render()`
+ * silently no-ops) while the tab container is still `display: none`. Mirrors
+ * App.svelte's real usage exactly: the container becomes visible, then
+ * `renderNowVisible()` is called exactly once afterward (App.svelte's own
+ * `tick().then(rAF(...))` one-shot, triggered by that same visibility
+ * change) — never called while still hidden, since real usage couldn't do
+ * that (visibility and the call are driven by the same reactive value).
+ * Isolates whether alphaTab's own native `ResizeObserver`-driven
+ * `triggerResize()` (confirmed present in
+ * `node_modules/@coderline/alphatab/dist/alphaTab.js`'s `AlphaTabApi`
+ * constructor: `this.container.resize.on(throttle(() => { if
+ * (this.container.width !== this._renderer.width) this.triggerResize() }))`)
+ * already self-heals this on its own in a real browser engine (Playwright
+ * CT) — empirically it does not — or whether it genuinely needs T008's
+ * explicit fix.
+ */
+test('recovers from scoreLoaded firing while the container is still hidden', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, startHidden: true } });
+
+  // Confirm the premise: scoreLoaded fires while hidden, and its own render is a no-op (no SVG yet).
+  await page.waitForFunction(
+    () => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true,
+    { timeout: 20_000 },
+  );
+  await expect(component.getByTestId('tab-container').locator('svg')).toHaveCount(0);
+
+  // Now make the container visible, then call renderNowVisible() exactly once — matching App.svelte's real, single call site.
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="tab-container"]')!.setAttribute('style', '');
+  });
+  await page.evaluate(() => (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible());
+
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+});
+
+function readEngineReady(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    let value: unknown;
+    const unsub = (window as unknown as { __clientStore: { subscribe: (fn: (s: unknown) => void) => () => void } }).__clientStore.subscribe(
+      (s) => (value = (s as { engineReady: boolean }).engineReady),
+    );
+    unsub();
+    return value as boolean;
+  });
+}
+
+/**
+ * Regression test for the loading-indicator signal (T009,
+ * tasks-session-lifecycle-836f): `clientStore.engineReady` must stay false
+ * until the tab has actually rendered, then flip true — this is exactly
+ * what `Playback.svelte`'s loading banner keys off. Not a Svelte-component
+ * test of `Playback.svelte` itself (its `{#if !$clientStore.engineReady}`
+ * is a one-line conditional with no logic of its own worth a dedicated
+ * harness for) — this covers the actual production logic
+ * (`markEngineReadyIfComplete`) that drives it, end-to-end against a real
+ * alphaTab render.
+ */
+test('clientStore.engineReady flips true only once the tab has actually rendered', async ({ mount, page }) => {
+  // Deliberately hidden at mount: proves engineReady only flips once a real,
+  // visible render actually happens (T008's renderedWhileVisible gate), not
+  // merely once scoreLoaded fires — the fixture is small enough that
+  // scoreLoaded (and, if this gate didn't exist, engineReady) could
+  // otherwise flip before this test even gets to check.
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, startHidden: true } });
+
+  await page.waitForFunction(
+    () => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true,
+    { timeout: 20_000 },
+  );
+  expect(await readEngineReady(page)).toBe(false);
+
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="tab-container"]')!.setAttribute('style', '');
+  });
+  await page.evaluate(() => (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible());
+
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => readEngineReady(page), { timeout: 5_000 }).toBe(true);
+});
+
+/**
+ * Regression test for the rapid-click cursor-thrash bug
+ * (feedback-lobby-cursor-race-4262, tasks-lobby-cursor-race-c9f8 T002/T003):
+ * a burst of rapid host seeks must collapse into a single
+ * `playback-control` `seek` broadcast (the *last* tick), not one broadcast
+ * per click.
+ */
+test('debounces rapid host seeks into a single broadcast carrying the last tick', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'host-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'paused' }));
+
+  // A real host can't click-to-seek before alphaTab is actually ready for
+  // playback (the seek-broadcast listener itself is gated on
+  // isReadyForPlayback, since alphaTab fires its own internal isSeek:true
+  // position-reset while still preparing MIDI, well before that point) —
+  // wait for the same real condition before firing synthetic seeks, rather
+  // than racing it.
+  await page.waitForFunction(
+    () => (window as unknown as { __getApi: () => { isReadyForPlayback: boolean } }).__getApi().isReadyForPlayback === true,
+    { timeout: 20_000 },
+  );
+
+  await page.evaluate(() => {
+    const api = (window as unknown as {
+      __getApi: () => { playerPositionChanged: { trigger: (e: unknown) => void } };
+    }).__getApi();
+    const trigger = (currentTick: number) =>
+      api.playerPositionChanged.trigger({ currentTime: 0, endTime: 10, currentTick, endTick: 0, isSeek: true, originalTempo: 120, modifiedTempo: 120 });
+    trigger(100);
+    trigger(200);
+    trigger(300);
+  });
+
+  await page.waitForTimeout(300);
+
+  const seeks = await page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string; action?: string; tickPosition?: number }[] }).__sentMessages.filter(
+      (m) => m.type === 'playback-control' && m.action === 'seek',
+    ),
+  );
+  expect(seeks).toHaveLength(1);
+  expect(seeks[0].tickPosition).toBe(300);
 });

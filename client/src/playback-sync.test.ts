@@ -113,7 +113,6 @@ describe('applyPlaybackSettings', () => {
       hostId: 'p1',
       playbackState: fakePlaybackState(),
       countInEnabled: false,
-      metronomeEnabled: false,
       lobbyCursorTick: null,
       spotlightMode: false,
       pendingHostRequest: null,
@@ -121,17 +120,17 @@ describe('applyPlaybackSettings', () => {
     };
   }
 
-  it('sets metronomeVolume/countInVolume from session flags when enabled', () => {
+  it('sets countInVolume from the session flag when enabled', () => {
     const api = fakeApi();
-    applyPlaybackSettings(api, fakeSession({ metronomeEnabled: true, countInEnabled: true }));
-    expect(api.metronomeVolume).toBe(1);
+    applyPlaybackSettings(api, fakeSession({ countInEnabled: true }));
     expect(api.countInVolume).toBe(1);
   });
 
-  it('sets metronomeVolume/countInVolume to 0 when disabled', () => {
+  it('sets countInVolume to 0 when disabled, and never touches metronomeVolume (a client-local preference)', () => {
     const api = fakeApi();
-    applyPlaybackSettings(api, fakeSession({ metronomeEnabled: false, countInEnabled: false }));
-    expect(api.metronomeVolume).toBe(0);
+    const before = api.metronomeVolume;
+    applyPlaybackSettings(api, fakeSession({ countInEnabled: false }));
     expect(api.countInVolume).toBe(0);
+    expect(api.metronomeVolume).toBe(before);
   });
 });

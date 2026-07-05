@@ -33,6 +33,15 @@
   {/if}
 </section>
 
+{#if !$clientStore.engineReady}
+  <!-- ui.md States: Loading — a prominent, in-view signal that the tab/lyrics
+       haven't actually rendered yet, distinct from the small per-participant
+       ReadinessBadge in the persistent Bar (easy to miss once already on this
+       view). Clears itself once playback-engine.ts's `engineReady` flips true
+       (tasks-session-lifecycle-836f T009) — never a silent stall. -->
+  <div class="loading-banner" role="status">{isLyricsPart ? 'Loading lyrics…' : 'Loading tab…'}</div>
+{/if}
+
 <style>
   .playback-controls {
     display: flex;
@@ -44,5 +53,23 @@
   .current-part {
     color: var(--ink-dim);
     font-size: 0.875rem;
+  }
+
+  .loading-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.9375rem;
+    color: var(--hazard);
+    border: 1px solid var(--hazard);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg);
+    pointer-events: none;
+    z-index: 50;
   }
 </style>

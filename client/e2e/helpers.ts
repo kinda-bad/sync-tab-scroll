@@ -58,6 +58,48 @@ export async function readStoredSession(page: Page): Promise<StoredSession> {
 }
 
 /**
+ * Asserts the page needs no horizontal scrolling — the small-screen
+ * invariant (plan-worktree-ui-improvements): vertical scroll is fine,
+ * horizontal never is. Checked on both the root element and body since
+ * either can be the one that overflows depending on which descendant is
+ * too wide.
+ */
+export async function expectNoHorizontalOverflow(page: Page, what: string): Promise<void> {
+  const metrics = await page.evaluate(() => {
+    // Any element whose computed overflow-x can actually scroll (auto/
+    // scroll) and whose content is wider than its box forces the user to
+    // scroll sideways — e.g. a modal body whose `overflow-y: auto` makes
+    // overflow-x compute to auto as well. overflow:hidden containers
+    // (Bar, lyrics ticker) clip rather than scroll, so they don't count.
+    const scrollers: string[] = [];
+    for (const el of Array.from(document.querySelectorAll('*'))) {
+      if (el.scrollWidth - el.clientWidth <= 0) continue;
+      const ox = getComputedStyle(el).overflowX;
+      if (ox === 'auto' || ox === 'scroll') {
+        scrollers.push(`${el.tagName.toLowerCase()}.${String(el.className)} (+${el.scrollWidth - el.clientWidth}px)`);
+      }
+    }
+    return {
+      layoutWidth: document.documentElement.clientWidth,
+      doc: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      body: document.body.scrollWidth - document.body.clientWidth,
+      scrollers,
+    };
+  });
+  // Without <meta name="viewport">, mobile browsers lay the page out at a
+  // ~980px virtual width and scale it down — nothing "overflows" that, the
+  // page is just illegibly small. So fitting a phone means two things at
+  // once: the layout viewport is the real device width, AND nothing
+  // overflows it. The viewport size comes from the test's device emulation
+  // (isMobile); 500 is a loose ceiling over real phone widths (~320-430)
+  // that any un-metaʼd 980px fallback blows straight past.
+  expect(metrics.layoutWidth, `${what}: layout viewport width should be device width, not the no-viewport-meta ~980px fallback`).toBeLessThanOrEqual(500);
+  expect(metrics.doc, `${what}: <html> horizontal overflow (px)`).toBeLessThanOrEqual(0);
+  expect(metrics.body, `${what}: <body> horizontal overflow (px)`).toBeLessThanOrEqual(0);
+  expect(metrics.scrollers, `${what}: elements requiring horizontal scroll`).toEqual([]);
+}
+
+/**
  * Sends a raw WS message as an already-existing participant, bypassing
  * whatever real UI/event would normally trigger it — used specifically to
  * drive `readiness-update: ready` past alphaTab's `isReadyForPlayback` gate,

@@ -2,6 +2,7 @@ import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
+import { loadStoredMetronome } from './metronome-preference';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
@@ -10,6 +11,7 @@ import { waitUntilReady } from './readiness';
 import { correctDrift, applyPlaybackSettings } from './playback-sync';
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
+import { debounce } from './debounce';
 
 export interface EngineContainers {
   tabContainer: HTMLElement;
@@ -27,6 +29,18 @@ interface EngineState {
   theme: Theme;
   showOverlay: boolean;
   scoreLoaded: boolean;
+  /**
+   * Whether the container was actually visible (non-zero `clientWidth`) at
+   * the moment `scoreLoaded` fired — `tab-renderer.ts`'s own unconditional
+   * `api.render()` there silently no-ops if it wasn't (alphaTab's native
+   * `ResizeObserver`-driven `triggerResize()` does not reliably self-heal
+   * this in practice — confirmed empirically, not assumed, via
+   * `playback-engine.ct.spec.ts`'s "recovers from scoreLoaded firing while
+   * the container is still hidden" regression test). `renderNowVisible()`
+   * uses this (not just `scoreLoaded` itself) to know whether it still owes
+   * the engine a real render.
+   */
+  renderedWhileVisible: boolean;
 }
 
 let state: EngineState | undefined;
@@ -67,7 +81,12 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
 
-  state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false };
+  // Metronome is a client-local personal preference (ui.md Preferences
+  // tab), not session state — applied once at creation and thereafter via
+  // setEngineMetronome() when the user toggles it.
+  api.metronomeVolume = loadStoredMetronome() ? 1 : 0;
+
+  state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
@@ -78,10 +97,14 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // `renderNowVisible` can force a real render once the Playback view
   // actually shows the container. Also captures the loaded score itself so
   // a later part switch can re-render a different track (switchTrack)
-  // without reloading the GP file.
+  // without reloading the GP file, and snapshots whether the container was
+  // actually visible *at this exact moment* — `scoreLoaded` becoming `true`
+  // doesn't by itself mean a real (non-zero-width) render happened.
   api.scoreLoaded.on((score) => {
     state!.scoreLoaded = true;
     state!.score = score;
+    if (!isLyricsPart) state!.renderedWhileVisible = containers.tabContainer.clientWidth > 0;
+    markEngineReadyIfComplete();
   });
 
   if (!isLyricsPart && song.lyricsTrackIndex !== null && song.lyricsLineIndex !== null && song.lyricLineBreaks) {
@@ -177,12 +200,27 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // feedback loop: correctDrift's own `api.tickPosition = ...` assignment
   // above fires this same event with `isSeek: true` — ignore any seek that
   // matches the tick we just applied ourselves rather than one the host
-  // actually clicked.
+  // actually clicked. Also guarded on `isReadyForPlayback`: alphaTab fires
+  // its own internal `isSeek: true` position-reset while the sequencer is
+  // still preparing MIDI (confirmed empirically — `currentTick` lands near
+  // the start with `isReadyForPlayback` still false), well before the host
+  // could have clicked anything; without this guard that spurious internal
+  // event gets broadcast as a real seek. The actual network send is
+  // debounced (plan-lobby-cursor-race-2026-07-04.md) so a rapid burst of
+  // clicks collapses to one broadcast after the host stops clicking,
+  // instead of every intermediate click force-resetting every other
+  // participant's view — the guards above still run synchronously per raw
+  // event (same-tick-sensitive against lastProgrammaticTick), only the send
+  // itself is coalesced.
+  const debouncedSendSeek = debounce((tickPosition: number) => {
+    wsClient.send({ type: 'playback-control', action: 'seek', tickPosition });
+  }, 150);
   api.playerPositionChanged.on((e) => {
     if (!e.isSeek) return;
+    if (!api.isReadyForPlayback) return;
     if (e.currentTick === lastProgrammaticTick) return;
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
-    wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: e.currentTick });
+    debouncedSendSeek(e.currentTick);
   });
 
   // Host-only periodic tick-report (infrastructure.md Session & Real-Time
@@ -208,14 +246,40 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
 /**
  * Forces a real alphaTab render once the tab container is actually shown
- * (App.svelte calls this on the Lobby→Playback transition). No-op for a
- * lyrics-part participant (no visible tab canvas) or if the score hasn't
- * loaded yet (the engine's own scoreLoaded render will succeed on its own
- * once it fires, since the container is visible by then).
+ * (App.svelte calls this once, right after the container becomes visible).
+ * No-op for a lyrics-part participant (no visible tab canvas). If the score
+ * hasn't loaded yet, this is a no-op too — but only because the engine's own
+ * `scoreLoaded` handler will still fire later and, per its own
+ * `renderedWhileVisible` check, render for real at that point (the
+ * container is already visible by then). If the score *has* already loaded
+ * — including the narrow-window case where `scoreLoaded` fired while the
+ * container was still hidden, silently no-opping its own render — this is
+ * the one remaining place that owes the engine a real render, so it forces
+ * one whenever `renderedWhileVisible` is false, not only when `scoreLoaded`
+ * itself hasn't fired yet (self-healing rather than order-dependent).
  */
 export function renderNowVisible(): void {
-  if (!state || state.isLyricsPart || !state.scoreLoaded) return;
-  state.api.render();
+  if (!state || state.isLyricsPart) return;
+  if (state.scoreLoaded && !state.renderedWhileVisible) {
+    state.renderedWhileVisible = true;
+    state.api.render();
+    markEngineReadyIfComplete();
+  }
+}
+
+/**
+ * Flips `clientStore.engineReady` once this participant's own tab/lyrics
+ * have actually rendered (T009, tasks-session-lifecycle-836f) — `scoreLoaded`
+ * plus, for an instrument part, a real render having happened while visible
+ * (`renderedWhileVisible`). Read by `Playback.svelte`'s loading indicator;
+ * distinct from the cross-participant `Participant.readiness` broadcast
+ * (which also folds in SoundFont load and is a different concern — see
+ * `ClientState.engineReady`'s doc comment in store.ts).
+ */
+function markEngineReadyIfComplete(): void {
+  if (state && state.scoreLoaded && state.renderedWhileVisible) {
+    clientStore.update((s) => (s.engineReady ? s : { ...s, engineReady: true }));
+  }
 }
 
 export function toggleOverlay(): void {
@@ -225,7 +289,7 @@ export function toggleOverlay(): void {
 }
 
 /** Test-only accessor — not used by app code. Exposes the module's private engine state (specifically its alphaTab `api`) so component tests can assert on real drift-correction/Spotlight-mode/seek behavior without duplicating the wiring. */
-export function __getEngineStateForTesting(): { api: AlphaTabApi } | undefined {
+export function __getEngineStateForTesting(): { api: AlphaTabApi; scoreLoaded: boolean } | undefined {
   return state;
 }
 
@@ -233,4 +297,10 @@ export function setEngineTheme(theme: Theme): void {
   if (!state) return;
   state.theme = theme;
   if (!state.isLyricsPart) setTheme(state.api, state.theme);
+}
+
+/** Applies the personal metronome preference to the live engine (visible or headless alike); no-op when no engine is active — same contract as setEngineTheme. */
+export function setEngineMetronome(enabled: boolean): void {
+  if (!state) return;
+  state.api.metronomeVolume = enabled ? 1 : 0;
 }

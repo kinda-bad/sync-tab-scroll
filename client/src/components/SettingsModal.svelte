@@ -5,13 +5,20 @@
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
+  import { debounce } from '../debounce';
+  import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
+  import { setEngineMetronome } from '../playback-engine';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
-  let activeTab: 'participants' | 'settings' = 'participants';
+  // Three semantic tabs (ui.md): Participants (who's here + host transfer),
+  // Session (host-broadcast controls everyone is affected by), Preferences
+  // (personal, this-device-only settings).
+  let activeTab: 'participants' | 'session' | 'preferences' = 'participants';
   let lobbyCursorInput = 0;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
+  let metronome = loadStoredMetronome();
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
@@ -23,8 +30,17 @@
     persistTheme(theme);
   }
 
+  // Debounced (plan-lobby-cursor-race-2026-07-04.md) so rapidly changing the
+  // input and clicking "Set" repeatedly collapses to one broadcast — created
+  // once per component instance, not per call, so repeated calls actually
+  // coalesce against the same timer. `clearLobbyCursor` stays undebounced:
+  // it's a single deliberate action, not a rapid-input path.
+  const debouncedSetLobbyCursor = debounce((tickPosition: number) => {
+    wsClient?.send({ type: 'lobby-cursor-set', tickPosition });
+  }, 150);
+
   function setLobbyCursor() {
-    wsClient?.send({ type: 'lobby-cursor-set', tickPosition: lobbyCursorInput });
+    debouncedSetLobbyCursor(lobbyCursorInput);
   }
 
   function clearLobbyCursor() {
@@ -35,8 +51,12 @@
     wsClient?.send({ type: 'spotlight-mode-set', enabled: !session?.spotlightMode });
   }
 
+  // Personal, this-device-only (ui.md Preferences tab): persists like the
+  // theme choice and applies to the live engine immediately; never a WS send.
   function toggleMetronome() {
-    wsClient?.send({ type: 'metronome-set', enabled: !session?.metronomeEnabled });
+    metronome = !metronome;
+    persistMetronome(metronome);
+    setEngineMetronome(metronome);
   }
 
   function toggleCountIn() {
@@ -59,7 +79,8 @@
 <Modal {open} {onClose} title="Settings">
   <div class="tab-strip">
     <Button variant={activeTab === 'participants' ? 'riot' : 'ghost'} label="Participants" onclick={() => (activeTab = 'participants')} />
-    <Button variant={activeTab === 'settings' ? 'riot' : 'ghost'} label="Settings" onclick={() => (activeTab = 'settings')} />
+    <Button variant={activeTab === 'session' ? 'riot' : 'ghost'} label="Session" onclick={() => (activeTab = 'session')} />
+    <Button variant={activeTab === 'preferences' ? 'riot' : 'ghost'} label="Preferences" onclick={() => (activeTab = 'preferences')} />
   </div>
 
   {#if activeTab === 'participants'}
@@ -86,7 +107,11 @@
           </ListRow>
         {/each}
       </ul>
-
+    {:else}
+      <p class="hint">Connecting…</p>
+    {/if}
+  {:else if activeTab === 'session'}
+    {#if session}
       <span class="section-label">Lobby cursor</span>
       {#if session.lobbyCursorTick !== null}
         <p class="hint">Host is pointing at tick {session.lobbyCursorTick}.</p>
@@ -94,7 +119,7 @@
         <p class="hint">No lobby cursor set.</p>
       {/if}
       {#if isHost}
-        <div class="cursor-controls">
+        <div class="control-row">
           <input type="number" bind:value={lobbyCursorInput} class="cursor-input" />
           <Button variant="ghost" label="Set lobby cursor" onclick={setLobbyCursor} />
           <Button variant="ghost" label="Clear" onclick={clearLobbyCursor} />
@@ -103,11 +128,13 @@
             label={session.spotlightMode ? 'Spotlight mode: on' : 'Spotlight mode: off'}
             onclick={toggleSpotlightMode}
           />
-          <Button
-            variant={session.metronomeEnabled ? 'riot' : 'ghost'}
-            label={session.metronomeEnabled ? 'Metronome: On' : 'Metronome: Off'}
-            onclick={toggleMetronome}
-          />
+        </div>
+        <p class="hint">
+          Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.
+        </p>
+
+        <span class="section-label">Playback audio</span>
+        <div class="control-row">
           <Button
             variant={session.countInEnabled ? 'riot' : 'ghost'}
             label={session.countInEnabled ? 'Count-in: On' : 'Count-in: Off'}
@@ -121,6 +148,16 @@
   {:else}
     <span class="section-label">Theme</span>
     <Button variant="ghost" label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleTheme} />
+
+    <span class="section-label">Playback audio</span>
+    <div class="control-row">
+      <Button
+        variant={metronome ? 'riot' : 'ghost'}
+        label={metronome ? 'Metronome: On' : 'Metronome: Off'}
+        onclick={toggleMetronome}
+      />
+    </div>
+    <p class="hint">Only you hear your metronome.</p>
   {/if}
 </Modal>
 
@@ -129,6 +166,15 @@
     display: flex;
     gap: var(--space-2);
     margin-bottom: var(--space-4);
+  }
+
+  /* Equal-width cells so the strip reads as one segmented control; the
+     section-label type size keeps all three labels on one line down to
+     360px-wide screens. */
+  .tab-strip > :global(.btn) {
+    flex: 1;
+    padding-inline: var(--space-1);
+    font-size: 0.6875rem;
   }
 
   .section-label {
@@ -157,8 +203,9 @@
     font-size: 0.875rem;
   }
 
-  .cursor-controls {
+  .control-row {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-2);
     align-items: center;
   }
