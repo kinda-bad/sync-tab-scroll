@@ -61,7 +61,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | displayName | string | |
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
-| selectedPart | number \| 'lyrics' \| null | A `CatalogPart.trackIndex` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for shared clock/metronome (infrastructure.md). Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
+| selectedPart | number \| 'lyrics' \| null | A `CatalogPart.trackIndex` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for the shared clock (infrastructure.md), with this participant's own personal metronome preference (`client/src/metronome-preference.ts`) applied locally to that instance — not a session-level setting. Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
 | readiness | ReadinessStatus | e.g. 'no-part' \| 'loading' \| 'ready' |
 | joinedAt | number | Wall-clock time this participant first joined; preserved across a reconnect, not reset. Determines tenure for host succession (infrastructure.md) |
 
