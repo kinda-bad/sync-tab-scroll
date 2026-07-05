@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-04
 diagram_status: stale
 ---
 
@@ -95,6 +95,36 @@ minting a new one — `id`, `role`, and `joinedAt` are preserved. Without
 this, a refreshing host would lose host control permanently: `Session.
 hostId` would keep pointing at an old participant id no socket can ever
 reclaim.
+
+## Connection Loss & Retry
+
+`client/src/ws-client.ts` tracks real WS connection state via
+`ConnectionStatus` (`'connecting' | 'connected' | 'disconnected'`,
+constitution Principle VI — one named type, not re-typed at each call
+site), stored on `ClientState.connectionStatus`. Previously the client
+registered only `open`/`message` listeners; a server-down-at-load or a
+mid-session drop went completely silent — `send()` already queued
+outbound messages while `readyState !== OPEN`, but nothing ever retried
+opening a new socket, and nothing told the user why the app appeared
+stuck. `ui.md`'s persistent connection-lost banner is driven directly by
+this field.
+
+On `error`/`close`, the client sets `connectionStatus: 'disconnected'`
+and starts a fixed-interval retry (2s, no exponential backoff/jitter —
+this project's self-hosted/small-group scale doesn't warrant it, same
+reasoning as elsewhere in this doc) that keeps attempting a fresh
+`new WebSocket(url)` until one opens. On success, `connectionStatus`
+flips back to `'connected'`. This reuses the same reconnect-by-identity
+mechanism above rather than adding a second one: if a session was
+already established before the drop (`ClientState.session`/
+`selfParticipantId` already set — distinguishing this from the very
+first connection, where the original `session-join`/`session-create`
+message is still sitting unsent in `pending` and flushes automatically
+once the socket opens), the client explicitly re-sends `session-join`
+with the persisted `code`/`participantId` on the new socket, hitting the
+same server-side reclaim-by-id branch a page refresh already uses. The
+retry never gives up — no "couldn't reconnect, give up" dead-end state;
+the user can always reload manually.
 
 ## Host Succession
 
