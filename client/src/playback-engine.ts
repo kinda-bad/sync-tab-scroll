@@ -8,7 +8,7 @@ import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import { parseLrc, type LrcLine } from './lrc-parser';
 import { waitUntilReady } from './readiness';
-import { correctDrift, applyPlaybackSettings } from './playback-sync';
+import { correctDrift, applyPlaybackSettings, installCountInCursorGuard } from './playback-sync';
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
 import { debounce } from './debounce';
@@ -85,6 +85,11 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // tab), not session state — applied once at creation and thereafter via
   // setEngineMetronome() when the user toggles it.
   api.metronomeVolume = loadStoredMetronome() ? 1 : 0;
+
+  // Keeps the beat cursor still while the count-in bar plays (see the
+  // guard's own doc comment). Installed for the headless engine too — it has
+  // no cursor DOM, so the handler simply never gets invoked there.
+  installCountInCursorGuard(api);
 
   state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
 

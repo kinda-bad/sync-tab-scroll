@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import * as at from '@coderline/alphatab';
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { PlaybackState, Session } from '@sync-tab-scroll/shared';
-import { applyPlaybackSettings, correctDrift } from './playback-sync';
+import { applyPlaybackSettings, correctDrift, installCountInCursorGuard } from './playback-sync';
 
 function fakeApi(overrides: Partial<{ isReadyForPlayback: boolean; tickPosition: number; playerState: at.synth.PlayerState }> = {}) {
   return {
@@ -43,6 +43,15 @@ describe('correctDrift', () => {
     expect(api.tickPosition).toBe(777);
     expect(api.play).toHaveBeenCalledOnce();
     expect(result).toBe(777);
+  });
+
+  it('starts playback without seeking when already at the target tick (count-in cursor-slide bug)', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 0 });
+    const onApply = vi.fn();
+    const result = correctDrift(api, fakePlaybackState({ status: 'running', tickPosition: 0 }), false, onApply);
+    expect(api.play).toHaveBeenCalledOnce();
+    expect(onApply).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 
   it('pauses when not running but still playing', () => {
@@ -100,6 +109,81 @@ describe('correctDrift', () => {
     const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 0 });
     const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
     expect(result).toBeNull();
+  });
+});
+
+describe('installCountInCursorGuard', () => {
+  // The guard needs the two player events plus countInVolume and the
+  // customCursorHandler slot; everything else on the api is irrelevant to it.
+  function guardedApi(countInVolume: number) {
+    const handlers = { state: [] as ((e: { state: at.synth.PlayerState }) => void)[], position: [] as ((e: { isSeek: boolean }) => void)[] };
+    const api = {
+      countInVolume,
+      customCursorHandler: undefined as unknown,
+      playerStateChanged: { on: (h: (e: { state: at.synth.PlayerState }) => void) => handlers.state.push(h) },
+      playerPositionChanged: { on: (h: (e: { isSeek: boolean }) => void) => handlers.position.push(h) },
+    };
+    installCountInCursorGuard(api as unknown as AlphaTabApi);
+    const fireState = (state: at.synth.PlayerState) => handlers.state.forEach((h) => h({ state }));
+    const firePosition = (isSeek: boolean) => handlers.position.forEach((h) => h({ isSeek }));
+    return { handler: api.customCursorHandler as ReturnType<typeof cursorArgs>['handler'], fireState, firePosition };
+  }
+
+  // Minimal shapes for the cursor-handler call: a recording beat cursor and
+  // the beatBounds path the handler dereferences for bar bounds.
+  function cursorArgs() {
+    const calls: { duration: number; x: number }[] = [];
+    const setBoundsCalls: number[][] = [];
+    const beatCursor = { transitionToX: (duration: number, x: number) => calls.push({ duration, x }), setBounds: (...args: number[]) => setBoundsCalls.push(args) };
+    const beatBounds = { barBounds: { masterBarBounds: { visualBounds: { x: 5, y: 10, w: 80, h: 90 } } } };
+    const handler = undefined as unknown as {
+      placeBeatCursor: (c: typeof beatCursor, b: typeof beatBounds, startX: number) => void;
+      transitionBeatCursor: (c: typeof beatCursor, b: typeof beatBounds, startX: number, nextX: number, duration: number, mode: at.midi.MidiTickLookupFindBeatResultCursorMode) => void;
+    };
+    return { calls, setBoundsCalls, beatCursor, beatBounds, handler };
+  }
+
+  it('degrades transitions to placements while the count-in window is open', () => {
+    const { handler, fireState } = guardedApi(1);
+    fireState(at.synth.PlayerState.Playing);
+    const { calls, setBoundsCalls, beatCursor, beatBounds } = cursorArgs();
+    handler.transitionBeatCursor(beatCursor, beatBounds, 100, 200, 500, at.midi.MidiTickLookupFindBeatResultCursorMode.ToNextBext);
+    expect(calls).toEqual([{ duration: 0, x: 100 }]);
+    expect(setBoundsCalls).toEqual([[100, 10, 1, 90]]);
+  });
+
+  it('animates again after the first non-seek position event (count-in over)', () => {
+    const { handler, fireState, firePosition } = guardedApi(1);
+    fireState(at.synth.PlayerState.Playing);
+    firePosition(true); // the internal isSeek reset must NOT close the window
+    const { calls: during, beatCursor: c1, beatBounds: b1 } = cursorArgs();
+    handler.transitionBeatCursor(c1, b1, 100, 200, 500, at.midi.MidiTickLookupFindBeatResultCursorMode.ToNextBext);
+    expect(during).toEqual([{ duration: 0, x: 100 }]);
+
+    firePosition(false);
+    const { calls: after, beatCursor: c2, beatBounds: b2 } = cursorArgs();
+    handler.transitionBeatCursor(c2, b2, 100, 200, 500, at.midi.MidiTickLookupFindBeatResultCursorMode.ToNextBext);
+    // ToNextBext doubles distance and duration, matching alphaTab's default handler.
+    expect(after).toEqual([{ duration: 1000, x: 300 }]);
+  });
+
+  it('never suppresses when no count-in is configured', () => {
+    const { handler, fireState } = guardedApi(0);
+    fireState(at.synth.PlayerState.Playing);
+    const { calls, beatCursor, beatBounds } = cursorArgs();
+    handler.transitionBeatCursor(beatCursor, beatBounds, 100, 200, 500, at.midi.MidiTickLookupFindBeatResultCursorMode.ToEndOfBeat);
+    expect(calls).toEqual([{ duration: 500, x: 200 }]);
+  });
+
+  it('re-opens the window on every fresh Playing transition with count-in on', () => {
+    const { handler, fireState, firePosition } = guardedApi(1);
+    fireState(at.synth.PlayerState.Playing);
+    firePosition(false); // playback ran; window closed
+    fireState(at.synth.PlayerState.Paused);
+    fireState(at.synth.PlayerState.Playing); // resume → new count-in
+    const { calls, beatCursor, beatBounds } = cursorArgs();
+    handler.transitionBeatCursor(beatCursor, beatBounds, 40, 60, 300, at.midi.MidiTickLookupFindBeatResultCursorMode.ToEndOfBeat);
+    expect(calls).toEqual([{ duration: 0, x: 40 }]);
   });
 });
 

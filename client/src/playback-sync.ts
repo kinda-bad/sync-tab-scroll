@@ -54,10 +54,21 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
   if (playbackState.status === 'running' && !isPlaying) {
-    onApply?.(playbackState.tickPosition);
-    api.tickPosition = playbackState.tickPosition;
+    // Skip the seek when already at the target tick (the common case: first
+    // Play, everyone at 0). A positionally-no-op assignment still fires an
+    // isSeek positionChanged whose cursor update alphaTab defers to the next
+    // frame — landing after play() has flipped playerState to Playing, which
+    // is one of the triggers for the count-in cursor slide that
+    // installCountInCursorGuard guards against (and it feeds the
+    // lastProgrammaticTick bookkeeping for no reason).
+    if (api.tickPosition !== playbackState.tickPosition) {
+      onApply?.(playbackState.tickPosition);
+      api.tickPosition = playbackState.tickPosition;
+      api.play();
+      return playbackState.tickPosition;
+    }
     api.play();
-    return playbackState.tickPosition;
+    return null;
   } else if (playbackState.status !== 'running' && isPlaying) {
     api.pause();
   }
@@ -95,4 +106,58 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
  */
 export function applyPlaybackSettings(api: AlphaTabApi, session: Session): void {
   api.countInVolume = session.countInEnabled ? 1 : 0;
+}
+
+/**
+ * Pins the beat cursor in place while alphaTab's count-in bar is playing
+ * (ui.md): alphaTab reports PlayerState.Playing for the whole count-in but
+ * deliberately suppresses positionChanged events until real playback begins —
+ * yet any cursor update that lands in that window makes the default cursor
+ * handler start its animated slide toward the next beat, so the cursor
+ * visibly drifts into the song while the count-in clicks are still sounding,
+ * then snaps back to the start when real playback begins (confirmed live
+ * 2026-07-05). Such updates do land there in practice: alphaTab emits an
+ * internal `isSeek: true` position-reset around play() (see the seek-guard
+ * comments in playback-engine.ts) and defers its DOM cursor update to the
+ * next frame, i.e. until after the state has already flipped to Playing.
+ *
+ * The guard uses alphaTab's public customCursorHandler extension point
+ * (>= 1.8.1), mirroring the built-in ToNextBeatAnimatingCursorHandler
+ * exactly except that transitions degrade to plain placements while the
+ * count-in window is active. The window opens when the player flips to
+ * Playing with a count-in configured, and closes on the first non-seek
+ * positionChanged — none are emitted during the count-in, and the first one
+ * only flows once real playback is underway. (A pause/stop also closes it
+ * via the state flipping away from Playing.)
+ */
+export function installCountInCursorGuard(api: AlphaTabApi): void {
+  let countInActive = false;
+  api.playerStateChanged.on((e) => {
+    countInActive = e.state === at.synth.PlayerState.Playing && api.countInVolume > 0;
+  });
+  api.playerPositionChanged.on((e) => {
+    if (!e.isSeek) countInActive = false;
+  });
+
+  api.customCursorHandler = {
+    onAttach() {},
+    onDetach() {},
+    placeBarCursor(barCursor, beatBounds) {
+      const barBounds = beatBounds.barBounds.masterBarBounds.visualBounds;
+      barCursor.setBounds(barBounds.x, barBounds.y, barBounds.w, barBounds.h);
+    },
+    placeBeatCursor(beatCursor, beatBounds, startBeatX) {
+      const barBounds = beatBounds.barBounds.masterBarBounds.visualBounds;
+      beatCursor.transitionToX(0, startBeatX);
+      beatCursor.setBounds(startBeatX, barBounds.y, 1, barBounds.h);
+    },
+    transitionBeatCursor(beatCursor, beatBounds, startBeatX, nextBeatX, duration, cursorMode) {
+      if (countInActive) {
+        this.placeBeatCursor(beatCursor, beatBounds, startBeatX);
+        return;
+      }
+      const factor = cursorMode === at.midi.MidiTickLookupFindBeatResultCursorMode.ToNextBext ? 2 : 1;
+      beatCursor.transitionToX(duration * factor, startBeatX + (nextBeatX - startBeatX) * factor);
+    },
+  };
 }
