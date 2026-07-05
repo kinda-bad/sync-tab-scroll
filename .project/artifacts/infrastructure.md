@@ -304,23 +304,30 @@ block above might suggest at a glance:
   `core.scriptFile` is only a fallback reached inside a `catch` for a
   *synchronous* Worker-construction error, which a Worker pointed at a
   hanging or 404ing URL never produces (`new Worker()` doesn't throw on
-  404). In practice, two different, unrelated mechanisms keep this working
-  in this app's two environments:
-  - **Dev server** (`vite`): `client/vite.config.ts`'s
-    `optimizeDeps.exclude: ['@coderline/alphatab']` changes alphaTab's own
-    bundler-environment self-detection enough that it skips the ESM-URL
-    Worker attempt entirely and falls through to `core.scriptFile`
-    directly — verified empirically; this is *why* dev works, not
-    `core.scriptFile` in isolation.
-  - **Production build** (`vite build`): has no such detection difference,
-    so the ESM-URL Worker attempt goes out for real — but Vite can't see
-    `new URL(...)` wrapped inside alphaTab's own `Environment` class, so
-    `alphaTab.worker.mjs`/`alphaTab.worklet.mjs`/`alphaTab.core.mjs` never
-    land in `dist/assets/` on their own. `client/vite.config.ts`'s
-    `alphaTabWorkerAssets()` plugin (mirroring the equivalent plugin
-    already in `playwright.config.ts`'s `ctViteConfig`) emits them via
-    `generateBundle`, so the request the built code actually issues
-    resolves. Without it, the request hangs forever with zero visible
+  404). The ESM-URL Worker attempt is made in *both* of this app's
+  environments — it is never skipped — but resolves through two different,
+  unrelated mechanisms, verified via a real-browser network trace of each:
+  - **Dev server** (`vite`): the request (`new URL('./alphaTab.worker.mjs',
+    import.meta.url)`, resolved against alphaTab's own package location)
+    goes out and is served by Vite's `/@fs/` raw-filesystem passthrough,
+    straight out of `node_modules/@coderline/alphatab/dist/` — no
+    building/rewriting involved. `client/vite.config.ts`'s
+    `optimizeDeps.exclude: ['@coderline/alphatab']` is what makes this
+    resolve at all: without it, Vite's dev-time dep-optimizer (esbuild)
+    tries to pre-bundle the package into its own rewritten `deps/` cache
+    first, and that rewritten copy's own internal `import.meta.url`
+    resolution breaks the same request the exclude avoids inviting in the
+    first place.
+  - **Production build** (`vite build`): the same request goes out, but
+    there is no `node_modules`/`/@fs/` passthrough in a built app — Vite
+    can't see `new URL(...)` wrapped inside alphaTab's own `Environment`
+    class to begin with, so `alphaTab.worker.mjs`/`alphaTab.worklet.mjs`/
+    `alphaTab.core.mjs` never land in `dist/assets/` on their own.
+    `client/vite.config.ts`'s `alphaTabWorkerAssets()` plugin (mirroring
+    the equivalent plugin already in `playwright.config.ts`'s
+    `ctViteConfig`) emits them via `generateBundle`, so the request the
+    built code actually issues resolves. Without it, the request hangs
+    forever with zero visible
     error, permanently blocking `soundFontLoaded`/playback readiness for
     every participant — this was the root cause of
     feedback-lyrics-only-view-d7d8 (the lyrics-only view has no fallback
