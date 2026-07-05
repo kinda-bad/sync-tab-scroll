@@ -101,14 +101,23 @@ export async function expectNoHorizontalOverflow(page: Page, what: string): Prom
 
 /**
  * Sends a raw WS message as an already-existing participant, bypassing
- * whatever real UI/event would normally trigger it — used specifically to
- * drive `readiness-update: ready` past alphaTab's `isReadyForPlayback` gate,
- * which never resolves under any browser-automation context (Chrome's
- * autoplay policy blocks the audio decode this depends on; confirmed
- * empirically, matches this project's known pre-existing limitation). This
- * reconnects as the same participantId via a second, real WS connection —
- * the exact `session-join` reconnect path already used for page refreshes —
- * rather than adding any test-only hook to production code.
+ * whatever real UI/event would normally trigger it — used by tests that
+ * want to reach a ready/playing state faster than waiting on the real
+ * `soundFontLoaded` auto-trigger, or that predate the fix below and just
+ * haven't been revisited. This reconnects as the same participantId via a
+ * second, real WS connection — the exact `session-join` reconnect path
+ * already used for page refreshes — rather than adding any test-only hook
+ * to production code.
+ *
+ * Not required for correctness anymore: `isReadyForPlayback` used to never
+ * resolve under browser automation, previously attributed here to Chrome's
+ * autoplay policy blocking the audio decode — that diagnosis was wrong. The
+ * real cause (confirmed 2026-07-04, feedback-lyrics-only-view-d7d8) was
+ * alphaTab's ESM synth worker asset never being emitted by the production
+ * Vite build (infrastructure.md's Font & Worker Setup section). Once
+ * `client/vite.config.ts` emits it, readiness resolves for real under
+ * Playwright automation too — see `lyrics-only-view.spec.ts`, which uses no
+ * bypass at all.
  */
 export async function sendAsParticipant(session: StoredSession, message: object): Promise<void> {
   const ws = new WebSocket('ws://localhost:6081');

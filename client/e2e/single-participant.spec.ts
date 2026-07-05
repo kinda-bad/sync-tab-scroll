@@ -2,14 +2,16 @@ import { test, expect } from '@playwright/test';
 import { createSessionAsHost, readStoredSession, sendAsParticipant } from './helpers';
 
 /**
- * SCOPE NOTE: reaching `readiness: 'ready'` naturally requires alphaTab's
- * `soundFontLoaded` event, which never fires under browser automation
- * (Chrome's autoplay policy blocks the audio decode it depends on —
- * confirmed empirically, a pre-existing project-wide limitation, not
- * specific to this test). `sendAsParticipant` drives the real
- * `readiness-update` WS message directly instead of waiting on the
- * audio-blocked auto-trigger, so Start/Playback-view flows can still be
- * exercised end-to-end.
+ * SCOPE NOTE: these tests use `sendAsParticipant` to drive the real
+ * `readiness-update` WS message directly rather than waiting on the real
+ * `soundFontLoaded` auto-trigger — kept for speed/determinism, not because
+ * it's required. It used to be required, under a since-corrected belief
+ * that Chrome's autoplay policy blocks the audio decode `soundFontLoaded`
+ * depends on under browser automation; the real cause (confirmed
+ * 2026-07-04, feedback-lyrics-only-view-d7d8, see helpers.ts's
+ * `sendAsParticipant` doc comment) was an unrelated missing build asset,
+ * now fixed — real readiness resolves under Playwright too (see
+ * `lyrics-only-view.spec.ts`, which uses no bypass).
  */
 test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
