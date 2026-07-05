@@ -1,11 +1,45 @@
 import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { createRequire } from 'node:module';
+import type { Plugin } from 'vite';
 
 // @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
 // from the published 1.8.3 package — a packaging bug, not a config error
 // (verified: the file genuinely doesn't exist in node_modules). Configuring
 // asset handling manually instead; see tab-renderer.ts for font/worker setup.
+//
+// The dev server (optimizeDeps.exclude below) and the production build need
+// two DIFFERENT fixes for the same underlying problem — alphaTab's ESM
+// build always attempts `new Worker(new URL('./alphaTab.worker.mjs',
+// import.meta.url), {type:'module'})` first (regardless of
+// core.scriptFile/core.useWorkers, which are only a fallback reached on a
+// *synchronous* construction error — a hanging/404 Worker never throws
+// one). Excluding the dep from esbuild's optimizer changes how alphaTab's
+// own bundler-detection resolves at dev-time, so the dev server takes a
+// different, working code path (verified empirically — see the real-browser
+// repro this fix was based on). The production `vite build` output has no
+// such detection difference, so the ESM worker request goes out for real —
+// but Vite can't see that `new URL(...)` call (it's wrapped inside
+// alphaTab's own Environment class), so the worker files never land in
+// dist/assets/ and the request hangs forever with no visible error,
+// permanently blocking playback readiness. Mirrors playwright.config.ts's
+// `alphaTabWorkerAssets()` (already applied to the CT project) for the
+// main client build.
+function alphaTabWorkerAssets(): Plugin {
+  const require = createRequire(import.meta.url);
+  const distDir = path.dirname(require.resolve('@coderline/alphatab'));
+  return {
+    name: 'alphatab-build-worker-assets',
+    generateBundle() {
+      for (const f of ['alphaTab.worker.mjs', 'alphaTab.worklet.mjs', 'alphaTab.core.mjs']) {
+        this.emitFile({ type: 'asset', fileName: `assets/${f}`, source: fs.readFileSync(path.join(distDir, f)) });
+      }
+    },
+  };
+}
 //
 // Ports: dev servers (a real person's own session) run on 6000/6080; e2e
 // spins up its own instances on 6001/6081 (playwright.config.ts's
@@ -23,7 +57,7 @@ const fileEnv = loadEnv('', process.cwd(), '');
 const backendPort = process.env.VITE_BACKEND_PORT ?? fileEnv.VITE_BACKEND_PORT ?? '6080';
 
 export default defineConfig({
-  plugins: [svelte()],
+  plugins: [svelte(), alphaTabWorkerAssets()],
   // The dep-optimizer's own bundling of alphaTab.worker.mjs never resolves
   // under Vite's dev server (verified: request stays pending forever,
   // blocking soundFontLoaded/readiness) — excluding it forces alphaTab to
