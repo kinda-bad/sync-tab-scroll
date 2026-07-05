@@ -28,9 +28,9 @@ status: in-progress   # generating -> ready -> in-progress -> completed
 
 ## Phase 4: Full verification
 
-- [ ] T012 Run `pnpm -r --if-present run check` (typecheck across all workspaces) — must pass clean.
-- [ ] T013 [parallel] Run `pnpm --filter client test` (client vitest) — must pass clean.
-- [ ] T014 [parallel] Run `pnpm --filter server test` (server vitest) — must pass clean.
-- [ ] T015 Run `npx playwright test --project=ct` (from `client/`) — must pass clean, including the pre-existing lyrics rendering-logic CT coverage.
-- [ ] T016 Run `npx playwright test --project=e2e` (from `client/`), including the new test from T006/T007 — must pass clean.
+- [x] T012 Run `pnpm -r --if-present run check` (typecheck across all workspaces) — must pass clean. **Passed.**
+- [x] T013 [parallel] Run `pnpm --filter client test` (client vitest) — must pass clean. **Passed: 10 files, 41 tests.**
+- [x] T014 [parallel] Run `pnpm --filter server test` (server vitest) — must pass clean. **Passed: 22 files, 88 tests.**
+- [x] T015 Run `npx playwright test --project=ct` (from `client/`) — must pass clean, including the pre-existing lyrics rendering-logic CT coverage. **Passed: 44 tests.**
+- [x] T016 Run `npx playwright test --project=e2e` (from `client/`), including the new test from T006/T007 — must pass clean. **Passed: 21 tests, including the new `lyrics-only-view.spec.ts`.**
 - [ ] T017 Run `/ardd-verify` then `/ardd-analyze` to close the loop on the artifact corrections from Phase 3.
