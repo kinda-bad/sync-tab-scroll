@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-04
 diagram_status: stale
 ---
 
@@ -234,6 +234,15 @@ one view.
   between clicking a Host Transfer control and that participant's state
   changing), and requesting host while a request is already pending —
   surfaced as toasts, not blocking modals.
+- **Connection lost**: the server is unreachable — either the WS never
+  connects at all (server down at load) or an established connection
+  drops. Distinct from the Error state above: this isn't a per-action
+  failure, it's total server unreachability, so it's a persistent,
+  non-dismissing banner fixed to the top of the viewport
+  (`ConnectionBanner.svelte`), not a toast. Shown on every view,
+  including Landing, since the bug this covers reproduces there
+  specifically. Clears on its own once the connection recovers
+  (infrastructure.md's reconnect-with-retry) — no user action needed.
 
 Color, typography, tone, and motion are owned by `brand.md`, not this
 artifact.
