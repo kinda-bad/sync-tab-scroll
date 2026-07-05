@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-04
 diagram_status: stale
 ---
 
@@ -294,12 +294,45 @@ block above might suggest at a glance:
   rendering works without issue at the scale this app needs.
 - `settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href`
   (`client/src/tab-renderer.ts:51`) — a distinct setting from
-  `core.useWorkers` above. alphaTab's audio player spawns its own worker
-  independent of the render worker `core.useWorkers` controls, and that
-  player worker needs a classic (non-ESM) script it can load, since
-  auto-detection fails under Vite's ESM output the same way the render
-  worker's did. A classic build copy is served as a static client asset
-  at that path for this.
+  `core.useWorkers` above, but **not** the mechanism that actually keeps
+  the audio player worker alive in every environment (a previous version
+  of this section claimed it was; corrected 2026-07-04 after a real-browser
+  investigation of feedback-lyrics-only-view-d7d8 traced the actual cause).
+  alphaTab's ESM build *always* attempts
+  `new Worker(new URL('./alphaTab.worker.mjs', import.meta.url), {type:
+  'module'})` first, under any Vite/Webpack-bundled environment detection —
+  `core.scriptFile` is only a fallback reached inside a `catch` for a
+  *synchronous* Worker-construction error, which a Worker pointed at a
+  hanging or 404ing URL never produces (`new Worker()` doesn't throw on
+  404). The ESM-URL Worker attempt is made in *both* of this app's
+  environments — it is never skipped — but resolves through two different,
+  unrelated mechanisms, verified via a real-browser network trace of each:
+  - **Dev server** (`vite`): the request (`new URL('./alphaTab.worker.mjs',
+    import.meta.url)`, resolved against alphaTab's own package location)
+    goes out and is served by Vite's `/@fs/` raw-filesystem passthrough,
+    straight out of `node_modules/@coderline/alphatab/dist/` — no
+    building/rewriting involved. `client/vite.config.ts`'s
+    `optimizeDeps.exclude: ['@coderline/alphatab']` is what makes this
+    resolve at all: without it, Vite's dev-time dep-optimizer (esbuild)
+    tries to pre-bundle the package into its own rewritten `deps/` cache
+    first, and that rewritten copy's own internal `import.meta.url`
+    resolution breaks the same request the exclude avoids inviting in the
+    first place.
+  - **Production build** (`vite build`): the same request goes out, but
+    there is no `node_modules`/`/@fs/` passthrough in a built app — Vite
+    can't see `new URL(...)` wrapped inside alphaTab's own `Environment`
+    class to begin with, so `alphaTab.worker.mjs`/`alphaTab.worklet.mjs`/
+    `alphaTab.core.mjs` never land in `dist/assets/` on their own.
+    `client/vite.config.ts`'s `alphaTabWorkerAssets()` plugin (mirroring
+    the equivalent plugin already in `playwright.config.ts`'s
+    `ctViteConfig`) emits them via `generateBundle`, so the request the
+    built code actually issues resolves. Without it, the request hangs
+    forever with zero visible
+    error, permanently blocking `soundFontLoaded`/playback readiness for
+    every participant — this was the root cause of
+    feedback-lyrics-only-view-d7d8 (the lyrics-only view has no fallback
+    content at all, unlike an instrument participant who at least sees a
+    static, if unsynced, rendered tab).
 
 The audio side of tab rendering also deviates from a bare visual-only
 setup: `settings.player.enablePlayer = true` and `settings.player.soundFont

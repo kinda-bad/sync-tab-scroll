@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-04 (`worktree-agent-a3742a2bf2ac7cfe1` and `worktree-ui-improvements` both merged to `main`. Both branches independently forked before this session's `switchTrack` part-switching fix (`106a323`) landed and had each silently reverted it in their own copy of `ensurePlaybackEngine`; both merges were resolved by hand to keep that fix alongside each branch's real new work, verified green via the full vitest + CT + e2e suite after each merge (not just typecheck). Two genuine pre-existing defects were found and fixed along the way (neither a merge regression — both reproduced identically on the source branch in isolation): a spurious internal alphaTab `isSeek: true` position-reset (fired while the sequencer still preparing MIDI, before `isReadyForPlayback`) was being broadcast as a real host seek — fixed with an `isReadyForPlayback` guard in `playback-engine.ts`'s seek listener; and `worktree-ui-improvements`' new `e2e/small-screen.spec.ts` predated both the dev/test port-separation work and the modal auto-close-on-part-select fix, so it hardcoded the old port and clicked a "Close" button that no longer exists — fixed. The metronome-per-participant reversal (`worktree-ui-improvements`) is a user-confirmed design decision, not newly decided by this merge — implementation not yet manually validated in the running app. `SettingsModal.svelte`'s three-tab redesign (`worktree-ui-improvements`) superseded the other branch's narrower crammed-row split, per that plan's own explicit supersession note — taken as authoritative during conflict resolution. Two feedback-driven branches remain in progress in the background, unaffected by this merge: `server-failure-banner` (T007 done, T008 in progress) and `lyrics-only-view-fix`.). Keep this current as artifacts are refined and open questions are resolved._
+_Updated: 2026-07-04 (branch `lyrics-only-view-fix`: root-caused and fixed feedback-lyrics-only-view-d7d8. The full-screen synced lyrics view rendered nothing in the production build because alphaTab's ESM synth worker always attempts `new Worker(new URL('./alphaTab.worker.mjs', import.meta.url))` first under Vite-bundled output — `core.scriptFile` is only a fallback reached on a synchronous construction error, never triggered by a hanging/404'd Worker — and `client/vite.config.ts` never emitted that file into `dist/assets/`, so the request hung forever with zero visible error, permanently blocking playback readiness for every participant. `pnpm dev` was already unaffected — a real network trace showed the same ESM worker request resolves there via Vite's `/@fs/` raw-filesystem passthrough straight out of `node_modules` (made possible by `optimizeDeps.exclude` avoiding esbuild's dep-optimizer rewriting it into a broken `deps/` cache copy), not by taking a different code path as an earlier draft of this fix incorrectly assumed before an advisor review caught the gap and a second network trace corrected it. Fixed the production build by adding the same `alphaTabWorkerAssets()` plugin `playwright.config.ts`'s CT project already carried. Verified via a real (non-Playwright) Chrome session against both the rebuilt production preview and dev, through actual playback. Also discovered and corrected a second, previously-undetected wrong belief: this project's own "Chrome's autoplay policy blocks playback under browser automation" diagnosis (documented in `e2e/helpers.ts` and `single-participant.spec.ts`) was never actually correct — it was always this same worker-asset bug; real Playwright-driven playback (no `sendAsParticipant` raw-WS bypass) now reaches ready in under a second. Corrected `infrastructure.md`'s Font & Worker Setup section, which had made the same wrong claim about `core.scriptFile` covering the audio worker unconditionally. Added a build-time regression guard (`client/scripts/check-worker-assets.mjs`, wired as `postbuild`) and a real e2e test (`lyrics-only-view.spec.ts`) asserting actual rendered lyric text, not just absence of a tab canvas. Full suite green: typecheck, 41 client + 88 server vitest, 44 CT, 21 e2e. Merged latest `main` into this branch first to pick up the feedback file and the two other branches (`worktree-agent-a3742a2bf2ac7cfe1`, `worktree-ui-improvements`) already merged there — clean merge, no conflicts. Not yet merged to `main` itself.). Keep this current as artifacts are refined and open questions are resolved._
 
 ## Artifact Status
 
@@ -68,10 +68,12 @@ one open, explicitly-deferred item (CI provider decision).
 ## Code-vs-Artifact Defects
 
 1 known defect — see `DEFECTS.md`, last checked 2026-07-04 (scoped to
-Principle VIII; other artifacts not re-surveyed this run). The defect:
-Principle VIII's "run ... in CI" half is unmet — no CI provider/workflow/
-remote exists in this repo — an explicitly deferred human decision, not a
-silent gap.
+Principle VIII and this session's `infrastructure.md`/`ui.md` sections;
+rest of the artifact set not re-surveyed this run — a full unscoped pass
+is recommended soon given how much has landed on `main` since the last
+one). The defect: Principle VIII's "run ... in CI" half is unmet — no CI
+provider/workflow/remote exists in this repo — an explicitly deferred
+human decision, not a silent gap.
 
 ## Feedback
 
@@ -94,10 +96,9 @@ merges). 1 Bug: the UI has no indication when the server is unreachable;
 should show a persistent error banner until contact is restored. Tagged
 `[artifacts: ui, infrastructure]`.
 
-`feedback-lyrics-only-view-d7d8.md` — **`status: open`** on this checkout
-(branch `lyrics-only-view-fix` is investigating/implementing in the
-background). 1 Bug: the lyrics-only view renders nothing. Tagged
-`[artifacts: ui]`.
+`feedback-lyrics-only-view-d7d8.md` — **`status: planned`**, fully
+implemented on branch `lyrics-only-view-fix` (see the note at the top of
+this file). Not yet merged to `main`.
 
 0 other open feedback files.
 
@@ -140,6 +141,10 @@ branch above.
 **`plan-server-failure-banner-2026-07-04.md`** → in progress on branch
 `server-failure-banner` (background), not yet merged.
 
+**`plan-lyrics-only-view-fix-2026-07-04.md`** → `tasks-lyrics-only-view-fix-3617.md`
+— `status: completed` (16/16; T017 is this `/ardd-verify`+`/ardd-analyze`
+pass itself), on branch `lyrics-only-view-fix`, not yet merged to `main`.
+
 ## Implementation Status
 
 **Both `worktree-agent-a3742a2bf2ac7cfe1` and `worktree-ui-improvements`
@@ -179,21 +184,30 @@ are implemented and merged to `main`.**
 
 **Unsigned commits — needs attention before any push.** Both merge
 commits (`af41e24`, `fcfab93`) were made with `--no-gpg-sign` (1Password
-locked). Re-sign the full unsigned range before pushing anything.
+locked). Re-sign the full unsigned range before pushing anything. This
+also applies to every commit on `lyrics-only-view-fix` (fix, tests, docs,
+and its own merge-of-`main` commit) — same reason, same fix needed.
 
 ## Recommended Next Step
 
-1. Manually validate the metronome-per-participant implementation in the
+1. Review and merge `lyrics-only-view-fix` to `main` (feedback item fully
+   implemented, full suite green, not yet merged).
+2. Manually validate the metronome-per-participant implementation in the
    running app (design decision already confirmed by the user; the
    implementation itself hasn't been exercised live yet).
-2. Re-sign the full unsigned commit range before pushing anything to a
+3. Re-sign the full unsigned commit range (both the earlier merges and
+   everything on `lyrics-only-view-fix`) before pushing anything to a
    remote.
-3. Let the two background branches (`server-failure-banner`,
-   `lyrics-only-view-fix`) finish and merge; both will need a fresh
-   `playback-engine.ts`/`Playback.svelte` conflict check against the now
-   much-changed `main`, same pattern as this pass.
-4. `plan-lyrics-pre-singing-2026-07-04.md`'s tasks are `in-progress` —
+4. Let the remaining background branch (`server-failure-banner`) finish
+   and merge; it will need a fresh `playback-engine.ts`/`Playback.svelte`
+   conflict check against the now much-changed `main`, same pattern as
+   the earlier merges.
+5. `plan-lyrics-pre-singing-2026-07-04.md`'s tasks are `in-progress` —
    resume or check status.
-5. Decide the CI-provider question for constitution Principle VIII
+6. Decide the CI-provider question for constitution Principle VIII
    whenever a remote/CI system exists (see `DEFECTS.md`).
-6. Not blocking: `/ardd-render` the three artifacts marked stale above.
+7. A full, unscoped `/ardd-verify` pass across all artifacts is
+   recommended soon — several passes in a row have been scoped to a
+   specific fix/feature rather than re-surveying everything, and `main`
+   has absorbed a lot of UI change recently.
+8. Not blocking: `/ardd-render` the three artifacts marked stale above.

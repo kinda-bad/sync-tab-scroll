@@ -40,10 +40,57 @@ _Last verified: 2026-07-04_
   from each other over time. Acceptable today (five values, no secrets),
   worth a one-line mention if a future feature adds more config keys.
 
-No other defects found — `datamodel.md`, `pipeline.md`, `infrastructure.md`,
-`ui.md`, and `brand.md` are unchanged since the 2026-07-03 all-clear pass and
-were not re-surveyed in depth this run (this pass was scoped to Principle
-VIII per the config-env-convention implementation it was run to confirm).
+## infrastructure.md
+
+No defects found in the "Font & Worker Setup" section (re-surveyed this
+run, scoped to feedback-lyrics-only-view-d7d8's fix): the section's
+`core.scriptFile`/`core.useWorkers` claims were themselves corrected as
+part of this fix (see the plan/tasks for `lyrics-only-view-fix`) to
+reflect the actual, verified mechanism — dev works via
+`optimizeDeps.exclude` changing alphaTab's own bundler-environment
+detection, production build works via `client/vite.config.ts`'s
+`alphaTabWorkerAssets()` plugin emitting the ESM worker files it requests.
+Verified directly against `client/vite.config.ts`, `client/src/tab-renderer.ts`,
+`client/playwright.config.ts`, and a real-browser network trace of both
+the dev server and a production build/preview.
+
+Rest of this artifact not re-surveyed in depth this run (scoped pass, see
+below).
+
+## ui.md
+
+No defects found in "Playback View" → "Lyrics part selected" (re-surveyed
+this run): the description (headless alphaTab instance, no visible staff,
+full lyric text driven by `CatalogSong.lyricsLrc` line timestamps, custom
+view not alphaTab's native lyrics rendering) matches
+`client/src/playback-engine.ts`'s `ensurePlaybackEngine` (the
+`isLyricsPart && song.lyricsLrc` branch) and `client/src/App.svelte`'s
+`.full-lyrics-view` element exactly. The feedback item that prompted this
+check (`feedback-lyrics-only-view-d7d8`) was filed against this artifact,
+but the actual bug was a build-config issue (see `infrastructure.md`
+above) that prevented this already-correctly-described behavior from ever
+running in the production build — not a documentation defect in `ui.md`
+itself.
+
+Rest of this artifact not re-surveyed in depth this run (scoped pass, see
+below) — `ui.md` has had substantial changes merged since the
+2026-07-03/07-04 passes (settings modal restructure, pre-singing lyrics
+placeholder, small-screen/responsive behavior, leave-session control) that
+this run did not audit; a full re-survey of `ui.md` is recommended before
+the next feature build that touches the Playback or Lobby views.
+
+## Not re-surveyed this run
+
+`datamodel.md`, `pipeline.md`, `brand.md`, and the rest of `ui.md` beyond
+the section above were not re-surveyed in depth this run — this pass was
+scoped to `feedback-lyrics-only-view-d7d8`'s fix (worker/build config and
+the two artifact sections it touches), per the same scoping convention the
+2026-07-04 Principle VIII pass used. Given how much has landed on `main`
+since the last full pass (host-transfer, settings-modal redesign,
+pre-singing lyrics placeholder, small-screen responsiveness, leave-session,
+metronome-as-preference, lobby-cursor debounce), a full unscoped
+`/ardd-verify` pass across all artifacts is recommended soon, not assumed
+clean by omission here.
 
 ## Resolved since last verification (2026-07-03, post-merge)
 
