@@ -65,7 +65,7 @@ status: in-progress
   now a genuine pink/cyan pair under `cyberpunk-dark`. Respect
   `prefers-reduced-motion`, consistent with the existing dark/light
   motion variants. (feature: grunge-cyberpunk-themes)
-- [ ] T007 [artifacts: brand] Add `cyberpunkDarkTabColors` (reuse the
+- [x] T007 [artifacts: brand] Add `cyberpunkDarkTabColors` (reuse the
   existing `darkTabColors` values verbatim — `brand.md` states
   `cyberpunk-dark`'s tab palette is identical to the current dark
   palette) and `cyberpunkLightTabColors` (new fresh-pass values per
