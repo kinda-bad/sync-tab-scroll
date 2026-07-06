@@ -67,6 +67,10 @@
     wsClient?.send({ type: 'host-delegate', targetParticipantId });
   }
 
+  function removeParticipant(participantId: string) {
+    wsClient?.send({ type: 'host-remove-participant', participantId });
+  }
+
   function requestHost() {
     wsClient?.send({ type: 'request-host' });
   }
@@ -100,6 +104,7 @@
             {/if}
             {#if isHost && !isSelf}
               <Button variant="ghost" label="Make host" onclick={() => delegateHost(p.id)} />
+              <Button variant="ghost" label="Remove" onclick={() => removeParticipant(p.id)} />
             {/if}
             {#if !isHost && isSelf}
               <Button variant="ghost" label="Request to become host" disabled={session.pendingHostRequest !== null} onclick={requestHost} />
