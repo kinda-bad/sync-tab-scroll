@@ -1,9 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-plan readme-local-setup-and-gp-ingestion`, on
-its own branch). Repo is on `main`, pushed to `origin/main`
-(`lyrics-gap-timing-indicator` merged and pushed this session). No
-cross-artifact contradictions found._
+_Updated: 2026-07-06 (`/ardd-tasks`, approved and tasked the
+readme-local-setup-and-gp-ingestion plan on its own branch). Repo is on
+`main`, pushed to `origin/main`. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -88,27 +87,24 @@ re-prompt:
 
 - `participant-selected-part` (participant list shows each member's
   currently selected part) — backlogged.
-- `readme-local-setup-and-gp-ingestion` — a plan now exists
-  (`plan-readme-local-setup-and-gp-ingestion-2026-07-06.md`, draft, on
-  its own unmerged branch); the register on `main` still says
-  `backlogged` since `/ardd-tasks` is what flips it to `planned`.
+- `readme-local-setup-and-gp-ingestion` — approved and tasked on its own
+  branch (`tasks-readme-local-setup-and-gp-ingestion-a8f1.md`, 9 tasks,
+  `ready`); the register on `main` still says `backlogged` since that
+  flip hasn't merged yet.
 
 ## In Flight
 
 - Branch `readme-local-setup-and-gp-ingestion` (plain branch, not a
-  worktree) — `plan-readme-local-setup-and-gp-ingestion-2026-07-06.md`
-  drafted (not yet approved/tasked), committed there, not yet on `main`.
-  Documentation-only plan: no artifact changes, adds a "Getting Started"
-  section (dev setup, the Chrome port-6000 gotcha discovered this
-  session), "Adding a song" (`.gp` ingestion CLI), and "Running tests" to
-  `README.md` — every command verified by actually running it, not
-  transcribed from memory.
+  worktree) — plan approved, `tasks-readme-local-setup-and-gp-ingestion-
+  a8f1.md` generated (9 tasks across 4 phases: Getting Started, Adding a
+  song, Running tests, final read-through — every command verified by
+  actually running it), `ready`, not yet started. All committed there,
+  not yet on `main`.
 
 ## Recommended Next Step
 
-1. Run `/ardd-tasks` on
-   `plan-readme-local-setup-and-gp-ingestion-2026-07-06.md` to approve it
-   and generate its task list, then implement.
+1. Implement `tasks-readme-local-setup-and-gp-ingestion-a8f1.md`
+   (`/ardd-implement`, inline or delegated).
 2. Consider a fresh `/ardd-verify` pass — a large amount of client code
    changed across the theme-rework, lyrics-sheet-redesign, and
    gap-timing-indicator merges, and the last verify pass predates all
