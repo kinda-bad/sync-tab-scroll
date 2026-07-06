@@ -1,8 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-analyze`, after an `/ardd-verify` pass
-cleared 3 of `DEFECTS.md`'s 5 defects — down to 2). Repo is on `main`. No
-cross-artifact contradictions found._
+_Updated: 2026-07-06 (`/ardd-plan`, drafting a second lyrics-only-view fix
+after `/ardd-tasks` approved and tasked the theme plan). Repo is on
+`main`; a delegated worktree is implementing the theme plan in the
+background. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -37,18 +38,14 @@ These are documented defaults, not blockers.
 
 - [MINOR] `features.md`'s "Metronome toggle"/"Count-in toggle" entries
   still carry their original logging-time descriptions, superseded by the
-  implemented design (metronome is a client-local preference; count-in has
-  a host toggle in the Settings modal). Owned by `/ardd-feature`/
-  `/ardd-plan`/`/ardd-tasks`, not this skill — flagged for a future pass.
-- [GAP] `ui.md`'s "Connection lost" state (client's own WS reachability)
-  and `datamodel.md`'s `Participant.connectionStatus` field (server's
-  per-participant socket state) share a name but describe different
-  concepts. Not contradictory, just worth disambiguating if it causes
-  confusion later.
+  implemented design. Owned by `/ardd-feature`/`/ardd-plan`/`/ardd-tasks`,
+  not this skill — flagged for a future pass.
+- [GAP] `ui.md`'s "Connection lost" state and `datamodel.md`'s
+  `Participant.connectionStatus` field share a name but describe different
+  concepts. Not contradictory, just worth disambiguating later.
 - [GAP] `ui.md`/`infrastructure.md` still don't mention
-  `installCountInCursorGuard` (`client/src/playback-sync.ts`), which pins
-  the cursor during the count-in window. Not a contradiction, just drift
-  for a future `/ardd-verify` to record as a doc addition.
+  `installCountInCursorGuard` (`client/src/playback-sync.ts`). Not a
+  contradiction, just drift for a future `/ardd-verify` to record.
 
 ## Within-Artifact Issues
 
@@ -60,75 +57,73 @@ These are documented defaults, not blockers.
 
 ## Constitution Compliance
 
-No new violations found this pass. Principle VIII (Config via `.env`,
-Synced by Example) remains implemented pre-commit; the CI half is a known,
-explicitly-deferred gap — see Code-vs-Artifact Defects below. No other
-principle violations spotted in this artifact-only pass.
+No new violations found this pass. Principle VIII's CI half remains a
+known, explicitly-deferred gap — see Code-vs-Artifact Defects below.
 
 ## Diagrams
 
 - datamodel.md — current ✅
 - infrastructure.md — current ✅
-- ui.md — current ✅ on `main` (a `ui.md` Preferences-tab edit is drafted
-  on the unmerged `grunge-cyberpunk-themes` branch, which will make this
-  stale once merged — see In Flight).
+- ui.md — current ✅ on `main` (a `ui.md` Preferences-tab edit is being
+  implemented on the in-flight `grunge-cyberpunk-themes` worktree, which
+  will make this stale once merged).
 
 ## Code-vs-Artifact Defects
 
-2 known defects — see `DEFECTS.md`, last checked 2026-07-06 (fresh
-codebase pass, confirmed against current code — not assumed). Down from
-5: `infrastructure.md`'s percussion-detection wording and render-scaling
-doc gap, the `host-remove-participant` UI/docs gap, and `pipeline.md`'s
-lrclib wording are all confirmed fixed and no longer listed. Remaining:
+2 known defects — see `DEFECTS.md`, last checked 2026-07-06 (confirmed
+against current code). Both were surfaced and declined in
+`plan-grunge-cyberpunk-themes-2026-07-06.md` (unrelated to that plan) and
+now also in `plan-lyrics-only-view-fix-2-2026-07-06.md` (unrelated to
+that one too) — won't re-prompt:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
-  the same wrong percussion-detection claim (`track.percussionArticulations`)
-  that `infrastructure.md`'s copy already fixed — the defects-followup
-  branch's scope only touched `infrastructure.md`.
+  the wrong percussion-detection claim that `infrastructure.md`'s copy
+  already fixed.
 - `constitution.md` — drift (pre-existing, deferred): Principle VIII's
-  CI half is unmet — no `.github/workflows/` exists (confirmed). Still
-  open, separate decision — see Recommended Next Step.
+  CI half is unmet — no `.github/workflows/` exists.
 
 ## Feedback
 
-1 open feedback file — `feedback-lyrics-only-view-6386.md` (bug: the
-lyrics-only view still shows nothing visible — possibly the earlier
-`feedback-lyrics-only-view-d7d8.md` fix, merged 2026-07-04, didn't fully
-resolve it, or it's regressed since). Will be picked up by the next
-`/ardd-plan`.
+1 feedback file, `feedback-lyrics-only-view-6386.md` — `status: open` on
+`main`, but its one bug item has been incorporated into
+`plan-lyrics-only-view-fix-2-2026-07-06.md` on the unmerged
+`lyrics-only-view-fix-2` branch (where the file is already flipped to
+`status: planned`); `main`'s copy will catch up once that branch merges.
 
 ## Feature Backlog
 
-2 backlogged · 0 planned · 0 tasked · 7 implemented — see
-`.project/artifacts/features.md`. `participant-selected-part` and
-`grunge-cyberpunk-themes` remain `backlogged` in `features.md` itself — a
-plan now exists for the latter
-(`plan-grunge-cyberpunk-themes-2026-07-06.md`, on its own unmerged
-branch), but per `/ardd-tasks`'s convention the `Status` flip to `planned`
-only happens when that plan is selected/approved via `/ardd-tasks`, not at
-draft time.
+2 backlogged · 0 planned · 0 tasked · 7 implemented in `features.md` on
+`main` right now. `participant-selected-part` remains backlogged.
+`grunge-cyberpunk-themes` is further along on its own branch (currently
+`Status: tasked`, being implemented — see In Flight) but that flip hasn't
+reached `main` yet either.
 
 ## In Flight
 
-- Branch `grunge-cyberpunk-themes` (plain branch, not a worktree) —
-  `plan-grunge-cyberpunk-themes-2026-07-06.md` drafted (reworks the
-  default theme into a louder "riot" palette, adds a new "cyberpunk"
-  theme). `brand.md`/`ui.md` design changes and this plan are committed
-  there, not yet on `main`, not yet approved/tasked.
-
-`lyrics-ticker-font-size` (3/3) and `defects-followup` (9/9) have both
-been merged into `main` and their worktrees/branches pruned.
+- Worktree `.claude/worktrees/agent-a74576c25e122e82d` (branch
+  `worktree-agent-a74576c25e122e82d`) — `tasks-grunge-cyberpunk-themes-
+  4982.md` in-progress, 2/16 (riot token rework + cyberpunk theme +
+  theme-control UI redesign — delegated subagent running in the
+  background).
+- Branch `grunge-cyberpunk-themes` (plain branch, source for the worktree
+  above) — plan approved and tasked, `brand.md`/`ui.md` design changes
+  committed, not yet on `main`.
+- Branch `lyrics-only-view-fix-2` (plain branch) —
+  `plan-lyrics-only-view-fix-2-2026-07-06.md` drafted (not yet
+  approved/tasked). Diagnoses the bug as likely `createHeadlessPlayer`'s
+  permanently-`display:none` container hitting alphaTab's known
+  "width=0, element invisible" render-skip quirk (already documented
+  elsewhere in `playback-engine.ts` for the visible tab-container path),
+  plus a confirmed CSS specificity conflict between `App.svelte` and
+  `lyrics.css` over `.full-lyrics-view`'s `display` property.
 
 ## Recommended Next Step
 
-1. Investigate the lyrics-only-view bug reported in
-   `feedback-lyrics-only-view-6386.md` — either live-debug it directly or
-   fold it into the next `/ardd-plan` pass.
-2. Switch to `grunge-cyberpunk-themes` and run `/ardd-tasks` to approve
-   the theme plan and generate its task list, then implement (or merge
-   its current draft-plan commits to `main` first if you'd rather plan
-   from there — either works, nothing beyond `brand.md`/`ui.md`/the plan
-   file has changed on that branch yet).
+1. Run `/ardd-tasks` on `plan-lyrics-only-view-fix-2-2026-07-06.md` to
+   approve it and generate its task list, then implement (Phase 1
+   reproduces both hypotheses before Phase 2 commits to a fix).
+2. Wait for the `grunge-cyberpunk-themes` worktree subagent to finish
+   (2/16 so far), then merge and re-analyze.
 3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
 4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
