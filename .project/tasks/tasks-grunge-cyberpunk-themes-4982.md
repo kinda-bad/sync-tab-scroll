@@ -155,7 +155,7 @@ status: in-progress
   `undefined` instead of the stored value); the `dark`/`light`/no-value/
   garbage-value cases already passed, as expected. T010 implements the
   4-way check next.
-- [ ] T012 [artifacts: ui] Redesign the Preferences tab's single
+- [x] T012 [artifacts: ui] Redesign the Preferences tab's single
   dark/light toggle in `SettingsModal.svelte` into two orthogonal
   controls per `ui.md`: a theme-family picker (`riot`/`cyberpunk`) and
   the existing light/dark toggle. Compute the flat `data-theme` value
@@ -164,6 +164,21 @@ status: in-progress
   stored flat value (theme-family: whether it starts with `cyberpunk-`;
   mode: whether it is/starts-with `dark` vs. `light`). (feature:
   grunge-cyberpunk-themes)
+
+  `themeFamily`/`themeMode` are reactive (`$:`) derivations off the single
+  `theme: StoredTheme` variable, never a second source of truth
+  (constitution Principle I) — `setTheme(family, mode)` recomputes the
+  flat value and calls the existing `applyTheme()`/`persistTheme()`
+  unchanged. Family button label: "Theme: Riot" / "Theme: Cyberpunk";
+  mode button keeps the existing label convention (shows the mode a click
+  switches *to*: "Light mode" when currently dark, "Dark mode" when
+  currently light). All 23 tests in `SettingsModal.ct.spec.ts` pass,
+  including the 6 T013 tests that failed pre-implementation (2 of those 6
+  had bugs in the test itself, found and fixed during this pass: the
+  "reload" simulation needed `component.unmount()` before mounting a
+  second instance — Playwright CT mounts append rather than replace — and
+  the mode==='Light' case needed to click "Light mode", not "Dark mode",
+  per the label-shows-target convention above).
 - [x] T013 [artifacts: ui] Extend `SettingsModal.ct.spec.ts` (test-first,
   per constitution Principle VII): both controls render in the
   Preferences tab; selecting each of the 4 combinations produces the

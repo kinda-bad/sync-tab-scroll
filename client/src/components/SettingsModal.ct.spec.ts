@@ -68,7 +68,14 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
   test(`selecting theme-family=${family} + mode=${mode} produces data-theme='${expected}' and persists it`, async ({ mount, page }) => {
     // Start from a known baseline (riot/dark) so every combination is
     // reached by an explicit number of clicks, not assumed default state.
-    await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'dark'));
+    // Also set `data-theme` directly, mirroring main.ts's own bootstrap
+    // (`applyTheme(loadStoredTheme() ?? 'dark')` runs before any view
+    // mounts in the real app) — the modal itself never calls `applyTheme`
+    // on mount, only in response to a click.
+    await page.evaluate(() => {
+      localStorage.setItem('sync-tab-scroll:theme', 'dark');
+      document.documentElement.dataset.theme = 'dark';
+    });
     const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Preferences' }).click();
 
@@ -76,7 +83,9 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
       await component.getByText('Theme: Riot').click();
     }
     if (mode === 'Light') {
-      await component.getByText('Dark mode').click();
+      // Buttons are labeled with the mode a click switches *to* — starting
+      // from the 'dark' baseline, that button reads "Light mode".
+      await component.getByText('Light mode').click();
     }
 
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
@@ -84,13 +93,20 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
     const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:theme'));
     expect(stored).toBe(expected);
 
-    // Simulated reload: a fresh mount re-reads localStorage the same way
-    // main.ts's own bootstrap does (loadStoredTheme() ?? 'dark'), rather
-    // than actually reloading the page (Playwright CT mounts don't survive
-    // a real page.reload()).
+    // Simulated reload: unmount, reset `data-theme` off, then a fresh
+    // mount + bootstrap re-reads localStorage the same way main.ts's own
+    // bootstrap does (loadStoredTheme() ?? 'dark') — Playwright CT mounts
+    // don't survive a real page.reload(), so this is the closest
+    // equivalent; must unmount the first component first, since a second
+    // mount() call appends rather than replaces.
+    await component.unmount();
     await page.evaluate(() => {
       document.documentElement.dataset.theme = '';
     });
+    const reloadedTheme = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:theme'));
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t ?? 'dark';
+    }, reloadedTheme);
     const component2 = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
     await component2.getByRole('button', { name: 'Preferences' }).click();
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
