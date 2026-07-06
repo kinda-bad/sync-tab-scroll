@@ -164,13 +164,26 @@ status: in-progress
   stored flat value (theme-family: whether it starts with `cyberpunk-`;
   mode: whether it is/starts-with `dark` vs. `light`). (feature:
   grunge-cyberpunk-themes)
-- [ ] T013 [artifacts: ui] Extend `SettingsModal.ct.spec.ts` (test-first,
+- [x] T013 [artifacts: ui] Extend `SettingsModal.ct.spec.ts` (test-first,
   per constitution Principle VII): both controls render in the
   Preferences tab; selecting each of the 4 combinations produces the
   correct `data-theme` attribute value on `document.documentElement` and
   persists it via `theme.ts`'s storage key across a simulated reload.
   Write and confirm these fail against the current single-toggle
   implementation before T012, then confirm they pass after.
+
+  Replaced the old single-toggle assertion (`/Light mode|Dark mode/` only)
+  with one that also expects `/Theme: Riot|Theme: Cyberpunk/`, and added: 4
+  parameterized tests (one per combination) asserting `data-theme` and the
+  `sync-tab-scroll:theme` localStorage key both land on the right flat
+  value, including a simulated-reload check (fresh `SettingsModalHarness`
+  mount re-reading `localStorage`, since Playwright CT mounts don't survive
+  a real `page.reload()`); one independence test (switching mode leaves
+  family untouched). Confirmed all 6 new/changed assertions fail against
+  the current single-toggle `SettingsModal.svelte` (the family-picker
+  button text never appears, so every locator times out) — 6 failed, 17
+  already-passing tests in this file unaffected. T012 implements the
+  two-control redesign next.
 - [ ] T014 [artifacts: ui] [parallel] Add `'cyberpunk-dark':
   'cyberpunk-dark'` and `'cyberpunk-light': 'cyberpunk-light'` entries to
   `client/.storybook/preview.ts`'s `withThemeByDataAttribute` `themes`

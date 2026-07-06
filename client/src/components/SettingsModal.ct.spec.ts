@@ -40,11 +40,73 @@ test('the modal has Participants, Session, and Preferences tabs, defaulting to P
   await expect(component.getByText(/lobby cursor/i)).toHaveCount(0);
 });
 
-test('the Preferences tab holds the theme toggle, for any participant', async ({ mount }) => {
+test('the Preferences tab holds two orthogonal theme controls, for any participant', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
   await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByText(/Theme: Riot|Theme: Cyberpunk/)).toBeVisible();
   await expect(component.getByText(/Light mode|Dark mode/)).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// Two orthogonal theme controls (brand.md Themes, ui.md Preferences): a
+// theme-family picker (riot/cyberpunk) and the existing light/dark toggle,
+// computing one of 4 flat `data-theme` values. Each control must act
+// independently of the other, and the combined value must persist across a
+// simulated reload (re-reading localStorage, same as theme.ts's own
+// loadStoredTheme/persistTheme round-trip).
+// ---------------------------------------------------------------------------
+
+const THEME_COMBINATIONS: Array<{ family: 'Riot' | 'Cyberpunk'; mode: 'Dark' | 'Light'; expected: string }> = [
+  { family: 'Riot', mode: 'Dark', expected: 'dark' },
+  { family: 'Riot', mode: 'Light', expected: 'light' },
+  { family: 'Cyberpunk', mode: 'Dark', expected: 'cyberpunk-dark' },
+  { family: 'Cyberpunk', mode: 'Light', expected: 'cyberpunk-light' },
+];
+
+for (const { family, mode, expected } of THEME_COMBINATIONS) {
+  test(`selecting theme-family=${family} + mode=${mode} produces data-theme='${expected}' and persists it`, async ({ mount, page }) => {
+    // Start from a known baseline (riot/dark) so every combination is
+    // reached by an explicit number of clicks, not assumed default state.
+    await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'dark'));
+    const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Preferences' }).click();
+
+    if (family === 'Cyberpunk') {
+      await component.getByText('Theme: Riot').click();
+    }
+    if (mode === 'Light') {
+      await component.getByText('Dark mode').click();
+    }
+
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
+
+    const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:theme'));
+    expect(stored).toBe(expected);
+
+    // Simulated reload: a fresh mount re-reads localStorage the same way
+    // main.ts's own bootstrap does (loadStoredTheme() ?? 'dark'), rather
+    // than actually reloading the page (Playwright CT mounts don't survive
+    // a real page.reload()).
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = '';
+    });
+    const component2 = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+    await component2.getByRole('button', { name: 'Preferences' }).click();
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
+  });
+}
+
+test('the theme-family picker and light/dark toggle act independently: switching mode does not reset family', async ({ mount, page }) => {
+  await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'cyberpunk-dark'));
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+  await component.getByRole('button', { name: 'Preferences' }).click();
+
+  await expect(component.getByText('Theme: Cyberpunk')).toBeVisible();
+  await component.getByText('Light mode').click();
+
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('cyberpunk-light');
+  await expect(component.getByText('Theme: Cyberpunk')).toBeVisible();
 });
 
 // --- Session tab: host-broadcast controls ---------------------------------
