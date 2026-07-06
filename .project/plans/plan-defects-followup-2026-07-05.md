@@ -1,6 +1,6 @@
 ---
 status: approved
-branch: lyrics-ticker-font-size
+branch: defects-followup
 created: 2026-07-05
 features: []
 ---
@@ -44,8 +44,9 @@ inaccuracies (`pipeline.md`'s lrclib-assisted-line-break description,
   finding) — unrelated, already tracked as its own open question, not
   part of this plan.
 - The `lyrics-ticker-font-size` CSS change itself — that's
-  `plan-lyrics-ticker-font-size-2026-07-05.md`, a separate draft plan on
-  this same branch; this plan doesn't touch `motifs.css`'s font-size.
+  `plan-lyrics-ticker-font-size-2026-07-05.md`, a separate plan on its own
+  `lyrics-ticker-font-size` branch; this plan doesn't touch `motifs.css`'s
+  font-size.
 
 ## Technical Approach
 

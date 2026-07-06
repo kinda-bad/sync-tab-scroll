@@ -33,7 +33,7 @@ infrastructure, ui, pipeline, brand), refreshing the 2026-07-05 pass.
   corresponding client UI or self-removal handling anywhere in `client/src/`
   — no `removeParticipant`/`host-remove-participant` reference exists
   client-side. A plan and generated tasks file
-  (`tasks-lyrics-ticker-font-size-defects-c196.md`) now target closing this,
+  (`tasks-defects-followup-c196.md`) now target closing this,
   but as of this verification pass it is still unimplemented and
   undocumented.
   **Location:** `server/src/handlers/host-remove-participant.ts`

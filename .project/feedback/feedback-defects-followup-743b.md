@@ -1,7 +1,7 @@
 ---
 status: planned
 created: 2026-07-05
-plan: plan-lyrics-ticker-font-size-defects-2026-07-05.md
+plan: plan-defects-followup-2026-07-05.md
 ---
 
 # Feedback

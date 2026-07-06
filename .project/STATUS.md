@@ -86,7 +86,7 @@ full-codebase pass, refreshing 2026-07-05's). Summary:
   via `tabScaleForViewportWidth` (`client/src/tab-renderer.ts:3,62`).
 - `infrastructure.md` — drift: `host-remove-participant` is a fully
   implemented server handler with no client-side entry point or docs.
-  **Now tasked** — `tasks-lyrics-ticker-font-size-defects-c196.md` targets
+  **Now tasked** — `tasks-defects-followup-c196.md` targets
   closing this; not yet implemented as of this pass.
 - `datamodel.md` — cosmetic (newly found this pass): the same wrong
   percussion-detection claim is duplicated in `CatalogPart.trackIndex`'s
@@ -119,7 +119,7 @@ landed on `main` via separate commits. Only the primary checkout remains.
 
 1. Implement `tasks-lyrics-ticker-font-size-7c31.md` (3 tasks: bump
    `.lyrics-overlay` font-size, live-verify, adjust strip height if
-   needed) and/or `tasks-lyrics-ticker-font-size-defects-c196.md` (9
+   needed) and/or `tasks-defects-followup-c196.md` (9
    tasks: Remove-participant UI + self-removal handling + 3 artifact
    wording fixes + verification) via `/ardd-implement`.
 2. Decide the CI-provider question for constitution Principle VIII now
