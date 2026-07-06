@@ -20,16 +20,28 @@
  * full style. App.svelte's markup still applies the `visible` class
  * (`class:visible={hasPart && isLyricsPart}`); only the CSS rule's
  * location changed.
+ *
+ * Reworked 2026-07-06 (ui.md "Lyrics part selected"): this is no longer a
+ * single centered line — it's a scrollable sheet holding one child
+ * `.lyric-line` element per line of the song's .lrc, built by
+ * playback-engine.ts. `--font-display` (brand.md Typography: hero/title
+ * moments only) is dropped in favor of `--font-mono`, matching this
+ * view's actual role as body reading-text, not a single hero word.
  */
 .full-lyrics-view {
   display: none;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  letter-spacing: 0.02em;
-  color: var(--lyric-base);
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  /* Clears the fixed, bottom-pinned nav bar (App.svelte's Bar.svelte,
+     `--bar-height`) the same way `.app-content.with-bar` does, since this
+     element is a top-level sibling of `.app-content`, not inside it. */
+  height: calc(100dvh - var(--bar-height));
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-4) + var(--bar-height));
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  line-height: 1.6;
   text-align: center;
   background: var(--bg);
 }
@@ -38,6 +50,11 @@
   display: flex;
 }
 
-.full-lyrics-view.at-highlight {
+.lyric-line {
+  color: var(--lyric-base);
+}
+
+.lyric-line.active {
   color: var(--lyric-active);
+  font-weight: bold;
 }

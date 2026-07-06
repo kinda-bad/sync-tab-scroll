@@ -124,22 +124,63 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     });
   } else if (isLyricsPart && song.lyricsLrc) {
     let lrcLines: LrcLine[] = [];
+    let lineEls: HTMLElement[] = [];
     let activeLineIndex = -1;
+
+    // Matches this codebase's existing prefers-reduced-motion convention
+    // (client/src/styles/motifs.css) of gating smooth/animated effects
+    // behind the media query rather than always animating.
+    const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Sets which line is marked active, moving the `.active` class rather
+    // than re-rendering all lines, and scrolls the newly-active line into
+    // view. Called both from the synchronous initial-mount population
+    // (index 0, "upcoming" line, ui.md) and from each playerPositionChanged
+    // tick below — same "one function, two call sites" shape as
+    // lyrics-overlay.ts's updateActiveSyllable/centerActiveSyllable split.
+    function setActiveLine(index: number): void {
+      if (index === activeLineIndex) return;
+      if (activeLineIndex >= 0) lineEls[activeLineIndex].classList.remove('active');
+      if (index >= 0) {
+        const el = lineEls[index];
+        el.classList.add('active');
+        el.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+      }
+      activeLineIndex = index;
+    }
+
     fetch(song.lyricsLrc)
       .then((res) => res.text())
       .then((content) => {
         lrcLines = parseLrc(content).filter((l) => l.text.length > 0);
+        containers.fullLyricsEl.textContent = '';
+        lineEls = lrcLines.map((line) => {
+          const el = document.createElement('div');
+          el.className = 'lyric-line';
+          el.textContent = line.text;
+          containers.fullLyricsEl.appendChild(el);
+          return el;
+        });
+        // Populated (and the first line marked active as the "upcoming"
+        // one) the moment the .lrc fetch resolves — not gated on the first
+        // playerPositionChanged event, so the sheet is never blank during
+        // an instrumental intro (ui.md "Lyrics part selected", reworked
+        // 2026-07-06).
+        if (lineEls.length > 0) setActiveLine(0);
       });
 
     api.playerPositionChanged.on((e) => {
-      let index = -1;
+      if (lineEls.length === 0) return;
+      // Defaults to the first line (not -1) so the sheet always has an
+      // active line, even before any line's own timestamp has passed —
+      // same "first line is the upcoming one" contract as the synchronous
+      // initial population above.
+      let index = 0;
       for (let i = 0; i < lrcLines.length; i++) {
         if (lrcLines[i].timeMs <= e.currentTime) index = i;
         else break;
       }
-      if (index === activeLineIndex) return;
-      activeLineIndex = index;
-      containers.fullLyricsEl.textContent = index >= 0 ? lrcLines[index].text : '';
+      setActiveLine(index);
     });
   }
 

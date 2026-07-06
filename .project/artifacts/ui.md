@@ -1,8 +1,8 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-04
-diagram_status: current
+last_updated: 2026-07-06
+diagram_status: stale
 ---
 
 # UI
@@ -239,15 +239,24 @@ identically regardless of which one they're on:
   participant is viewing.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
-  only audio (metronome/count-in) and the shared clock. Full lyric text is
-  shown in large font, driven by `CatalogSong.lyricsLrc` line timestamps,
-  with a timing animation (e.g. line-to-line highlight/transition)
-  standing in for the cursor an instrument view would otherwise show. This
+  only audio (metronome/count-in) and the shared clock. **Reworked
+  2026-07-06**: the full lyric sheet — every line from
+  `CatalogSong.lyricsLrc`, not just the current one — is shown at once,
+  vertically stacked, scrollable, and populated **immediately when the
+  view loads, before playback ever starts** (previously blank until the
+  first line's timestamp passed during playback, which read as broken
+  during a song's instrumental intro). The currently-active line is
+  highlighted (same active/base color roles as the in-tab ticker's
+  syllable highlight — brand.md) and the view auto-scrolls to keep it
+  roughly centered as playback advances, replacing the prior
+  one-line-at-a-time karaoke display. Before playback starts (or before
+  any line's timestamp has passed once playing), the first line is
+  highlighted as the upcoming one, so there's always a legible, non-blank
+  sheet visible — never an empty screen waiting for the first cue. This
   is a custom view, not alphaTab's native lyrics rendering with notation
   hidden — alphaTab lays lyric text out as part of its normal paginated
   bar-by-bar score grid, which would produce small per-bar lyric
-  fragments wrapping across rows, not the large single-line karaoke-style
-  display this view wants.
+  fragments wrapping across rows, not a single readable scrolling sheet.
 
 Both renderings share alphaTab's native metronome and count-in
 (`metronomeVolume`, `countInVolume` — both off by default; count-in is
