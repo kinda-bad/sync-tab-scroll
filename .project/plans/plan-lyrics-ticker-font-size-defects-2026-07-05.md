@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: lyrics-ticker-font-size
 created: 2026-07-05
 features: []
