@@ -111,11 +111,33 @@ status: in-progress
   centering, not true invisibility). I did not edit `ui.md`/`infrastructure.md`
   myself per this task's rules — flagging this discrepancy for a
   `/ardd-refine` pass rather than guessing further.
-- [ ] T002 Live-verify in a real browser (this project's
+- [x] T002 Live-verify in a real browser (this project's
   `browser-verify-alphatab-quirks` practice) with a real two-participant
   session: one participant on an instrument part, one on Lyrics. Confirm
   the CT reproduction in T001 matches real observed behavior, not just a
   test-harness artifact.
+
+  **NOTE (2026-07-06):** Already covered as part of T001's writeup above
+  (the throwaway two-participant e2e run, real Chromium via Playwright's
+  `e2e` project — real production `vite build`/`preview`, real server,
+  two separate isolated browser contexts, host on the instrument part +
+  member on Lyrics, real `Start` click) — screenshot showed the correct
+  lyric text ("TEST") legible and roughly centered, no repro of "nothing
+  visible". I additionally attempted a genuine interactive check via
+  `claude-in-chrome` (real, non-Playwright Chrome, two real tabs) as a
+  higher-fidelity cross-check beyond Playwright automation, running the
+  client/server on ports 7500/7080 (not 6000/6080/6001/6081, to avoid
+  colliding with any other real dev session or e2e run). That attempt was
+  blocked by a recurring `Cannot access a chrome-extension:// URL of
+  different extension` error from the browser tooling itself (unrelated
+  to this app — happened on plain textbox clicks/screenshots on the
+  Landing page, before any app logic ran) that didn't resolve across
+  several retries and fresh tabs, so I did not get a human-eyeball-style
+  two-tab session working. Flagging this as **not manually verified by a
+  human** — the e2e Playwright run above is the strongest live-browser
+  evidence I could produce; a real two-person manual pass (or someone
+  else's real Chrome session without this extension conflict) is still
+  worth doing before fully trusting this finding.
 
 ## Phase 2: Fix
 - [ ] T003 [artifacts: infrastructure] Based on T001's findings: if the
