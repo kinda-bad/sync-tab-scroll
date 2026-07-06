@@ -135,12 +135,21 @@ status: in-progress
   type (currently `Theme` re-exported, `'dark' | 'light'`) to the
   4-value set, and update `loadStoredTheme`'s validation from a 2-way to
   a 4-way check against `localStorage`. (feature: grunge-cyberpunk-themes)
-- [ ] T011 [artifacts: ui] Add a unit test (per constitution Principle
+- [x] T011 [artifacts: ui] Add a unit test (per constitution Principle
   VII, test-first): `loadStoredTheme` returns `undefined` for any value
   outside the 4-value set, and returns each of the 4 valid values
   correctly when present in `localStorage`. Write and confirm it fails
   against the current 2-value implementation before T010 lands, then
   confirm it passes after.
+
+  Added `client/src/theme.test.ts` (plain vitest, same fake-localStorage
+  pattern as `metronome-preference.test.ts`/`session-persistence.test.ts`
+  — no jsdom/browser coupling needed for pure localStorage logic).
+  Confirmed failing against the current 2-value `loadStoredTheme`: 2 of 6
+  cases failed (`cyberpunk-dark`/`cyberpunk-light` both returned
+  `undefined` instead of the stored value); the `dark`/`light`/no-value/
+  garbage-value cases already passed, as expected. T010 implements the
+  4-way check next.
 - [ ] T012 [artifacts: ui] Redesign the Preferences tab's single
   dark/light toggle in `SettingsModal.svelte` into two orthogonal
   controls per `ui.md`: a theme-family picker (`riot`/`cyberpunk`) and
