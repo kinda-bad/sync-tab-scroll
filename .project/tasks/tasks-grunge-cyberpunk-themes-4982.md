@@ -131,10 +131,15 @@ status: in-progress
   for T016's final manual pass.
 
 ## Phase 3: Theme control UI
-- [ ] T010 [artifacts: ui] Widen `client/src/theme.ts`'s `StoredTheme`
+- [x] T010 [artifacts: ui] Widen `client/src/theme.ts`'s `StoredTheme`
   type (currently `Theme` re-exported, `'dark' | 'light'`) to the
   4-value set, and update `loadStoredTheme`'s validation from a 2-way to
   a 4-way check against `localStorage`. (feature: grunge-cyberpunk-themes)
+
+  `StoredTheme` is `= Theme` (re-exported, not redeclared — Principle VI),
+  so it was already widened by T008's `Theme` union change; the only
+  actual code change here is `loadStoredTheme`'s 2-way to 4-way
+  `localStorage` value check. `theme.test.ts` (T011) now passes 6/6.
 - [x] T011 [artifacts: ui] Add a unit test (per constitution Principle
   VII, test-first): `loadStoredTheme` returns `undefined` for any value
   outside the 4-value set, and returns each of the 4 valid values
