@@ -71,7 +71,7 @@ status: in-progress
   CSS decides which renders, per this codebase's "components don't
   branch on theme" convention. Use a `--gap-fill` custom property (0–1,
   same pattern as `HazardBar`'s `--hazard-fill`) set by T005's code.
-- [ ] T007 [artifacts: brand] [parallel] Add dot styling to
+- [x] T007 [artifacts: brand] [parallel] Add dot styling to
   `client/src/lyrics.css` alongside the existing `.lyric-line`/
   `.lyric-line.active` rules — base dots using `--lyric-base`, the
   currently-lit dot using `--lyric-active` (same color-role convention
