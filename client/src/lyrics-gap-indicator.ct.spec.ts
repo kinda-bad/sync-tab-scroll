@@ -14,9 +14,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
 const gpBuffer = fs.readFileSync(GP_PATH);
 
-// Leading gap (0 -> 2500ms) and inter-line gap (500ms -> 3000ms) both
-// exceed the 2000ms measure length, so both qualify for an indicator.
-const QUALIFYING_LRC = `[00:02.50]Hello there\n[00:03.00]\n[00:03.30]General Kenobi`;
+// Leading gap (0 -> 2500ms) and inter-line gap (3000ms -> 6000ms) both
+// exceed the 2000ms measure length, so both qualify for an indicator. The
+// inter-line gap's endMs (6000ms) runs past this fixture's own mapped
+// 4000ms (2 measures) — lyrics-gap-timing.ts's fallback ("nearest
+// masterBar", clamped to the last one once endMs runs past the whole
+// score) still gives a real, correct 2000ms local measure length here
+// since the whole fixture is a constant 120bpm/4-4.
+const QUALIFYING_LRC = `[00:02.50]Hello there\n[00:03.00]\n[00:06.00]General Kenobi`;
 
 // Inter-line gap here is exactly 1000ms (1000ms -> 2000ms) — one measure or
 // shorter, so no indicator should appear (ui.md: "Gaps of one measure or
@@ -88,28 +93,28 @@ test('a short (<= 1 measure) gap inserts no gap-indicator element at all', async
 test('dots light up one at a time, in order, across the 4 beats immediately preceding the gap end', async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
-  // Inter-line gap: [500ms, 3000ms], 120bpm/4-4 measure = 2000ms, beat =
-  // 500ms. The 4 beat timestamps immediately preceding 3000 are 1000, 1500,
-  // 2000, 2500.
+  // Inter-line gap: [3000ms, 6000ms], 120bpm/4-4 local measure = 2000ms,
+  // beat = 500ms. The 4 beat timestamps immediately preceding 6000 are
+  // 4000, 4500, 5000, 5500.
   const interLineIndicator = page.locator('.gap-indicator').nth(1);
   const dots = interLineIndicator.locator('.gap-dot');
 
-  await triggerPosition(page, 999);
+  await triggerPosition(page, 3999);
   await expect(dots).toHaveCount(4);
   await expect(interLineIndicator.locator('.gap-dot.active')).toHaveCount(0);
 
-  await triggerPosition(page, 1000);
+  await triggerPosition(page, 4000);
   await expect(dots.nth(0)).toHaveClass(/active/);
   await expect(dots.nth(1)).not.toHaveClass(/active/);
 
-  await triggerPosition(page, 1500);
+  await triggerPosition(page, 4500);
   await expect(dots.nth(1)).toHaveClass(/active/);
   await expect(dots.nth(0)).not.toHaveClass(/active/);
 
-  await triggerPosition(page, 2000);
+  await triggerPosition(page, 5000);
   await expect(dots.nth(2)).toHaveClass(/active/);
 
-  await triggerPosition(page, 2500);
+  await triggerPosition(page, 5500);
   await expect(dots.nth(3)).toHaveClass(/active/);
 });
 
@@ -123,12 +128,12 @@ test("the drain bar's fill decreases from 100% at gap start to 0% at gap end", a
     return drain.evaluate((el) => Number(el.style.getPropertyValue('--gap-fill')));
   }
 
-  await triggerPosition(page, 500); // gap start
+  await triggerPosition(page, 3000); // gap start
   expect(await readFill()).toBeCloseTo(1, 2);
 
-  await triggerPosition(page, 1750); // halfway through the 2500ms gap
+  await triggerPosition(page, 4500); // halfway through the 3000ms gap
   expect(await readFill()).toBeCloseTo(0.5, 1);
 
-  await triggerPosition(page, 3000); // gap end
+  await triggerPosition(page, 6000); // gap end
   expect(await readFill()).toBeCloseTo(0, 2);
 });

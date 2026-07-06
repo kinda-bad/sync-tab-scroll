@@ -56,7 +56,7 @@ status: in-progress
   gap start, 0% at gap end). Add a second case with a short gap (≤1
   measure) asserting no indicator element is inserted at all. Confirm
   these fail against the current (Phase-1-only) implementation.
-- [ ] T005 [artifacts: ui, brand] Implement the DOM insertion (gap-
+- [x] T005 [artifacts: ui, brand] Implement the DOM insertion (gap-
   indicator element with 4 dot children + 1 drain-bar child) and wire
   the existing `playerPositionChanged` subscription (the same one
   already driving active-line highlighting) to update dot-lit state and
