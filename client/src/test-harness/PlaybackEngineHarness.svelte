@@ -8,6 +8,12 @@
   export let gpFilePath: string;
   export let trackIndex: number;
   export let startHidden = false;
+  // T001 (tasks-lyrics-only-view-fix-2-c7cf.md): lets a CT test exercise
+  // the headless lyrics-part path through the real ensurePlaybackEngine
+  // wiring (lrc fetch + playerPositionChanged line-matching), instead of
+  // reimplementing that logic in the harness itself.
+  export let isLyricsPart = false;
+  export let lyricsLrc: string | null = null;
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -39,23 +45,40 @@
         { instrumentName: 'Guitar', trackIndex: 0 },
         { instrumentName: 'Bass', trackIndex: 1 },
       ],
-      lyricsLrc: null,
+      lyricsLrc,
       lyricsTrackIndex: 0,
       lyricsLineIndex: 0,
       lyricLineBreaks: [6, 7, 6],
     };
 
-    ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, false);
+    ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);
 
     // Test-only: mirrors App.svelte's reactive re-invocation of
     // ensurePlaybackEngine when a participant's selectedPart changes —
     // lets a CT test simulate a part switch without a real session/store.
     (window as unknown as { __switchPart: (newTrackIndex: number) => void }).__switchPart = (newTrackIndex: number) => {
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, newTrackIndex, false);
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, newTrackIndex, isLyricsPart);
     };
   });
 </script>
 
 <div bind:this={tabContainer} data-testid="tab-container" style={startHidden ? 'display: none' : ''}></div>
 <div bind:this={overlayContainer} data-testid="overlay-container"></div>
-<div bind:this={fullLyricsEl} data-testid="full-lyrics"></div>
+<div bind:this={fullLyricsEl} data-testid="full-lyrics" class="full-lyrics-view" class:visible={isLyricsPart}></div>
+
+<style>
+  /*
+   * T001 (tasks-lyrics-only-view-fix-2-c7cf.md): copied verbatim from
+   * App.svelte's own scoped rule (not imported — Svelte scoping is
+   * per-component) so this harness reproduces the same specificity fight
+   * against the global `lyrics.css` `.full-lyrics-view` rule that the real
+   * App.svelte does. If/when T004 removes App.svelte's copy, remove this
+   * one too — this block exists only to make the conflict observable here.
+   */
+  .full-lyrics-view {
+    display: none;
+  }
+  .full-lyrics-view.visible {
+    display: block;
+  }
+</style>

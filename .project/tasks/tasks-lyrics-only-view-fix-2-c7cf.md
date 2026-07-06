@@ -7,7 +7,7 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Reproduce
-- [ ] T001 [artifacts: ui, infrastructure] Write a Playwright CT test
+- [x] T001 [artifacts: ui, infrastructure] Write a Playwright CT test
   (test-first, per constitution Principle VII) using the existing
   `HeadlessPlayerHarness.svelte` test-harness pattern (see
   `headless-player.ct.spec.ts` for precedent) that: mounts the headless
@@ -23,6 +23,94 @@ status: in-progress
   reflect it (pointing at something else, e.g. the CSS conflict alone
   being insufficient to explain full invisibility) — this determines
   Phase 2's actual scope.
+
+  **NOTE (T001 finding, 2026-07-06):** Wrote
+  `client/src/full-lyrics-view.ct.spec.ts`, driving the real
+  `ensurePlaybackEngine` headless-lyrics-part wiring (via
+  `PlaybackEngineHarness`, extended here with `isLyricsPart`/`lyricsLrc`
+  props — chosen over literally reusing `HeadlessPlayerHarness.svelte`
+  because that harness doesn't wire up `.full-lyrics-view`/the lrc-line
+  matching at all; `PlaybackEngineHarness` already calls the exact
+  production `ensurePlaybackEngine` this bug lives in). Also added the
+  missing `../src/lyrics.css` import to `client/playwright/index.ts` (it
+  loaded `tokens.css`/`motifs.css` but not `lyrics.css` — a CT-harness gap
+  that would have made the CSS-conflict half of this investigation
+  untestable in CT at all) and a copy of App.svelte's conflicting scoped
+  `.full-lyrics-view` rule inside `PlaybackEngineHarness.svelte`'s own
+  `<style>` block (Svelte scoping is per-component, so this is the only
+  way to reproduce the same specificity fight in a harness instead of
+  mounting the whole `App.svelte` tree).
+
+  **The test, written exactly to the plan's literal Phase 1 acceptance
+  criteria (`display` not `'none'` AND `textContent` non-empty), does
+  NOT fail against current code — it passes immediately, no fix
+  applied.** `scoreLoaded` and `playerPositionChanged` both fire
+  normally for the headless (permanently `display:none`) `api`, and
+  `.full-lyrics-view`'s `textContent` updates correctly once a line's
+  timestamp is crossed. **This refutes hypothesis 1** (the
+  render-gate/tick-pipeline stall theorized in the plan's Technical
+  Approach #1) — alphaTab's playback/position-tracking pipeline is not
+  gated behind the same "real sized render happened" check that gates
+  visual rendering; only the visual render itself is skipped
+  (`[AlphaTab][Rendering] AlphaTab skipped rendering because of width=0`
+  logs confirm the skip still happens, but harmlessly, since the headless
+  path never wants a visual render anyway).
+
+  I also went further than a CT-only repro and ran a real, throwaway
+  two-participant **e2e** test (real production build, real server, host
+  on the instrument part + a second participant on Lyrics, real
+  `page.getByRole('button', { name: 'Start' })` playback start — same
+  shape as `e2e/multi-participant.spec.ts`'s existing
+  host-vs-lyrics-participant pattern) to check whether the CT repro was
+  itself a test-harness artifact. It also did **not** reproduce "nothing
+  visible": a screenshot showed the correct lyric line ("TEST") rendered
+  in the expected amber color, legible, roughly centered. (Aside,
+  unrelated to this bug: my first attempt at this e2e run gave a false
+  404 for `lyrics.lrc` because Playwright's `reuseExistingServer` had
+  silently reattached to an orphaned dev-server process left running on
+  port 6081 by a *different*, since-deleted git worktree from an
+  unrelated earlier session — confirmed via `git worktree list` no
+  longer listing it, then killed. Once that stale process was cleared,
+  the real server correctly served `lyrics.lrc` with 200 and the e2e
+  repro attempt gave the clean "no bug found" result above.)
+
+  **What *is* confirmed as a real, live defect** (a second test in the
+  same spec file): `.full-lyrics-view`'s computed `display` resolves to
+  `'block'` (App.svelte's scoped rule wins on specificity), never
+  `lyrics.css`'s intended `'flex'` — hypothesis 2 is real, exactly as the
+  plan's Technical Approach documented. But per my empirical testing it
+  is **not** a total-invisibility bug on its own: with the fixture song's
+  short one-word lines, `text-align: center` (uncontested, still applies
+  under `display:block`) visually centers the text closely enough that a
+  casual look doesn't read as broken — only the flex-based *vertical*
+  centering is lost, which could look more obviously wrong with longer or
+  multi-line text, but "nothing visible" does not describe what I
+  observed.
+
+  **Conclusion for Phase 2:** neither documented hypothesis explains a
+  total-blackout "nothing is visible" symptom on this branch's current
+  code, using every reproduction tool available in this task (CT harness
+  extended to exercise the real production wiring, and a real two-
+  participant e2e run against a real production build). The CSS
+  specificity conflict (hypothesis 2) is a real, confirmed defect worth
+  fixing regardless (T004) — it's a maintainability hazard and a genuine,
+  if lesser, layout bug — but T003's headless-container fix (hypothesis
+  1) is not needed: the render-gate stall it would guard against does not
+  happen. Per this task's own instructions, skipping T003 with this note
+  rather than forcing an unneeded fix.
+
+  **Flag for the user:** I could not reproduce the actual reported
+  symptom (feedback-lyrics-only-view-6386: "nothing is visible") with any
+  tool available to me. This may mean the bug is real but needs a
+  reproduction condition my fixtures/tooling don't cover (e.g. a song
+  whose first `.lrc` line isn't at `00:00`, a longer real session, a
+  specific real browser/production-deployment difference, or a race this
+  synthetic timing doesn't hit), or that it was already fixed by
+  something else, or that the original report was itself imprecise about
+  what "nothing visible" meant (e.g. describing the lost vertical
+  centering, not true invisibility). I did not edit `ui.md`/`infrastructure.md`
+  myself per this task's rules — flagging this discrepancy for a
+  `/ardd-refine` pass rather than guessing further.
 - [ ] T002 Live-verify in a real browser (this project's
   `browser-verify-alphatab-quirks` practice) with a real two-participant
   session: one participant on an instrument part, one on Lyrics. Confirm
