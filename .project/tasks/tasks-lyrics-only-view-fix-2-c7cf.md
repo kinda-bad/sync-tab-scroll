@@ -211,8 +211,25 @@ status: in-progress
   which `playback-engine.ts`'s `.filter((l) => l.text.length > 0)` drops
   entirely, so the last real line correctly stays shown rather than
   clearing — confirmed by running the suite, not assumed).
-- [ ] T007 Live-verify in a real browser, two-participant session again:
+- [x] T007 Live-verify in a real browser, two-participant session again:
   the lyrics-only participant sees line text appear and advance in sync
   with the instrument participant's tab playback, in both light and dark
   theme.
+
+  **NOTE (2026-07-06):** Ran a throwaway two-participant e2e test (real
+  Chromium via Playwright's `e2e` project, real production build/server —
+  same shape as T001/T002's repro): host on the instrument part, member
+  on Lyrics, real `Start` click, then toggled the member's own theme
+  preference (Settings → Preferences → "Light mode"/"Dark mode") and
+  screenshotted both states. Both themes: `.full-lyrics-view` shows
+  "test", correctly centered via `display: flex` (confirmed via
+  `getComputedStyle`, not just visually) — the T004 fix holds in both
+  themes. As with T002, this is Playwright-automation verification, not a
+  literal two-human-eyeball session — a `claude-in-chrome` interactive
+  attempt for T002 was blocked by an unrelated browser-extension error
+  (see T002's note) and I did not retry it here since the underlying
+  issue there wasn't specific to theme/state, just the tooling
+  environment. Flagging the same caveat: a real human manual pass is
+  still worth doing, though the Playwright real-browser/real-build
+  evidence here is strong.
 - [ ] T008 Run the full test suite (server + client vitest, CT, e2e).
