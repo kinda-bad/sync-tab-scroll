@@ -206,7 +206,16 @@ status: in-progress
   (feature: grunge-cyberpunk-themes)
 
 ## Phase 4: Verification
-- [ ] T015 Run the full test suite (server + client vitest, CT, e2e).
+- [x] T015 Run the full test suite (server + client vitest, CT, e2e).
+
+  All green: server vitest 88/88 (22 files), client vitest 55/55 (13
+  files, includes the new `theme.test.ts`), client CT 61/61 (includes the
+  updated `SettingsModal.ct.spec.ts` and the pre-existing
+  `playback-engine.ct.spec.ts` test "a freshly-created engine picks up the
+  document theme instead of hardcoding dark", which now also covers the
+  `playback-engine.ts` fix noted under T008), client e2e 23/23,
+  `packages/pipeline` vitest 3/3. Full-workspace `pnpm -r check` (tsc
+  --noEmit across shared/client/server/pipeline) clean.
 - [ ] T016 Manually verify in a real browser: switching the theme-family
   picker and the light/dark toggle each independently updates the CSS
   palette and tab-notation colors together, and the resulting flat value
