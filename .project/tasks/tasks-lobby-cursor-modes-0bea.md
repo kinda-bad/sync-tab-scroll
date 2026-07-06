@@ -28,4 +28,4 @@ status: in-progress
 ## Phase 4: Remaining artifact revisions
 
 - [x] T011 [artifacts: ui] Revise `ui.md`'s Lobby View section: describe the Spotlight-mode toggle (host-only) and that the lobby cursor only forces participants' views to follow while it's on; otherwise each participant browses independently. Bump `last_updated` to today's date and set `diagram_status: stale` if not already.
-- [x] T012 [artifacts: features] Revise `features.md`'s "Lobby cursor" entry to describe the conditional (Spotlight-mode-gated) behavior instead of the current "all participants see the same pointer" description — this is the resolution of `feedback-lobby-cursor-mode-e13b.md`'s Reconsidered item. Bump `last_updated` to today's date.
+- [x] T012 Revise `features.md`'s "Lobby cursor" entry to describe the conditional (Spotlight-mode-gated) behavior instead of the current "all participants see the same pointer" description — this is the resolution of `feedback-lobby-cursor-mode-e13b.md`'s Reconsidered item. Bump `last_updated` to today's date.
