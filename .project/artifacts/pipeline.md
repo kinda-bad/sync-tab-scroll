@@ -76,12 +76,16 @@ infrastructure.md.
      path is genuinely needed, not just theoretical.
    - If the GP file's lyrics lack line-break placement (syllables present,
      but no marked line boundaries, per the raw-XML check above), lrclib.net
-     is queried and used **only as a reference for where to insert line
-     breaks** in the GP-derived syllable stream — lrclib's own timestamps
-     are discarded; all timing in the resulting `.lrc` still comes from GP,
-     and `lyricLineBreaks` records the line-break placement decided here
-     (whichever source it came from) so the client can regroup the same
-     way at render time.
+     is queried and its **own line text** is used directly as the `.lrc`
+     line breaks (`extractLyrics`'s `parseLrclibLines(lrclibResult.
+     syncedLyrics)`) — lrclib's own timestamps are still discarded, though:
+     each line's syllable count is estimated from lrclib's line text
+     proportionally by word count (`distributeByWordCount`), and that
+     count is what determines the actual start/end timestamps written into
+     the `.lrc`, both taken from GP's own per-syllable timing (`buildLrc`)
+     — never from lrclib's timestamps. `lyricLineBreaks` records the
+     resulting per-line syllable counts (whichever source decided the line
+     breaks) so the client can regroup the same way at render time.
 2. **Lyrics fallback (lrclib.net)** — only runs when the GP file has no
    embedded lyrics at all (distinct from stage 1's narrower lrclib use,
    which only supplies line-break positions for GP lyrics that already

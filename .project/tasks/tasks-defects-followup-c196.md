@@ -1,18 +1,18 @@
 ---
 plan: plan-defects-followup-2026-07-05.md
 generated: 2026-07-06
-status: ready
+status: completed
 ---
 
 # Tasks
 
 ## Phase 1: Remove-participant control (client)
-- [ ] T001 [artifacts: ui] Write/extend `SettingsModal.ct.spec.ts` (failing
+- [x] T001 [artifacts: ui] Write/extend `SettingsModal.ct.spec.ts` (failing
   first, per constitution Principle VII) covering: a "Remove" button
   renders in the Participants tab only for the host, only on other
   participants' rows (not the self row, not for non-hosts), and clicking
   it sends `{ type: 'host-remove-participant', participantId }`.
-- [ ] T002 [artifacts: ui] Add the "Remove" button to
+- [x] T002 [artifacts: ui] Add the "Remove" button to
   `SettingsModal.svelte`'s Participants tab (host-only, non-self rows,
   alongside the existing "Make host" button per `SettingsModal.svelte:101-
   103`), wired to a `removeParticipant(p.id)` function sending
@@ -22,7 +22,7 @@ status: ready
   (feedback: `feedback-defects-followup-743b.md`)
 
 ## Phase 2: Self-removal handling (client)
-- [ ] T003 [artifacts: infrastructure] Write a unit test (failing first,
+- [x] T003 [artifacts: infrastructure] Write a unit test (failing first,
   per constitution Principle VII), mirroring `leave-session.test.ts`'s
   pattern: simulate a `session-state` message whose
   `session.participants` no longer contains the current
@@ -32,7 +32,7 @@ status: ready
   `leaveSession()` uses (landing view, null session/selfParticipantId,
   empty catalog), and the socket's `close()` is called with no scheduled
   reconnect.
-- [ ] T004 [artifacts: infrastructure] Add the self-removal detection
+- [x] T004 [artifacts: infrastructure] Add the self-removal detection
   branch to `ws-client.ts`'s `message.type === 'session-state'` handler
   (`ws-client.ts:75-89`): if `message.selfParticipantId` is set, the
   store's `selfParticipantId` is also still set (idempotency guard), and
@@ -49,11 +49,11 @@ status: ready
   (feedback: `feedback-defects-followup-743b.md`)
 
 ## Phase 3: Artifact updates
-- [ ] T005 [artifacts: ui] [parallel] Document the new "Remove" control in
+- [x] T005 [artifacts: ui] [parallel] Document the new "Remove" control in
   `ui.md`'s Participants tab bullet list (host-only, non-self rows), and
   add a "Removed from session" entry under States (toast + reset to
   Landing).
-- [ ] T006 [artifacts: infrastructure] [parallel] In `infrastructure.md`:
+- [x] T006 [artifacts: infrastructure] [parallel] In `infrastructure.md`:
   add a subsection near Host Transfer/Host Succession documenting
   `host-remove-participant` (host-only, filters the target from
   `Session.participants`, broadcasts `session-state` normally, plus the
@@ -62,15 +62,17 @@ status: ready
   (`tab-renderer.ts:106`); add a mention of the small-screen render-scale
   (`tabScaleForViewportWidth`, `tab-renderer.ts:59-62`) to the Tab
   Rendering section.
-- [ ] T007 [artifacts: pipeline] [parallel] In `pipeline.md`, reword the
+- [x] T007 [artifacts: pipeline] [parallel] In `pipeline.md`, reword the
   lrclib-assisted-line-break branch to say lrclib supplies the lyric text
   in that branch and GP supplies only timestamps/line-break counts
   (matches `extract-lyrics.ts:59-62`, `lrc-writer.ts:17-35`).
 
 ## Phase 4: Verification
-- [ ] T008 [artifacts: ui, infrastructure] Manually verify in a real
+- [x] T008 [artifacts: ui, infrastructure] Manually verify in a real
   browser with two clients: host removes a member; the removed member
   sees the toast, lands back on the Landing view, and does not silently
-  reconnect into the same session.
-- [ ] T009 Run the full test suite (server + client vitest, CT, e2e)
+  reconnect into the same session. (Done via a real two-browser-context
+  Playwright e2e test, `client/e2e/host-controls.spec.ts`, rather than
+  interactive manual clicking — see report for details.)
+- [x] T009 Run the full test suite (server + client vitest, CT, e2e)
   before merging.

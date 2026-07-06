@@ -107,6 +107,15 @@ regardless of whether playback has started:
     are the same action (infrastructure.md Host Transfer). A row with a
     pending request additionally shows a "Decline" control next to "Make
     host", for the host to reject the request without transferring.
+  - **The host** also sees a "Remove" control alongside "Make host" on
+    every other participant's row (never their own). Clicking it removes
+    that participant from the session immediately, no confirmation
+    dialog — same terse-host-action pattern as "Make host". The list
+    updates for everyone the moment the resulting `session-state`
+    broadcast arrives, same as the other actions on this list — no local
+    optimistic update. The removed participant's own client detects this
+    from that same broadcast and is sent back to Landing (see "Removed
+    from session" under States, below).
   - **A non-host participant** sees a "Request to become host" control on
     their own row only. It's disabled (not hidden) while
     `Session.pendingHostRequest` is already set — to them or to anyone
@@ -330,6 +339,17 @@ every rule below assumes):
   between clicking a Host Transfer control and that participant's state
   changing), and requesting host while a request is already pending —
   surfaced as toasts, not blocking modals.
+- **Removed from session**: the host removed this participant (Participants
+  tab, above) via `host-remove-participant`. The removed participant's own
+  client detects it from the ordinary `session-state` broadcast it still
+  receives (its socket is still attached; it just no longer finds itself
+  in `Session.participants`) rather than a dedicated message — consistent
+  with Principle I. It shows a toast ("You were removed from the session
+  by the host"), resets to the Landing view, and clears its persisted
+  session identity so a later refresh doesn't try to rejoin the session it
+  was just removed from (infrastructure.md). This client's own reconnect
+  loop is also stopped — it does not silently reattach to the same
+  session.
 - **Connection lost**: the server is unreachable — either the WS never
   connects at all (server down at load) or an established connection
   drops. Distinct from the Error state above: this isn't a per-action
