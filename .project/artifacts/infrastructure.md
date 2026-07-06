@@ -213,6 +213,35 @@ with Principle I: every participant, not just the host, sees who's
 requesting and who currently holds host privileges from the same shared
 state.
 
+## Host Remove Participant
+
+Separate from Host Transfer (above) — removing a participant, not
+transferring host privileges. Message: `host-remove-participant
+{ participantId }`, host-only (same authorization pattern as
+`host-delegate`/`playback-control`: host id checked against the
+connection's participant id; a non-host sender gets an `error` message,
+`server/src/handlers/host-remove-participant.ts`). The handler filters the
+target out of `Session.participants` and broadcasts the updated
+`session-state` the normal way — no separate result message, same as
+every other mutation in this section.
+
+The removed participant's own socket is not closed server-side and
+receives that same `session-state` broadcast like every other connection
+(`ConnectionRegistry.broadcast` builds each recipient's copy from that
+recipient's own still-attached `conn.participantId`) — it just no longer
+finds an entry for itself in `Session.participants`. The client, not the
+server, detects this: `ws-client.ts`'s `session-state` handler checks
+whether the broadcast's `selfParticipantId` matches the store's current
+`selfParticipantId` (an idempotency guard, so this only fires once) and is
+now absent from `session.participants`. On a match, it pushes a toast,
+clears the persisted session identity (`clearStoredSession()`), resets
+`clientStore` to the same shape `leaveSession()` uses, and closes its own
+socket — while also setting a `suppressReconnect` flag so the socket's
+`'close'` listener does not schedule its usual reconnect-and-rejoin
+attempt (which would otherwise just rejoin the session this participant
+was just removed from). See ui.md's Participants tab and "Removed from
+session" state.
+
 ## Song Catalog Delivery
 
 The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,
@@ -253,8 +282,8 @@ settings, carried forward from the prior pipeline's proven configuration
 and now applied at client render/init time instead of offline:
 
 ```js
-// isPercussion is read from the parsed score's track data
-// (track.percussionArticulations / instrument metadata), not stored in
+// isPercussion is read directly from the parsed track's own data
+// (track.isPercussion, client/src/tab-renderer.ts), not stored in
 // the datamodel — alphaTab already exposes this natively (constitution
 // Principle V).
 const settings = new at.Settings();
@@ -265,6 +294,11 @@ settings.core.fontDirectory = '/font/'; // Bravura assets served as a static cli
 // with workers enabled); main-thread rendering works immediately.
 settings.core.useWorkers = false;
 settings.display.layoutMode = at.LayoutMode.Page;
+// Phone screens get a larger render scale so notation is legible without
+// pinch-zoom (client/src/tab-scale.ts's tabScaleForViewportWidth) — Page
+// layout re-wraps bars to the container, so this can't introduce
+// horizontal overflow.
+settings.display.scale = tabScaleForViewportWidth(window.innerWidth);
 // No settings.display.barsPerRow pin — auto-wrap by default (someday:
 // host-mandated bars-per-row and participant-preferred horizontal layout
 // are deferred future direction, not built now).
