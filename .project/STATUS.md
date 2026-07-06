@@ -1,7 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-analyze`, after merging the completed
-defects-followup worktree into `main` and pruning it). Repo is on `main`.
+_Updated: 2026-07-06 (`/ardd-feedback`, logging a lyrics-only-view bug
+report; an `/ardd-verify` pass is also running concurrently in the
+background — its results aren't reflected here yet). Repo is on `main`.
 No cross-artifact contradictions found; findings are the same handful of
 minor gaps plus one newly-confirmed duplicate defect._
 
@@ -99,6 +100,14 @@ clear them. Summary:
   CI half is unmet — no `.github/workflows/` exists. Still open, separate
   decision — see Recommended Next Step.
 
+## Feedback
+
+1 open feedback file — `feedback-lyrics-only-view-6386.md` (bug: the
+lyrics-only view still shows nothing visible — possibly the earlier
+`feedback-lyrics-only-view-d7d8.md` fix, merged 2026-07-04, didn't fully
+resolve it, or it's regressed since). Will be picked up by the next
+`/ardd-plan`.
+
 ## Feature Backlog
 
 2 backlogged · 0 planned · 0 tasked · 7 implemented — see
@@ -123,15 +132,19 @@ been merged into `main` and their worktrees/branches pruned.
 
 ## Recommended Next Step
 
-1. Run `/ardd-verify` to refresh `DEFECTS.md` — 4 of its 5 listed defects
-   are already fixed in code and just need the file regenerated.
-2. Switch to `grunge-cyberpunk-themes` and run `/ardd-tasks` to approve
+1. Investigate the lyrics-only-view bug reported in
+   `feedback-lyrics-only-view-6386.md` — either live-debug it directly or
+   fold it into the next `/ardd-plan` pass.
+2. Wait for the in-progress `/ardd-verify` pass to finish and re-run
+   `/ardd-analyze` — it should clear 4 of `DEFECTS.md`'s 5 listed defects
+   (already fixed in code by the defects-followup merge).
+3. Switch to `grunge-cyberpunk-themes` and run `/ardd-tasks` to approve
    the theme plan and generate its task list, then implement (or merge
    its current draft-plan commits to `main` first if you'd rather plan
    from there — either works, nothing beyond `brand.md`/`ui.md`/the plan
    file has changed on that branch yet).
-3. Decide the CI-provider question for constitution Principle VIII now
+4. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim
+5. Not blocking: `datamodel.md`'s duplicated percussion-detection claim
    (not fixed by defects-followup, only `infrastructure.md`'s copy was),
    plus the other minor cross-artifact notes above.
