@@ -100,13 +100,35 @@ status: in-progress
   otherwise. Not separately listed in this task's file-by-file description
   but necessary for the `Theme` widening to actually take effect end to
   end.
-- [ ] T009 Live-verify in a real browser, both cyberpunk modes: the
+- [x] T009 Live-verify in a real browser, both cyberpunk modes: the
   literal pink/cyan `.signature-glitch` two-channel split renders as
   expected, the CRT scanline is visible but not overpowering (and
   respects `prefers-reduced-motion` when toggled), and tab notation
   colors read clearly against both cyberpunk backgrounds. This is the
   test for T004-T008 — a palette/motion addition with no scripted
   equivalent for visual review.
+
+  Verified via a throwaway Playwright CT spec (real Chromium), not
+  committed: `BarHarness` (mounts `Bar.svelte`, exercising
+  `.signature-glitch`/CRT scanline together) and `TabRendererHarness`
+  (real alphaTab SVG render against the `synthetic-song.gp` fixture, same
+  fixture `tab-renderer.ct.spec.ts` uses). Confirmed `--riot`/`--hazard`
+  are a genuine pink/cyan pair in both cyberpunk modes (dark: `#ff2d78`/
+  `#00cfff`; light: `#d6006b`/`#0090b8`), `body::after`'s scanline rule is
+  present (`content: ""`) under both `cyberpunk-dark` and
+  `cyberpunk-light`, and — confirmed via full-page screenshots — the
+  scanline reads as a subtle, non-overpowering horizontal-line texture
+  (clearly visible against the light background, subtler against the near-
+  black dark background). Also confirmed the scanline still renders under
+  `page.emulateMedia({reducedMotion: 'reduce'})` — expected and correct,
+  since it's a static texture with no animation to gate (see T006's note).
+  Real alphaTab SVG render confirmed tab-notation glyph fill colors:
+  `cyberpunk-dark` renders `rgb(255, 230, 0)` (neon-yellow, identical to
+  `darkTabColors`, per T007); `cyberpunk-light` renders `rgb(0, 183, 221)`
+  (deep cyan, per `cyberpunkLightTabColors`) with magenta staff/barlines —
+  both screenshotted and legible against their respective backgrounds. Not
+  a substitute for a human eyeball pass on the actual running app, flagged
+  for T016's final manual pass.
 
 ## Phase 3: Theme control UI
 - [ ] T010 [artifacts: ui] Widen `client/src/theme.ts`'s `StoredTheme`
