@@ -199,7 +199,7 @@ status: in-progress
   button text never appears, so every locator times out) — 6 failed, 17
   already-passing tests in this file unaffected. T012 implements the
   two-control redesign next.
-- [ ] T014 [artifacts: ui] [parallel] Add `'cyberpunk-dark':
+- [x] T014 [artifacts: ui] [parallel] Add `'cyberpunk-dark':
   'cyberpunk-dark'` and `'cyberpunk-light': 'cyberpunk-light'` entries to
   `client/.storybook/preview.ts`'s `withThemeByDataAttribute` `themes`
   map, per that file's own comment anticipating this exact addition.
