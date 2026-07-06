@@ -182,12 +182,18 @@
     padding-bottom: var(--bar-height);
   }
 
-  .engine-containers,
-  .full-lyrics-view {
+  /*
+   * T004 (tasks-lyrics-only-view-fix-2-c7cf.md): .full-lyrics-view's
+   * own display/.visible toggle used to be duplicated here, conflicting
+   * with lyrics.css's `display: flex` rule for the same class (this
+   * scoped rule always won on specificity, so lyrics.css's flex-based
+   * centering never applied). Moved into lyrics.css alongside that
+   * class's other styling — this file only owns .engine-containers now.
+   */
+  .engine-containers {
     display: none;
   }
-  .engine-containers.visible,
-  .full-lyrics-view.visible {
+  .engine-containers.visible {
     display: block;
   }
   .engine-containers.visible {

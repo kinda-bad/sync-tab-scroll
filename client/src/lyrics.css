@@ -11,8 +11,18 @@
   font-weight: bold;
 }
 
+/*
+ * T004 (tasks-lyrics-only-view-fix-2-c7cf.md): the display/.visible
+ * toggle used to live in App.svelte's own scoped <style> block too,
+ * duplicating (and, via Svelte's scoping specificity, always
+ * overriding) this rule's `display: flex` with `display: none`/`block`
+ * — moved here so there is exactly one place declaring this element's
+ * full style. App.svelte's markup still applies the `visible` class
+ * (`class:visible={hasPart && isLyricsPart}`); only the CSS rule's
+ * location changed.
+ */
 .full-lyrics-view {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   height: 400px;
@@ -22,6 +32,10 @@
   color: var(--lyric-base);
   text-align: center;
   background: var(--bg);
+}
+
+.full-lyrics-view.visible {
+  display: flex;
 }
 
 .full-lyrics-view.at-highlight {

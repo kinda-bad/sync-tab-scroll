@@ -65,20 +65,3 @@
 <div bind:this={tabContainer} data-testid="tab-container" style={startHidden ? 'display: none' : ''}></div>
 <div bind:this={overlayContainer} data-testid="overlay-container"></div>
 <div bind:this={fullLyricsEl} data-testid="full-lyrics" class="full-lyrics-view" class:visible={isLyricsPart}></div>
-
-<style>
-  /*
-   * T001 (tasks-lyrics-only-view-fix-2-c7cf.md): copied verbatim from
-   * App.svelte's own scoped rule (not imported — Svelte scoping is
-   * per-component) so this harness reproduces the same specificity fight
-   * against the global `lyrics.css` `.full-lyrics-view` rule that the real
-   * App.svelte does. If/when T004 removes App.svelte's copy, remove this
-   * one too — this block exists only to make the conflict observable here.
-   */
-  .full-lyrics-view {
-    display: none;
-  }
-  .full-lyrics-view.visible {
-    display: block;
-  }
-</style>

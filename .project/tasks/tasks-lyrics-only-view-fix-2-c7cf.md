@@ -161,7 +161,7 @@ status: in-progress
   would be a speculative, unneeded change with no confirmed defect behind
   it, so leaving `client/src/headless-player.ts` as-is per this task's own
   instruction to skip when T001 points elsewhere.
-- [ ] T004 [artifacts: ui] [parallel] Consolidate the `.full-lyrics-view`
+- [x] T004 [artifacts: ui] [parallel] Consolidate the `.full-lyrics-view`
   CSS split: remove the duplicate/conflicting rule from `App.svelte`'s
   scoped `<style>` block (`.full-lyrics-view { display: none; }` /
   `.full-lyrics-view.visible { display: block; }`), and move the
@@ -172,16 +172,45 @@ status: in-progress
   isLyricsPart}` stays in the markup; only the CSS rule's *location*
   changes, so there is exactly one file declaring this element's full
   style instead of two files each partially overriding the other).
-- [ ] T005 Make T001's CT test pass.
+
+  **NOTE (2026-07-06):** Done. `App.svelte`'s scoped rule now only owns
+  `.engine-containers`; `client/src/lyrics.css`'s `.full-lyrics-view` rule
+  now declares `display: none` (base) / `.full-lyrics-view.visible {
+  display: flex }` (was previously `display: flex` unconditionally, which
+  was itself dead code while App.svelte's rule always won — now it's the
+  only rule and actually takes effect). Also removed the duplicate scoped
+  conflict rule from `PlaybackEngineHarness.svelte` (added in T001 only to
+  reproduce the conflict in CT) since the real conflict source is gone.
+- [x] T005 Make T001's CT test pass.
+
+  **NOTE (2026-07-06):** T001's test already passed pre-fix (see its
+  note) for the literal "not none + non-empty text" acceptance criteria —
+  there was nothing to newly make pass there. What T004 fixed is the
+  *separate* confirmed-defect assertion (display resolving to `'flex'`,
+  not `'block'`) — updated that test's expectation to `'flex'` and
+  confirmed it now passes: `client/src/full-lyrics-view.ct.spec.ts`'s 3
+  tests all pass (`npx playwright test --project=ct
+  full-lyrics-view.ct.spec.ts`).
 
 ## Phase 3: Regression coverage & verification
-- [ ] T006 [artifacts: ui] Add a permanent CT test (distinct from T001's
+- [x] T006 [artifacts: ui] Add a permanent CT test (distinct from T001's
   reproduction, or promote/rename it to a permanent spec file e.g.
   `full-lyrics-view.ct.spec.ts`) covering: `.full-lyrics-view` becomes
   visible and shows the correct line text as simulated playback position
   crosses each `.lrc` line boundary in order, using a fixture song with a
   real multi-line `.lrc` file — mirroring `lyrics-overlay.ct.spec.ts`'s
   existing pattern for the in-tab overlay.
+
+  **NOTE (2026-07-06):** Done in the same `full-lyrics-view.ct.spec.ts`
+  file T001 wrote (kept that name rather than adding a separate file, per
+  this task's own "or promote/rename it" option) — added a 4-line real
+  `.lrc` fixture (`Hello there` / `General Kenobi` / `You are` / `a bold
+  one` at 0/2000/4000/6000ms) and a test driving `playerPositionChanged`
+  across each boundary in order, asserting the shown text updates
+  correctly at each step (including the trailing empty-text gap entry,
+  which `playback-engine.ts`'s `.filter((l) => l.text.length > 0)` drops
+  entirely, so the last real line correctly stays shown rather than
+  clearing — confirmed by running the suite, not assumed).
 - [ ] T007 Live-verify in a real browser, two-participant session again:
   the lyrics-only participant sees line text appear and advance in sync
   with the instrument participant's tab playback, in both light and dark

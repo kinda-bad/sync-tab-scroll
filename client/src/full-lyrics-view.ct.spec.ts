@@ -9,9 +9,9 @@ const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
 const gpBuffer = fs.readFileSync(GP_PATH);
 
 // Real multi-line .lrc content (not the single-line fixture-catalog one) —
-// three real timestamped lines plus a trailing gap, so a test can cross
-// more than one line boundary in order (T006 permanent coverage) as well
-// as reproduce T001's single-line-crossing repro.
+// four real timestamped lines plus a trailing gap, so a test can cross
+// more than one line boundary in order (mirrors lyrics-overlay.ct.spec.ts's
+// existing pattern for the in-tab overlay).
 const LRC_CONTENT = `[00:00.00]Hello there\n[00:02.00]General Kenobi\n[00:04.00]You are\n[00:06.00]a bold one\n[00:08.00]`;
 
 test.beforeEach(async ({ page }) => {
@@ -30,50 +30,53 @@ function triggerPosition(page: import('@playwright/test').Page, currentTimeMs: n
   }, currentTimeMs);
 }
 
-/**
- * T001 (tasks-lyrics-only-view-fix-2-c7cf.md): reproduces
- * feedback-lyrics-only-view-6386's "lyrics-only view shows nothing" report
- * against the headless lyrics-part path, using the real
- * `ensurePlaybackEngine` wiring (via `PlaybackEngineHarness`, extended
- * with an `isLyricsPart`/`lyricsLrc` prop pair for this task) rather than
- * reimplementing the lrc-matching logic in a bespoke harness. Asserts
- * exactly the plan's Phase 1 acceptance criteria: `.full-lyrics-view`'s
- * computed `display` is not `'none'`, and its `textContent` becomes
- * non-empty, once simulated playback crosses a real `.lrc` line's
- * timestamp.
- *
- * FINDING (see the tasks file's T001 note for the full writeup): this
- * test does NOT fail against current code — it passes as written, with
- * no fix applied. The headless api's `scoreLoaded` and
- * `playerPositionChanged` both fire normally despite the headless
- * container being permanently `display:none` (refuting hypothesis 1 —
- * the render-gate/tick-pipeline stall never happens), and
- * `.full-lyrics-view`'s `textContent` updates correctly. A separate,
- * throwaway two-participant e2e repro (host on an instrument part,
- * member on Lyrics, real playback) also failed to reproduce "nothing
- * visible" on this branch's current code.
- *
- * The one thing this test *does* confirm as a genuine, live defect
- * (logged separately below, not gating this test) is hypothesis 2's CSS
- * conflict: `getComputedStyle(...).display` resolves to `'block'`
- * (App.svelte's scoped rule wins), never `lyrics.css`'s intended
- * `'flex'` — real, but not a total-blackout bug on its own; text and
- * visibility both work, only flex-based vertical centering is lost.
- */
-test('headless lyrics-part path: full-lyrics-view becomes visible and shows text as playback crosses a line boundary', async ({ mount, page }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function mountAndWaitForScore(mount: any, page: import('@playwright/test').Page) {
   await mount(PlaybackEngineHarness, {
     props: { gpFilePath: '/fixture.gp', trackIndex: 0, isLyricsPart: true, lyricsLrc: '/fixture-lyrics.lrc' },
   });
-
   await page.waitForFunction(() => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true, {
     timeout: 20_000,
   });
   expect((await readEngineState(page))?.scoreLoaded).toBe(true);
-
   // Give the async `fetch(song.lyricsLrc).then(...)` a moment to resolve
   // before driving position — mirrors the real race between lrc parsing
   // and the first tick in production.
   await page.waitForTimeout(300);
+}
+
+/**
+ * T001/T005/T006 (tasks-lyrics-only-view-fix-2-c7cf.md): permanent
+ * regression coverage for the headless lyrics-part path — reproduces
+ * feedback-lyrics-only-view-6386's "lyrics-only view shows nothing"
+ * report using the real `ensurePlaybackEngine` wiring (via
+ * `PlaybackEngineHarness`, extended with an `isLyricsPart`/`lyricsLrc`
+ * prop pair for this task) rather than reimplementing the lrc-matching
+ * logic in a bespoke harness.
+ *
+ * T001 FINDING (see the tasks file's T001 note for the full writeup):
+ * this suite's first test, asserting the plan's literal Phase 1
+ * acceptance criteria (`display` not `'none'` AND `textContent`
+ * non-empty), did NOT fail against pre-fix code — it passed immediately.
+ * `scoreLoaded`/`playerPositionChanged` both fire normally for the
+ * headless (permanently `display:none`) container, refuting the
+ * render-gate/tick-pipeline-stall hypothesis (plan Technical Approach
+ * #1; T003 skipped, no fix needed). A separate, throwaway
+ * two-participant e2e repro (real production build, real server, host
+ * on an instrument part + member on Lyrics, real playback) also found no
+ * "nothing visible" symptom.
+ *
+ * What *was* a real, confirmed defect (plan Technical Approach #2):
+ * `.full-lyrics-view`'s computed `display` resolved to `'block'`
+ * (App.svelte's scoped rule won the specificity fight against
+ * `lyrics.css`'s `display: flex`), never `'flex'` — not a
+ * total-blackout bug on its own (text/visibility both worked), but a
+ * real loss of the intended flex-based vertical centering. T004
+ * consolidated the CSS split into `lyrics.css` alone; the second test
+ * below is this defect's regression guard.
+ */
+test('headless lyrics-part path: full-lyrics-view becomes visible and shows text as playback crosses a line boundary', async ({ mount, page }) => {
+  await mountAndWaitForScore(mount, page);
 
   await triggerPosition(page, 2_500); // past "General Kenobi" (2000ms), before "You are" (4000ms)
 
@@ -82,19 +85,41 @@ test('headless lyrics-part path: full-lyrics-view becomes visible and shows text
   await expect(el).not.toHaveCSS('display', 'none');
 });
 
-test('CONFIRMED DEFECT (hypothesis 2): full-lyrics-view display resolves to block, not lyrics.css\'s intended flex', async ({ mount, page }) => {
-  await mount(PlaybackEngineHarness, {
-    props: { gpFilePath: '/fixture.gp', trackIndex: 0, isLyricsPart: true, lyricsLrc: '/fixture-lyrics.lrc' },
-  });
+test('regression (T004): full-lyrics-view display resolves to lyrics.css\'s flex, not App.svelte\'s stale block', async ({ mount, page }) => {
+  await mountAndWaitForScore(mount, page);
 
-  await page.waitForFunction(() => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true, {
-    timeout: 20_000,
-  });
+  await triggerPosition(page, 0); // any position past hasPart/visible — display doesn't depend on playback position, just the .visible class
+  await expect(page.locator('.full-lyrics-view')).toHaveCSS('display', 'flex');
+});
 
-  const display = await page.locator('.full-lyrics-view').evaluate((el) => getComputedStyle(el).display);
-  // Pre-T004: App.svelte's scoped `display:block` beats lyrics.css's
-  // `display:flex` on specificity. T004 consolidates the rule into
-  // lyrics.css alone, at which point this should become 'flex' — this
-  // test's expectation flips as part of T005.
-  expect(display).toBe('block');
+/**
+ * T006: shows the correct line text as simulated playback position
+ * crosses each .lrc line boundary in order, mirroring
+ * lyrics-overlay.ct.spec.ts's existing pattern for the in-tab overlay.
+ */
+test('shows each line in order as playback crosses each .lrc line boundary', async ({ mount, page }) => {
+  await mountAndWaitForScore(mount, page);
+
+  const el = page.locator('.full-lyrics-view');
+
+  await triggerPosition(page, 0);
+  await expect(el).toHaveText('Hello there');
+
+  await triggerPosition(page, 1_999); // just before the next line
+  await expect(el).toHaveText('Hello there');
+
+  await triggerPosition(page, 2_000);
+  await expect(el).toHaveText('General Kenobi');
+
+  await triggerPosition(page, 4_500);
+  await expect(el).toHaveText('You are');
+
+  await triggerPosition(page, 6_000);
+  await expect(el).toHaveText('a bold one');
+
+  // The trailing [00:08.00] gap entry has empty text, so playback-engine.ts's
+  // `.filter((l) => l.text.length > 0)` drops it from lrcLines entirely -
+  // the last real line ("a bold one") stays shown, it doesn't clear.
+  await triggerPosition(page, 8_000);
+  await expect(el).toHaveText('a bold one');
 });
