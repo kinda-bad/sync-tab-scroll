@@ -28,7 +28,7 @@
 
 <section class="landing">
   <div class="landing-card">
-    <h1 class="landing-title">
+    <h1 class="landing-title glitch-text">
       SYNC<span class="landing-title-dash">-</span>TAB<span class="landing-title-dash">-</span>SCROLL
     </h1>
     <p class="landing-tagline">Live session viewer</p>

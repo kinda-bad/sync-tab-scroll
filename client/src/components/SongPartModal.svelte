@@ -57,7 +57,7 @@
       <div class="song-row">
         <div>
           <span class="section-label">Song</span>
-          <p class="song-name">{selectedSong?.name ?? session.selectedSong}</p>
+          <p class="song-name glitch-text">{selectedSong?.name ?? session.selectedSong}</p>
         </div>
         {#if isHost}
           <Button variant="ghost" label="Change song" onclick={() => (browsingCatalog = true)} />

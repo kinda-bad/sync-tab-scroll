@@ -77,7 +77,9 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // agree dark is the default absent any preference. Read directly off the
   // document rather than importing from theme.ts, which already imports
   // setEngineTheme from this module (a reverse import here would be circular).
-  const theme: Theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  const datasetTheme = document.documentElement.dataset.theme;
+  const theme: Theme =
+    datasetTheme === 'light' || datasetTheme === 'cyberpunk-dark' || datasetTheme === 'cyberpunk-light' ? datasetTheme : 'dark';
 
   const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
 

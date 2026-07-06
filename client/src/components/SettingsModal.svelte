@@ -18,16 +18,32 @@
   let activeTab: 'participants' | 'session' | 'preferences' = 'participants';
   let lobbyCursorInput = 0;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
+
+  // Two orthogonal controls (ui.md Preferences, brand.md Themes) combine
+  // into the one flat `StoredTheme`/`data-theme` value `theme.ts` actually
+  // persists and `applyTheme()` consumes — derived from it on mount/every
+  // change, never a second source of truth (constitution Principle I).
+  $: themeFamily = theme.startsWith('cyberpunk') ? 'cyberpunk' : 'riot';
+  $: themeMode = theme.endsWith('dark') ? 'dark' : 'light';
+
   let metronome = loadStoredMetronome();
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
 
-  function toggleTheme() {
-    theme = theme === 'dark' ? 'light' : 'dark';
+  function setTheme(family: 'riot' | 'cyberpunk', mode: 'dark' | 'light'): void {
+    theme = family === 'riot' ? mode : (`cyberpunk-${mode}` as StoredTheme);
     applyTheme(theme);
     persistTheme(theme);
+  }
+
+  function toggleThemeFamily() {
+    setTheme(themeFamily === 'riot' ? 'cyberpunk' : 'riot', themeMode);
+  }
+
+  function toggleThemeMode() {
+    setTheme(themeFamily, themeMode === 'dark' ? 'light' : 'dark');
   }
 
   // Debounced (plan-lobby-cursor-race-2026-07-04.md) so rapidly changing the
@@ -152,7 +168,10 @@
     {/if}
   {:else}
     <span class="section-label">Theme</span>
-    <Button variant="ghost" label={theme === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleTheme} />
+    <div class="control-row">
+      <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
+      <Button variant="ghost" label={themeMode === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleThemeMode} />
+    </div>
 
     <span class="section-label">Playback audio</span>
     <div class="control-row">

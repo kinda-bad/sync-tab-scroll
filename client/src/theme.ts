@@ -7,7 +7,7 @@ export const STORAGE_KEY = 'sync-tab-scroll:theme';
 
 export function loadStoredTheme(): StoredTheme | undefined {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw !== 'dark' && raw !== 'light') return undefined;
+  if (raw !== 'dark' && raw !== 'light' && raw !== 'cyberpunk-dark' && raw !== 'cyberpunk-light') return undefined;
   return raw;
 }
 

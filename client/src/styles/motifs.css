@@ -4,10 +4,17 @@
  * not what markup gets applied, so components never branch on theme.
  */
 
-/* ── Torn/taped edge ─────────────────────────────────────────────────────
+/* ── Torn/taped edge (riot-exclusive) ────────────────────────────────────
    The persistent bar's top edge (facing into the content it sits below) —
-   a ripped-paper silhouette instead of a clean rule. */
-.torn-edge {
+   a ripped-paper silhouette instead of a clean rule. `riot`-scoped
+   (brand.md, second 2026-07-06 revision): analog/physical torn-paper is
+   `riot`'s identity only now, no longer a shared shape `cyberpunk` merely
+   recolored — `cyberpunk` gets its own `.glitch-cut-edge` device instead
+   (below). Markup still carries this class unconditionally per this
+   codebase's "components never branch on theme" convention; the selector
+   below is what actually gates it. */
+[data-theme='dark'] .torn-edge,
+[data-theme='light'] .torn-edge {
   clip-path: polygon(
     0% 10%, 4% 3%, 8% 12%, 12% 4%, 16% 11%, 20% 2%, 24% 9%, 28% 3%,
     32% 12%, 36% 4%, 40% 10%, 44% 2%, 48% 9%, 52% 4%, 56% 12%, 60% 3%,
@@ -17,17 +24,21 @@
   );
 }
 
-/* ── Hazard stripe fill ──────────────────────────────────────────────────
+/* ── Hazard stripe fill (riot-exclusive) ──────────────────────────────────
    One device, three jobs (per-participant readiness, playback progress,
    lyric-timing highlight) — diagonal caution-tape stripes instead of a
-   smooth gradient fill. `--hazard-fill` is the 0–1 progress the caller sets. */
-.hazard-stripes {
+   smooth gradient fill. `--hazard-fill` is the 0–1 progress the caller
+   sets. `riot`-scoped (brand.md, second 2026-07-06 revision) — `cyberpunk`
+   gets `.led-marquee` instead (below). */
+[data-theme='dark'] .hazard-stripes,
+[data-theme='light'] .hazard-stripes {
   --hazard-fill: 0;
   position: relative;
   background: var(--surface-raised);
   overflow: hidden;
 }
-.hazard-stripes::before {
+[data-theme='dark'] .hazard-stripes::before,
+[data-theme='light'] .hazard-stripes::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -43,15 +54,23 @@
   transition: width 0.2s linear;
 }
 
-/* ── Dark mode: glitch fringe ────────────────────────────────────────────
-   Chromatic-aberration-style double fringe on the torn edge, recolored to
-   the punk palette (riot + hazard, not literal RGB channel split). Brief
-   and infrequent — a glitch, not a constant shimmer. */
-[data-theme='dark'] .signature-glitch {
+/* ── Cyberpunk: glitch fringe (both modes) ────────────────────────────────
+   Chromatic-aberration-style double fringe, moved to `cyberpunk`
+   exclusively (brand.md, second 2026-07-06 revision) — `riot`'s identity
+   is entirely physical/tactile now (paper, tape, peeling) and never uses a
+   screen-distortion effect, in either mode. Because `cyberpunk`'s --riot/
+   --hazard are a genuine pink/cyan pair (not two shades of one warm
+   accent), this renders as a literal chromatic-aberration split, same as
+   `sync-scroll`'s original. Brief and infrequent — a glitch, not a
+   constant shimmer. */
+[data-theme='cyberpunk-dark'] .signature-glitch,
+[data-theme='cyberpunk-light'] .signature-glitch {
   position: relative;
 }
-[data-theme='dark'] .signature-glitch::before,
-[data-theme='dark'] .signature-glitch::after {
+[data-theme='cyberpunk-dark'] .signature-glitch::before,
+[data-theme='cyberpunk-dark'] .signature-glitch::after,
+[data-theme='cyberpunk-light'] .signature-glitch::before,
+[data-theme='cyberpunk-light'] .signature-glitch::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -59,11 +78,13 @@
   pointer-events: none;
   opacity: 0;
 }
-[data-theme='dark'] .signature-glitch::before {
+[data-theme='cyberpunk-dark'] .signature-glitch::before,
+[data-theme='cyberpunk-light'] .signature-glitch::before {
   box-shadow: inset 0 2px 0 0 var(--riot);
   animation: glitch-fringe-a 7s infinite;
 }
-[data-theme='dark'] .signature-glitch::after {
+[data-theme='cyberpunk-dark'] .signature-glitch::after,
+[data-theme='cyberpunk-light'] .signature-glitch::after {
   box-shadow: inset 0 -2px 0 0 var(--hazard);
   animation: glitch-fringe-b 7s infinite;
 }
@@ -78,13 +99,20 @@
   93.7% { opacity: 0; }
 }
 
-/* ── Light mode: tape peel ───────────────────────────────────────────────
+/* ── Riot: tape peel (both modes) ─────────────────────────────────────────
    A torn strip of tape in one corner that lifts slightly on hover/focus —
-   same DIY-physical idea as the glitch, different medium (paper, not
-   screen). Purely decorative, aria-hidden by the component. */
+   `riot`'s single signature motion in **both** modes now (brand.md,
+   second 2026-07-06 revision) — previously light-mode-only, with dark mode
+   using the glitch fringe instead; that glitch has moved to `cyberpunk`
+   exclusively (above), leaving tape-peel as `riot`'s one motion identity,
+   symmetric with `cyberpunk`'s one motion identity (glitch fringe + CRT
+   scanline) also running in both its modes. Purely decorative, aria-hidden
+   by the component. */
+[data-theme='dark'] .signature-tape,
 [data-theme='light'] .signature-tape {
   position: relative;
 }
+[data-theme='dark'] .signature-tape::after,
 [data-theme='light'] .signature-tape::after {
   content: '';
   position: absolute;
@@ -99,19 +127,124 @@
   transition: transform 0.2s ease;
   pointer-events: none;
 }
+[data-theme='dark'] .signature-tape:hover::after,
+[data-theme='dark'] .signature-tape:focus-within::after,
 [data-theme='light'] .signature-tape:hover::after,
 [data-theme='light'] .signature-tape:focus-within::after {
   transform: rotate(-3deg) translateY(-3px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-theme='dark'] .signature-glitch::before,
-  [data-theme='dark'] .signature-glitch::after {
+  [data-theme='cyberpunk-dark'] .signature-glitch::before,
+  [data-theme='cyberpunk-dark'] .signature-glitch::after,
+  [data-theme='cyberpunk-light'] .signature-glitch::before,
+  [data-theme='cyberpunk-light'] .signature-glitch::after {
     animation: none;
   }
+  [data-theme='dark'] .signature-tape::after,
   [data-theme='light'] .signature-tape::after {
     transition: none;
   }
+}
+
+/* ── Cyberpunk: glitch-cut edge (both modes) ──────────────────────────────
+   The bar's top edge under `cyberpunk` — a jagged, stepped silhouette of
+   sharp right-angle notches (a corrupted-signal read: hard digital steps,
+   not `riot`'s organic torn-paper curve), replacing `.torn-edge` for this
+   theme entirely (brand.md, second 2026-07-06 revision, Themes ›
+   Cyberpunk). No shared edge shape with `riot` anymore. */
+[data-theme='cyberpunk-dark'] .glitch-cut-edge,
+[data-theme='cyberpunk-light'] .glitch-cut-edge {
+  clip-path: polygon(
+    0% 100%, 0% 20%, 8% 20%, 8% 6%, 16% 6%, 16% 24%, 24% 24%, 24% 0%,
+    32% 0%, 32% 16%, 40% 16%, 40% 4%, 48% 4%, 48% 20%, 56% 20%, 56% 8%,
+    64% 8%, 64% 22%, 72% 22%, 72% 0%, 80% 0%, 80% 14%, 88% 14%, 88% 4%,
+    96% 4%, 96% 18%, 100% 18%, 100% 100%
+  );
+}
+
+/* ── Cyberpunk: LED marquee fill (both modes) ─────────────────────────────
+   The progress/readiness fill under `cyberpunk` — blocky rectangular
+   segments with small gaps, hard edges, a subtle glow on lit segments,
+   filling in discrete quantized steps instead of `riot`'s diagonal
+   hazard-tape stripe (brand.md, second 2026-07-06 revision, Themes ›
+   Cyberpunk). Same `--hazard-fill` 0–1 custom property the caller sets;
+   segment count is fixed (20); the segment grid itself (background-image
+   below) is always full width and never resizes, so each block stays a
+   fixed physical size regardless of fill — only how much of that fixed
+   grid is *revealed*, via `clip-path`, tracks `--hazard-fill`
+   continuously (like `.hazard-stripes`'s width does). The result is
+   always whole lit segments plus, at most, one partially-cut segment at
+   the leading edge, never a smooth gradient or diagonal texture. */
+[data-theme='cyberpunk-dark'] .led-marquee,
+[data-theme='cyberpunk-light'] .led-marquee {
+  --hazard-fill: 0;
+  --led-count: 20;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+  padding: 2px;
+}
+[data-theme='cyberpunk-dark'] .led-marquee::before,
+[data-theme='cyberpunk-light'] .led-marquee::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: inset(0 calc(100% - (var(--hazard-fill) * 100%)) 0 0);
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--hazard) 0,
+    var(--hazard) calc(100% / var(--led-count) - 2px),
+    transparent calc(100% / var(--led-count) - 2px),
+    transparent calc(100% / var(--led-count))
+  );
+  box-shadow: 0 0 6px 1px var(--hazard);
+  transition: clip-path 0.2s linear;
+}
+
+/* ── Cyberpunk: RGB-split hero/title text (both modes) ────────────────────
+   A subtle red/cyan channel-offset text-shadow duplicate on `--font-display`
+   hero/title moments (logotype, song title, big state words) — cheap,
+   layered `text-shadow`, no new font — reinforcing the glitch identity
+   where type is most prominent (brand.md, second 2026-07-06 revision,
+   Themes › Cyberpunk). `riot` has no equivalent; its type stays clean,
+   consistent with its physical (not screen-based) identity — this class
+   is inert outside `cyberpunk`. Static (no animation), same as the CRT
+   scanline below, so no `prefers-reduced-motion` gate is needed. */
+[data-theme='cyberpunk-dark'] .glitch-text,
+[data-theme='cyberpunk-light'] .glitch-text {
+  text-shadow:
+    -1px 0 0 rgba(255, 0, 60, 0.7),
+    1px 0 0 rgba(0, 220, 255, 0.7);
+}
+
+/* ── Cyberpunk: CRT scanline ─────────────────────────────────────────────
+   A third theme-scoped motion variant (brand.md, Themes), adapted from
+   sync-scroll's own CRT scanline overlay verbatim — a static repeating
+   horizontal-line texture over the whole viewport, harvested with no
+   flicker/pulse of its own (unlike dark's glitch-fringe or light's
+   tape-peel, this one has no animation/transition to gate under
+   prefers-reduced-motion — same precedent as the tape motif's own static
+   shape staying visible under reduced motion, only its hover transition
+   is disabled: there is simply nothing here that moves). `pointer-events:
+   none` and a high z-index (matching the source) so it never blocks
+   clicks and always sits over content, under alphaTab's own injected
+   cursor DOM (z-index: 1000) is not a concern since neither element is
+   interactive. */
+[data-theme='cyberpunk-dark'] body::after,
+[data-theme='cyberpunk-light'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
 }
 
 /* ── alphaTab playback cursor ────────────────────────────────────────────

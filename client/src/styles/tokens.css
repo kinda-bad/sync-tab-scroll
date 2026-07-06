@@ -11,17 +11,28 @@
 
 :root,
 :root[data-theme='dark'] {
-  --bg: #0a0a0a;
-  --surface: #17171b;
-  --surface-raised: #201f24;
-  --bar-surface: #2a2930;
-  --ink: #f2f0e8;
-  --ink-dim: rgba(242, 240, 232, 0.55);
-  --riot: #ff2178;
-  --riot-dim: rgba(255, 33, 120, 0.35);
-  --hazard: #ffcc00;
-  --hazard-dim: rgba(255, 204, 0, 0.35);
-  --border: rgba(242, 240, 232, 0.14);
+  /* "riot" — second 2026-07-06 rework (brand.md, UI Chrome Redesign): the
+     first rework read too close/muted for real punk contrast, so this pass
+     pushes to true-black --bg (not a warm near-black) and fully saturated
+     blood-red-pink --riot / safety-yellow --hazard. --surface-raised isn't
+     in brand.md's semantic table directly; re-derived here the same way the
+     prior rework derived it from its base values — in HSL, at the same
+     ~45% interpolation point between --surface and --bar-surface (by
+     hue/lightness/saturation) that the previous implementation's values sat
+     at relative to its own --surface/--bar-surface. --ink-dim/--riot-dim/
+     --hazard-dim/--border keep the same alphas the prior implementation
+     used (0.55/0.35/0.35/0.14), just re-keyed to these new base colors. */
+  --bg: #000000;
+  --surface: #120a0d;
+  --surface-raised: #170a0f;
+  --bar-surface: #1f0a12;
+  --ink: #fff4e0;
+  --ink-dim: rgba(255, 244, 224, 0.55);
+  --riot: #ff0033;
+  --riot-dim: rgba(255, 0, 51, 0.35);
+  --hazard: #ffe600;
+  --hazard-dim: rgba(255, 230, 0, 0.35);
+  --border: rgba(255, 244, 224, 0.14);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);
@@ -29,20 +40,82 @@
 }
 
 :root[data-theme='light'] {
-  /* Not an inversion of dark — a photocopied-flyer concept: warm-toner
-     near-black ink on newsprint paper, deeper/inkier accents rather than
-     dark mode's glowing neon (brand.md, Light/Dark Mode). */
-  --bg: #e4e1d6;
-  --surface: #d6d2c4;
-  --surface-raised: #cac5b5;
-  --bar-surface: #bfb9a5;
-  --ink: #131211;
-  --ink-dim: rgba(19, 18, 17, 0.55);
-  --riot: #c40855;
-  --riot-dim: rgba(196, 8, 85, 0.18);
-  --hazard: #a8760a;
-  --hazard-dim: rgba(168, 118, 10, 0.18);
-  --border: rgba(19, 18, 17, 0.18);
+  /* "riot" light — second 2026-07-06 rework (brand.md): moved off the
+     decayed-parchment concept the first rework used — a stark, near-white
+     photocopied-flyer/zine paper instead, for sharper ink/accent contrast.
+     --surface-raised isn't in brand.md's semantic table directly;
+     re-derived here the same way as dark mode above, at the same ~45%
+     interpolation point between --surface and --bar-surface the prior
+     implementation's value sat at. --ink-dim/--riot-dim/--hazard-dim/
+     --border keep the prior implementation's alphas (0.55/0.18/0.18/0.18),
+     re-keyed to these new base colors. --riot is the same fully-saturated
+     value as dark mode (brand.md: the near-white bg supports it without
+     reading murky). */
+  --bg: #fafaf5;
+  --surface: #efece2;
+  --surface-raised: #e9e5d7;
+  --bar-surface: #e2ddc9;
+  --ink: #0d0704;
+  --ink-dim: rgba(13, 7, 4, 0.55);
+  --riot: #ff0033;
+  --riot-dim: rgba(255, 0, 51, 0.18);
+  --hazard: #c77700;
+  --hazard-dim: rgba(199, 119, 0, 0.18);
+  --border: rgba(13, 7, 4, 0.18);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
+:root[data-theme='cyberpunk-dark'] {
+  /* "cyberpunk" (brand.md, Themes) — harvested directly from the
+     predecessor project's (sync-scroll) full-neon "video-game HUD" chrome
+     palette, the multi-neon look the "riot" default deliberately narrowed
+     away from. --riot/--hazard are a genuine pink/cyan pair here, not two
+     shades of one warm accent — the existing `.signature-glitch` motif
+     renders as a literal chromatic-aberration split as a result, no code
+     changes needed. --surface-raised/--ink-dim/--riot-dim/--hazard-dim/
+     --border aren't in brand.md's semantic table directly; derived here
+     from these base values at the same relative position/alpha the riot
+     dark block uses. */
+  --bg: #08080c;
+  --surface: #111118;
+  --surface-raised: #16161e;
+  --bar-surface: #1c1c26;
+  --ink: #e8f6ff;
+  --ink-dim: rgba(232, 246, 255, 0.55);
+  --riot: #ff2d78;
+  --riot-dim: rgba(255, 45, 120, 0.35);
+  --hazard: #00cfff;
+  --hazard-dim: rgba(0, 207, 255, 0.35);
+  --border: rgba(232, 246, 255, 0.14);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
+:root[data-theme='cyberpunk-light'] {
+  /* "cyberpunk" light (brand.md, Themes) — fresh design pass, no
+     sync-scroll equivalent to harvest (it never shipped light mode); a
+     "holographic display" concept. Lower confidence than the dark pass
+     above, same caveat this artifact applies to any non-harvested
+     palette. --surface-raised/--ink-dim/--riot-dim/--hazard-dim/--border
+     aren't in brand.md's semantic table directly; derived here from these
+     base values at the same relative position/alpha the riot light block
+     uses. */
+  --bg: #eef3f7;
+  --surface: #dbe7ee;
+  --surface-raised: #d0dfe8;
+  --bar-surface: #c3d6e0;
+  --ink: #0c1420;
+  --ink-dim: rgba(12, 20, 32, 0.55);
+  --riot: #d6006b;
+  --riot-dim: rgba(214, 0, 107, 0.18);
+  --hazard: #0090b8;
+  --hazard-dim: rgba(0, 144, 184, 0.18);
+  --border: rgba(12, 20, 32, 0.18);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);

@@ -28,7 +28,7 @@
 </script>
 
 <section class="lobby">
-  <h1 class="lobby-title">Lobby</h1>
+  <h1 class="lobby-title glitch-text">Lobby</h1>
   <p class="hint">{hint}</p>
 </section>
 

@@ -133,7 +133,7 @@
     {#snippet identity()}
       <span class="bar-artist bar-code">Join code: {session.code}</span>
       {#if catalogSong}
-        <strong class="bar-title">{catalogSong.name}</strong>
+        <strong class="bar-title glitch-text">{catalogSong.name}</strong>
         <span class="bar-artist"> — {catalogSong.artist}</span>
       {/if}
     {/snippet}

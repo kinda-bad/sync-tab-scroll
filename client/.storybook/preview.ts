@@ -19,7 +19,7 @@ const preview: Preview = {
   },
   decorators: [
     withThemeByDataAttribute({
-      themes: { dark: 'dark', light: 'light' },
+      themes: { dark: 'dark', light: 'light', 'cyberpunk-dark': 'cyberpunk-dark', 'cyberpunk-light': 'cyberpunk-light' },
       defaultTheme: 'dark',
       attributeName: 'data-theme',
     }),

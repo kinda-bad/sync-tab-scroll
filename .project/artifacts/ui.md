@@ -167,10 +167,13 @@ regardless of whether playback has started:
     nobody else is affected and the server has no reason to know.
 - **Preferences**: personal, this-device-only settings, none of which
   touch the server:
-  - a dark/light theme toggle — the app's first in-app theme control
-    (`client/src/theme.ts`); toggling it switches both the app's CSS
-    palette and the tab notation's colors together, and the choice
-    persists across a refresh.
+  - two orthogonal theme controls (`client/src/theme.ts`), per
+    `brand.md`'s Themes section: a **theme** picker (`riot` — the
+    default — or `cyberpunk`) and the existing dark/light toggle,
+    combining into one of four `data-theme` values (`dark`, `light`,
+    `cyberpunk-dark`, `cyberpunk-light`). Changing either control
+    switches the app's CSS palette and the tab notation's colors
+    together, and both choices persist across a refresh.
   - a personal "Metronome" toggle, visible to **every** participant (not
     host-gated): persisted client-side like the theme choice
     (`client/src/metronome-preference.ts`, default off), applied to this

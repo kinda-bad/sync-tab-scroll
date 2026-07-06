@@ -1,8 +1,8 @@
 import * as at from '@coderline/alphatab';
-import { darkTabColors, lightTabColors } from './brand-colors';
+import { darkTabColors, lightTabColors, cyberpunkDarkTabColors, cyberpunkLightTabColors } from './brand-colors';
 import { tabScaleForViewportWidth } from './tab-scale';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'cyberpunk-dark' | 'cyberpunk-light';
 
 export interface TabRendererOptions {
   container: HTMLElement;
@@ -12,7 +12,12 @@ export interface TabRendererOptions {
 }
 
 function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
-  const colors = theme === 'dark' ? darkTabColors : lightTabColors;
+  const colors = {
+    dark: darkTabColors,
+    light: lightTabColors,
+    'cyberpunk-dark': cyberpunkDarkTabColors,
+    'cyberpunk-light': cyberpunkLightTabColors,
+  }[theme];
   resources.mainGlyphColor = colors.foreground; // flat full-brightness — see class doc comment below
   resources.secondaryGlyphColor = colors.foregroundDim;
   resources.staffLineColor = colors.rulingDim;
