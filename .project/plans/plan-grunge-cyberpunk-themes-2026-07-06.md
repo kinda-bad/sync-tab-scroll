@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: grunge-cyberpunk-themes
 created: 2026-07-06
 features: [grunge-cyberpunk-themes]
