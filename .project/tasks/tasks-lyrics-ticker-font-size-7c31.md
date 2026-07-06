@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-ticker-font-size-2026-07-05.md
 generated: 2026-07-06
-status: ready
+status: in-progress
 ---
 
 # Tasks
