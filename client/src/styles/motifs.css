@@ -54,6 +54,41 @@
   transition: width 0.2s linear;
 }
 
+/* ── Riot: lyric-gap drain (hazard-tape language) ────────────────────────
+   The full-lyrics-sheet gap-timing indicator's drain bar (ui.md/brand.md
+   "Lyrics Gap Indicator", 2026-07-06) — a genuinely separate element from
+   the persistent Bar's own `.hazard-stripes` readiness/progress device
+   (brand.md: "not a second instance of it"), tracking a lyric gap's
+   remaining time instead. Same diagonal hazard-tape visual language and
+   `riot`-scoped gating as `.hazard-stripes` above, driven by its own
+   `--gap-fill` custom property (1 at gap start, 0 at gap end,
+   playback-engine.ts) — the caller counts *down*, not up, so this reuses
+   `.hazard-stripes`'s exact width-reveal mechanism (the stripe area
+   visibly shrinks as `--gap-fill` falls). */
+[data-theme='dark'] .gap-drain-tape,
+[data-theme='light'] .gap-drain-tape {
+  --gap-fill: 1;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+[data-theme='dark'] .gap-drain-tape::before,
+[data-theme='light'] .gap-drain-tape::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: calc(var(--gap-fill) * 100%);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--hazard) 0px,
+    var(--hazard) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  background-color: var(--hazard-dim);
+  transition: width 0.2s linear;
+}
+
 /* ── Cyberpunk: glitch fringe (both modes) ────────────────────────────────
    Chromatic-aberration-style double fringe, moved to `cyberpunk`
    exclusively (brand.md, second 2026-07-06 revision) — `riot`'s identity
@@ -191,6 +226,41 @@
   position: absolute;
   inset: 2px;
   clip-path: inset(0 calc(100% - (var(--hazard-fill) * 100%)) 0 0);
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--hazard) 0,
+    var(--hazard) calc(100% / var(--led-count) - 2px),
+    transparent calc(100% / var(--led-count) - 2px),
+    transparent calc(100% / var(--led-count))
+  );
+  box-shadow: 0 0 6px 1px var(--hazard);
+  transition: clip-path 0.2s linear;
+}
+
+/* ── Cyberpunk: lyric-gap drain (LED-marquee language) ────────────────────
+   The full-lyrics-sheet gap-timing indicator's drain bar under `cyberpunk`
+   (ui.md/brand.md "Lyrics Gap Indicator", 2026-07-06) — same segmented,
+   hard-edged block language as `.led-marquee` above, a genuinely separate
+   element from it (brand.md), driven by its own `--gap-fill` custom
+   property (1 at gap start, 0 at gap end, playback-engine.ts). Same
+   drain-not-fill direction as `.gap-drain-tape`'s riot counterpart — the
+   lit segment count shrinks as `--gap-fill` falls, reusing `.led-
+   marquee`'s exact clip-path-reveal mechanism. */
+[data-theme='cyberpunk-dark'] .gap-drain-led,
+[data-theme='cyberpunk-light'] .gap-drain-led {
+  --gap-fill: 1;
+  --led-count: 20;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+  padding: 2px;
+}
+[data-theme='cyberpunk-dark'] .gap-drain-led::before,
+[data-theme='cyberpunk-light'] .gap-drain-led::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: inset(0 calc(100% - (var(--gap-fill) * 100%)) 0 0);
   background-image: repeating-linear-gradient(
     to right,
     var(--hazard) 0,

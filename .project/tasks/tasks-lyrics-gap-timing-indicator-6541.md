@@ -62,7 +62,7 @@ status: in-progress
   already driving active-line highlighting) to update dot-lit state and
   drain-bar fill continuously, in `client/src/playback-engine.ts`. Make
   T004's tests pass.
-- [ ] T006 [artifacts: brand] [parallel] Add `.gap-drain-tape` (riot:
+- [x] T006 [artifacts: brand] [parallel] Add `.gap-drain-tape` (riot:
   diagonal hazard-stripe visual language, shrinking as the gap elapses)
   and `.gap-drain-led` (cyberpunk: segmented LED-marquee visual language,
   same shrink direction) to `client/src/styles/motifs.css`, gated by
