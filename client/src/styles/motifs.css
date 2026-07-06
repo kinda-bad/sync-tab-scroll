@@ -182,7 +182,7 @@
      surface tone, so this now actually shows up in both themes. */
   background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
   font-family: var(--font-mono);
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   color: var(--ink-dim);
   overflow: hidden;
   pointer-events: none;

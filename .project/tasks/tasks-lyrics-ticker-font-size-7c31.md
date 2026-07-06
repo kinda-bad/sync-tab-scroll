@@ -7,11 +7,12 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Increase ticker font size
-- [ ] T001 [artifacts: ui] Increase `.lyrics-overlay`'s `font-size` in
+- [x] T001 [artifacts: ui] Increase `.lyrics-overlay`'s `font-size` in
   `client/src/styles/motifs.css:185` (currently `0.9375rem`) to a larger,
   more legible value. Pick a concrete value during implementation (no
   artifact-level spec to derive it from) — e.g. try `1.125rem` as a
   starting point and adjust based on the live-verify step below.
+  Done: bumped to `1.125rem` (18px, up from 15px).
 - [ ] T002 [artifacts: ui] Live-verify in a real browser (light + dark
   theme, per this project's `browser-verify-alphatab-quirks` practice —
   Playwright/vitest can't observe rendered CSS layout) that the larger
