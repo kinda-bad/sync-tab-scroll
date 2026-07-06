@@ -49,11 +49,11 @@ status: in-progress
   (feedback: `feedback-defects-followup-743b.md`)
 
 ## Phase 3: Artifact updates
-- [ ] T005 [artifacts: ui] [parallel] Document the new "Remove" control in
+- [x] T005 [artifacts: ui] [parallel] Document the new "Remove" control in
   `ui.md`'s Participants tab bullet list (host-only, non-self rows), and
   add a "Removed from session" entry under States (toast + reset to
   Landing).
-- [ ] T006 [artifacts: infrastructure] [parallel] In `infrastructure.md`:
+- [x] T006 [artifacts: infrastructure] [parallel] In `infrastructure.md`:
   add a subsection near Host Transfer/Host Succession documenting
   `host-remove-participant` (host-only, filters the target from
   `Session.participants`, broadcasts `session-state` normally, plus the
@@ -62,7 +62,7 @@ status: in-progress
   (`tab-renderer.ts:106`); add a mention of the small-screen render-scale
   (`tabScaleForViewportWidth`, `tab-renderer.ts:59-62`) to the Tab
   Rendering section.
-- [ ] T007 [artifacts: pipeline] [parallel] In `pipeline.md`, reword the
+- [x] T007 [artifacts: pipeline] [parallel] In `pipeline.md`, reword the
   lrclib-assisted-line-break branch to say lrclib supplies the lyric text
   in that branch and GP supplies only timestamps/line-break counts
   (matches `extract-lyrics.ts:59-62`, `lrc-writer.ts:17-35`).
