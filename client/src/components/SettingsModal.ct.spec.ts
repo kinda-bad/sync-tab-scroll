@@ -170,6 +170,22 @@ test('the host sees a "Decline" control on the pending-requester\'s row, and it 
   expect(sent).toEqual([{ type: 'host-request-decline' }]);
 });
 
+test('the host sees a "Remove" control on every other row but not their own, and it sends host-remove-participant', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+
+  await expect(component.getByRole('button', { name: 'Remove' })).toHaveCount(1);
+  await component.getByRole('button', { name: 'Remove' }).click();
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toContainEqual({ type: 'host-remove-participant', participantId: 'member-1' });
+});
+
+test('a non-host does not see a "Remove" control on any row', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await expect(component.getByRole('button', { name: 'Remove' })).toHaveCount(0);
+});
+
 test('a non-host, non-requesting viewer sees a plain pending label on the requester\'s row, not a Decline button', async ({ mount }) => {
   const session = baseSession({
     pendingHostRequest: 'member-1',
