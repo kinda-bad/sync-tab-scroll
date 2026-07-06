@@ -9,7 +9,7 @@ client/public/test/
 catalog/
 
 # Claude Code local tooling/config — not for the repo
-.claude/
+.claude/skills/ardd-*/
 
 *storybook.log
 storybook-static
