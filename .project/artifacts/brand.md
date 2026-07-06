@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-06
 ---
 
 # Brand & Theming
@@ -20,6 +20,17 @@ cyberpunk look. (Superseded 2026-07-02 — see UI Chrome Redesign below;
 the original "dark, neon-accented, glitch-titled" framing undersold
 the direction and is kept below only where it still applies, to Tab
 Notation specifically.)
+
+**Reworked 2026-07-06 — "riot"**: the UI Chrome palette below was pushed
+louder and wilder, drawing on Yeah Yeah Yeahs album/gig-poster art
+(*Fever to Tell*'s scrawled collage-red, gig-poster bone-ribcage-on-black
+with magenta blood-splatter) and Nirvana's *In Utero* (cracked, yellowed
+parchment; deep blood-red serif type) — still the same punk-rock
+identity and the same five semantic roles, just hotter values and a
+grittier light-mode metaphor (decayed parchment, not clean photocopy).
+This is a value-level rework of the existing theme, not a new theme
+alongside it — see Themes below for how it now coexists with the new
+**cyberpunk** theme as a second, fully distinct option.
 
 ## UI Chrome Redesign (2026-07-02)
 
@@ -46,35 +57,41 @@ These are **semantic role names, not theme-specific** (no `--void` vs.
 `--paper` split) so that components never branch on which theme is
 active — only the values behind each name change per
 `[data-theme='...']` block (`client/src/styles/tokens.css`). This is
-also what makes the palette extensible: a future theme (e.g. a
-straight cyberpunk palette, floated as a long-term goal) is a new
-`[data-theme='cyberpunk']` block plus a new toolbar entry in
+also what makes the palette extensible: **Themes** below documents how
+this now supports two fully distinct themes (`riot`, `cyberpunk`), each
+with its own dark/light pair — a new theme is a new pair of
+`[data-theme='...']` blocks plus a new toolbar entry in
 `.storybook/preview.ts`'s `withThemeByDataAttribute` config — nothing
 else changes, no component touches theme-specific logic.
 
-**Dark mode** — a void/stage concept:
+**Dark mode** — a void/stage concept, pushed louder in the 2026-07-06
+"riot" rework (Yeah Yeah Yeahs/Nirvana-inspired — see above): hotter
+magenta-pink `--riot`, hotter marigold `--hazard`, a warmer near-black
+base than the original neutral void:
 
 | Token | Value |
 |---|---|
-| `--bg` | `#0a0a0a` |
-| `--surface` | `#17171b` |
-| `--bar-surface` | `#2a2930` |
-| `--ink` | `#f2f0e8` |
-| `--riot` | `#ff2178` |
-| `--hazard` | `#ffcc00` |
+| `--bg` | `#050403` |
+| `--surface` | `#150e10` |
+| `--bar-surface` | `#2b1018` |
+| `--ink` | `#f3e6c8` |
+| `--riot` | `#ff0857` |
+| `--hazard` | `#ffb400` |
 
-**Light mode** — its own pass, not a mechanical inversion: a
-photocopied-flyer concept (warm-toner ink on newsprint paper, deeper/
-inkier accents rather than dark mode's glow):
+**Light mode** — its own pass, not a mechanical inversion: reworked from
+a photocopied-flyer concept into a **decayed, cracked parchment**
+concept (per *In Utero*'s cover — yellowed, brittle paper; deep
+blood-red serif type), warm-toner ink on aged paper rather than clean
+newsprint:
 
 | Token | Value |
 |---|---|
-| `--bg` | `#e4e1d6` (deliberately not cream/`#F4F1EA` — reads as an AI-default) |
-| `--surface` | `#d6d2c4` |
-| `--bar-surface` | `#bfb9a5` |
-| `--ink` | `#131211` |
-| `--riot` | `#c40855` |
-| `--hazard` | `#a8760a` |
+| `--bg` | `#ece0b8` |
+| `--surface` | `#ddcb92` |
+| `--bar-surface` | `#c2a35c` |
+| `--ink` | `#160f0c` |
+| `--riot` | `#9c0f3a` |
+| `--hazard` | `#8a5200` |
 
 ### Signature element: the persistent Bar
 
@@ -120,6 +137,68 @@ element.
   effect.
 
 Both respect `prefers-reduced-motion`.
+
+## Themes
+
+Two fully distinct themes, each with its own dark/light pair — orthogonal
+controls (per `ui.md`'s Preferences tab): a **theme** picker (`riot` /
+`cyberpunk`) and the existing light/dark toggle, combining into four flat
+`data-theme` values: `dark`, `light` (theme `riot`, the default — see UI
+Chrome Redesign above for its palette), `cyberpunk-dark`,
+`cyberpunk-light`. `riot` keeps the `dark`/`light` values rather than
+being renamed to `riot-dark`/`riot-light`, since it's a rework of the
+original default theme in place, not a new theme added alongside it.
+
+### Cyberpunk
+
+Direct harvest of the predecessor project's (`sync-scroll`) full-neon
+chrome palette — the very look this app's UI Chrome Redesign (above)
+deliberately narrowed *away* from for its own default theme. `cyberpunk`
+is where that multi-neon "video-game HUD" identity gets to exist as its
+own selectable option instead.
+
+**`cyberpunk-dark`** — harvested directly from `sync-scroll/client/src/
+styles/main.css`'s `--color-void`/`--color-panel`/`--color-rail`/
+`--color-neon-pink`/`--color-neon-blue`:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#08080c` |
+| `--surface` | `#111118` |
+| `--bar-surface` | `#1c1c26` |
+| `--ink` | `#e8f6ff` |
+| `--riot` | `#ff2d78` |
+| `--hazard` | `#00cfff` |
+
+Because `--riot` and `--hazard` are now a genuine pink/cyan pair (not two
+shades of the same warm accent, as in `riot`), the existing
+`.signature-glitch` motif — already a two-channel border fringe,
+per Motion above — renders as a **literal** pink/cyan chromatic-
+aberration split here, the same effect `sync-scroll` used, with zero new
+component logic: it's the same mechanism, just fed a theme where the two
+tokens are actually different hues.
+
+**`cyberpunk-light`** — fresh design pass, no `sync-scroll` equivalent to
+harvest (it never shipped light mode); a "holographic display" concept,
+lower confidence than the dark pass above, same caveat this artifact
+already applies to any non-harvested palette:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#eef3f7` |
+| `--surface` | `#dbe7ee` |
+| `--bar-surface` | `#c3d6e0` |
+| `--ink` | `#0c1420` |
+| `--riot` | `#d6006b` |
+| `--hazard` | `#0090b8` |
+
+**Motion**: adds `sync-scroll`'s CRT scanline overlay (a `body::after`
+repeating-linear-gradient texture) as a third theme-scoped motion variant,
+gated `[data-theme='cyberpunk-dark'], [data-theme='cyberpunk-light']` —
+same per-theme-motion pattern the Motion section above already uses for
+`riot` dark (glitch) vs. light (tape-peel), just a third value rather than
+a new mechanism. No tape-peel/glitch-fringe-recolor equivalent is needed
+beyond the existing `.signature-glitch` reuse described above.
 
 ## Color Palette (Tab Notation)
 
@@ -209,6 +288,26 @@ production-proven like dark mode's.
 | Active/currently-sung lyric syllable | — | same deep rose as cursor | in-tab `.at-highlight`, lyrics view line-highlight |
 | Base (non-highlighted) lyric text | — | `#8a6a00`, matching notation's default tone | full lyrics view |
 | Lobby pre-playback pointer | — | `#8a6a00` — same yellow-family/pink-family split as dark mode | lobby cursor overlay |
+
+**`cyberpunk` theme.** `cyberpunk-dark` reuses this section's existing
+dark-mode table as-is — full-brightness neon-yellow/neon-blue is already
+the right look, no changes needed. `cyberpunk-light` is a fresh pass
+(same lower-confidence caveat as the `riot`-light table above), pushing
+cyan/magenta instead of amber/rose to match the Themes section's
+"holographic display" concept:
+
+| Role | Token | Value | alphaTab resource / class |
+|---|---|---|---|
+| Note glyphs (fret numbers, notes, stems, beams, bend/slur geometry) | `--tab-foreground` | `#00b7dd` (deep cyan) | `mainGlyphColor` (flat — same constraint as above) |
+| Ghost notes, ties | `--tab-foreground-dim` | `rgba(0,183,221,0.40)` | `secondaryGlyphColor` |
+| Bar numbers | `--tab-foreground-dim` | same as ghost notes/ties | `barNumberColor` |
+| Section labels | `--tab-foreground-dim` | same as ghost notes/ties | `scoreInfoColor` |
+| Staff lines | `--tab-ruling-dim` | `rgba(214,0,107,0.35)` (magenta) | `staffLineColor` |
+| Barlines | `--tab-ruling-mid` | `rgba(214,0,107,0.50)` | `barSeparatorColor` |
+| Playback cursor | — | `#d6006b`, near-opaque (matches chrome `--riot`) | `.at-cursor-bar` / `.at-cursor-beat` |
+| Active/currently-sung lyric syllable | — | same magenta as cursor | in-tab `.at-highlight`, lyrics view line-highlight |
+| Base (non-highlighted) lyric text | — | `#00647d`, deep cyan-teal | full lyrics view |
+| Lobby pre-playback pointer | — | `#00647d` — same cyan-family/magenta-family split as dark mode | lobby cursor overlay |
 
 ## Typography
 
