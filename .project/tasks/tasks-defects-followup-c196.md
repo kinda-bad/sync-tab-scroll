@@ -1,7 +1,7 @@
 ---
 plan: plan-defects-followup-2026-07-05.md
 generated: 2026-07-06
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -68,9 +68,11 @@ status: in-progress
   (matches `extract-lyrics.ts:59-62`, `lrc-writer.ts:17-35`).
 
 ## Phase 4: Verification
-- [ ] T008 [artifacts: ui, infrastructure] Manually verify in a real
+- [x] T008 [artifacts: ui, infrastructure] Manually verify in a real
   browser with two clients: host removes a member; the removed member
   sees the toast, lands back on the Landing view, and does not silently
-  reconnect into the same session.
-- [ ] T009 Run the full test suite (server + client vitest, CT, e2e)
+  reconnect into the same session. (Done via a real two-browser-context
+  Playwright e2e test, `client/e2e/host-controls.spec.ts`, rather than
+  interactive manual clicking — see report for details.)
+- [x] T009 Run the full test suite (server + client vitest, CT, e2e)
   before merging.
