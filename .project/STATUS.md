@@ -1,10 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-feature`, logging
-`readme-local-setup-and-gp-ingestion`; also committed the
-`0003-per-feature-files` ARDD migration that had been sitting applied but
-uncommitted since earlier this session). Repo is on `main`, pushed to
-`origin/main`. No cross-artifact contradictions found._
+_Updated: 2026-07-06 (`/ardd-tasks`, approved and tasked the
+lyrics-gap-timing-indicator plan on its own branch). Repo is on `main`,
+pushed to `origin/main`. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -89,28 +87,27 @@ declined for inclusion in the `lyrics-gap-timing-indicator` and
 
 - `participant-selected-part` (participant list shows each member's
   currently selected part) — backlogged.
-- `lyrics-gap-timing-indicator` — a plan now exists
-  (`plan-lyrics-gap-timing-indicator-2026-07-06.md`, draft, on its own
-  unmerged branch); the register itself still says `backlogged` since
-  `/ardd-tasks` is what flips it to `planned`.
+- `lyrics-gap-timing-indicator` — approved and tasked on its own branch
+  (`tasks-lyrics-gap-timing-indicator-6541.md`, 9 tasks, `ready`); the
+  register on `main` still says `backlogged` since that flip hasn't
+  merged yet.
 - `readme-local-setup-and-gp-ingestion` (README documents local dev setup
   and `.gp` ingestion) — backlogged, just logged this pass.
 
 ## In Flight
 
 - Branch `lyrics-gap-timing-indicator` (plain branch, not a worktree) —
-  `plan-lyrics-gap-timing-indicator-2026-07-06.md` drafted (not yet
-  approved/tasked). `ui.md`/`brand.md` design changes and the plan are
-  committed there, not yet on `main`. Technical approach: derives
-  measure/beat boundaries from the headless alphaTab instance's own
-  loaded score (`MasterBar.start`/`calculateDuration()` +
-  `tickPositionToTimePosition()`), not `CatalogSong.bpm` (display-only).
-  Rebased onto `main` after this pass's migration commit — up to date.
+  plan approved, `tasks-lyrics-gap-timing-indicator-6541.md` generated
+  (9 tasks across 3 phases: gap/beat-math via alphaTab's
+  `MasterBar`/`tickPositionToTimePosition` API, dots + drain-bar
+  rendering, verification), `ready`, not yet started. `ui.md`/`brand.md`
+  design changes, the plan, and the tasks file are all committed there,
+  not yet on `main`.
 
 ## Recommended Next Step
 
-1. Run `/ardd-tasks` on `plan-lyrics-gap-timing-indicator-2026-07-06.md`
-   to approve it and generate its task list, then implement.
+1. Implement `tasks-lyrics-gap-timing-indicator-6541.md` (`/ardd-implement`,
+   inline or delegated).
 2. Run `/ardd-plan readme-local-setup-and-gp-ingestion` when ready to
    design the README feature.
 3. Consider a fresh `/ardd-verify` pass — a large amount of client code
