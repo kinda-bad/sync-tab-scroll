@@ -1,10 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-feedback`, logging a lyrics-only-view bug
-report; an `/ardd-verify` pass is also running concurrently in the
-background — its results aren't reflected here yet). Repo is on `main`.
-No cross-artifact contradictions found; findings are the same handful of
-minor gaps plus one newly-confirmed duplicate defect._
+_Updated: 2026-07-06 (`/ardd-analyze`, after an `/ardd-verify` pass
+cleared 3 of `DEFECTS.md`'s 5 defects — down to 2). Repo is on `main`. No
+cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -77,28 +75,19 @@ principle violations spotted in this artifact-only pass.
 
 ## Code-vs-Artifact Defects
 
-5 known defects — see `DEFECTS.md`, last checked 2026-07-06. **4 of the 5
-are now fixed in code** (percussion-detection wording, render-scaling doc
-gap, `host-remove-participant` UI, lrclib wording — all landed via the
-defects-followup merge), but `DEFECTS.md` itself hasn't been regenerated
-since, so it still lists them as open. Run `/ardd-verify` to refresh and
-clear them. Summary:
+2 known defects — see `DEFECTS.md`, last checked 2026-07-06 (fresh
+codebase pass, confirmed against current code — not assumed). Down from
+5: `infrastructure.md`'s percussion-detection wording and render-scaling
+doc gap, the `host-remove-participant` UI/docs gap, and `pipeline.md`'s
+lrclib wording are all confirmed fixed and no longer listed. Remaining:
 
-- `infrastructure.md` — cosmetic (percussion-detection wording) —
-  **fixed in code**, `DEFECTS.md` stale.
-- `infrastructure.md` — drift (undocumented render-scaling) — **fixed in
-  code**, `DEFECTS.md` stale.
-- `infrastructure.md` — drift (`host-remove-participant` client UI/docs)
-  — **fixed in code** (Remove button + self-removal handling), `DEFECTS.md`
-  stale.
-- `datamodel.md` — cosmetic: the same wrong percussion-detection claim
-  duplicated in `CatalogPart.trackIndex`'s note. **Not fixed** — the
-  defects-followup work only touched `infrastructure.md`'s copy.
-- `pipeline.md` — drift (lrclib wording) — **fixed in code**, `DEFECTS.md`
-  stale.
+- `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
+  the same wrong percussion-detection claim (`track.percussionArticulations`)
+  that `infrastructure.md`'s copy already fixed — the defects-followup
+  branch's scope only touched `infrastructure.md`.
 - `constitution.md` — drift (pre-existing, deferred): Principle VIII's
-  CI half is unmet — no `.github/workflows/` exists. Still open, separate
-  decision — see Recommended Next Step.
+  CI half is unmet — no `.github/workflows/` exists (confirmed). Still
+  open, separate decision — see Recommended Next Step.
 
 ## Feedback
 
@@ -135,16 +124,12 @@ been merged into `main` and their worktrees/branches pruned.
 1. Investigate the lyrics-only-view bug reported in
    `feedback-lyrics-only-view-6386.md` — either live-debug it directly or
    fold it into the next `/ardd-plan` pass.
-2. Wait for the in-progress `/ardd-verify` pass to finish and re-run
-   `/ardd-analyze` — it should clear 4 of `DEFECTS.md`'s 5 listed defects
-   (already fixed in code by the defects-followup merge).
-3. Switch to `grunge-cyberpunk-themes` and run `/ardd-tasks` to approve
+2. Switch to `grunge-cyberpunk-themes` and run `/ardd-tasks` to approve
    the theme plan and generate its task list, then implement (or merge
    its current draft-plan commits to `main` first if you'd rather plan
    from there — either works, nothing beyond `brand.md`/`ui.md`/the plan
    file has changed on that branch yet).
-4. Decide the CI-provider question for constitution Principle VIII now
+3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-5. Not blocking: `datamodel.md`'s duplicated percussion-detection claim
-   (not fixed by defects-followup, only `infrastructure.md`'s copy was),
+4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    plus the other minor cross-artifact notes above.
