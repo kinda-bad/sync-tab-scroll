@@ -29,7 +29,7 @@ status: in-progress
   duration (measure duration ÷ `timeSignatureNumerator`) and the 4 beat
   timestamps immediately preceding `endMs`. Do NOT use `CatalogSong.bpm`
   (datamodel.md: display-only, not for tick-to-time math).
-- [ ] T003 [artifacts: ui] In `client/src/playback-engine.ts`'s
+- [x] T003 [artifacts: ui] In `client/src/playback-engine.ts`'s
   lyrics-sheet branch, stop discarding `.lrc`'s blank gap-marker lines
   (currently filtered via `.filter((l) => l.text.length > 0)` in the
   `isLyricsPart && song.lyricsLrc` branch). Keep the full parsed line

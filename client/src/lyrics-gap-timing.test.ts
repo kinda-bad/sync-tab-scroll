@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeGapTiming } from './lyrics-gap-timing';
+import { computeGapTiming, findLyricGaps } from './lyrics-gap-timing';
 import type * as at from '@coderline/alphatab';
 
 /**
@@ -77,5 +77,46 @@ describe('computeGapTiming', () => {
     expect(result.measureDurationMs).toBeCloseTo(1600, 1);
     const beatDurationMs = result.beatTimestampsMs[1] - result.beatTimestampsMs[0];
     expect(beatDurationMs).toBeCloseTo(400, 1);
+  });
+});
+
+describe('findLyricGaps', () => {
+  // 120bpm, 4/4 throughout — one measure = 2000ms — for every fixture below.
+  const score = fakeScore(120, [fakeMasterBar({ start: 0, durationTicks: 3840, timeSignatureNumerator: 4 })]);
+
+  it('reports a qualifying leading gap (song start to the first real line) at insertBeforeIndex 0', () => {
+    const allLines = [
+      { timeMs: 8390, text: 'first real line' },
+      { timeMs: 10420, text: '' },
+      { timeMs: 10680, text: 'second real line' },
+    ];
+
+    const gaps = findLyricGaps(score, allLines);
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0]).toMatchObject({ insertBeforeIndex: 0, startMs: 0, endMs: 8390 });
+    expect(gaps[0].timing.qualifies).toBe(true);
+  });
+
+  it('reports no gap for a leading or inter-line gap of one measure or shorter', () => {
+    const allLines = [
+      { timeMs: 0, text: 'first real line' },
+      { timeMs: 2000, text: '' },
+      { timeMs: 2000, text: 'second real line' },
+    ];
+
+    expect(findLyricGaps(score, allLines)).toEqual([]);
+  });
+
+  it('reports a qualifying inter-line gap at the insertBeforeIndex of the next real line', () => {
+    const allLines = [
+      { timeMs: 0, text: 'first real line' },
+      { timeMs: 1000, text: '' },
+      { timeMs: 20000, text: 'second real line' },
+      { timeMs: 21000, text: 'third real line' },
+    ];
+
+    const gaps = findLyricGaps(score, allLines);
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0]).toMatchObject({ insertBeforeIndex: 1, startMs: 1000, endMs: 20000 });
   });
 });

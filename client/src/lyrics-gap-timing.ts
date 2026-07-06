@@ -1,4 +1,5 @@
 import type * as at from '@coderline/alphatab';
+import type { LrcLine } from './lrc-parser';
 
 export interface GapTimingResult {
   /** Whether this gap's real-time duration exceeds one local measure (ui.md Gap timing indicator). */
@@ -85,4 +86,48 @@ export function computeGapTiming(score: at.model.Score, startMs: number, endMs: 
   const beatTimestampsMs = [4, 3, 2, 1].map((beatsBeforeEnd) => endMs - beatsBeforeEnd * beatDurationMs);
 
   return { qualifies: true, measureDurationMs: targetBarDurationMs, beatTimestampsMs };
+}
+
+export interface LyricGap {
+  /** Index into the rendered (real-line-only) line list this gap precedes — 0 for the leading gap, before the first line. */
+  insertBeforeIndex: number;
+  startMs: number;
+  endMs: number;
+  timing: GapTimingResult;
+}
+
+/**
+ * Finds every qualifying gap (ui.md "Gap timing indicator") in a `.lrc`'s
+ * *full* parsed line list (including blank gap-marker lines, `lrc-
+ * parser.ts`) — the leading gap before the first real line (song start to
+ * that line's timestamp, per ui.md) plus every inter-line gap marked by a
+ * blank-text line immediately preceding a real one. Only returns gaps
+ * `computeGapTiming` says qualify (longer than one local measure) — a
+ * short gap gets no entry at all, matching ui.md's "one measure or
+ * shorter get no special treatment."
+ */
+export function findLyricGaps(score: at.model.Score, allLines: LrcLine[]): LyricGap[] {
+  const gaps: LyricGap[] = [];
+  let renderedIndex = 0;
+
+  const firstReal = allLines.find((l) => l.text.length > 0);
+  if (firstReal && firstReal.timeMs > 0) {
+    const timing = computeGapTiming(score, 0, firstReal.timeMs);
+    if (timing.qualifies) gaps.push({ insertBeforeIndex: 0, startMs: 0, endMs: firstReal.timeMs, timing });
+  }
+
+  for (let i = 0; i < allLines.length; i++) {
+    const line = allLines[i];
+    if (line.text.length === 0) {
+      const next = allLines[i + 1];
+      if (next && next.text.length > 0) {
+        const timing = computeGapTiming(score, line.timeMs, next.timeMs);
+        if (timing.qualifies) gaps.push({ insertBeforeIndex: renderedIndex, startMs: line.timeMs, endMs: next.timeMs, timing });
+      }
+    } else {
+      renderedIndex++;
+    }
+  }
+
+  return gaps;
 }
