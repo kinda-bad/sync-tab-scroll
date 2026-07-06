@@ -27,10 +27,23 @@ louder and wilder, drawing on Yeah Yeah Yeahs album/gig-poster art
 with magenta blood-splatter) and Nirvana's *In Utero* (cracked, yellowed
 parchment; deep blood-red serif type) — still the same punk-rock
 identity and the same five semantic roles, just hotter values and a
-grittier light-mode metaphor (decayed parchment, not clean photocopy).
-This is a value-level rework of the existing theme, not a new theme
-alongside it — see Themes below for how it now coexists with the new
-**cyberpunk** theme as a second, fully distinct option.
+grittier light-mode metaphor. This is a value-level rework of the
+existing theme, not a new theme alongside it — see Themes below for how
+it now coexists with the new **cyberpunk** theme as a second, fully
+distinct option.
+
+**Revised again 2026-07-06 (second pass)**: the first rework's values read
+as too close to each other and too muted — real punk needs harder
+contrast, not just warmer near-blacks. Pushed further (below): `--bg` to
+true black in dark mode and near-white (not parchment-tan) in light mode,
+`--riot`/`--hazard` to fully saturated blood-red and safety-yellow. This
+pass also makes the torn-paper/hazard-tape motifs (Signature element,
+below) and their tape-peel motion **exclusive to `riot`** — previously
+these were shared geometry that `cyberpunk` merely recolored, which read
+as two palettes on one shape rather than two distinct identities.
+`cyberpunk` gets its own signature devices instead (see Themes below):
+analog/physical (paper, tape) vs. digital/glitch (circuit, LED,
+corruption) are now opposed on purpose.
 
 ## UI Chrome Redesign (2026-07-02)
 
@@ -64,34 +77,41 @@ with its own dark/light pair — a new theme is a new pair of
 `.storybook/preview.ts`'s `withThemeByDataAttribute` config — nothing
 else changes, no component touches theme-specific logic.
 
-**Dark mode** — a void/stage concept, pushed louder in the 2026-07-06
-"riot" rework (Yeah Yeah Yeahs/Nirvana-inspired — see above): hotter
-magenta-pink `--riot`, hotter marigold `--hazard`, a warmer near-black
-base than the original neutral void:
+**Dark mode** — a void/stage concept, pushed to true high-contrast punk
+voltage in the second 2026-07-06 pass: true-black base (not a warm
+near-black) so the accents have real void to scream against, a fully
+saturated blood-red-pink `--riot` and true safety-yellow `--hazard`
+(both maximum saturation, not muted marigold/magenta):
 
 | Token | Value |
 |---|---|
-| `--bg` | `#050403` |
-| `--surface` | `#150e10` |
-| `--bar-surface` | `#2b1018` |
-| `--ink` | `#f3e6c8` |
-| `--riot` | `#ff0857` |
-| `--hazard` | `#ffb400` |
+| `--bg` | `#000000` |
+| `--surface` | `#120a0d` |
+| `--bar-surface` | `#1f0a12` |
+| `--ink` | `#fff4e0` |
+| `--riot` | `#ff0033` |
+| `--hazard` | `#ffe600` |
 
-**Light mode** — its own pass, not a mechanical inversion: reworked from
-a photocopied-flyer concept into a **decayed, cracked parchment**
-concept (per *In Utero*'s cover — yellowed, brittle paper; deep
-blood-red serif type), warm-toner ink on aged paper rather than clean
-newsprint:
+**Light mode** — its own pass, not a mechanical inversion. First reworked
+into a decayed-parchment concept, then revised again: don't be afraid of
+white — a stark, near-white photocopied-flyer/zine paper (not a
+clinical AI-default cream, and not the parchment-tan of the first
+rework either) gives sharper contrast for the ink and accent to work
+against, closer to a xeroxed punk show flyer than aged parchment:
 
 | Token | Value |
 |---|---|
-| `--bg` | `#ece0b8` |
-| `--surface` | `#ddcb92` |
-| `--bar-surface` | `#c2a35c` |
-| `--ink` | `#160f0c` |
-| `--riot` | `#9c0f3a` |
-| `--hazard` | `#8a5200` |
+| `--bg` | `#fafaf5` |
+| `--surface` | `#efece2` |
+| `--bar-surface` | `#e2ddc9` |
+| `--ink` | `#0d0704` |
+| `--riot` | `#ff0033` |
+| `--hazard` | `#c77700` |
+
+`--riot` is the same fully-saturated value as dark mode here — the
+near-white background supports full saturation without the accent
+reading murky, so there's no need to deepen it the way the first
+rework's parchment background required.
 
 ### Signature element: the persistent Bar
 
@@ -101,42 +121,48 @@ bottom transport-bar split (`sync-scroll`'s pattern, explicitly
 rejected: it reads as two different UIs stitched together). Bottom
 placement matches transport-control muscle memory (players, DAWs) and
 reads like the lip of a stage. Landing has no bar — its own full-screen
-moment.
+moment. The bar's own physical treatment (edge silhouette, progress-fill
+device, and motion) is now **theme-scoped** — see below for `riot`'s
+torn-paper/hazard-tape identity and Themes' Cyberpunk section for its
+own distinct glitch-cut/LED-marquee identity.
+
+**`riot`'s bar** — torn paper and hazard tape, per the album-art
+inspiration above:
 
 The bar's top edge is a torn/ripped-paper silhouette (`clip-path`
-polygon, no image assets — `.torn-edge`, `client/src/styles/motifs.css`)
-rather than a clean rule.
+polygon, no image assets — `.torn-edge`, `client/src/styles/motifs.css`),
+gated to `riot` (`[data-theme='dark'], [data-theme='light']`) — no
+longer a shared shape other themes merely recolor.
 
 The readiness/progress fill — a diagonal hazard-tape stripe
-(`.hazard-stripes`) rather than a smooth gradient — is **not** part of
-the bar itself. It renders as its own independently `position: fixed`
-strip pinned to the **top** of the viewport (`HazardBar.svelte`,
-mounted in its own `.hazard-wrap` by `Bar.svelte`, `top: 0`), decoupled
-from the bottom-pinned nav bar (`.bar-wrap`, `bottom: 0`) — moved there
-specifically so it's never sandwiched between the nav bar and the main
-content. Same `progress` prop, same one-device-triple-duty role
-(per-participant readiness in the Lobby, playback progress in
-Playback, and the lyric-timing drain/fill visual), just anchored to the
-opposite screen edge from the bar it originally shared a container
-with. The combined effect — a torn strip of caution tape stuck across
-the top of the screen, with the bottom-pinned nav bar as its own
-separate torn-edge element — is still the single most recognizable,
-unmistakable pairing of the redesign, just no longer literally one
-element.
+(`.hazard-stripes`), also `riot`-scoped — rather than a smooth gradient
+is **not** part of the bar itself. It renders as its own independently
+`position: fixed` strip pinned to the **top** of the viewport
+(`HazardBar.svelte`, mounted in its own `.hazard-wrap` by `Bar.svelte`,
+`top: 0`), decoupled from the bottom-pinned nav bar (`.bar-wrap`,
+`bottom: 0`) — moved there specifically so it's never sandwiched between
+the nav bar and the main content. Same `progress` prop, same
+one-device-triple-duty role (per-participant readiness in the Lobby,
+playback progress in Playback, and the lyric-timing drain/fill visual),
+just anchored to the opposite screen edge from the bar it originally
+shared a container with. The combined effect — a torn strip of caution
+tape stuck across the top of the screen, with the bottom-pinned nav bar
+as its own separate torn-edge element — is `riot`'s single most
+recognizable, unmistakable pairing.
 
 ### Motion: diverges by theme, not just palette
 
-- **Dark** keeps a glitch/chromatic-aberration fringe on the bar's torn
-  edge (`.signature-glitch`) — recolored to `--riot`/`--hazard` rather
-  than sync-scroll's literal pink/cyan channel split. Broadcast/screen
-  distortion suits a void/stage backdrop.
-- **Light** swaps this for a **tape-peel** micro-interaction instead
-  (`.signature-tape`) — a small torn-tape corner that lifts slightly on
-  hover/focus. Same DIY-physical energy, expressed through a different
-  medium (paper, not screen) — not a lazy palette-only swap of the same
-  effect.
+`riot`'s signature motion is **tape-peel** (`.signature-tape`) in
+**both** modes now — a small torn-tape corner on the bar's edge that
+lifts slightly on hover/focus. Previously dark mode used a
+glitch/chromatic-aberration fringe instead (recolored from
+`sync-scroll`'s literal pink/cyan channel split to `--riot`/`--hazard`);
+that motion has moved to `cyberpunk` exclusively (see Themes below),
+since `riot`'s identity is entirely physical/tactile — paper, tape,
+peeling — and a screen-distortion effect didn't fit that world. `riot`
+never uses glitch, in either mode, now.
 
-Both respect `prefers-reduced-motion`.
+Respects `prefers-reduced-motion`.
 
 ## Themes
 
@@ -170,13 +196,45 @@ styles/main.css`'s `--color-void`/`--color-panel`/`--color-rail`/
 | `--riot` | `#ff2d78` |
 | `--hazard` | `#00cfff` |
 
-Because `--riot` and `--hazard` are now a genuine pink/cyan pair (not two
-shades of the same warm accent, as in `riot`), the existing
-`.signature-glitch` motif — already a two-channel border fringe,
-per Motion above — renders as a **literal** pink/cyan chromatic-
-aberration split here, the same effect `sync-scroll` used, with zero new
-component logic: it's the same mechanism, just fed a theme where the two
-tokens are actually different hues.
+Because `--riot` and `--hazard` are a genuine pink/cyan pair (not two
+shades of the same warm accent, as in `riot`), `cyberpunk`'s glitch
+motion (below) renders as a **literal** pink/cyan chromatic-aberration
+split, the same effect `sync-scroll` used.
+
+**Signature devices — digital/glitch, opposed to `riot`'s analog/
+physical identity on purpose (second 2026-07-06 revision):**
+
+- **Bar edge**: a jagged, stepped **glitch-cut** silhouette
+  (`.glitch-cut-edge`) instead of `riot`'s torn-paper curve — a
+  `clip-path` polygon of sharp right-angle notches (a corrupted-signal
+  read: hard digital steps, not an organic tear). `cyberpunk`-scoped
+  (`[data-theme='cyberpunk-dark'], [data-theme='cyberpunk-light']`),
+  replacing `.torn-edge` for this theme entirely — no shared edge shape
+  with `riot` anymore.
+- **Progress/readiness fill**: a segmented **LED marquee** bar
+  (`.led-marquee`) instead of `riot`'s diagonal hazard-tape stripe —
+  blocky rectangular segments with small gaps between them, hard edges,
+  a subtle glow (`box-shadow`) on lit segments, filling in discrete
+  quantized steps rather than a smooth gradient or diagonal texture.
+  Same `HazardBar.svelte`/`progress` prop and triple-duty role
+  (readiness/playback progress/lyric-timing) as `riot`'s version — only
+  the rendered device changes per theme, per this artifact's existing
+  "components don't branch on theme, only values/classes do" rule (the
+  component picks the class from `data-theme`, same mechanism
+  `.signature-glitch`/`.signature-tape` already used).
+- **Motion**: the glitch/chromatic-aberration fringe (`.signature-glitch`)
+  plus the CRT scanline (below), in **both** modes — `cyberpunk`'s whole
+  identity is digital, so there's no light-mode exception the way `riot`
+  has one signature motion (tape-peel) shared across both of its modes.
+  Symmetric with `riot`: each theme has exactly one signature motion,
+  used in both its modes, and the two themes never share one.
+- **Type flourish**: a subtle RGB-split text-shadow duplicate
+  (`.glitch-text`, red/cyan channel offset) on hero/title type
+  (`--font-display` moments — logotype, big state words) only under this
+  theme — no new font, just a cheap layered `text-shadow` reinforcing the
+  glitch identity where type is most prominent. `riot` has no equivalent;
+  its type stays clean/undistorted, consistent with its physical (not
+  screen-based) identity.
 
 **`cyberpunk-light`** — fresh design pass, no `sync-scroll` equivalent to
 harvest (it never shipped light mode); a "holographic display" concept,
@@ -192,13 +250,10 @@ already applies to any non-harvested palette:
 | `--riot` | `#d6006b` |
 | `--hazard` | `#0090b8` |
 
-**Motion**: adds `sync-scroll`'s CRT scanline overlay (a `body::after`
-repeating-linear-gradient texture) as a third theme-scoped motion variant,
-gated `[data-theme='cyberpunk-dark'], [data-theme='cyberpunk-light']` —
-same per-theme-motion pattern the Motion section above already uses for
-`riot` dark (glitch) vs. light (tape-peel), just a third value rather than
-a new mechanism. No tape-peel/glitch-fringe-recolor equivalent is needed
-beyond the existing `.signature-glitch` reuse described above.
+Additionally adds `sync-scroll`'s CRT scanline overlay (a `body::after`
+repeating-linear-gradient texture), gated the same way, alongside the
+glitch fringe — both run in both `cyberpunk` modes, per the Motion
+bullet above.
 
 ## Color Palette (Tab Notation)
 
@@ -329,14 +384,15 @@ doesn't have to match the visual volume.
 
 ## Motion & Vibe
 
-Dark mode: a glitch/chromatic-aberration fringe (`.signature-glitch`,
-`client/src/styles/motifs.css`) on the persistent Bar's torn edge, and
-the "glitch" title effect on hero type. Light mode: a tape-peel
-micro-interaction (`.signature-tape`) in its place — see UI Chrome
-Redesign above for why these diverge by theme rather than sharing one
-effect. Animated hazard-stripe drain/fill visuals (`.hazard-stripes`)
-carry per-participant readiness, playback progress, and lyric-timing
-highlight — one device, three jobs.
+Motion is theme-scoped, not mode-scoped — see UI Chrome Redesign's
+Motion section for `riot` (tape-peel, both modes) and Themes' Cyberpunk
+section for `cyberpunk` (glitch fringe + CRT scanline + RGB-split title
+text, both modes). Each theme has exactly one signature motion identity,
+expressed identically in both its light and dark variants; the two
+themes never share a motion device. Animated progress/readiness fill
+(`.hazard-stripes` for `riot`, `.led-marquee` for `cyberpunk`) carries
+per-participant readiness, playback progress, and lyric-timing
+highlight in both themes — one device per theme, three jobs each.
 
 ## Light/Dark Mode
 
