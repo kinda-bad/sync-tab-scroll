@@ -73,7 +73,7 @@ status: in-progress
   `rgba(0,183,221,0.40)`, rulingDim `rgba(214,0,107,0.35)`, rulingMid
   `rgba(214,0,107,0.50)`) to `client/src/brand-colors.ts`. (feature:
   grunge-cyberpunk-themes)
-- [ ] T008 [artifacts: brand] Widen `client/src/tab-renderer.ts`'s
+- [x] T008 [artifacts: brand] Widen `client/src/tab-renderer.ts`'s
   `Theme` type from `'dark' | 'light'` to `'dark' | 'light' |
   'cyberpunk-dark' | 'cyberpunk-light'`, and extend
   `applyThemeColors`/`setTheme` to switch over all four values, per
@@ -83,6 +83,23 @@ status: in-progress
   `#d6006b` for cursor/active syllable and `#00647d` for base lyric text
   (matching T007's `cyberpunkLightTabColors`). (feature:
   grunge-cyberpunk-themes)
+
+  Note: cursor/active-syllable/base-lyric-text colors are CSS-driven
+  (`--lyric-active`/`--lyric-base` in tokens.css, aliased to
+  `--riot`/`--hazard` per theme, consumed by `motifs.css`'s
+  `.at-cursor-bar`/`.at-cursor-beat`/`.at-selection` and `lyrics.css`) —
+  already correct for both cyberpunk themes from T004/T005's token values
+  with no `tab-renderer.ts` code needed; this task's actual code changes
+  are the `Theme` union widening and `applyThemeColors`'s 4-way color-table
+  switch (`mainGlyphColor`/`secondaryGlyphColor`/`staffLineColor`/
+  `barSeparatorColor`/`barNumberColor`/`scoreInfoColor`). Also fixed
+  `playback-engine.ts`'s `ensurePlaybackEngine`, which read
+  `document.documentElement.dataset.theme` into a `Theme` via a
+  light-or-dark-only ternary — a fresh tab engine created under either
+  cyberpunk theme would've silently rendered with dark-mode tab colors
+  otherwise. Not separately listed in this task's file-by-file description
+  but necessary for the `Theme` widening to actually take effect end to
+  end.
 - [ ] T009 Live-verify in a real browser, both cyberpunk modes: the
   literal pink/cyan `.signature-glitch` two-channel split renders as
   expected, the CRT scanline is visible but not overpowering (and
