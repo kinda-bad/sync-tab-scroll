@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-only-view-fix-2-2026-07-06.md
 generated: 2026-07-06
-status: ready
+status: in-progress
 ---
 
 # Tasks
