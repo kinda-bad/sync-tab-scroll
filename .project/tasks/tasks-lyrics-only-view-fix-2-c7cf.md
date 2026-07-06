@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-only-view-fix-2-2026-07-06.md
 generated: 2026-07-06
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -232,4 +232,13 @@ status: in-progress
   environment. Flagging the same caveat: a real human manual pass is
   still worth doing, though the Playwright real-browser/real-build
   evidence here is strong.
-- [ ] T008 Run the full test suite (server + client vitest, CT, e2e).
+- [x] T008 Run the full test suite (server + client vitest, CT, e2e).
+
+  **NOTE (2026-07-06):** All green.
+  - `pnpm --filter server test`: 22 files, 88 tests passed.
+  - `pnpm --filter client test`: 12 files, 49 tests passed.
+  - `npx playwright test --project=ct` (in `client/`): 59 tests passed,
+    including the 3 new/updated `full-lyrics-view.ct.spec.ts` tests.
+  - `npx playwright test --project=e2e` (in `client/`): 23 tests passed,
+    including the pre-existing `lyrics-only-view.spec.ts` regression test
+    and `single-participant.spec.ts`'s lyrics-part coverage.
