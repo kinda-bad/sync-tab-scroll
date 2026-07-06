@@ -116,3 +116,24 @@ The participant list shows which part (an instrument, or the tab-less "lyrics" p
 _Slug: `grunge-cyberpunk-themes` · Status: implemented · Logged 2026-07-06 · Plan: plan-grunge-cyberpunk-themes-2026-07-06.md · Tasks: tasks-grunge-cyberpunk-themes-4982.md_
 Offer two additional selectable themes, each a fully distinct dark/light pair, alongside the current default: (1) a louder, wilder variant of the current theme drawing visual inspiration from Yeah Yeah Yeahs and Nirvana album cover art (see `~/Documents/art/`); (2) a cyberpunk theme, drawing color palette and design ideas from the predecessor project `sync-scroll` (`~/dev/sync-scroll/`).
 Why: `brand.md` already anticipated this extensibility path — themes are selected via a `[data-theme='...']` attribute against semantic role names (not theme-specific tokens), specifically so a new theme is an additive `tokens.css` block plus a toolbar entry with no component touching theme-specific logic. `/ardd-plan` will need to review the referenced album art and the `sync-scroll` codebase directly (both outside this repo, so not derivable from artifacts alone) to derive concrete palettes before designing the `brand.md`/`tokens.css` changes.
+
+## Lyrics-gap timing indicator
+_Slug: `lyrics-gap-timing-indicator` · Status: backlogged · Logged 2026-07-06_
+In the lyrics-only full-lyrics-sheet view, any gap in `.lrc` timing longer
+than one measure gets two visual cues instead of a silent wait: four dots
+("...."), each highlighting in turn on the 4 beats immediately preceding
+the next line, and a separate theme-styled bar (echoing riot's hazard-tape
+or cyberpunk's LED-marquee look, per `brand.md` — not a second instance of
+the existing `HazardBar` readiness/progress component, a distinct element
+scoped to this purpose) positioned above the upcoming line, draining over
+the gap's full duration.
+Why: the full-lyrics sheet (just redesigned to show all lines at once,
+2026-07-06) has no indication of *how long* until the next line during an
+instrumental gap — a beat-precise countdown plus a duration-spanning drain
+bar gives both a close-up and a wide-angle sense of the wait. `/ardd-plan`
+will need to work out how to derive measure/beat boundaries for a headless
+alphaTab instance with no visible rendering (the client's `bpm` field is
+documented as display-only, not for tick-to-time math — the loaded
+score's own tempo map, reachable via the same alphaTab API instance
+already running headless, is the likely real source, but this needs
+confirming against tempo/time-signature changes mid-song).
