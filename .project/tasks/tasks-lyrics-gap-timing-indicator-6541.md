@@ -41,7 +41,7 @@ status: in-progress
   indicator.
 
 ## Phase 2: Render dots + drain bar
-- [ ] T004 [artifacts: ui, brand] Write/extend a Playwright CT spec
+- [x] T004 [artifacts: ui, brand] Write/extend a Playwright CT spec
   (test-first, per constitution Principle VII), likely in
   `client/src/full-lyrics-view.ct.spec.ts` or a new
   `lyrics-gap-indicator.ct.spec.ts`: using a fixture `.lrc` with a
