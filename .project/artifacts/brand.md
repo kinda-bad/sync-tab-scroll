@@ -255,6 +255,29 @@ repeating-linear-gradient texture), gated the same way, alongside the
 glitch fringe — both run in both `cyberpunk` modes, per the Motion
 bullet above.
 
+## Lyrics Gap Indicator (2026-07-06)
+
+The full-lyrics sheet's gap-timing indicator (ui.md) reuses each theme's
+own established visual language for its drain bar — a genuinely
+**separate element** from the persistent Bar's `HazardBar`
+readiness/progress device (`--hazard-fill`, `.hazard-stripes`/
+`.led-marquee`), not a second instance of it, since this bar tracks a
+different signal (time remaining in a lyric gap, not overall
+session/playback progress):
+
+- **`riot`**: a hazard-tape-styled drain — the same diagonal-stripe
+  visual language as `.hazard-stripes`, `--hazard`-colored, but its own
+  element/class, draining (shrinking) rather than filling as the gap
+  elapses.
+- **`cyberpunk`**: an LED-marquee-styled drain — the same segmented,
+  hard-edged block language as `.led-marquee`, `--hazard`-colored, same
+  drain-not-fill direction.
+
+The four countdown dots reuse the existing active/base lyric-text color
+roles (the same convention the lyric-line highlight already uses,
+`--lyric-active`/`--lyric-base`) — no new color role, just the existing
+"what's active right now" meaning applied to a dot instead of a line.
+
 ## Color Palette (Tab Notation)
 
 Dark canvas with neon accents (`neon-yellow`, `neon-blue`, `neon-pink`

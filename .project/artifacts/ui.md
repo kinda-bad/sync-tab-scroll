@@ -261,6 +261,22 @@ identically regardless of which one they're on:
   bar-by-bar score grid, which would produce small per-bar lyric
   fragments wrapping across rows, not a single readable scrolling sheet.
 
+  **Gap timing indicator (2026-07-06)**: `CatalogSong.lyricsLrc`'s blank
+  "gap" lines (pipeline.md — a blank-text line marking a real line's end
+  timestamp) mark instrumental gaps between two real lines. When a gap's
+  real-time duration exceeds one measure — computed from the headless
+  instance's own loaded score at that point in the song (the actual
+  local tempo/time-signature via alphaTab's own tick/tempo data, not
+  `CatalogSong.bpm`, which stays display-only per its existing
+  datamodel.md note) — a gap-indicator line is inserted between the two
+  real lines: four dots ("...."), each lighting up in turn on the 4 beats
+  immediately preceding the next line (same local-tempo derivation), and
+  a separate bar positioned directly above the upcoming line that drains
+  continuously over the gap's full duration (brand.md — a theme-styled
+  device distinct from the persistent Bar's own readiness/progress
+  indicator). Gaps of one measure or shorter get no special treatment —
+  the sheet just continues to the next line as before.
+
 Both renderings share alphaTab's native metronome and count-in
 (`metronomeVolume`, `countInVolume` — both off by default; count-in is
 toggled via `Session.countInEnabled`, the metronome via the personal
