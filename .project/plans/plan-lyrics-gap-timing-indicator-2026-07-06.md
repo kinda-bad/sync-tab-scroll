@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: lyrics-gap-timing-indicator
 created: 2026-07-06
 features: [lyrics-gap-timing-indicator]
