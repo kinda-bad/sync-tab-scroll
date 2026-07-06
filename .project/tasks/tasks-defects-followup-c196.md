@@ -1,7 +1,7 @@
 ---
 plan: plan-defects-followup-2026-07-05.md
 generated: 2026-07-06
-status: ready
+status: in-progress
 ---
 
 # Tasks
