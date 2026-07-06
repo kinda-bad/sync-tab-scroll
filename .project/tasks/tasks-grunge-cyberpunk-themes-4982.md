@@ -51,7 +51,7 @@ status: in-progress
   `--riot: #ff2d78`, `--hazard: #00cfff` (harvested from
   `sync-scroll/client/src/styles/main.css`, per `brand.md`'s Themes
   section). (feature: grunge-cyberpunk-themes)
-- [ ] T005 [artifacts: brand] [parallel] Add a new
+- [x] T005 [artifacts: brand] [parallel] Add a new
   `[data-theme='cyberpunk-light']` block to `tokens.css`: `--bg: #eef3f7`,
   `--surface: #dbe7ee`, `--bar-surface: #c3d6e0`, `--ink: #0c1420`,
   `--riot: #d6006b`, `--hazard: #0090b8`. (feature:

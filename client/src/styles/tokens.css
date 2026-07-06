@@ -89,6 +89,32 @@
   --canvas-bg: var(--bg);
 }
 
+:root[data-theme='cyberpunk-light'] {
+  /* "cyberpunk" light (brand.md, Themes) — fresh design pass, no
+     sync-scroll equivalent to harvest (it never shipped light mode); a
+     "holographic display" concept. Lower confidence than the dark pass
+     above, same caveat this artifact applies to any non-harvested
+     palette. --surface-raised/--ink-dim/--riot-dim/--hazard-dim/--border
+     aren't in brand.md's semantic table directly; derived here from these
+     base values at the same relative position/alpha the riot light block
+     uses. */
+  --bg: #eef3f7;
+  --surface: #dbe7ee;
+  --surface-raised: #d0dfe8;
+  --bar-surface: #c3d6e0;
+  --ink: #0c1420;
+  --ink-dim: rgba(12, 20, 32, 0.55);
+  --riot: #d6006b;
+  --riot-dim: rgba(214, 0, 107, 0.18);
+  --hazard: #0090b8;
+  --hazard-dim: rgba(0, 144, 184, 0.18);
+  --border: rgba(12, 20, 32, 0.18);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
 :root {
   --font-display: 'Bungee', 'Arial Black', sans-serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
