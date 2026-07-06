@@ -56,7 +56,7 @@ status: in-progress
   `--surface: #dbe7ee`, `--bar-surface: #c3d6e0`, `--ink: #0c1420`,
   `--riot: #d6006b`, `--hazard: #0090b8`. (feature:
   grunge-cyberpunk-themes)
-- [ ] T006 [artifacts: brand] Add the CRT-scanline motion rule (a
+- [x] T006 [artifacts: brand] Add the CRT-scanline motion rule (a
   `body::after` repeating-linear-gradient texture, adapted from
   `sync-scroll/client/src/styles/main.css`'s scanline overlay), gated to
   `[data-theme='cyberpunk-dark'], [data-theme='cyberpunk-light']` only —

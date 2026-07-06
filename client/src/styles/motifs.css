@@ -114,6 +114,35 @@
   }
 }
 
+/* ── Cyberpunk: CRT scanline ─────────────────────────────────────────────
+   A third theme-scoped motion variant (brand.md, Themes), adapted from
+   sync-scroll's own CRT scanline overlay verbatim — a static repeating
+   horizontal-line texture over the whole viewport, harvested with no
+   flicker/pulse of its own (unlike dark's glitch-fringe or light's
+   tape-peel, this one has no animation/transition to gate under
+   prefers-reduced-motion — same precedent as the tape motif's own static
+   shape staying visible under reduced motion, only its hover transition
+   is disabled: there is simply nothing here that moves). `pointer-events:
+   none` and a high z-index (matching the source) so it never blocks
+   clicks and always sits over content, under alphaTab's own injected
+   cursor DOM (z-index: 1000) is not a concern since neither element is
+   interactive. */
+[data-theme='cyberpunk-dark'] body::after,
+[data-theme='cyberpunk-light'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
 /* ── alphaTab playback cursor ────────────────────────────────────────────
    alphaTab ships .at-cursor-bar/.at-cursor-beat/.at-selection with only
    positioning inline styles — zero color/opacity of its own; styling
