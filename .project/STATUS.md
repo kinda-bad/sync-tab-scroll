@@ -1,9 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-plan`, drafting a second lyrics-only-view fix
-after `/ardd-tasks` approved and tasked the theme plan). Repo is on
-`main`; a delegated worktree is implementing the theme plan in the
-background. No cross-artifact contradictions found._
+_Updated: 2026-07-06 (`/ardd-tasks`, approved and tasked the
+lyrics-only-view-fix-2 plan). Repo is on `main`; a delegated worktree is
+implementing the theme plan in the background (7/16). No cross-artifact
+contradictions found._
 
 ## Artifact Status
 
@@ -96,34 +96,35 @@ that one too) — won't re-prompt:
 `main` right now. `participant-selected-part` remains backlogged.
 `grunge-cyberpunk-themes` is further along on its own branch (currently
 `Status: tasked`, being implemented — see In Flight) but that flip hasn't
-reached `main` yet either.
+reached `main` yet either. `lyrics-only-view-fix-2` isn't feature-backed
+(`features: []`).
 
 ## In Flight
 
 - Worktree `.claude/worktrees/agent-a74576c25e122e82d` (branch
   `worktree-agent-a74576c25e122e82d`) — `tasks-grunge-cyberpunk-themes-
-  4982.md` in-progress, 2/16 (riot token rework + cyberpunk theme +
+  4982.md` in-progress, 7/16 (riot token rework + cyberpunk theme +
   theme-control UI redesign — delegated subagent running in the
   background).
 - Branch `grunge-cyberpunk-themes` (plain branch, source for the worktree
   above) — plan approved and tasked, `brand.md`/`ui.md` design changes
   committed, not yet on `main`.
-- Branch `lyrics-only-view-fix-2` (plain branch) —
-  `plan-lyrics-only-view-fix-2-2026-07-06.md` drafted (not yet
-  approved/tasked). Diagnoses the bug as likely `createHeadlessPlayer`'s
+- Branch `lyrics-only-view-fix-2` (plain branch, not a worktree, not yet
+  delegated) — `plan-lyrics-only-view-fix-2-2026-07-06.md` approved,
+  `tasks-lyrics-only-view-fix-2-c7cf.md` generated (8 tasks, `ready`, not
+  yet started). Diagnoses the bug as likely `createHeadlessPlayer`'s
   permanently-`display:none` container hitting alphaTab's known
-  "width=0, element invisible" render-skip quirk (already documented
-  elsewhere in `playback-engine.ts` for the visible tab-container path),
-  plus a confirmed CSS specificity conflict between `App.svelte` and
-  `lyrics.css` over `.full-lyrics-view`'s `display` property.
+  "width=0, element invisible" render-skip quirk, plus a confirmed CSS
+  specificity conflict between `App.svelte` and `lyrics.css` over
+  `.full-lyrics-view`'s `display` property.
 
 ## Recommended Next Step
 
-1. Run `/ardd-tasks` on `plan-lyrics-only-view-fix-2-2026-07-06.md` to
-   approve it and generate its task list, then implement (Phase 1
-   reproduces both hypotheses before Phase 2 commits to a fix).
+1. Implement `tasks-lyrics-only-view-fix-2-c7cf.md` (`/ardd-implement`,
+   inline or delegated) — Phase 1 reproduces both diagnosed hypotheses
+   before Phase 2 commits to a fix.
 2. Wait for the `grunge-cyberpunk-themes` worktree subagent to finish
-   (2/16 so far), then merge and re-analyze.
+   (7/16 so far), then merge and re-analyze.
 3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
 4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
