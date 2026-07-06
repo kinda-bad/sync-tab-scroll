@@ -11,24 +11,28 @@
 
 :root,
 :root[data-theme='dark'] {
-  /* "riot" — reworked 2026-07-06 (brand.md, UI Chrome Redesign): a
-     void/stage concept pushed louder (Yeah Yeah Yeahs/Nirvana-inspired) —
-     hotter magenta-pink --riot, hotter marigold --hazard, a warmer
-     near-black base than the original neutral void. --surface-raised/
-     --ink-dim/--riot-dim/--hazard-dim/--border aren't in brand.md's
-     semantic table directly; derived here from the new base values at the
-     same relative position/alpha the prior values used. */
-  --bg: #050403;
-  --surface: #150e10;
-  --surface-raised: #1f0f14;
-  --bar-surface: #2b1018;
-  --ink: #f3e6c8;
-  --ink-dim: rgba(243, 230, 200, 0.55);
-  --riot: #ff0857;
-  --riot-dim: rgba(255, 8, 87, 0.35);
-  --hazard: #ffb400;
-  --hazard-dim: rgba(255, 180, 0, 0.35);
-  --border: rgba(243, 230, 200, 0.14);
+  /* "riot" — second 2026-07-06 rework (brand.md, UI Chrome Redesign): the
+     first rework read too close/muted for real punk contrast, so this pass
+     pushes to true-black --bg (not a warm near-black) and fully saturated
+     blood-red-pink --riot / safety-yellow --hazard. --surface-raised isn't
+     in brand.md's semantic table directly; re-derived here the same way the
+     prior rework derived it from its base values — in HSL, at the same
+     ~45% interpolation point between --surface and --bar-surface (by
+     hue/lightness/saturation) that the previous implementation's values sat
+     at relative to its own --surface/--bar-surface. --ink-dim/--riot-dim/
+     --hazard-dim/--border keep the same alphas the prior implementation
+     used (0.55/0.35/0.35/0.14), just re-keyed to these new base colors. */
+  --bg: #000000;
+  --surface: #120a0d;
+  --surface-raised: #170a0f;
+  --bar-surface: #1f0a12;
+  --ink: #fff4e0;
+  --ink-dim: rgba(255, 244, 224, 0.55);
+  --riot: #ff0033;
+  --riot-dim: rgba(255, 0, 51, 0.35);
+  --hazard: #ffe600;
+  --hazard-dim: rgba(255, 230, 0, 0.35);
+  --border: rgba(255, 244, 224, 0.14);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);
@@ -36,25 +40,28 @@
 }
 
 :root[data-theme='light'] {
-  /* "riot" light — reworked 2026-07-06 (brand.md): its own pass, not a
-     mechanical inversion of dark — reworked from a photocopied-flyer
-     concept into a decayed, cracked-parchment concept (In Utero's cover:
-     yellowed, brittle paper; deep blood-red serif type), warm-toner ink
-     on aged paper rather than clean newsprint. --surface-raised/--ink-dim/
-     --riot-dim/--hazard-dim/--border aren't in brand.md's semantic table
-     directly; derived here from the new base values at the same relative
-     position/alpha the prior values used. */
-  --bg: #ece0b8;
-  --surface: #ddcb92;
-  --surface-raised: #d1b97a;
-  --bar-surface: #c2a35c;
-  --ink: #160f0c;
-  --ink-dim: rgba(22, 15, 12, 0.55);
-  --riot: #9c0f3a;
-  --riot-dim: rgba(156, 15, 58, 0.18);
-  --hazard: #8a5200;
-  --hazard-dim: rgba(138, 82, 0, 0.18);
-  --border: rgba(22, 15, 12, 0.18);
+  /* "riot" light — second 2026-07-06 rework (brand.md): moved off the
+     decayed-parchment concept the first rework used — a stark, near-white
+     photocopied-flyer/zine paper instead, for sharper ink/accent contrast.
+     --surface-raised isn't in brand.md's semantic table directly;
+     re-derived here the same way as dark mode above, at the same ~45%
+     interpolation point between --surface and --bar-surface the prior
+     implementation's value sat at. --ink-dim/--riot-dim/--hazard-dim/
+     --border keep the prior implementation's alphas (0.55/0.18/0.18/0.18),
+     re-keyed to these new base colors. --riot is the same fully-saturated
+     value as dark mode (brand.md: the near-white bg supports it without
+     reading murky). */
+  --bg: #fafaf5;
+  --surface: #efece2;
+  --surface-raised: #e9e5d7;
+  --bar-surface: #e2ddc9;
+  --ink: #0d0704;
+  --ink-dim: rgba(13, 7, 4, 0.55);
+  --riot: #ff0033;
+  --riot-dim: rgba(255, 0, 51, 0.18);
+  --hazard: #c77700;
+  --hazard-dim: rgba(199, 119, 0, 0.18);
+  --border: rgba(13, 7, 4, 0.18);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);
