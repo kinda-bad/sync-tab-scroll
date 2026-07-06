@@ -140,7 +140,7 @@ status: in-progress
   worth doing before fully trusting this finding.
 
 ## Phase 2: Fix
-- [ ] T003 [artifacts: infrastructure] Based on T001's findings: if the
+- [x] T003 [artifacts: infrastructure] Based on T001's findings: if the
   headless player's `scoreLoaded`/`playerPositionChanged` events are
   confirmed not firing (or firing incorrectly) due to the container's
   `display: none`, change `createHeadlessPlayer`
@@ -152,6 +152,15 @@ status: in-progress
   element while it still never appears in the visible viewport. Skip
   this task (mark done with a note) if T001's findings point elsewhere
   instead.
+
+  **SKIPPED (note, 2026-07-06):** T001 confirmed `scoreLoaded` and
+  `playerPositionChanged` both fire correctly for the headless
+  `display:none` container — the render-gate hypothesis this task exists
+  to fix does not hold (see T001's note). Changing
+  `createHeadlessPlayer`'s container to an off-screen-but-sized element
+  would be a speculative, unneeded change with no confirmed defect behind
+  it, so leaving `client/src/headless-player.ts` as-is per this task's own
+  instruction to skip when T001 points elsewhere.
 - [ ] T004 [artifacts: ui] [parallel] Consolidate the `.full-lyrics-view`
   CSS split: remove the duplicate/conflicting rule from `App.svelte`'s
   scoped `<style>` block (`.full-lyrics-view { display: none; }` /
