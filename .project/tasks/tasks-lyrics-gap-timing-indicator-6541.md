@@ -85,5 +85,5 @@ status: in-progress
   gap; confirm behavior for any other qualifying inter-line gap present
   in the catalog's other songs. Note any song/theme combination that
   looks wrong.
-- [ ] T009 Run the full test suite (server + client vitest, CT, e2e) and
+- [x] T009 Run the full test suite (server + client vitest, CT, e2e) and
   confirm everything passes.
