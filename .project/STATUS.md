@@ -1,8 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-tasks`, approved and tasked the
-lyrics-gap-timing-indicator plan on its own branch). Repo is on `main`,
-pushed to `origin/main`. No cross-artifact contradictions found._
+_Updated: 2026-07-06 (`/ardd-plan readme-local-setup-and-gp-ingestion`, on
+its own branch). Repo is on `main`, pushed to `origin/main`
+(`lyrics-gap-timing-indicator` merged and pushed this session). No
+cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -69,10 +70,10 @@ known, explicitly-deferred gap — see Code-vs-Artifact Defects below.
 ## Code-vs-Artifact Defects
 
 2 known defects — see `DEFECTS.md`, last checked 2026-07-06, **before**
-the theme rework and lyrics-sheet redesign merged — worth a fresh
-`/ardd-verify` pass given how much client code has changed since. Both
-declined for inclusion in the `lyrics-gap-timing-indicator` and
-`grunge-cyberpunk-themes` plans — won't re-prompt:
+the theme rework, lyrics-sheet redesign, and gap-timing-indicator all
+merged — worth a fresh `/ardd-verify` pass given how much client code has
+changed since. Both already declined for inclusion in prior plans — won't
+re-prompt:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
   the wrong percussion-detection claim that `infrastructure.md`'s copy
@@ -82,39 +83,38 @@ declined for inclusion in the `lyrics-gap-timing-indicator` and
 
 ## Feature Backlog
 
-3 backlogged · 0 planned · 0 tasked · 8 implemented — see
+2 backlogged · 0 planned · 0 tasked · 9 implemented — see
 `.project/features/`.
 
 - `participant-selected-part` (participant list shows each member's
   currently selected part) — backlogged.
-- `lyrics-gap-timing-indicator` — approved and tasked on its own branch
-  (`tasks-lyrics-gap-timing-indicator-6541.md`, 9 tasks, `ready`); the
-  register on `main` still says `backlogged` since that flip hasn't
-  merged yet.
-- `readme-local-setup-and-gp-ingestion` (README documents local dev setup
-  and `.gp` ingestion) — backlogged, just logged this pass.
+- `readme-local-setup-and-gp-ingestion` — a plan now exists
+  (`plan-readme-local-setup-and-gp-ingestion-2026-07-06.md`, draft, on
+  its own unmerged branch); the register on `main` still says
+  `backlogged` since `/ardd-tasks` is what flips it to `planned`.
 
 ## In Flight
 
-- Branch `lyrics-gap-timing-indicator` (plain branch, not a worktree) —
-  plan approved, `tasks-lyrics-gap-timing-indicator-6541.md` generated
-  (9 tasks across 3 phases: gap/beat-math via alphaTab's
-  `MasterBar`/`tickPositionToTimePosition` API, dots + drain-bar
-  rendering, verification), `ready`, not yet started. `ui.md`/`brand.md`
-  design changes, the plan, and the tasks file are all committed there,
-  not yet on `main`.
+- Branch `readme-local-setup-and-gp-ingestion` (plain branch, not a
+  worktree) — `plan-readme-local-setup-and-gp-ingestion-2026-07-06.md`
+  drafted (not yet approved/tasked), committed there, not yet on `main`.
+  Documentation-only plan: no artifact changes, adds a "Getting Started"
+  section (dev setup, the Chrome port-6000 gotcha discovered this
+  session), "Adding a song" (`.gp` ingestion CLI), and "Running tests" to
+  `README.md` — every command verified by actually running it, not
+  transcribed from memory.
 
 ## Recommended Next Step
 
-1. Implement `tasks-lyrics-gap-timing-indicator-6541.md` (`/ardd-implement`,
-   inline or delegated).
-2. Run `/ardd-plan readme-local-setup-and-gp-ingestion` when ready to
-   design the README feature.
-3. Consider a fresh `/ardd-verify` pass — a large amount of client code
-   changed across the theme-rework and lyrics-sheet-redesign merges, and
-   the last verify pass predates both.
-4. Decide the CI-provider question for constitution Principle VIII now
+1. Run `/ardd-tasks` on
+   `plan-readme-local-setup-and-gp-ingestion-2026-07-06.md` to approve it
+   and generate its task list, then implement.
+2. Consider a fresh `/ardd-verify` pass — a large amount of client code
+   changed across the theme-rework, lyrics-sheet-redesign, and
+   gap-timing-indicator merges, and the last verify pass predates all
+   three.
+3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-5. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the other minor cross-artifact notes above, and running `/ardd-render
    ui` to refresh the stale UI diagram.
