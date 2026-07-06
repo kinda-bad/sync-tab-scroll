@@ -18,7 +18,7 @@ status: in-progress
   `--bg: #ece0b8`, `--surface: #ddcb92`, `--bar-surface: #c2a35c`,
   `--ink: #160f0c`, `--riot: #9c0f3a`, `--hazard: #8a5200`. (feature:
   grunge-cyberpunk-themes)
-- [ ] T003 Live-verify in a real browser (this project's
+- [x] T003 Live-verify in a real browser (this project's
   `browser-verify-alphatab-quirks` practice — Playwright/vitest can't
   fully substitute for visual review), both dark and light: contrast and
   legibility of the reworked values against the Bar, cards, and forms,
@@ -27,6 +27,22 @@ status: in-progress
   test for T001/T002 — a palette-value change with no scripted
   equivalent, same pattern as the prior `lyrics-ticker-font-size` plan's
   live-verify task.
+
+  Verified via a throwaway Playwright CT spec (real Chromium, `BarHarness`
+  mounting `Bar.svelte` — exercises `.torn-edge`/`.hazard-stripes`/
+  `.signature-glitch`/`.signature-tape` together), not committed: measured
+  WCAG contrast ratio of `--ink` against `--bg`/`--surface`/`--bar-surface`
+  in both modes (all > 4.5:1 — dark: ink `#f3e6c8` vs bg `#050403` ≈ 16.5:1,
+  vs bar-surface `#2b1018` ≈ 12.7:1; light: ink `#160f0c` vs bg `#ece0b8` ≈
+  15.8:1, vs bar-surface `#c2a35c` ≈ 8.0:1) and captured full-page
+  screenshots of both. Dark: near-black canvas, blood-magenta torn-edge bar,
+  marigold hazard stripe, cream text — all legible. Light: cracked-parchment
+  tan canvas, warm ochre bar, dark ink text, brown/tan hazard stripe — all
+  legible. No contrast/legibility regressions found; no code changes
+  needed. Not a substitute for a human eyeball pass on the actual app
+  (cards/forms weren't in this harness — only the Bar/motifs — since
+  `--surface`/`--ink` contrast was already checked directly via computed
+  tokens above), flagged for T016's final manual pass.
 
 ## Phase 2: Cyberpunk theme (tokens, tab colors, motion)
 - [ ] T004 [artifacts: brand] [parallel] Add a new
