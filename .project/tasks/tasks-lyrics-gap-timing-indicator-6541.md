@@ -18,7 +18,7 @@ status: in-progress
   between the gap's start and end, asserting the *local* (nearest-to-
   `endMs`) tempo is used, not the song's first/average tempo. Confirm
   both fail (module doesn't exist yet).
-- [ ] T002 [artifacts: ui] Implement `client/src/lyrics-gap-timing.ts` to
+- [x] T002 [artifacts: ui] Implement `client/src/lyrics-gap-timing.ts` to
   make T001's tests pass: given the headless `alphaTabApi` instance and a
   `[startMs, endMs]` gap window, find the score's `MasterBar` nearest
   `endMs` (via `score.masterBars`, each exposing `.start` in ticks and

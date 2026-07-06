@@ -40,7 +40,7 @@ describe('computeGapTiming', () => {
     expect(result.qualifies).toBe(true);
     expect(result.measureDurationMs).toBeCloseTo(2000, 5);
     // 4 beats immediately preceding endMs (8400), each 500ms apart, ascending.
-    expect(result.beatTimestampsMs.map((t) => Math.round(t))).toEqual([6900, 7400, 7900, 8400 - 500]);
+    expect(result.beatTimestampsMs.map((t) => Math.round(t))).toEqual([6400, 6900, 7400, 7900]);
   });
 
   it('does not qualify a gap shorter than or equal to one measure', () => {
