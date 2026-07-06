@@ -78,7 +78,7 @@ status: in-progress
   the line highlight already uses, no new role).
 
 ## Phase 3: Verification
-- [ ] T008 Live-verify in a real browser, both themes (riot and
+- [x] T008 Live-verify in a real browser, both themes (riot and
   cyberpunk, each in dark and light mode): the real catalog song
   `muse-time-is-running-out` (a ~8.4s gap before its first `.lrc` line)
   shows the dots-and-drain-bar sequence correctly during that leading
