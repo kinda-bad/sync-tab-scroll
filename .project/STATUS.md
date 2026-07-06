@@ -1,11 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-analyze`, after pruning 5 stale worktrees/
-branches, generating tasks for both draft plans on `main`, and a fresh
-`/ardd-verify` pass). Repo is on `main`, working tree has staged/generated
-task files only (no code changes), up to date with `origin/main` except for
-this pass's writes. No cross-artifact contradictions found; findings are
-the same handful of minor gaps plus one newly-confirmed duplicate defect._
+_Updated: 2026-07-06 (`/ardd-analyze`, after logging the
+`grunge-cyberpunk-themes` feature idea and delegating both tasked plans to
+isolated worktree subagents). Repo is on `main`. No cross-artifact
+contradictions found; findings are the same handful of minor gaps plus one
+newly-confirmed duplicate defect._
 
 ## Artifact Status
 
@@ -101,31 +100,37 @@ full-codebase pass, refreshing 2026-07-05's). Summary:
 
 ## Feature Backlog
 
-1 backlogged · 0 planned · 0 tasked · 7 implemented — see
+2 backlogged · 0 planned · 0 tasked · 7 implemented — see
 `.project/artifacts/features.md`. `participant-selected-part` (participant
-list shows each member's currently selected part) remains backlogged —
-target it with `/ardd-plan participant-selected-part` when ready.
+list shows each member's currently selected part) and
+`grunge-cyberpunk-themes` (two new selectable dark/light theme pairs — a
+louder Yeah Yeah Yeahs/Nirvana-inspired variant of the current theme, and a
+`sync-scroll`-palette cyberpunk theme) remain backlogged — target either
+with `/ardd-plan <slug>` when ready.
 
 ## In Flight
 
-None — the five stale worktrees/branches from the prior pass
-(`playback-fidelity-testing`, `server-failure-banner`,
-`config-env-convention`, `lyrics-only-view-fix`,
-`worktree-agent-a3742a2bf2ac7cfe1`) have been pruned (`git worktree
-remove` + `git branch -D`), after confirming each one's unique work already
-landed on `main` via separate commits. Only the primary checkout remains.
+- Worktree `.claude/worktrees/agent-a3d9149b39e896685` (branch
+  `worktree-agent-a3d9149b39e896685`) — `tasks-defects-followup-c196.md`
+  in-progress, 0/9 (Remove-participant UI, self-removal handling, 3
+  artifact wording fixes, verification — delegated subagent still running).
+- Worktree `.claude/worktrees/agent-af741d85be2762830` (branch
+  `worktree-agent-af741d85be2762830`) — `tasks-lyrics-ticker-font-size-
+  7c31.md` completed, 3/3 (font-size bumped to `1.125rem`, live-verified in
+  both themes via a temporary Playwright CT harness spec, no clipping
+  found; strip-height task skipped as not needed). **Ready to merge** —
+  not yet merged into `main`.
 
 ## Recommended Next Step
 
-1. Implement `tasks-lyrics-ticker-font-size-7c31.md` (3 tasks: bump
-   `.lyrics-overlay` font-size, live-verify, adjust strip height if
-   needed) and/or `tasks-defects-followup-c196.md` (9
-   tasks: Remove-participant UI + self-removal handling + 3 artifact
-   wording fixes + verification) via `/ardd-implement`.
-2. Decide the CI-provider question for constitution Principle VIII now
+1. Merge the completed `worktree-agent-af741d85be2762830` branch (lyrics
+   ticker font-size, 3/3 done) into `main`, then run `/ardd-analyze` again.
+2. Wait for the `worktree-agent-a3d9149b39e896685` subagent
+   (defects-followup, 9 tasks) to finish, then merge and re-analyze.
+3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists (see Code-vs-Artifact Defects) — a real scope
    decision, not a mechanical fix.
-3. Not blocking: the minor cross-artifact notes above (`features.md`'s
+4. Not blocking: the minor cross-artifact notes above (`features.md`'s
    stale toggle entries, `connectionStatus` naming overlap, count-in
    cursor guard doc drift, `datamodel.md`'s duplicated percussion-detection
    claim).
