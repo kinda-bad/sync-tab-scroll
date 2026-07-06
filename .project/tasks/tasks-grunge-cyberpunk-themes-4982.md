@@ -216,7 +216,32 @@ status: in-progress
   `playback-engine.ts` fix noted under T008), client e2e 23/23,
   `packages/pipeline` vitest 3/3. Full-workspace `pnpm -r check` (tsc
   --noEmit across shared/client/server/pipeline) clean.
-- [ ] T016 Manually verify in a real browser: switching the theme-family
+- [x] T016 Manually verify in a real browser: switching the theme-family
   picker and the light/dark toggle each independently updates the CSS
   palette and tab-notation colors together, and the resulting flat value
   survives a page refresh.
+
+  This agent's environment can't drive a real interactive click-around
+  browser session directly, so verified via a throwaway Playwright *e2e*
+  spec, not committed — the strongest available substitute: the real
+  production preview build + real server (not a component-test harness),
+  driving the actual Lobby → Playback flow through real UI clicks (Settings
+  → Preferences → theme buttons), ending with a genuine `page.reload()`
+  (not a simulated one). Confirmed: starting at `dark`, clicking "Theme:
+  Riot" (→ family=cyberpunk, mode unchanged) produced `cyberpunk-dark`,
+  changed `--bg` from the riot dark value while `mainGlyphColor` fill
+  stayed identical (both neon-yellow, per T007's verbatim reuse — expected,
+  not a bug); clicking "Light mode" next (→ mode=light, family unchanged)
+  produced `cyberpunk-light` with the family button still correctly
+  reading "Theme: Cyberpunk" (controls are independent); both `--bg` and
+  glyph fill changed again. After a real `page.reload()`, `data-theme`,
+  `--bg`, and glyph fill all matched their pre-reload `cyberpunk-light`
+  values exactly — full persistence confirmed, not just a `localStorage`
+  round-trip in isolation. Screenshots taken before/after reload: the
+  reload screenshot shows the full cyberpunk-light look (light blue-grey
+  chrome, cyan/magenta tab notation) rendering correctly. Not a substitute
+  for an actual human clicking through the app — flagged here as the
+  final open item a human should still spot-check (in particular: the
+  Settings modal's own surface tone against each of the 4 themes, and the
+  CRT scanline's real-world visibility/subtlety preference, both matters
+  of taste this agent can measure but not judge).
