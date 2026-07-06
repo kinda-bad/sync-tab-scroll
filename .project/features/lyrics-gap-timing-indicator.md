@@ -1,7 +1,9 @@
 ---
 slug: lyrics-gap-timing-indicator
-status: backlogged
+status: implemented
 logged: 2026-07-06
+plan: plan-lyrics-gap-timing-indicator-2026-07-06.md
+tasks: tasks-lyrics-gap-timing-indicator-6541.md
 ---
 
 In the lyrics-only full-lyrics-sheet view, any gap in `.lrc` timing longer

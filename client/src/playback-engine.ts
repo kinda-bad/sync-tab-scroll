@@ -7,6 +7,14 @@ import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import { parseLrc, type LrcLine } from './lrc-parser';
+import { findLyricGaps, type LyricGap } from './lyrics-gap-timing';
+
+interface GapIndicatorHandle {
+  gap: LyricGap;
+  container: HTMLElement;
+  dotEls: HTMLElement[];
+  drainEl: HTMLElement;
+}
 import { waitUntilReady } from './readiness';
 import { correctDrift, applyPlaybackSettings, installCountInCursorGuard } from './playback-sync';
 import { clientStore } from './store';
@@ -125,9 +133,13 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && song.lyricsLrc) {
-    let lrcLines: LrcLine[] = [];
+    let lrcLines: LrcLine[] = []; // rendered (real-line-only) list — DOM building + active-line matching, unchanged shape from before this feature.
     let lineEls: HTMLElement[] = [];
     let activeLineIndex = -1;
+    let gapScore: at.model.Score | undefined; // Set once the headless instance's scoreLoaded fires (may race the .lrc fetch below).
+    let pendingAllLines: LrcLine[] | undefined; // The full (blank-gap-marker-included) parsed list, set once the .lrc fetch resolves.
+    let gaps: LyricGap[] = [];
+    let gapIndicators: GapIndicatorHandle[] = [];
 
     // Matches this codebase's existing prefers-reduced-motion convention
     // (client/src/styles/motifs.css) of gating smooth/animated effects
@@ -151,10 +163,75 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
       activeLineIndex = index;
     }
 
+    // Gap detection (ui.md "Gap timing indicator") needs both the .lrc's
+    // full parsed line list (fetched below) and the headless instance's own
+    // loaded score (lyrics-gap-timing.ts's computeGapTiming reads the
+    // score's masterBars/tempo data) — these resolve independently and in
+    // no guaranteed order, so this is called from both completion points
+    // and only actually computes once both are available.
+    function tryComputeGaps(): void {
+      if (!gapScore || !pendingAllLines) return;
+      gaps = findLyricGaps(gapScore, pendingAllLines);
+      renderGapIndicators();
+    }
+
+    // Inserts one gap-indicator element (4 .gap-dot children + 1 .gap-drain
+    // child) per qualifying gap, anchored via insertBefore against the
+    // *rendered* line list's own DOM nodes (lineEls) — insertBeforeIndex ===
+    // lineEls.length never occurs since this feature only covers a leading
+    // gap or a gap between two real lines (plan: a trailing gap after the
+    // last line is out of scope), so a reference node always exists.
+    // brand.md: the drain bar carries both theme-specific classes
+    // unconditionally (`.gap-drain-tape`/`.gap-drain-led`, T006) — CSS
+    // decides which one actually renders per data-theme, same convention as
+    // HazardBar's own `.hazard-stripes`/`.led-marquee` pair.
+    function renderGapIndicators(): void {
+      for (const handle of gapIndicators) handle.container.remove();
+      gapIndicators = gaps.map((gap) => {
+        const container = document.createElement('div');
+        container.className = 'gap-indicator';
+
+        const dotEls = Array.from({ length: 4 }, () => {
+          const dot = document.createElement('span');
+          dot.className = 'gap-dot';
+          container.appendChild(dot);
+          return dot;
+        });
+
+        const drainEl = document.createElement('div');
+        drainEl.className = 'gap-drain gap-drain-tape gap-drain-led';
+        drainEl.style.setProperty('--gap-fill', '1');
+        container.appendChild(drainEl);
+
+        containers.fullLyricsEl.insertBefore(container, lineEls[gap.insertBeforeIndex] ?? null);
+        return { gap, container, dotEls, drainEl };
+      });
+    }
+
+    // Lights each gap's dots in turn as its beat timestamps are reached, and
+    // continuously shrinks its drain bar's --gap-fill from 1 (gap start) to
+    // 0 (gap end) — same custom-property mechanism as HazardBar's
+    // --hazard-fill, on this separate element (brand.md: not a second
+    // HazardBar instance).
+    function updateGapIndicators(currentTimeMs: number): void {
+      for (const { gap, dotEls, drainEl } of gapIndicators) {
+        const totalMs = gap.endMs - gap.startMs;
+        const fill = totalMs > 0 ? Math.max(0, Math.min(1, (gap.endMs - currentTimeMs) / totalMs)) : 0;
+        drainEl.style.setProperty('--gap-fill', String(fill));
+
+        let activeDot = -1;
+        for (let i = 0; i < gap.timing.beatTimestampsMs.length; i++) {
+          if (gap.timing.beatTimestampsMs[i] <= currentTimeMs) activeDot = i;
+        }
+        dotEls.forEach((dot, i) => dot.classList.toggle('active', i === activeDot));
+      }
+    }
+
     fetch(song.lyricsLrc)
       .then((res) => res.text())
       .then((content) => {
-        lrcLines = parseLrc(content).filter((l) => l.text.length > 0);
+        const allLines = parseLrc(content);
+        lrcLines = allLines.filter((l) => l.text.length > 0);
         containers.fullLyricsEl.textContent = '';
         lineEls = lrcLines.map((line) => {
           const el = document.createElement('div');
@@ -169,7 +246,14 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
         // an instrumental intro (ui.md "Lyrics part selected", reworked
         // 2026-07-06).
         if (lineEls.length > 0) setActiveLine(0);
+        pendingAllLines = allLines;
+        tryComputeGaps();
       });
+
+    api.scoreLoaded.on((score) => {
+      gapScore = score;
+      tryComputeGaps();
+    });
 
     api.playerPositionChanged.on((e) => {
       if (lineEls.length === 0) return;
@@ -183,6 +267,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
         else break;
       }
       setActiveLine(index);
+      updateGapIndicators(e.currentTime);
     });
   }
 
