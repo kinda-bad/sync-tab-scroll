@@ -7,7 +7,7 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Riot rework (tokens + tab colors)
-- [ ] T001 [artifacts: brand] Update `client/src/styles/tokens.css`'s
+- [x] T001 [artifacts: brand] Update `client/src/styles/tokens.css`'s
   `[data-theme='dark']` block to the reworked "riot" dark values from
   `brand.md`'s UI Chrome Redesign section: `--bg: #050403`,
   `--surface: #150e10`, `--bar-surface: #2b1018`, `--ink: #f3e6c8`,

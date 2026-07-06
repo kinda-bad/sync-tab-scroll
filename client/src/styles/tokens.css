@@ -11,17 +11,24 @@
 
 :root,
 :root[data-theme='dark'] {
-  --bg: #0a0a0a;
-  --surface: #17171b;
-  --surface-raised: #201f24;
-  --bar-surface: #2a2930;
-  --ink: #f2f0e8;
-  --ink-dim: rgba(242, 240, 232, 0.55);
-  --riot: #ff2178;
-  --riot-dim: rgba(255, 33, 120, 0.35);
-  --hazard: #ffcc00;
-  --hazard-dim: rgba(255, 204, 0, 0.35);
-  --border: rgba(242, 240, 232, 0.14);
+  /* "riot" — reworked 2026-07-06 (brand.md, UI Chrome Redesign): a
+     void/stage concept pushed louder (Yeah Yeah Yeahs/Nirvana-inspired) —
+     hotter magenta-pink --riot, hotter marigold --hazard, a warmer
+     near-black base than the original neutral void. --surface-raised/
+     --ink-dim/--riot-dim/--hazard-dim/--border aren't in brand.md's
+     semantic table directly; derived here from the new base values at the
+     same relative position/alpha the prior values used. */
+  --bg: #050403;
+  --surface: #150e10;
+  --surface-raised: #1f0f14;
+  --bar-surface: #2b1018;
+  --ink: #f3e6c8;
+  --ink-dim: rgba(243, 230, 200, 0.55);
+  --riot: #ff0857;
+  --riot-dim: rgba(255, 8, 87, 0.35);
+  --hazard: #ffb400;
+  --hazard-dim: rgba(255, 180, 0, 0.35);
+  --border: rgba(243, 230, 200, 0.14);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);
