@@ -7,7 +7,7 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Gap detection & measure/beat math
-- [ ] T001 [artifacts: ui] Write a unit test (test-first, per constitution
+- [x] T001 [artifacts: ui] Write a unit test (test-first, per constitution
   Principle VII) for a new `client/src/lyrics-gap-timing.ts` module,
   against a constructed/mock alphaTab `Score` fixture with a known
   constant tempo and time signature (e.g. 120bpm, 4/4): assert the
