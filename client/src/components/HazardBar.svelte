@@ -9,7 +9,7 @@
   export let label: string | undefined = undefined;
 </script>
 
-<div class="hazard-bar hazard-stripes" style="--hazard-fill: {Math.max(0, Math.min(1, fill))}" role="progressbar" aria-valuenow={Math.round(fill * 100)} aria-valuemin={0} aria-valuemax={100}>
+<div class="hazard-bar hazard-stripes led-marquee" style="--hazard-fill: {Math.max(0, Math.min(1, fill))}" role="progressbar" aria-valuenow={Math.round(fill * 100)} aria-valuemin={0} aria-valuemax={100}>
   {#if label}
     <span class="hazard-bar-label">{label}</span>
   {/if}

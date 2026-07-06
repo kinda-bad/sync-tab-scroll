@@ -34,7 +34,7 @@
       onkeydown={(e) => e.stopPropagation()}
     >
       <div class="modal-header">
-        <h2 class="modal-title">{title}</h2>
+        <h2 class="modal-title glitch-text">{title}</h2>
         {#if dismissible}
           <button class="modal-close" onclick={() => onClose?.()} aria-label="Close">×</button>
         {/if}
