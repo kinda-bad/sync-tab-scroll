@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: readme-local-setup-and-gp-ingestion
 created: 2026-07-06
 features: [readme-local-setup-and-gp-ingestion]
