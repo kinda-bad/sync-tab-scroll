@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: lyrics-only-view-fix-2
 created: 2026-07-06
 features: []
