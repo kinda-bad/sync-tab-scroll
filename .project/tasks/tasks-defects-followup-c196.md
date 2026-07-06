@@ -7,12 +7,12 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Remove-participant control (client)
-- [ ] T001 [artifacts: ui] Write/extend `SettingsModal.ct.spec.ts` (failing
+- [x] T001 [artifacts: ui] Write/extend `SettingsModal.ct.spec.ts` (failing
   first, per constitution Principle VII) covering: a "Remove" button
   renders in the Participants tab only for the host, only on other
   participants' rows (not the self row, not for non-hosts), and clicking
   it sends `{ type: 'host-remove-participant', participantId }`.
-- [ ] T002 [artifacts: ui] Add the "Remove" button to
+- [x] T002 [artifacts: ui] Add the "Remove" button to
   `SettingsModal.svelte`'s Participants tab (host-only, non-self rows,
   alongside the existing "Make host" button per `SettingsModal.svelte:101-
   103`), wired to a `removeParticipant(p.id)` function sending
@@ -22,7 +22,7 @@ status: in-progress
   (feedback: `feedback-defects-followup-743b.md`)
 
 ## Phase 2: Self-removal handling (client)
-- [ ] T003 [artifacts: infrastructure] Write a unit test (failing first,
+- [x] T003 [artifacts: infrastructure] Write a unit test (failing first,
   per constitution Principle VII), mirroring `leave-session.test.ts`'s
   pattern: simulate a `session-state` message whose
   `session.participants` no longer contains the current
@@ -32,7 +32,7 @@ status: in-progress
   `leaveSession()` uses (landing view, null session/selfParticipantId,
   empty catalog), and the socket's `close()` is called with no scheduled
   reconnect.
-- [ ] T004 [artifacts: infrastructure] Add the self-removal detection
+- [x] T004 [artifacts: infrastructure] Add the self-removal detection
   branch to `ws-client.ts`'s `message.type === 'session-state'` handler
   (`ws-client.ts:75-89`): if `message.selfParticipantId` is set, the
   store's `selfParticipantId` is also still set (idempotency guard), and
