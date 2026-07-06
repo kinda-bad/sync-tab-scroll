@@ -1,10 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-analyze`, after logging the
-`grunge-cyberpunk-themes` feature idea and delegating both tasked plans to
-isolated worktree subagents). Repo is on `main`. No cross-artifact
-contradictions found; findings are the same handful of minor gaps plus one
-newly-confirmed duplicate defect._
+_Updated: 2026-07-06 (`/ardd-analyze`, after merging the completed
+lyrics-ticker-font-size worktree into `main` and pruning it). Repo is on
+`main`. No cross-artifact contradictions found; findings are the same
+handful of minor gaps plus one newly-confirmed duplicate defect._
 
 ## Artifact Status
 
@@ -114,23 +113,18 @@ with `/ardd-plan <slug>` when ready.
   `worktree-agent-a3d9149b39e896685`) — `tasks-defects-followup-c196.md`
   in-progress, 0/9 (Remove-participant UI, self-removal handling, 3
   artifact wording fixes, verification — delegated subagent still running).
-- Worktree `.claude/worktrees/agent-af741d85be2762830` (branch
-  `worktree-agent-af741d85be2762830`) — `tasks-lyrics-ticker-font-size-
-  7c31.md` completed, 3/3 (font-size bumped to `1.125rem`, live-verified in
-  both themes via a temporary Playwright CT harness spec, no clipping
-  found; strip-height task skipped as not needed). **Ready to merge** —
-  not yet merged into `main`.
+
+`lyrics-ticker-font-size` (3/3 done) has been merged into `main` and its
+worktree/branch pruned — `.lyrics-overlay`'s font-size is now `1.125rem`.
 
 ## Recommended Next Step
 
-1. Merge the completed `worktree-agent-af741d85be2762830` branch (lyrics
-   ticker font-size, 3/3 done) into `main`, then run `/ardd-analyze` again.
-2. Wait for the `worktree-agent-a3d9149b39e896685` subagent
+1. Wait for the `worktree-agent-a3d9149b39e896685` subagent
    (defects-followup, 9 tasks) to finish, then merge and re-analyze.
-3. Decide the CI-provider question for constitution Principle VIII now
+2. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists (see Code-vs-Artifact Defects) — a real scope
    decision, not a mechanical fix.
-4. Not blocking: the minor cross-artifact notes above (`features.md`'s
+3. Not blocking: the minor cross-artifact notes above (`features.md`'s
    stale toggle entries, `connectionStatus` naming overlap, count-in
    cursor guard doc drift, `datamodel.md`'s duplicated percussion-detection
    claim).
