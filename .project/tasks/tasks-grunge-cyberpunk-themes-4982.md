@@ -45,7 +45,7 @@ status: in-progress
   tokens above), flagged for T016's final manual pass.
 
 ## Phase 2: Cyberpunk theme (tokens, tab colors, motion)
-- [ ] T004 [artifacts: brand] [parallel] Add a new
+- [x] T004 [artifacts: brand] [parallel] Add a new
   `[data-theme='cyberpunk-dark']` block to `tokens.css`: `--bg: #08080c`,
   `--surface: #111118`, `--bar-surface: #1c1c26`, `--ink: #e8f6ff`,
   `--riot: #ff2d78`, `--hazard: #00cfff` (harvested from

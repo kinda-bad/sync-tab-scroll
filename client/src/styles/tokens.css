@@ -61,6 +61,34 @@
   --canvas-bg: var(--bg);
 }
 
+:root[data-theme='cyberpunk-dark'] {
+  /* "cyberpunk" (brand.md, Themes) — harvested directly from the
+     predecessor project's (sync-scroll) full-neon "video-game HUD" chrome
+     palette, the multi-neon look the "riot" default deliberately narrowed
+     away from. --riot/--hazard are a genuine pink/cyan pair here, not two
+     shades of one warm accent — the existing `.signature-glitch` motif
+     renders as a literal chromatic-aberration split as a result, no code
+     changes needed. --surface-raised/--ink-dim/--riot-dim/--hazard-dim/
+     --border aren't in brand.md's semantic table directly; derived here
+     from these base values at the same relative position/alpha the riot
+     dark block uses. */
+  --bg: #08080c;
+  --surface: #111118;
+  --surface-raised: #16161e;
+  --bar-surface: #1c1c26;
+  --ink: #e8f6ff;
+  --ink-dim: rgba(232, 246, 255, 0.55);
+  --riot: #ff2d78;
+  --riot-dim: rgba(255, 45, 120, 0.35);
+  --hazard: #00cfff;
+  --hazard-dim: rgba(0, 207, 255, 0.35);
+  --border: rgba(232, 246, 255, 0.14);
+
+  --lyric-active: var(--riot);
+  --lyric-base: var(--hazard);
+  --canvas-bg: var(--bg);
+}
+
 :root {
   --font-display: 'Bungee', 'Arial Black', sans-serif;
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
