@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import type { ClientMessage, ServerMessage } from '@sync-tab-scroll/shared';
 import { clientStore } from './store';
 import { toastStore } from './toast-store';
+import { clearStoredSession } from './session-persistence';
 
 export interface WsClient {
   send(message: ClientMessage): void;
@@ -33,6 +34,12 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
   // participant record via session-join.ts's existing reclaim-by-id branch
   // (the same path used for page-refresh reconnects) — no second mechanism.
   let hasOpenedBefore = false;
+  // Set true only when this client detects it was just removed from the
+  // session by the host (session-state handler below) — this client's own
+  // socket is being closed deliberately, so the 'close' listener's usual
+  // reconnect-and-rejoin behavior must not fire (it would just rejoin the
+  // session this participant was just removed from).
+  let suppressReconnect = false;
 
   function attachSocket() {
     socket = new WebSocket(url);
@@ -67,12 +74,48 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
     });
     socket.addEventListener('close', () => {
       clientStore.update((s) => ({ ...s, connectionStatus: 'disconnected' }));
-      setTimeout(attachSocket, reconnectDelayMs);
+      if (!suppressReconnect) setTimeout(attachSocket, reconnectDelayMs);
     });
 
     socket.addEventListener('message', (event) => {
       const message: ServerMessage = JSON.parse(event.data);
       if (message.type === 'session-state') {
+        // Self-removal detection (infrastructure.md host-remove-participant):
+        // every session-state broadcast passes through here, including the
+        // one a just-removed participant's own still-attached socket
+        // receives (ConnectionRegistry.broadcast builds it from that
+        // socket's own conn.participantId) — it just won't find itself in
+        // the participant list anymore. The current store's
+        // selfParticipantId check is an idempotency guard: it's cleared by
+        // the reset below, so this only fires once per removal.
+        const current = get(clientStore);
+        const wasRemoved =
+          current.selfParticipantId !== null &&
+          message.selfParticipantId === current.selfParticipantId &&
+          !message.session.participants.some((p) => p.id === current.selfParticipantId);
+
+        if (wasRemoved) {
+          toastStore.push('You were removed from the session by the host');
+          suppressReconnect = true;
+          // Not leaveSession() itself — it calls wsClient?.close(), which
+          // would re-enter this same 'close' listener from within this
+          // message handler. Closing directly and mirroring (not calling)
+          // leaveSession's reset shape avoids that reentrancy.
+          socket.close();
+          clearStoredSession();
+          clientStore.set({
+            view: 'landing',
+            session: null,
+            selfParticipantId: null,
+            catalog: [],
+            wsClient: null,
+            playbackProgress: 0,
+            engineReady: false,
+            connectionStatus: 'connecting',
+          });
+          return;
+        }
+
         clientStore.update((s) => {
           // View transitions (ui.md): landing -> lobby once a session exists,
           // lobby -> playback once the host has actually started playback —
