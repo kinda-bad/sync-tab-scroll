@@ -13,7 +13,7 @@ status: in-progress
   `--surface: #150e10`, `--bar-surface: #2b1018`, `--ink: #f3e6c8`,
   `--riot: #ff0857`, `--hazard: #ffb400`. (feature:
   grunge-cyberpunk-themes)
-- [ ] T002 [artifacts: brand] [parallel] Update `tokens.css`'s
+- [x] T002 [artifacts: brand] [parallel] Update `tokens.css`'s
   `[data-theme='light']` block to the reworked "riot" light values:
   `--bg: #ece0b8`, `--surface: #ddcb92`, `--bar-surface: #c2a35c`,
   `--ink: #160f0c`, `--riot: #9c0f3a`, `--hazard: #8a5200`. (feature:

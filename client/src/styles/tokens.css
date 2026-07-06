@@ -36,20 +36,25 @@
 }
 
 :root[data-theme='light'] {
-  /* Not an inversion of dark — a photocopied-flyer concept: warm-toner
-     near-black ink on newsprint paper, deeper/inkier accents rather than
-     dark mode's glowing neon (brand.md, Light/Dark Mode). */
-  --bg: #e4e1d6;
-  --surface: #d6d2c4;
-  --surface-raised: #cac5b5;
-  --bar-surface: #bfb9a5;
-  --ink: #131211;
-  --ink-dim: rgba(19, 18, 17, 0.55);
-  --riot: #c40855;
-  --riot-dim: rgba(196, 8, 85, 0.18);
-  --hazard: #a8760a;
-  --hazard-dim: rgba(168, 118, 10, 0.18);
-  --border: rgba(19, 18, 17, 0.18);
+  /* "riot" light — reworked 2026-07-06 (brand.md): its own pass, not a
+     mechanical inversion of dark — reworked from a photocopied-flyer
+     concept into a decayed, cracked-parchment concept (In Utero's cover:
+     yellowed, brittle paper; deep blood-red serif type), warm-toner ink
+     on aged paper rather than clean newsprint. --surface-raised/--ink-dim/
+     --riot-dim/--hazard-dim/--border aren't in brand.md's semantic table
+     directly; derived here from the new base values at the same relative
+     position/alpha the prior values used. */
+  --bg: #ece0b8;
+  --surface: #ddcb92;
+  --surface-raised: #d1b97a;
+  --bar-surface: #c2a35c;
+  --ink: #160f0c;
+  --ink-dim: rgba(22, 15, 12, 0.55);
+  --riot: #9c0f3a;
+  --riot-dim: rgba(156, 15, 58, 0.18);
+  --hazard: #8a5200;
+  --hazard-dim: rgba(138, 82, 0, 0.18);
+  --border: rgba(22, 15, 12, 0.18);
 
   --lyric-active: var(--riot);
   --lyric-base: var(--hazard);
