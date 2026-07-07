@@ -44,12 +44,12 @@ status: in-progress
   datamodel.md's Consent Record section for detail.
 
 ## Phase 3: Running tests section
-- [ ] T007 Verify the test-suite commands actually run clean: server
+- [x] T007 Verify the test-suite commands actually run clean: server
   vitest (`pnpm test` in `server/`), client vitest (`pnpm test` in
   `client/`), client CT (`pnpm test:ct` in `client/`), client e2e (`pnpm
   test:e2e` in `client/`). Note exact working-directory requirements for
   each.
-- [ ] T008 Write the "## Running tests" section into `README.md` covering
+- [x] T008 Write the "## Running tests" section into `README.md` covering
   T007's verified commands.
 
 ## Phase 4: Final read-through
