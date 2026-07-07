@@ -1,7 +1,9 @@
 ---
 slug: readme-local-setup-and-gp-ingestion
-status: backlogged
+status: implemented
 logged: 2026-07-06
+plan: plan-readme-local-setup-and-gp-ingestion-2026-07-06.md
+tasks: tasks-readme-local-setup-and-gp-ingestion-a8f1.md
 ---
 
 The README has clear, accurate instructions for starting and using the app locally, and for ingesting .gp files into the catalog.
