@@ -239,16 +239,17 @@ graph TD
     PartPicker[Part picker incl. Lyrics option]
 
     SettingsModal[Settings modal]
-    TabParticipants[Participants tab<br/>list + host transfer controls]
+    TabParticipants[Participants tab<br/>list + Make host, Remove,<br/>Request/Decline host controls]
     TabSession[Session tab<br/>lobby cursor + Spotlight mode,<br/>host Count-in toggle]
-    TabPreferences[Preferences tab<br/>theme toggle, personal metronome]
+    TabPreferences[Preferences tab<br/>theme picker riot/cyberpunk<br/>+ light/dark toggle, personal metronome]
 
     InstrumentView[Instrument part rendering]
     AlphaTabVisible[Visible alphaTab renderer<br/>native cursor overlay]
     Ticker[In-tab lyrics ticker<br/>single-line, snap-centered syllable]
     LyricsView[Lyrics part rendering]
     AlphaTabHeadless[Headless alphaTab instance<br/>audio + shared clock only]
-    FullLyrics[Full lyrics text view<br/>.lrc line timestamps]
+    FullLyrics[Full-lyrics sheet<br/>all .lrc lines, auto-scroll to active line]
+    GapIndicator[Gap timing indicator<br/>4-beat dot countdown + theme-styled drain bar]
     LoadingBanner[Loading tab/lyrics banner]
 
     App --> Banner
@@ -271,4 +272,6 @@ graph TD
     InstrumentView -.->|optional toggle| Ticker
     LyricsView --> AlphaTabHeadless
     LyricsView --> FullLyrics
+    FullLyrics -.->|gap > 1 measure| GapIndicator
 ```
+
