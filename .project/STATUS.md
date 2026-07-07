@@ -1,8 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-06 (`/ardd-tasks`, approved and tasked the
-readme-local-setup-and-gp-ingestion plan on its own branch). Repo is on
-`main`, pushed to `origin/main`. No cross-artifact contradictions found._
+_Updated: 2026-07-07 (`/ardd-analyze`, full manual pass after the theme
+rework, lyrics-sheet redesign, gap-timing-indicator, and README-docs
+merges). Repo is on `main`, pushed to `origin/main`. One new finding this
+pass: `brand.md` has a stale internal claim about `HazardBar`'s scope —
+see Cross-Artifact Issues._
 
 ## Artifact Status
 
@@ -34,16 +36,28 @@ These are documented defaults, not blockers.
 
 ## Cross-Artifact Issues
 
-- [MINOR] The feature register's "Metronome toggle"/"Count-in toggle"
-  entries still carry their original logging-time descriptions,
-  superseded by the implemented design. Owned by
-  `/ardd-feature`/`/ardd-plan`/`/ardd-tasks`, not this skill.
-- [GAP] `ui.md`'s "Connection lost" state and `datamodel.md`'s
-  `Participant.connectionStatus` field share a name but describe different
+- [CONFLICT] `brand.md`'s "Signature element" and "Motion & Vibe" sections
+  both describe `HazardBar` (`.hazard-stripes`/`.led-marquee`) as carrying
+  three jobs, including "the lyric-timing drain/fill visual" — but
+  `brand.md`'s own newer "Lyrics Gap Indicator" section explicitly states
+  the gap-timing drain bar is a **separate element**, not a second
+  `HazardBar` instance. Verified against code: `HazardBar`'s `progress`
+  prop (`client/src/components/Bar.svelte:16`) only ever receives
+  `barProgress` (`client/src/App.svelte:73`), which is either the Lobby
+  readiness ratio or Playback progress — nothing feeds it a lyric-timing
+  signal. The "third job" claim reads as stale, predating (or never
+  matching) what was actually built. Worth a `/ardd-refine` pass on
+  `brand.md` to drop or correct it.
+- [GAP] `ui.md`'s "Connection lost" state (client's own WS reachability)
+  and `datamodel.md`'s `Participant.connectionStatus` field (server's
+  per-participant socket state) share a name but describe different
   concepts. Not contradictory, just worth disambiguating later.
 - [GAP] `ui.md`/`infrastructure.md` still don't mention
   `installCountInCursorGuard` (`client/src/playback-sync.ts`). Not a
   contradiction, just drift for a future `/ardd-verify` to record.
+- [MINOR] The feature register's pre-convention "Metronome toggle"/
+  "Count-in toggle" entries still carry their original logging-time
+  descriptions, superseded by the implemented design.
 
 ## Within-Artifact Issues
 
@@ -51,12 +65,13 @@ These are documented defaults, not blockers.
 - [OPEN] Per-song vs. per-submitter consent (see above)
 - [OPEN] CLI drop-in vs. web upload form (see above)
 - [OPEN] Real ToS legal text (see above)
-- [OPEN] `lyricLineBreaks` retention (see above)
+- [VAGUE] `lyricLineBreaks` retention — still unresolved whether it's
+  worth keeping given nothing reads the grouped result for layout
 
 ## Constitution Compliance
 
-No new violations found this pass. Principle VIII's CI half remains a
-known, explicitly-deferred gap — see Code-vs-Artifact Defects below.
+No violations found this pass. Principle VIII's CI half remains a known,
+explicitly-deferred gap — see Code-vs-Artifact Defects below.
 
 ## Diagrams
 
@@ -70,47 +85,42 @@ known, explicitly-deferred gap — see Code-vs-Artifact Defects below.
 
 2 known defects — see `DEFECTS.md`, last checked 2026-07-06, **before**
 the theme rework, lyrics-sheet redesign, and gap-timing-indicator all
-merged — worth a fresh `/ardd-verify` pass given how much client code has
-changed since. Both already declined for inclusion in prior plans — won't
-re-prompt:
+merged — a fresh `/ardd-verify` pass is overdue given how much client code
+has changed since (it would likely also independently catch this pass's
+new `HazardBar`/lyric-timing finding above). Both already declined for
+inclusion in prior plans — won't re-prompt via `/ardd-plan`:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
-  the wrong percussion-detection claim that `infrastructure.md`'s copy
-  already fixed.
+  the wrong percussion-detection claim (`track.percussionArticulations`)
+  that `infrastructure.md`'s copy already fixed (`track.isPercussion`).
 - `constitution.md` — drift (pre-existing, deferred): Principle VIII's
   CI half is unmet — no `.github/workflows/` exists.
 
 ## Feature Backlog
 
-2 backlogged · 0 planned · 0 tasked · 9 implemented — see
+1 backlogged · 0 planned · 0 tasked · 10 implemented — see
 `.project/features/`.
 
 - `participant-selected-part` (participant list shows each member's
-  currently selected part) — backlogged.
-- `readme-local-setup-and-gp-ingestion` — approved and tasked on its own
-  branch (`tasks-readme-local-setup-and-gp-ingestion-a8f1.md`, 9 tasks,
-  `ready`); the register on `main` still says `backlogged` since that
-  flip hasn't merged yet.
+  currently selected part) — the only remaining backlog item.
 
 ## In Flight
 
-- Branch `readme-local-setup-and-gp-ingestion` (plain branch, not a
-  worktree) — plan approved, `tasks-readme-local-setup-and-gp-ingestion-
-  a8f1.md` generated (9 tasks across 4 phases: Getting Started, Adding a
-  song, Running tests, final read-through — every command verified by
-  actually running it), `ready`, not yet started. All committed there,
-  not yet on `main`.
+None — everything merged and pushed to `main` as of this pass.
 
 ## Recommended Next Step
 
-1. Implement `tasks-readme-local-setup-and-gp-ingestion-a8f1.md`
-   (`/ardd-implement`, inline or delegated).
-2. Consider a fresh `/ardd-verify` pass — a large amount of client code
+1. Run `/ardd-verify` — overdue given the volume of client code that
    changed across the theme-rework, lyrics-sheet-redesign, and
-   gap-timing-indicator merges, and the last verify pass predates all
-   three.
-3. Decide the CI-provider question for constitution Principle VIII now
+   gap-timing-indicator merges; would also likely catch/confirm this
+   pass's `HazardBar`/lyric-timing finding independently.
+2. Run `/ardd-refine brand` to fix (or remove) the stale "lyric-timing
+   drain/fill" claim in the Signature element / Motion & Vibe sections.
+3. Run `/ardd-render ui` to refresh the stale UI diagram.
+4. Run `/ardd-plan participant-selected-part` when ready to design the
+   last backlogged feature.
+5. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
-   the other minor cross-artifact notes above, and running `/ardd-render
-   ui` to refresh the stale UI diagram.
+6. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+   the `connectionStatus` naming overlap, and the missing
+   `installCountInCursorGuard` mention.
