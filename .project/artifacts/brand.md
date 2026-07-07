@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-07-06
+last_updated: 2026-07-07
 ---
 
 # Brand & Theming
@@ -142,11 +142,12 @@ is **not** part of the bar itself. It renders as its own independently
 `top: 0`), decoupled from the bottom-pinned nav bar (`.bar-wrap`,
 `bottom: 0`) — moved there specifically so it's never sandwiched between
 the nav bar and the main content. Same `progress` prop, same
-one-device-triple-duty role (per-participant readiness in the Lobby,
-playback progress in Playback, and the lyric-timing drain/fill visual),
-just anchored to the opposite screen edge from the bar it originally
-shared a container with. The combined effect — a torn strip of caution
-tape stuck across the top of the screen, with the bottom-pinned nav bar
+one-device-two-job role (per-participant readiness in the Lobby, playback
+progress in Playback — the full-lyrics sheet's own gap-timing drain bar,
+Lyrics Gap Indicator below, is a separate element, not a third job of
+this one), just anchored to the opposite screen edge from the bar it
+originally shared a container with. The combined effect — a torn strip of
+caution tape stuck across the top of the screen, with the bottom-pinned nav bar
 as its own separate torn-edge element — is `riot`'s single most
 recognizable, unmistakable pairing.
 
@@ -216,8 +217,8 @@ physical identity on purpose (second 2026-07-06 revision):**
   blocky rectangular segments with small gaps between them, hard edges,
   a subtle glow (`box-shadow`) on lit segments, filling in discrete
   quantized steps rather than a smooth gradient or diagonal texture.
-  Same `HazardBar.svelte`/`progress` prop and triple-duty role
-  (readiness/playback progress/lyric-timing) as `riot`'s version — only
+  Same `HazardBar.svelte`/`progress` prop and two-job role
+  (readiness/playback progress) as `riot`'s version — only
   the rendered device changes per theme, per this artifact's existing
   "components don't branch on theme, only values/classes do" rule (the
   component picks the class from `data-theme`, same mechanism
@@ -414,8 +415,11 @@ text, both modes). Each theme has exactly one signature motion identity,
 expressed identically in both its light and dark variants; the two
 themes never share a motion device. Animated progress/readiness fill
 (`.hazard-stripes` for `riot`, `.led-marquee` for `cyberpunk`) carries
-per-participant readiness, playback progress, and lyric-timing
-highlight in both themes — one device per theme, three jobs each.
+per-participant readiness and playback progress in both themes — one
+device per theme, two jobs each. The full-lyrics sheet's gap-timing drain
+bar (Lyrics Gap Indicator, above) reuses each theme's same visual
+language but is a separate element with its own job, not a third use of
+this device.
 
 ## Light/Dark Mode
 
