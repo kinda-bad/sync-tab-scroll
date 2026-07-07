@@ -9,6 +9,130 @@ See `.project/artifacts/` for the full artifact-driven-dev specification
 (`constitution.md`, `datamodel.md`, `pipeline.md`, `infrastructure.md`,
 `ui.md`, `brand.md`) and `.project/STATUS.md` for current status.
 
+## Getting Started
+
+### Prerequisites and install
+
+Requires Node **>=20** (per root `package.json`'s `engines` field) and
+[pnpm](https://pnpm.io/) (tested with pnpm 10.33.0). From the repo root:
+
+```sh
+pnpm install
+```
+
+This installs all workspace packages (`client`, `server`,
+`packages/pipeline`, `packages/shared`) and sets `core.hooksPath` to
+`.githooks` via the `prepare` script.
+
+### Configuration (`.env`)
+
+Both `server/` and `client/` need a local `.env`, copied from their
+`.env.example`:
+
+```sh
+cp server/.env.example server/.env
+cp client/.env.example client/.env
+```
+
+Per constitution Principle VIII, `server/.env`'s `PORT` and
+`client/.env`'s `VITE_BACKEND_PORT` must stay equal — both encode the dev
+backend port that the client's `/catalog` proxy and WebSocket connection
+target (default `6080` in both `.env.example` files). If they drift, the
+client's dev server silently proxies `/catalog` and WS traffic at the
+wrong backend, with no error. `.env` is git-ignored; a
+`pnpm check:env` script (run automatically before commit) checks that
+each `.env` has the same key set as its `.env.example`, but does not
+check that the port *values* match — that part is on you.
+
+### Running the dev servers
+
+```sh
+pnpm dev
+```
+
+runs `pnpm -r --parallel dev`, starting both the server
+(`tsx watch`, listening on `server/.env`'s `PORT`, default `6080`) and the
+client (Vite dev server, hardcoded to port `6000` in
+`client/vite.config.ts`) together.
+
+**Chrome will not load `http://localhost:6000`.** Port 6000 is on
+Chrome's (and other Chromium browsers') list of restricted "unsafe"
+ports (historically associated with the X11 window system), and it
+refuses to navigate there at all — this is a browser restriction, not a
+bug in this app. Workarounds:
+- Use a non-Chromium browser (Firefox, Safari) to hit `localhost:6000`, or
+- Run the client dev server on a different port directly, bypassing the
+  root `pnpm dev` script:
+  ```sh
+  cd client
+  VITE_BACKEND_PORT=6080 npx vite --port 7050 --strictPort
+  ```
+  (swap `7050` for any free port; `VITE_BACKEND_PORT` must still match
+  the server's `PORT`).
+
+## Adding a song
+
+The `packages/pipeline` workspace has a CLI, `extract-lyrics`, that
+converts a Guitar Pro (`.gp`) file into a catalog entry. From the repo
+root:
+
+```sh
+pnpm --filter @sync-tab-scroll/pipeline extract-lyrics <path-to-file.gp> <catalogRoot>
+```
+
+For example, verified against a real `.gp` file:
+
+```sh
+pnpm --filter @sync-tab-scroll/pipeline extract-lyrics \
+  /path/to/Radiohead-Creep-06-25-2026.gp \
+  ./catalog
+```
+
+**Note:** `pnpm --filter <pkg> <script>` runs the script with its
+working directory set to that package (`packages/pipeline/`), so a
+relative `<catalogRoot>` like `./catalog` resolves *inside
+`packages/pipeline/`*, not at the repo root — pass an absolute path (or
+one relative to `packages/pipeline/`) if you want the catalog to land
+elsewhere, e.g. the repo-root `catalog/` directory that `server/.env`'s
+`CATALOG_ROOT` points at by default.
+
+This produces a new `<catalogRoot>/<song-slug>/` directory (the slug is
+derived from artist/title) containing:
+- the published `.gp` file itself,
+- `meta.json` (song name, artist, per-track `parts`, and lyrics-sync
+  fields — `lyricsTrackIndex`, `lyricsLineIndex`, `lyricLineBreaks`),
+- `lyrics.lrc`, if lyrics were found on the designated lyrics track (or
+  via the lrclib.net fallback — see `pipeline.md`).
+
+The server picks up everything under its `CATALOG_ROOT` at startup.
+
+If you're running a public deployment with `REQUIRE_SONG_CONSENT=true`,
+each song directory also needs a consent record before the server will
+load it — record one with:
+
+```sh
+pnpm --filter @sync-tab-scroll/pipeline record-consent <catalogRoot> <songSlug> <submitterName>
+```
+
+See `.project/artifacts/datamodel.md`'s Consent Record section for the
+full field list and rationale; this isn't needed for local/personal
+catalog use.
+
+## Running tests
+
+| Suite | Command | Working directory |
+|-------|---------|--------------------|
+| Server unit tests (vitest) | `pnpm test` | `server/` |
+| Client unit tests (vitest) | `pnpm test` | `client/` |
+| Client component tests (Playwright CT) | `pnpm test:ct` | `client/` |
+| Client end-to-end tests (Playwright) | `pnpm test:e2e` | `client/` |
+
+All four were run clean in this worktree: 88 server tests, 61 client
+unit tests, 79 CT tests, and 23 e2e tests, all passing. The e2e suite
+builds the client and starts its own server/client instances on
+alternate ports (see `client/playwright.config.ts`), so it doesn't
+collide with a `pnpm dev` session you already have running.
+
 ## Datamodel
 
 ```mermaid

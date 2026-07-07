@@ -7,25 +7,25 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Getting Started section
-- [ ] T001 Verify install/prerequisites by actually running them from a
+- [x] T001 Verify install/prerequisites by actually running them from a
   clean state: `node --version` (repo requires `>=20` per root
   `package.json`'s `engines` field — confirm this is still accurate) and
   `pnpm install` at the repo root. Note the exact pnpm version used
   (`pnpm --version`) if worth pinning in the docs.
-- [ ] T002 Verify the `.env` setup by actually copying
+- [x] T002 Verify the `.env` setup by actually copying
   `server/.env.example` → `server/.env` and `client/.env.example` →
   `client/.env`, confirming the default `PORT`/`VITE_BACKEND_PORT`
   values match (constitution Principle VIII) and that `pnpm dev` (root
   script) fails or behaves oddly if they're missing/mismatched — note
   the actual observed behavior for the docs.
-- [ ] T003 Verify running `pnpm dev` from the repo root actually starts
+- [x] T003 Verify running `pnpm dev` from the repo root actually starts
   both the server and client dev servers, and confirm the real default
   client URL/port. Reproduce and document the Chrome port-6000 "unsafe
   port" restriction discovered this session (`client/vite.config.ts`'s
   dev server is hardcoded to port 6000 — Chrome refuses to navigate to
   `localhost:6000` at all) and the workaround (a different browser, or
   running vite directly with `--port <other> --strictPort`).
-- [ ] T004 Write the "## Getting Started" section into `README.md`
+- [x] T004 Write the "## Getting Started" section into `README.md`
   (placed right after the existing intro paragraph, before the "##
   Datamodel" diagram section), covering T001-T003's verified steps.
 
