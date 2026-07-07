@@ -1,8 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-render ui`, refreshed the UI component
-diagram). Repo is on `main`, pushed to `origin/main`. No cross-artifact
-contradictions found._
+_Updated: 2026-07-07 (`/ardd-verify`, full clean pass — first time the
+theme system, full-lyrics-sheet redesign, gap-timing indicator, and
+Preferences tab UI have been checked against code). Repo is on `main`,
+pushed to `origin/main`. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -67,11 +68,11 @@ explicitly-deferred gap — see Code-vs-Artifact Defects below.
 
 ## Code-vs-Artifact Defects
 
-2 known defects — see `DEFECTS.md`, last checked 2026-07-06, **before**
-the theme rework, lyrics-sheet redesign, and gap-timing-indicator all
-merged — a fresh `/ardd-verify` pass is overdue given how much client code
-has changed since. Both already declined for inclusion in prior plans —
-won't re-prompt via `/ardd-plan`:
+2 known defects — see `DEFECTS.md`, last checked 2026-07-07 (fresh full
+pass, confirmed against current code — the theme system, full-lyrics-
+sheet redesign, gap-timing indicator, and Preferences tab UI all checked
+out clean, no new defects). Both remaining are pre-existing and already
+declined for inclusion in prior plans — won't re-prompt via `/ardd-plan`:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
   the wrong percussion-detection claim (`track.percussionArticulations`)
@@ -93,13 +94,10 @@ None — everything merged and pushed to `main` as of this pass.
 
 ## Recommended Next Step
 
-1. Run `/ardd-verify` — overdue given the volume of client code that
-   changed across the theme-rework, lyrics-sheet-redesign, and
-   gap-timing-indicator merges.
-2. Run `/ardd-plan participant-selected-part` when ready to design the
+1. Run `/ardd-plan participant-selected-part` when ready to design the
    last backlogged feature.
-3. Decide the CI-provider question for constitution Principle VIII now
+2. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, and the missing
    `installCountInCursorGuard` mention.
