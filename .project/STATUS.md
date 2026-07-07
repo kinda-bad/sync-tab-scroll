@@ -1,8 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-refine brand`, fixed the stale `HazardBar`
-"lyric-timing" claim the last `/ardd-analyze` pass surfaced). Repo is on
-`main`, pushed to `origin/main`. No cross-artifact contradictions found._
+_Updated: 2026-07-07 (`/ardd-render ui`, refreshed the UI component
+diagram). Repo is on `main`, pushed to `origin/main`. No cross-artifact
+contradictions found._
 
 ## Artifact Status
 
@@ -63,9 +63,7 @@ explicitly-deferred gap — see Code-vs-Artifact Defects below.
 
 - datamodel.md — current ✅
 - infrastructure.md — current ✅
-- ui.md — stale ⚠️ (run `/ardd-render ui` — the theme-control Preferences
-  tab, the full-lyrics-sheet redesign, and the gap-timing-indicator design
-  have all landed since this was last rendered)
+- ui.md — current ✅
 
 ## Code-vs-Artifact Defects
 
@@ -98,11 +96,10 @@ None — everything merged and pushed to `main` as of this pass.
 1. Run `/ardd-verify` — overdue given the volume of client code that
    changed across the theme-rework, lyrics-sheet-redesign, and
    gap-timing-indicator merges.
-2. Run `/ardd-render ui` to refresh the stale UI diagram.
-3. Run `/ardd-plan participant-selected-part` when ready to design the
+2. Run `/ardd-plan participant-selected-part` when ready to design the
    last backlogged feature.
-4. Decide the CI-provider question for constitution Principle VIII now
+3. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-5. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, and the missing
    `installCountInCursorGuard` mention.
