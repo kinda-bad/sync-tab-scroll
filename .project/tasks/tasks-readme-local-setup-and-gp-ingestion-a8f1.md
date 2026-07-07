@@ -1,7 +1,7 @@
 ---
 plan: plan-readme-local-setup-and-gp-ingestion-2026-07-06.md
 generated: 2026-07-06
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -53,7 +53,7 @@ status: in-progress
   T007's verified commands.
 
 ## Phase 4: Final read-through
-- [ ] T009 Read through all three new `README.md` sections end-to-end,
+- [x] T009 Read through all three new `README.md` sections end-to-end,
   checking no step assumes undocumented prior knowledge (e.g. catalog
   directory structure, what a "song slug" is) and that every command
   shown was actually run and verified in T001-T008, not transcribed from

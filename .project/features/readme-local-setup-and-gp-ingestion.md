@@ -1,6 +1,6 @@
 ---
 slug: readme-local-setup-and-gp-ingestion
-status: tasked
+status: implemented
 logged: 2026-07-06
 plan: plan-readme-local-setup-and-gp-ingestion-2026-07-06.md
 tasks: tasks-readme-local-setup-and-gp-ingestion-a8f1.md
