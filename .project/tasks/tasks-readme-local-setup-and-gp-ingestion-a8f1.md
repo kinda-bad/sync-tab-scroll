@@ -30,14 +30,14 @@ status: in-progress
   Datamodel" diagram section), covering T001-T003's verified steps.
 
 ## Phase 2: Adding a song section
-- [ ] T005 [artifacts: pipeline] Verify the `.gp` ingestion CLI end-to-end
+- [x] T005 [artifacts: pipeline] Verify the `.gp` ingestion CLI end-to-end
   against a real `.gp` file: run `pnpm --filter @sync-tab-scroll/pipeline
   extract-lyrics <path-to-file.gp> <catalogRoot>` (confirm the exact
   invocation — check whether it must be run from `packages/pipeline` or
   works via `--filter` from the repo root) and confirm what it actually
   produces in the catalog directory (meta.json, `.lrc` if lyrics found,
   the published `.gp` file itself).
-- [ ] T006 [artifacts: datamodel] Write the "## Adding a song" section
+- [x] T006 [artifacts: datamodel] Write the "## Adding a song" section
   into `README.md`, covering T005's verified command and output, plus a
   brief pointer (not a duplication) to `record-consent` and
   `REQUIRE_SONG_CONSENT` for public-deployment submissions, linking to
