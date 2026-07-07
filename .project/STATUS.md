@@ -1,10 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-analyze`, full manual pass after the theme
-rework, lyrics-sheet redesign, gap-timing-indicator, and README-docs
-merges). Repo is on `main`, pushed to `origin/main`. One new finding this
-pass: `brand.md` has a stale internal claim about `HazardBar`'s scope —
-see Cross-Artifact Issues._
+_Updated: 2026-07-07 (`/ardd-refine brand`, fixed the stale `HazardBar`
+"lyric-timing" claim the last `/ardd-analyze` pass surfaced). Repo is on
+`main`, pushed to `origin/main`. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -36,18 +34,6 @@ These are documented defaults, not blockers.
 
 ## Cross-Artifact Issues
 
-- [CONFLICT] `brand.md`'s "Signature element" and "Motion & Vibe" sections
-  both describe `HazardBar` (`.hazard-stripes`/`.led-marquee`) as carrying
-  three jobs, including "the lyric-timing drain/fill visual" — but
-  `brand.md`'s own newer "Lyrics Gap Indicator" section explicitly states
-  the gap-timing drain bar is a **separate element**, not a second
-  `HazardBar` instance. Verified against code: `HazardBar`'s `progress`
-  prop (`client/src/components/Bar.svelte:16`) only ever receives
-  `barProgress` (`client/src/App.svelte:73`), which is either the Lobby
-  readiness ratio or Playback progress — nothing feeds it a lyric-timing
-  signal. The "third job" claim reads as stale, predating (or never
-  matching) what was actually built. Worth a `/ardd-refine` pass on
-  `brand.md` to drop or correct it.
 - [GAP] `ui.md`'s "Connection lost" state (client's own WS reachability)
   and `datamodel.md`'s `Participant.connectionStatus` field (server's
   per-participant socket state) share a name but describe different
@@ -86,9 +72,8 @@ explicitly-deferred gap — see Code-vs-Artifact Defects below.
 2 known defects — see `DEFECTS.md`, last checked 2026-07-06, **before**
 the theme rework, lyrics-sheet redesign, and gap-timing-indicator all
 merged — a fresh `/ardd-verify` pass is overdue given how much client code
-has changed since (it would likely also independently catch this pass's
-new `HazardBar`/lyric-timing finding above). Both already declined for
-inclusion in prior plans — won't re-prompt via `/ardd-plan`:
+has changed since. Both already declined for inclusion in prior plans —
+won't re-prompt via `/ardd-plan`:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
   the wrong percussion-detection claim (`track.percussionArticulations`)
@@ -112,15 +97,12 @@ None — everything merged and pushed to `main` as of this pass.
 
 1. Run `/ardd-verify` — overdue given the volume of client code that
    changed across the theme-rework, lyrics-sheet-redesign, and
-   gap-timing-indicator merges; would also likely catch/confirm this
-   pass's `HazardBar`/lyric-timing finding independently.
-2. Run `/ardd-refine brand` to fix (or remove) the stale "lyric-timing
-   drain/fill" claim in the Signature element / Motion & Vibe sections.
-3. Run `/ardd-render ui` to refresh the stale UI diagram.
-4. Run `/ardd-plan participant-selected-part` when ready to design the
+   gap-timing-indicator merges.
+2. Run `/ardd-render ui` to refresh the stale UI diagram.
+3. Run `/ardd-plan participant-selected-part` when ready to design the
    last backlogged feature.
-5. Decide the CI-provider question for constitution Principle VIII now
+4. Decide the CI-provider question for constitution Principle VIII now
    that a remote exists — a real scope decision, not a mechanical fix.
-6. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+5. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, and the missing
    `installCountInCursorGuard` mention.
