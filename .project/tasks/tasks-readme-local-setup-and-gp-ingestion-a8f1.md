@@ -1,7 +1,7 @@
 ---
 plan: plan-readme-local-setup-and-gp-ingestion-2026-07-06.md
 generated: 2026-07-06
-status: ready
+status: in-progress
 ---
 
 # Tasks
