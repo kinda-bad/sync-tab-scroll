@@ -264,6 +264,59 @@ test('a non-host does not see a "Remove" control on any row', async ({ mount }) 
   await expect(component.getByRole('button', { name: 'Remove' })).toHaveCount(0);
 });
 
+// --- Participants tab: selected-part display (plan-participant-selected-part) ---
+
+test('a row shows the participant\'s selected instrument part in the sublabel', async ({ mount }) => {
+  const session = baseSession({
+    availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
+    participants: [
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
+
+  await expect(component.getByText('Lead Guitar')).toBeVisible();
+});
+
+test('a row shows "Lyrics" for a participant on the tab-less lyrics part', async ({ mount }) => {
+  const session = baseSession({
+    participants: [
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 'lyrics', readiness: 'ready', joinedAt: 1 },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
+
+  await expect(component.getByText('Lyrics')).toBeVisible();
+});
+
+test('the host row combines "HOST" and the selected part as "HOST · <part>"', async ({ mount }) => {
+  const session = baseSession({
+    availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
+    participants: [
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 0 },
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await expect(component.getByText('HOST · Lead Guitar')).toBeVisible();
+});
+
+test('a row with no selected part shows no part text', async ({ mount }) => {
+  const session = baseSession({
+    participants: [
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
+
+  await expect(component.getByText('HOST', { exact: true })).toBeVisible();
+  await expect(component.getByText(/HOST ·/)).toHaveCount(0);
+});
+
 test('a non-host, non-requesting viewer sees a plain pending label on the requester\'s row, not a Decline button', async ({ mount }) => {
   const session = baseSession({
     pendingHostRequest: 'member-1',

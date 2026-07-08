@@ -7,7 +7,7 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Part-label derivation
-- [ ] T001 [artifacts: ui] Write a CT test in
+- [x] T001 [artifacts: ui] Write a CT test in
   `client/src/components/SettingsModal.ct.test.ts` (or the existing CT
   test file covering the Participants tab, if one already exists — check
   first) asserting the Participants tab's `ListRow` sublabel content for
