@@ -1,6 +1,6 @@
 ---
 slug: github-actions-ci-workflow
-status: tasked
+status: implemented
 logged: 2026-07-07
 plan: plan-github-actions-ci-workflow-2026-07-07.md
 tasks: tasks-github-actions-ci-workflow-e421.md
