@@ -1,7 +1,9 @@
 ---
 slug: github-actions-ci-workflow
-status: backlogged
+status: tasked
 logged: 2026-07-07
+plan: plan-github-actions-ci-workflow-2026-07-07.md
+tasks: tasks-github-actions-ci-workflow-e421.md
 ---
 
 A GitHub Actions workflow runs typecheck, the .env/.env.example key-parity lint, and the full test suite (server + client vitest, CT, e2e) on every push and pull request to main.

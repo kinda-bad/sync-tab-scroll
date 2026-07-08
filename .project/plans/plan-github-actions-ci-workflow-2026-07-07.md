@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: github-actions-ci-workflow
 created: 2026-07-07
 features: [github-actions-ci-workflow]
