@@ -10,6 +10,8 @@ catalog/
 
 # Claude Code local tooling/config — not for the repo
 .claude/skills/ardd-*/
+.claude/skills/shieldcn-badges/
+skills-lock.json
 
 *storybook.log
 storybook-static
