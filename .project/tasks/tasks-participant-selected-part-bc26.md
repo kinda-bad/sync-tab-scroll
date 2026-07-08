@@ -1,7 +1,7 @@
 ---
 plan: plan-participant-selected-part-2026-07-07.md
 generated: 2026-07-08
-status: ready
+status: in-progress
 ---
 
 # Tasks
