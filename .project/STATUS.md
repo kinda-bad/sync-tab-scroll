@@ -1,8 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-08 (`/ardd-analyze`, after `/ardd-implement` completed
-`tasks-fix-percussion-doc-drift-bb10.md` (4/4) on branch
-`fix-percussion-doc-drift`). No cross-artifact contradictions found._
+_Updated: 2026-07-08 (`/ardd-analyze`, after `fix-percussion-doc-drift`
+merged into `main`). Repo is on `main`. **Merge commit `38af718` is
+unsigned** — 1Password was locked; re-sign before pushing (e.g. `git
+commit --amend -S`). No cross-artifact contradictions found._
 
 ARDD update available: installed `9189817`, source at `61de0df` — run
 `/ardd-update`.
@@ -98,15 +99,14 @@ authoritative confirmation that nothing else has drifted since
 
 ## In Flight
 
-Branch `fix-percussion-doc-drift` (current checkout, not a separate
-worktree) — `tasks-fix-percussion-doc-drift-bb10.md` completed, 4/4, not
-yet merged into `main`. Also untracked: `.project/.lock` (worth a manual
-look; not written/removed by this pass).
+Nothing in flight — no other worktrees, no draft PRs. `fix-percussion-doc-drift`
+has merged. Working tree clean except an untracked `.project/.lock` (worth
+a manual look; not written/removed by this pass).
 
 ## Recommended Next Step
 
-1. Merge `fix-percussion-doc-drift` into `main` (all tasks complete,
-   typecheck + env-parity checks passed pre-commit, doc-only diff).
+1. Re-sign merge commit `38af718` once 1Password is unlocked (`git commit
+   --amend -S`), then push `main`.
 2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `61de0df`).
 3. Consider a follow-up plan for e2e tests in CI, once the current
