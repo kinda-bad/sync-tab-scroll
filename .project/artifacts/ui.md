@@ -1,8 +1,8 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-06
-diagram_status: current
+last_updated: 2026-07-07
+diagram_status: stale
 ---
 
 # UI
@@ -93,6 +93,16 @@ regardless of whether playback has started:
 - **Participants**: the live participant list with readiness state and
   Host Transfer controls (infrastructure.md), which differ by viewer and
   by row:
+  - **Every row** shows which part that participant currently has
+    selected — the instrument name (`Session.availableParts`, matched by
+    `CatalogPart.trackIndex` against `Participant.selectedPart`) or
+    "Lyrics" for the tab-less lyrics part — as part of the row's existing
+    sublabel, alongside "HOST" when both apply (e.g. "HOST · Lead
+    Guitar"). Same derivation the Playback View's own "Playing: X" label
+    already uses (below), reused here rather than duplicated. Omitted
+    entirely while `selectedPart` is still `null` — the row's readiness
+    badge already reads `'no-part'` in that case, so there's nothing
+    useful to add.
   - **The host** sees a "Make host" control on every other participant's
     row (never their own) — regardless of that participant's connection
     status; a disconnected participant's row still shows it, and clicking

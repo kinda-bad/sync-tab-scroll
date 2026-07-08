@@ -1,7 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-verify`, cleared the now-resolved
-`constitution.md` CI defect). Repo is on `main`, pushed to `origin/main`.
+_Updated: 2026-07-07 (`/ardd-plan participant-selected-part` — drafted a
+plan for the last backlogged feature; `ui.md` updated with the design,
+`STATUS.md` refreshed). Repo is on branch `participant-selected-part`.
 No cross-artifact contradictions found._
 
 ## Artifact Status
@@ -69,7 +70,9 @@ real passing run on `main`.
   desired — the new Continuous Integration section isn't reflected in
   the container diagram; judgment call whether CI belongs there at all,
   since it's not a runtime component, not blocking)
-- ui.md — current ✅
+- ui.md — stale ⚠️ (run `/ardd-render ui` — the new "Every row shows
+  which part..." bullet under Participants doesn't change the component
+  hierarchy, just row content, so this is low priority)
 
 ## Code-vs-Artifact Defects
 
@@ -88,16 +91,20 @@ resolved and no longer listed:
 `.project/features/`.
 
 - `participant-selected-part` (participant list shows each member's
-  currently selected part) — the only remaining backlog item.
+  currently selected part) — now has a draft plan
+  (`plan-participant-selected-part-2026-07-07.md`); still `backlogged`
+  until `/ardd-tasks` selects and approves that plan.
 
 ## In Flight
 
-None — everything merged and pushed to `main` as of this pass.
+None — plan is drafted but not yet approved/tasked; branch
+`participant-selected-part` has no commits ahead of `main` besides the
+plan and `ui.md`/`STATUS.md` updates.
 
 ## Recommended Next Step
 
-1. Run `/ardd-plan participant-selected-part` when ready to design the
-   last backlogged feature.
+1. Run `/ardd-tasks` to approve `plan-participant-selected-part-2026-07-07.md`
+   and generate its task list.
 2. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
