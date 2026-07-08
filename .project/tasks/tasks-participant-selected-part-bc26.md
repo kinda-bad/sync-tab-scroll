@@ -19,14 +19,14 @@ status: in-progress
   only, or omitted entirely, matching today's no-part behavior). Run the
   test and confirm it fails (red) before any implementation — this
   project follows TDD (constitution Principle VII).
-- [ ] T002 [artifacts: ui] In `client/src/components/SettingsModal.svelte`,
+- [x] T002 [artifacts: ui] In `client/src/components/SettingsModal.svelte`,
   inside the Participants tab's `{#each session.participants as p (p.id)}`
   loop, add a `partLabel` derivation matching
   `client/src/views/Playback.svelte`'s existing `currentPartLabel` logic:
   `p.selectedPart === 'lyrics' ? 'Lyrics' : session.availableParts.find(ap
   => ap.trackIndex === p.selectedPart)?.instrumentName`, yielding
   `undefined` when `p.selectedPart === null`.
-- [ ] T003 [artifacts: ui] In the same loop, combine `partLabel` with the
+- [x] T003 [artifacts: ui] In the same loop, combine `partLabel` with the
   existing `p.role === 'host' ? 'HOST' : undefined` into a single
   `sublabel` value passed to `ListRow`: `"HOST · <part>"` when both are
   present, just `"HOST"` or just `<part>` when only one is present, and

@@ -110,7 +110,14 @@
         {#each session.participants as p (p.id)}
           {@const isSelf = p.id === $clientStore.selfParticipantId}
           {@const isPendingRow = session.pendingHostRequest === p.id}
-          <ListRow label={p.displayName} sublabel={p.role === 'host' ? 'HOST' : undefined}>
+          {@const partLabel =
+            p.selectedPart === 'lyrics'
+              ? 'Lyrics'
+              : p.selectedPart === null
+                ? undefined
+                : session.availableParts.find((ap) => ap.trackIndex === p.selectedPart)?.instrumentName}
+          {@const sublabel = p.role === 'host' ? (partLabel ? `HOST · ${partLabel}` : 'HOST') : partLabel}
+          <ListRow label={p.displayName} {sublabel}>
             {#if isPendingRow && isHost}
               <Button variant="ghost" label="Decline" onclick={declineHostRequest} />
             {:else if isPendingRow}
