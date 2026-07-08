@@ -1,12 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-08 (`/ardd-tasks` — approved
-`plan-participant-selected-part-2026-07-07.md` and generated its 4-task
-list). Repo is on branch `participant-selected-part`. No cross-artifact
-contradictions found._
-
-ARDD update available: installed `cd7dbbe`, source at `3c72550` — run
-`/ardd-update`.
+_Updated: 2026-07-08 (`/ardd-update` — updated ARDD skills `cd7dbbe` ->
+`3c72550`, no migrations pending). Repo is on branch
+`participant-selected-part`. No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -107,13 +103,11 @@ worktree) — `tasks-participant-selected-part-bc26.md` ready, 0/4.
 
 1. Run `/ardd-implement` to work through
    `tasks-participant-selected-part-bc26.md`'s 4 tasks.
-2. Optional: run `/ardd-update` — an ARDD tooling update is available
-   (installed `cd7dbbe`, source at `3c72550`).
-3. Consider a follow-up plan for e2e tests in CI, once the current
+2. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and whether `infrastructure.md`'s
    container diagram should include CI at all.
