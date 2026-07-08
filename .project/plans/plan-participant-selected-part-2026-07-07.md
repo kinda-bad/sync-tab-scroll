@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: participant-selected-part
 created: 2026-07-07
 features: [participant-selected-part]
