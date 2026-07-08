@@ -3,6 +3,7 @@
 <!-- ardd-badge-start -->
 [![built with ARDD](https://img.shields.io/badge/built%20with-ARDD-blue)](https://github.com/moui72/artifact-driven-dev)
 <!-- ardd-badge-end -->
+[![powered by alphaTab](https://img.shields.io/badge/powered%20by-alphaTab-orange)](https://www.alphatab.net/)
 
 A synchronized tab-scrolling app for musicians playing together remotely.
 See `.project/artifacts/` for the full artifact-driven-dev specification
@@ -274,4 +275,11 @@ graph TD
     LyricsView --> FullLyrics
     FullLyrics -.->|gap > 1 measure| GapIndicator
 ```
+
+## Acknowledgements
+
+This app's tab rendering, playback, and cursor sync are all built on
+[alphaTab](https://www.alphatab.net/), an excellent open-source music
+notation and Guitar Pro rendering engine. Thank you to the alphaTab
+maintainers and contributors — this project wouldn't exist without it.
 
