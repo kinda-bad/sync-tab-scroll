@@ -1,9 +1,12 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-plan participant-selected-part` — drafted a
-plan for the last backlogged feature; `ui.md` updated with the design,
-`STATUS.md` refreshed). Repo is on branch `participant-selected-part`.
-No cross-artifact contradictions found._
+_Updated: 2026-07-08 (`/ardd-tasks` — approved
+`plan-participant-selected-part-2026-07-07.md` and generated its 4-task
+list). Repo is on branch `participant-selected-part`. No cross-artifact
+contradictions found._
+
+ARDD update available: installed `cd7dbbe`, source at `3c72550` — run
+`/ardd-update`.
 
 ## Artifact Status
 
@@ -87,29 +90,30 @@ resolved and no longer listed:
 
 ## Feature Backlog
 
-1 backlogged · 0 planned · 0 tasked · 11 implemented — see
+0 backlogged · 0 planned · 1 tasked · 11 implemented — see
 `.project/features/`.
 
 - `participant-selected-part` (participant list shows each member's
-  currently selected part) — now has a draft plan
-  (`plan-participant-selected-part-2026-07-07.md`); still `backlogged`
-  until `/ardd-tasks` selects and approves that plan.
+  currently selected part) — `tasked`, see
+  `tasks-participant-selected-part-bc26.md` (4 tasks, 0/4 complete, TDD
+  paradigm).
 
 ## In Flight
 
-None — plan is drafted but not yet approved/tasked; branch
-`participant-selected-part` has no commits ahead of `main` besides the
-plan and `ui.md`/`STATUS.md` updates.
+Branch `participant-selected-part` (current checkout, not a separate
+worktree) — `tasks-participant-selected-part-bc26.md` ready, 0/4.
 
 ## Recommended Next Step
 
-1. Run `/ardd-tasks` to approve `plan-participant-selected-part-2026-07-07.md`
-   and generate its task list.
-2. Consider a follow-up plan for e2e tests in CI, once the current
+1. Run `/ardd-implement` to work through
+   `tasks-participant-selected-part-bc26.md`'s 4 tasks.
+2. Optional: run `/ardd-update` — an ARDD tooling update is available
+   (installed `cd7dbbe`, source at `3c72550`).
+3. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and whether `infrastructure.md`'s
    container diagram should include CI at all.
