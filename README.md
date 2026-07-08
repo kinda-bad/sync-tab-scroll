@@ -1,9 +1,8 @@
 # sync-tab-scroll
 
 <!-- ardd-badge-start -->
-[![built with ARDD](https://img.shields.io/badge/built%20with-ARDD-blue)](https://github.com/moui72/artifact-driven-dev)
+[![built with ARDD](https://img.shields.io/badge/built%20with-ARDD-blue)](https://github.com/moui72/artifact-driven-dev) [![powered by alphaTab](https://img.shields.io/badge/powered%20by-alphaTab-orange)](https://www.alphatab.net/)
 <!-- ardd-badge-end -->
-[![powered by alphaTab](https://img.shields.io/badge/powered%20by-alphaTab-orange)](https://www.alphatab.net/)
 
 A synchronized tab-scrolling app for musicians playing together remotely.
 See `.project/artifacts/` for the full artifact-driven-dev specification
