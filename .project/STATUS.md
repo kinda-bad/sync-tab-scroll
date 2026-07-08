@@ -1,9 +1,8 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-implement`, merged and pushed the GitHub
-Actions CI workflow — resolves the deferred CI half of constitution
-Principle VIII). Repo is on `main`, pushed to `origin/main`. No
-cross-artifact contradictions found._
+_Updated: 2026-07-07 (`/ardd-verify`, cleared the now-resolved
+`constitution.md` CI defect). Repo is on `main`, pushed to `origin/main`.
+No cross-artifact contradictions found._
 
 ## Artifact Status
 
@@ -57,39 +56,31 @@ These are documented defaults, not blockers.
 
 ## Constitution Compliance
 
-No violations found this pass. Principle VIII is now **fully satisfied**
-— the `.env`/`.env.example` key-parity lint runs pre-commit, and
-typecheck + the full test suite (minus e2e, deliberately deferred) now
-run in CI on every push/PR to `main` (`.github/workflows/ci.yml`),
-verified with real GitHub Actions runs including a deliberate-breakage
-test that correctly failed red. `DEFECTS.md`'s corresponding entry is
-stale as of this pass — see Code-vs-Artifact Defects below.
+No violations found this pass. Principle VIII is **fully satisfied** —
+the `.env`/`.env.example` key-parity lint runs pre-commit, and typecheck
++ the full test suite (minus e2e, deliberately deferred) run in CI on
+every push/PR to `main` (`.github/workflows/ci.yml`), confirmed via a
+real passing run on `main`.
 
 ## Diagrams
 
 - datamodel.md — current ✅
-- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` — the
-  new Continuous Integration section isn't reflected in the container
-  diagram; judgment call whether CI belongs on that diagram at all, since
-  it's not a runtime component)
+- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` if
+  desired — the new Continuous Integration section isn't reflected in
+  the container diagram; judgment call whether CI belongs there at all,
+  since it's not a runtime component, not blocking)
 - ui.md — current ✅
 
 ## Code-vs-Artifact Defects
 
-2 known defects — see `DEFECTS.md`, last checked 2026-07-07, **before**
-this pass's CI-workflow merge. One of the two (`constitution.md`'s "no
-CI" claim) is now stale — `.github/workflows/ci.yml` exists and is
-verified working — worth a fresh `/ardd-verify` pass to clear it
-properly, though the fix is obvious enough to not block anything:
+1 known defect — see `DEFECTS.md`, last checked 2026-07-07 (scoped
+refresh confirming the CI workflow matches `infrastructure.md` exactly
+and passed a real run). Down from 2 — the `constitution.md` CI claim is
+resolved and no longer listed:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
   the wrong percussion-detection claim (`track.percussionArticulations`)
   that `infrastructure.md`'s copy already fixed (`track.isPercussion`).
-  Still accurate, unrelated to this pass.
-- `constitution.md` — **now resolved in code**, `DEFECTS.md` wording is
-  stale: Principle VIII's CI half is no longer unmet —
-  `.github/workflows/ci.yml` runs typecheck + test suite on push/PR to
-  `main`, confirmed working via real Actions runs.
 
 ## Feature Backlog
 
@@ -105,15 +96,13 @@ None — everything merged and pushed to `main` as of this pass.
 
 ## Recommended Next Step
 
-1. Run `/ardd-verify` (or a quick manual fix) to clear `DEFECTS.md`'s now-
-   stale "no CI" claim for `constitution.md`.
-2. Run `/ardd-plan participant-selected-part` when ready to design the
+1. Run `/ardd-plan participant-selected-part` when ready to design the
    last backlogged feature.
-3. Consider a follow-up plan for e2e tests in CI, once the current
+2. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
-   deferred this pass — see `plan-github-actions-ci-workflow-2026-07-07.md`'s
-   Open Questions).
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+   deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
+   Questions).
+3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and whether `infrastructure.md`'s
    container diagram should include CI at all.
