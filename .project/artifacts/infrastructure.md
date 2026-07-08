@@ -1,8 +1,8 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-04
-diagram_status: current
+last_updated: 2026-07-07
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -455,6 +455,43 @@ per-beat lyrics in their XML, which sets alphaTab's internal
 The bug is only live for legacy binary GP3-5 files or synthetic inputs —
 worth a defensive note in the walk's implementation, not a primary design
 concern.
+
+## Continuous Integration
+
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push
+and pull request to `main` — fulfilling the CI half of constitution
+Principle VIII, deferred until now for lack of a git remote/provider. It
+runs:
+
+1. **Typecheck** — `pnpm check` (root script, fans out to every
+   workspace package's own `check` script: `packages/shared`, `server`,
+   `packages/pipeline`, `client`).
+2. **Test suite** — server vitest, client vitest, client CT (Playwright
+   component tests), and `packages/pipeline`'s vitest, each in its own
+   job/step. Client CT and e2e require Playwright's browser binaries
+   (`pnpm exec playwright install --with-deps chromium` — only Chromium,
+   the only browser this project's `playwright.config.ts` configures
+   projects for).
+
+The test infrastructure was already CI-aware before this workflow existed
+— `playwright.config.ts`'s `webServer` entries key `reuseExistingServer`
+off `!process.env.CI` (the standard env var GitHub Actions and most CI
+providers set automatically), and e2e/CT tests already run against the
+committed synthetic fixture catalog
+(`client/test-fixtures/fixture-catalog`), not the real gitignored
+`catalog/` directory — so a fresh CI checkout needs no local-only content
+to run the full suite.
+
+**Deliberately not run in CI**: `pnpm check:env` (the `.env`/
+`.env.example` key-parity lint, Principle VIII's other half). `.env` is
+git-ignored, and `scripts/check-env-parity.mjs` explicitly passes
+trivially when `.env` doesn't exist (its own docstring: "a fresh
+clone/CI genuinely has no `.env`... so there's nothing to drift
+against") — so running it in CI would always pass regardless of what was
+actually committed, providing no real protection. Only the pre-commit
+hook, which sees a real local `.env`, does meaningful work for this
+specific check; CI running the same script would be theater, not defense
+in depth.
 
 ## Production Posture
 
