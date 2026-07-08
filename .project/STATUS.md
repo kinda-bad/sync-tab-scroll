@@ -1,10 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-08 (`/ardd-analyze`, after `/ardd-render` and
-`/ardd-update`). ARDD tooling updated `3c72550` → `9189817` (no pending
-migrations, no new install-time suggestions); `datamodel`/`infrastructure`/
-`ui` diagrams regenerated and re-stamped current. No cross-artifact
-contradictions found._
+_Updated: 2026-07-08 (`/ardd-analyze`, after `/ardd-implement` completed
+`tasks-fix-percussion-doc-drift-bb10.md` (4/4) on branch
+`fix-percussion-doc-drift`). No cross-artifact contradictions found._
+
+ARDD update available: installed `9189817`, source at `61de0df` — run
+`/ardd-update`.
 
 ## Artifact Status
 
@@ -76,20 +77,19 @@ every push/PR to `main` (`.github/workflows/ci.yml`).
 ## Diagrams
 
 - datamodel.md — current ✅
-- infrastructure.md — current ✅ (re-rendered; Server node and the
-  WebSocket edge label now mention host removal. CI deliberately left off
-  the container diagram — a build-time workflow, not a runtime component)
-- ui.md — current ✅ (re-rendered; no structural change — the "Every row
-  shows which part..." addition is row content, not a new component)
+- infrastructure.md — current ✅ (Server node and the WebSocket edge
+  label mention host removal. CI deliberately left off the container
+  diagram — a build-time workflow, not a runtime component)
+- ui.md — current ✅
 
 ## Code-vs-Artifact Defects
 
-1 known defect — see `DEFECTS.md`, last checked 2026-07-07. Unchanged
-this pass:
-
-- `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
-  the wrong percussion-detection claim (`track.percussionArticulations`)
-  that `infrastructure.md`'s copy already fixed (`track.isPercussion`).
+0 known defects — see `DEFECTS.md`, last checked 2026-07-07 (the one
+outstanding entry, the `datamodel.md` percussion-detection claim, was
+fixed this pass on `fix-percussion-doc-drift` and marked resolved in
+`DEFECTS.md`; a fresh full `/ardd-verify` pass would still be the
+authoritative confirmation that nothing else has drifted since
+2026-07-07).
 
 ## Feature Backlog
 
@@ -98,21 +98,21 @@ this pass:
 
 ## In Flight
 
-Nothing in flight — no other worktrees, no draft PRs, working tree clean
-except an untracked `.project/.lock` (worth a manual look; not something
-this pass writes or removes).
+Branch `fix-percussion-doc-drift` (current checkout, not a separate
+worktree) — `tasks-fix-percussion-doc-drift-bb10.md` completed, 4/4, not
+yet merged into `main`. Also untracked: `.project/.lock` (worth a manual
+look; not written/removed by this pass).
 
 ## Recommended Next Step
 
-1. Commit `.project/STATUS.md`, `.project/ardd-version.md`,
-   `.project/artifacts/infrastructure.md`, `.project/artifacts/ui.md`, and
-   `README.md` — all currently uncommitted from this session's
-   `/ardd-render` + `/ardd-update` + `/ardd-analyze` pass.
-2. Consider a follow-up plan for e2e tests in CI, once the current
+1. Merge `fix-percussion-doc-drift` into `main` (all tasks complete,
+   typecheck + env-parity checks passed pre-commit, doc-only diff).
+2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+   available (installed `9189817`, source at `61de0df`).
+3. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
-   the `connectionStatus` naming overlap, the missing
+4. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
    in the Consent Record section.
