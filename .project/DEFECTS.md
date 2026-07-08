@@ -18,16 +18,10 @@ run on `main` (28913418819) — this is no longer a defect.
 
 ## datamodel.md
 
-- **Claim:** `CatalogPart.trackIndex`'s note describes percussion status
-  as read from the track's own parsed data via
-  `track.percussionArticulations`/instrument metadata.
-  **Actual:** the actual code path is the plain `track.isPercussion`
-  boolean (`client/src/tab-renderer.ts:111,144`), not articulations/
-  instrument metadata. `infrastructure.md`'s copy of this same claim was
-  fixed in a prior pass; this artifact's independent copy still carries
-  the stale wording.
-  **Location:** `client/src/tab-renderer.ts:111,144`
-  **Severity:** cosmetic
+**Confirmed resolved 2026-07-08** (`fix-percussion-doc-drift`):
+`CatalogPart.trackIndex`'s note now reads `track.isPercussion`, matching
+`infrastructure.md`'s already-correct copy and the real code
+(`client/src/tab-renderer.ts:111,144`) — this is no longer a defect.
 
 No defects found in `constitution.md`, `ui.md`, `infrastructure.md`,
 `pipeline.md`, or `brand.md` this pass.

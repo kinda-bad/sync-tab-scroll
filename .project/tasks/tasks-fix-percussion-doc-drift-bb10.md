@@ -1,14 +1,14 @@
 ---
 plan: plan-fix-percussion-doc-drift-2026-07-08.md
 generated: 2026-07-08
-status: in-progress
+status: completed
 ---
 
 # Tasks
 
 ## Phase 1: Fix the artifact
 
-- [ ] T001 [artifacts: datamodel] Documentation-only change — no test
+- [x] T001 [artifacts: datamodel] Documentation-only change — no test
       required (constitution Principle VII's documentation-only carve-out).
       In `.project/artifacts/datamodel.md`'s `CatalogPart` entity table,
       the `trackIndex` row's Notes cell currently reads: "Percussion
@@ -27,7 +27,7 @@ status: in-progress
       (`track.isPercussion`, `client/src/tab-renderer.ts`)"). `[defect:
       56f2bb95]`
 
-- [ ] T002 [artifacts: datamodel] Stamp `datamodel.md`'s frontmatter after
+- [x] T002 [artifacts: datamodel] Stamp `datamodel.md`'s frontmatter after
       T001's edit: run `.claude/skills/ardd-scripts/ardd-state.sh stamp
       .project/artifacts/datamodel.md last_updated <today's date>`. Do
       not change `diagram_status` — the percussion-detection mechanism is
@@ -36,7 +36,7 @@ status: in-progress
       detail — the diagram represents structure, not implementation"), so
       this edit doesn't make the diagram stale.
 
-- [ ] T003 Update `.project/DEFECTS.md` to drop the now-fixed
+- [x] T003 Update `.project/DEFECTS.md` to drop the now-fixed
       `CatalogPart.trackIndex` percussion-detection entry under its
       `## datamodel.md` heading (the only entry there), following the
       same in-place "confirmed resolved" pattern already used earlier in
@@ -47,7 +47,7 @@ status: in-progress
       `/ardd-verify` run remains the authoritative check that no defects
       remain.
 
-- [ ] T004 Verify: `git diff` against `main` shows exactly the
+- [x] T004 Verify: `git diff` against `main` shows exactly the
       one-line wording change in `datamodel.md`, the frontmatter
       `last_updated` stamp, and the `DEFECTS.md` update — no code files
       touched. Confirm `datamodel.md`'s `CatalogPart.trackIndex` note now
