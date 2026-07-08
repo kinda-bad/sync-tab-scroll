@@ -1,7 +1,7 @@
 ---
 plan: plan-participant-selected-part-2026-07-07.md
 generated: 2026-07-08
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -35,7 +35,7 @@ status: in-progress
   T001's test and confirm it now passes (green).
 
 ## Phase 2: Verification
-- [ ] T004 Run the full client test suite (`pnpm --filter
+- [x] T004 Run the full client test suite (`pnpm --filter
   @sync-tab-scroll/client test` and `pnpm --filter @sync-tab-scroll/client
   test:ct`) and confirm no regressions in other Participants-tab or
   Settings-modal coverage (e.g. existing "Make host"/"Remove"/pending-

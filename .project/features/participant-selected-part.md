@@ -1,6 +1,6 @@
 ---
 slug: participant-selected-part
-status: tasked
+status: implemented
 logged: 2026-07-04
 plan: plan-participant-selected-part-2026-07-07.md
 tasks: tasks-participant-selected-part-bc26.md
