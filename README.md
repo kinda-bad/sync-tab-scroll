@@ -203,7 +203,7 @@ graph TD
     Lrclib[lrclib.net<br/>external lyrics source]
     Pipeline[Offline lyrics-extraction pipeline<br/>alphaTab in Node]
     Catalog[(Per-song catalog directory<br/>.gp + .lrc + meta.json + consent record)]
-    Server[Node + ws server<br/>in-memory sessions, host succession/transfer,<br/>consent gate at catalog load]
+    Server[Node + ws server<br/>in-memory sessions, host succession/transfer/removal,<br/>consent gate at catalog load]
     HTTP[Static HTTP route<br/>/catalog/...]
     Client[Svelte client<br/>single store, reconnect-by-identity,<br/>2s retry on connection loss]
     AlphaTab[alphaTab instance per participant<br/>visible renderer or headless<br/>renders tab + plays audio + native cursor]
@@ -215,7 +215,7 @@ graph TD
     Catalog -->|loaded once at startup,<br/>paths rewritten to URLs| Server
     Server --- HTTP
     HTTP -->|.gp and .lrc fetches| Client
-    Client <-->|WebSocket: session-state broadcasts,<br/>playback-control, song-select, host transfer| Server
+    Client <-->|WebSocket: session-state broadcasts,<br/>playback-control, song-select,<br/>host transfer/request, remove participant| Server
     Client -->|host only: playback-tick-report ~1/s| Server
     Server -->|periodic PlaybackState broadcast<br/>drift correction against 50-tick threshold| Client
     Client --> AlphaTab

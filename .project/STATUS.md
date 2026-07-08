@@ -1,12 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-08 (`/ardd-implement` — completed all 4 tasks for
-`participant-selected-part`; feature flipped to `implemented`). Repo is on
-branch `participant-selected-part`, not yet merged to `main`. No
-cross-artifact contradictions found._
-
-ARDD update available: installed `3c72550`, source at `0692443` — run
-`/ardd-update`.
+_Updated: 2026-07-08 (`/ardd-analyze`, after `/ardd-render` and
+`/ardd-update`). ARDD tooling updated `3c72550` → `9189817` (no pending
+migrations, no new install-time suggestions); `datamodel`/`infrastructure`/
+`ui` diagrams regenerated and re-stamped current. No cross-artifact
+contradictions found._
 
 ## Artifact Status
 
@@ -34,7 +32,10 @@ ARDD update available: installed `3c72550`, source at `0692443` — run
   unit-tested, but the current single-line ticker overlay never uses the
   grouped line boundaries for layout.
 
-These are documented defaults, not blockers.
+These are documented defaults, not blockers. All three carry `[OPEN:
+...]` markers in the artifact text despite already stating a resolved
+answer inline — cosmetic labeling drift, not an unresolved decision (see
+Within-Artifact Issues).
 
 ## Cross-Artifact Issues
 
@@ -57,32 +58,34 @@ These are documented defaults, not blockers.
 - [OPEN] Real ToS legal text (see above)
 - [VAGUE] `lyricLineBreaks` retention — still unresolved whether it's
   worth keeping given nothing reads the grouped result for layout
+- [VAGUE] All three `[OPEN: ...]` inline markers in the Consent Record
+  section already state a resolved decision in the same sentence (e.g.
+  "chosen for this plan as the simpler shape") — the `[OPEN:` tag reads
+  as still-undecided even though the surrounding prose isn't. Consider
+  switching these to the `**Resolved**:`-with-caveat phrasing the rest of
+  the artifact set uses elsewhere, or leave as intentionally-revisitable
+  markers — either way, non-blocking.
 
 ## Constitution Compliance
 
 No violations found this pass. Principle VIII is **fully satisfied** —
 the `.env`/`.env.example` key-parity lint runs pre-commit, and typecheck
 + the full test suite (minus e2e, deliberately deferred) run in CI on
-every push/PR to `main` (`.github/workflows/ci.yml`), confirmed via a
-real passing run on `main`.
+every push/PR to `main` (`.github/workflows/ci.yml`).
 
 ## Diagrams
 
 - datamodel.md — current ✅
-- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` if
-  desired — the new Continuous Integration section isn't reflected in
-  the container diagram; judgment call whether CI belongs there at all,
-  since it's not a runtime component, not blocking)
-- ui.md — stale ⚠️ (run `/ardd-render ui` — the new "Every row shows
-  which part..." bullet under Participants doesn't change the component
-  hierarchy, just row content, so this is low priority)
+- infrastructure.md — current ✅ (re-rendered; Server node and the
+  WebSocket edge label now mention host removal. CI deliberately left off
+  the container diagram — a build-time workflow, not a runtime component)
+- ui.md — current ✅ (re-rendered; no structural change — the "Every row
+  shows which part..." addition is row content, not a new component)
 
 ## Code-vs-Artifact Defects
 
-1 known defect — see `DEFECTS.md`, last checked 2026-07-07 (scoped
-refresh confirming the CI workflow matches `infrastructure.md` exactly
-and passed a real run). Down from 2 — the `constitution.md` CI claim is
-resolved and no longer listed:
+1 known defect — see `DEFECTS.md`, last checked 2026-07-07. Unchanged
+this pass:
 
 - `datamodel.md` — cosmetic: `CatalogPart.trackIndex`'s note still has
   the wrong percussion-detection claim (`track.percussionArticulations`)
@@ -95,21 +98,21 @@ resolved and no longer listed:
 
 ## In Flight
 
-Branch `participant-selected-part` (current checkout, not a separate
-worktree) — `tasks-participant-selected-part-bc26.md` completed, 4/4, all
-commits signed. Not yet merged into `main`.
+Nothing in flight — no other worktrees, no draft PRs, working tree clean
+except an untracked `.project/.lock` (worth a manual look; not something
+this pass writes or removes).
 
 ## Recommended Next Step
 
-1. Merge `participant-selected-part` into `main` (all tasks complete,
-   full client vitest + CT suites pass, no regressions).
-2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `3c72550`, source at `0692443`).
-3. Consider a follow-up plan for e2e tests in CI, once the current
+1. Commit `.project/STATUS.md`, `.project/ardd-version.md`,
+   `.project/artifacts/infrastructure.md`, `.project/artifacts/ui.md`, and
+   `README.md` — all currently uncommitted from this session's
+   `/ardd-render` + `/ardd-update` + `/ardd-analyze` pass.
+2. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, the missing
-   `installCountInCursorGuard` mention, and whether `infrastructure.md`'s
-   container diagram should include CI at all.
+   `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
+   in the Consent Record section.
