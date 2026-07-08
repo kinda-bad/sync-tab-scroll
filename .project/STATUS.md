@@ -1,8 +1,12 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-07 (`/ardd-verify`, cleared the now-resolved
-`constitution.md` CI defect). Repo is on `main`, pushed to `origin/main`.
-No cross-artifact contradictions found._
+_Updated: 2026-07-08 (`/ardd-implement` — completed all 4 tasks for
+`participant-selected-part`; feature flipped to `implemented`). Repo is on
+branch `participant-selected-part`, not yet merged to `main`. No
+cross-artifact contradictions found._
+
+ARDD update available: installed `3c72550`, source at `0692443` — run
+`/ardd-update`.
 
 ## Artifact Status
 
@@ -69,7 +73,9 @@ real passing run on `main`.
   desired — the new Continuous Integration section isn't reflected in
   the container diagram; judgment call whether CI belongs there at all,
   since it's not a runtime component, not blocking)
-- ui.md — current ✅
+- ui.md — stale ⚠️ (run `/ardd-render ui` — the new "Every row shows
+  which part..." bullet under Participants doesn't change the component
+  hierarchy, just row content, so this is low priority)
 
 ## Code-vs-Artifact Defects
 
@@ -84,25 +90,26 @@ resolved and no longer listed:
 
 ## Feature Backlog
 
-1 backlogged · 0 planned · 0 tasked · 11 implemented — see
-`.project/features/`.
-
-- `participant-selected-part` (participant list shows each member's
-  currently selected part) — the only remaining backlog item.
+0 backlogged · 0 planned · 0 tasked · 12 implemented — see
+`.project/features/`. Backlog is empty.
 
 ## In Flight
 
-None — everything merged and pushed to `main` as of this pass.
+Branch `participant-selected-part` (current checkout, not a separate
+worktree) — `tasks-participant-selected-part-bc26.md` completed, 4/4, all
+commits signed. Not yet merged into `main`.
 
 ## Recommended Next Step
 
-1. Run `/ardd-plan participant-selected-part` when ready to design the
-   last backlogged feature.
-2. Consider a follow-up plan for e2e tests in CI, once the current
+1. Merge `participant-selected-part` into `main` (all tasks complete,
+   full client vitest + CT suites pass, no regressions).
+2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+   available (installed `3c72550`, source at `0692443`).
+3. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-3. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
+4. Not blocking: `datamodel.md`'s duplicated percussion-detection claim,
    the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and whether `infrastructure.md`'s
    container diagram should include CI at all.
