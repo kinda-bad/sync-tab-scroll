@@ -39,12 +39,12 @@ status: in-progress
   "fixes" by adding it back without re-reading the reasoning.
 
 ## Phase 2: Verification
-- [ ] T006 Push this branch to the remote and confirm via `gh run list`/
+- [x] T006 Push this branch to the remote and confirm via `gh run list`/
   `gh run view` (or the GitHub Actions UI) that the workflow actually
   triggers and every step passes — this is the real acceptance test; a
   workflow file that only parses/typechecks isn't sufficient evidence it
   works end-to-end on GitHub's runners.
-- [ ] T007 Deliberately introduce one breaking change (e.g. a type error
+- [x] T007 Deliberately introduce one breaking change (e.g. a type error
   in a throwaway line, or a failing test assertion), commit and push it
   to this same branch, and confirm via `gh run view` that the workflow
   actually fails red on the correct step — proving it isn't a silent

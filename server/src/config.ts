@@ -7,9 +7,6 @@ export interface ServerConfig {
   requireSongConsent: boolean;
 }
 
-// DELIBERATE-CI-BREAKAGE: temporary type error to verify T007 (workflow goes red).
-const __ci_verification_breakage: number = 'this is a string, not a number';
-
 export function loadConfig(): ServerConfig {
   return {
     port: Number(process.env.PORT ?? 6080),
