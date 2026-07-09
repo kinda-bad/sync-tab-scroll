@@ -1,13 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-tasks` approved
-`plan-railway-terraform-deployment-2026-07-09.md` and generated
-`tasks-railway-terraform-deployment-30b0.md` on branch
-`railway-terraform-deployment`). `main` is pushed and matches
-`origin/main` as of the last session. No cross-artifact contradictions
-found._
+_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-implement` completed
+`tasks-railway-terraform-deployment-30b0.md` (12/12) on branch
+`railway-terraform-deployment`). Not yet merged into `main`. No
+cross-artifact contradictions found._
 
-ARDD update available: installed `9189817`, source at `5fba0e5` — run
+ARDD update available: installed `9189817`, source at `759e03f` — run
 `/ardd-update`.
 
 ## Artifact Status
@@ -42,9 +40,11 @@ answer inline — cosmetic labeling drift, not an unresolved decision (see
 Within-Artifact Issues).
 
 ### infrastructure.md
-- `[OPEN: custom domain]` (new, `railway-terraform-deployment` plan) —
-  the Railway-assigned `*.up.railway.app` domain is sufficient for now;
-  a custom domain is deferred, not resolved by this plan.
+- `[OPEN: custom domain]` — the Railway-assigned `*.up.railway.app`
+  domain is sufficient for now (and is what's actually provisioned by
+  `infra/`'s `railway_service_domain` resource); a custom domain is
+  deferred, not resolved by the now-implemented
+  `railway-terraform-deployment` feature.
 
 ## Cross-Artifact Issues
 
@@ -82,9 +82,10 @@ Within-Artifact Issues).
 ## Constitution Compliance
 
 No violations found this pass. Principle VIII is **fully satisfied** —
-the `.env`/`.env.example` key-parity lint runs pre-commit, and typecheck
-+ the full test suite (minus e2e, deliberately deferred) run in CI on
-every push/PR to `main` (`.github/workflows/ci.yml`). The new Deployment
+the `.env`/`.env.example` key-parity lint runs pre-commit, typecheck +
+the full test suite (minus e2e, deliberately deferred) run in CI, and
+the new `CLIENT_ROOT` env var was added to both `server/.env.example`
+and `config.test.ts` alongside the code that reads it. The Deployment
 section explicitly reconciles itself with Principle VIII rather than
 conflicting (local `.env` governs dev/CI only; deployed env vars are
 Terraform-managed, a distinct mechanism for a distinct environment).
@@ -93,7 +94,7 @@ Terraform-managed, a distinct mechanism for a distinct environment).
 
 - datamodel.md — current ✅
 - infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` if
-  desired — the new Deployment section's Railway/Dockerfile/Terraform
+  desired — the Deployment section's Railway/Dockerfile/Terraform
   topology isn't reflected in the container diagram; not blocking, and
   arguably build/ops detail the diagram may not need at all)
 - ui.md — current ✅
@@ -101,55 +102,55 @@ Terraform-managed, a distinct mechanism for a distinct environment).
 ## Code-vs-Artifact Defects
 
 0 known defects — see `DEFECTS.md`, last checked 2026-07-07. A fresh full
-`/ardd-verify` pass would still be the authoritative confirmation that
-nothing has drifted since then.
+`/ardd-verify` pass would be worth running once `railway-terraform-deployment`
+merges, given the volume of new server/client code this feature added.
 
 ## Feature Backlog
 
-1 backlogged · 0 planned · 1 tasked · 12 implemented — see
+1 backlogged · 0 planned · 0 tasked · 13 implemented — see
 `.project/features/`:
-- `railway-terraform-deployment` — **tasked**. Design applied
-  (`infrastructure.md`'s Deployment section), plan approved
-  (`plan-railway-terraform-deployment-2026-07-09.md`), tasks generated
-  (`tasks-railway-terraform-deployment-30b0.md`, `status: ready`, 0/12).
-  Next step is `/ardd-implement`.
+- `railway-terraform-deployment` — **implemented**. Same-origin WS
+  client mode, server-serves-client-build static fallback, `Dockerfile`,
+  `infra/`'s Terraform config, and deployment docs (`README.md`,
+  `infra/README.md`) are all done and committed on branch
+  `railway-terraform-deployment` (not yet merged into `main`).
 - `catalog-activation-key-access` (logged 2026-07-08, still
   `backlogged`): private song catalogues on a public deployment,
   unlockable by a per-catalog activation key (a shared secret, not a
   per-user credential). A real design change to `datamodel.md`'s
   currently-single-global `CatalogSong[]` model — expect `datamodel.md`,
   `infrastructure.md`, and `ui.md` all affected, and likely overlap with
-  the Song Consent Gate and the now-designed Railway deployment (e.g.
+  the Song Consent Gate and the now-implemented Railway deployment (e.g.
   where the activation-key check would live in the deployed topology).
 
 ## In Flight
 
 Branch `railway-terraform-deployment` (current checkout, not a separate
-worktree) — `tasks-railway-terraform-deployment-30b0.md` at
-`status: ready`, 0/12 complete. 5 phases: same-origin WS client, server
-serves the client build, Dockerfile, Terraform config (`infra/`),
-documentation. Explicitly does **not** include running `terraform
-apply` — that's scoped as a manual operator step, never an automated
-task (T010 stops at `terraform validate`/`plan`). Also untracked:
-`.project/.lock` (worth a manual look; not written/removed by this
-pass).
+worktree) — `tasks-railway-terraform-deployment-30b0.md` completed,
+12/12, not yet merged into `main`. Real Docker/Terraform verification
+was done this session (Docker Desktop started locally, a real image
+built and run with a bind-mounted catalog; Terraform installed via
+Homebrew, `terraform validate` passed, `terraform plan` confirmed to
+fail only on a missing `RAILWAY_TOKEN` — no real Railway resources were
+provisioned). Also untracked: `.project/.lock` (worth a manual look; not
+written/removed by this pass).
 
 ## Recommended Next Step
 
-1. Run `/ardd-implement` to execute
-   `tasks-railway-terraform-deployment-30b0.md` (12 tasks, all on
-   `railway-terraform-deployment`). Note T010 needs a Railway API token
-   to run a real `terraform plan`; without one it falls back to
-   `terraform validate` plus a manual structural read-through.
-2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `5fba0e5`).
-3. When ready, run `/ardd-plan catalog-activation-key-access` — consider
-   doing this after (not concurrently with) the Railway work, since the
-   two likely interact.
-4. Consider a follow-up plan for e2e tests in CI, once the current
+1. Merge `railway-terraform-deployment` into `main` (all 12 tasks
+   complete, full test suites pass, real Docker build/run verified).
+2. Once merged, an operator can follow `README.md`'s "Deploying to
+   Railway" section to actually provision the deployment (requires a
+   Railway account/API token this session didn't have).
+3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+   available (installed `9189817`, source at `759e03f`).
+4. When ready, run `/ardd-plan catalog-activation-key-access` to design
+   the remaining backlogged feature.
+5. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-5. Not blocking: the `connectionStatus` naming overlap, the missing
-   `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
-   in `datamodel.md`'s Consent Record section.
+6. Not blocking: the `connectionStatus` naming overlap, the missing
+   `installCountInCursorGuard` mention, the stale `[OPEN:` labeling in
+   `datamodel.md`'s Consent Record section, and `infrastructure.md`'s
+   stale container diagram.
