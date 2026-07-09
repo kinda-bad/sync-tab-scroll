@@ -1,11 +1,13 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-08 (`/ardd-analyze`, after `fix-percussion-doc-drift`
-merged into `main`). Repo is on `main`. **Merge commit `38af718` is
-unsigned** — 1Password was locked; re-sign before pushing (e.g. `git
-commit --amend -S`). No cross-artifact contradictions found._
+_Updated: 2026-07-08 (`/ardd-analyze`, after `/ardd-feature` logged
+`catalog-activation-key-access`). Repo is on `main`, pushed to `origin`
+(all commits signed — the earlier `fix-percussion-doc-drift` merge and
+its unsigned-commit trail were re-signed via rebase and pushed this
+session). `STATUS.md` and both newly-logged feature files are staged but
+not yet committed. No cross-artifact contradictions found._
 
-ARDD update available: installed `9189817`, source at `61de0df` — run
+ARDD update available: installed `9189817`, source at `5fba0e5` — run
 `/ardd-update`.
 
 ## Artifact Status
@@ -87,32 +89,53 @@ every push/PR to `main` (`.github/workflows/ci.yml`).
 
 0 known defects — see `DEFECTS.md`, last checked 2026-07-07 (the one
 outstanding entry, the `datamodel.md` percussion-detection claim, was
-fixed this pass on `fix-percussion-doc-drift` and marked resolved in
-`DEFECTS.md`; a fresh full `/ardd-verify` pass would still be the
-authoritative confirmation that nothing else has drifted since
-2026-07-07).
+fixed on `fix-percussion-doc-drift` and marked resolved in `DEFECTS.md`;
+a fresh full `/ardd-verify` pass would still be the authoritative
+confirmation that nothing else has drifted since 2026-07-07).
 
 ## Feature Backlog
 
-0 backlogged · 0 planned · 0 tasked · 12 implemented — see
-`.project/features/`. Backlog is empty.
+2 backlogged · 0 planned · 0 tasked · 12 implemented — see
+`.project/features/`:
+- `railway-terraform-deployment` (logged 2026-07-08): deploy the system
+  to Railway with infrastructure defined and provisioned as Terraform
+  code. Expect `infrastructure.md` to gain a Deployment section, and
+  possibly a `constitution.md` touch on the Production Posture note.
+- `catalog-activation-key-access` (logged 2026-07-08): private song
+  catalogues on a public deployment, unlockable by a per-catalog
+  activation key (a shared secret, not a per-user credential — this app
+  has no auth); the host's unlocked catalogues are what session members
+  see. A real design change to `datamodel.md`'s currently-single-global
+  `CatalogSong[]` model — expect `datamodel.md`, `infrastructure.md`,
+  and `ui.md` all affected, and likely overlap with the existing Song
+  Consent Gate (public-deployment-only) and with
+  `railway-terraform-deployment`.
+
+Target either with `/ardd-plan <slug>` when ready to design.
 
 ## In Flight
 
-Nothing in flight — no other worktrees, no draft PRs. `fix-percussion-doc-drift`
-has merged. Working tree clean except an untracked `.project/.lock` (worth
-a manual look; not written/removed by this pass).
+Nothing in flight — no other worktrees, no draft PRs, `main` is pushed
+and matches `origin/main`. Working tree clean except an untracked
+`.project/.lock` (worth a manual look; not written/removed by this
+pass).
 
 ## Recommended Next Step
 
-1. Re-sign merge commit `38af718` once 1Password is unlocked (`git commit
-   --amend -S`), then push `main`.
-2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `61de0df`).
-3. Consider a follow-up plan for e2e tests in CI, once the current
+1. Commit `.project/STATUS.md` and the two new feature files
+   (`railway-terraform-deployment.md`, `catalog-activation-key-access.md`)
+   — currently staged/untracked.
+2. When ready, run `/ardd-plan <slug>` for either backlogged feature to
+   design it — `railway-terraform-deployment` and
+   `catalog-activation-key-access` likely overlap (both touch the public-
+   deployment posture), so consider whether to plan them together or in
+   sequence.
+3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+   available (installed `9189817`, source at `5fba0e5`).
+4. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-4. Not blocking: the `connectionStatus` naming overlap, the missing
+5. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
    in the Consent Record section.
