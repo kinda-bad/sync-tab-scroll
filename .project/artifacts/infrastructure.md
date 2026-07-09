@@ -1,8 +1,8 @@
 ---
 name: infrastructure
-status: stable
-last_updated: 2026-07-07
-diagram_status: current
+status: draft
+last_updated: 2026-07-09
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -528,3 +528,92 @@ submitter previews their own not-yet-consented song by running the app
 against their own local/personal deployment (the already-fully-supported,
 gate-off case) before deciding to submit it for public distribution — not
 by connecting to the public deployment itself.
+
+## Deployment (Railway + Terraform)
+
+Gives the Production Posture/Song Consent Gate sections above an actual
+deployment target: a public instance on [Railway](https://railway.app/),
+provisioned via Terraform rather than click-ops through Railway's
+dashboard. This section owns *how the system runs once deployed*;
+Production Posture and Song Consent Gate above still own the posture
+decisions (no auth, `REQUIRE_SONG_CONSENT`) this deployment target turns
+on.
+
+**Single Railway service, one process.** The server already serves the
+catalog directory statically over the same `http.Server` instance as the
+WebSocket upgrade (Song Catalog Delivery, above) — a single Dockerfile
+builds the whole pnpm workspace (client + server + `packages/shared`) and
+the server additionally serves the built client SPA (`client/dist`) as a
+static fallback route (any request not matched by `/catalog/...` or the
+WS upgrade). One Railway service, one process, one Railway-assigned port
+— deliberately not a two-service split (separate static hosting +
+separate API service): that would require the client and server to know
+each other's URLs at build time, reintroducing exactly the kind of
+environment-specific config drift Principle VIII's `.env` convention
+exists to prevent, for no benefit at this app's scale.
+
+**Client WS connection gains a same-origin production mode.**
+`client/src/ws-client.ts`'s `connect()` currently always builds
+`ws://${location.hostname}:${backendPort}`, defaulting `backendPort` to
+`'6080'` when `VITE_BACKEND_PORT` is unset — a shape that only makes
+sense for dev/e2e, where the client and backend run as separate
+processes on separate ports. It breaks under Railway's HTTPS-only,
+single-assigned-port model: there is no separate backend port to point
+at, and `ws://` (not `wss://`) would be a mixed-content failure under
+HTTPS. Production build: when `VITE_BACKEND_PORT` is unset, connect to
+`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
+instead — same-origin, no explicit port, protocol matching the page's
+own. Dev and e2e are unaffected: `playwright.config.ts`'s `webServer`
+entries and `client/.env`/`client/.env.example` continue setting
+`VITE_BACKEND_PORT` explicitly (`6080`/`6081`), taking the existing
+explicit-port branch.
+
+**Catalog content via a Railway volume.** `catalog/` is gitignored (real
+commercial `.gp` files never belong in the repo, per the existing
+local-deployment model) and Terraform has no legally-clear content to
+seed — a Railway volume is provisioned and mounted at whatever path
+`CATALOG_ROOT` points to on the deployed service, but populating it stays
+the operator's job, out-of-band, the same operator-driven model
+`pipeline.md` already documents for local catalogs (Terraform provisions
+the empty volume; it does not run the pipeline or upload songs).
+
+**`REQUIRE_SONG_CONSENT=true` by default on the deployed environment.**
+Unlike local/personal deployments (default `false`, Song Consent Gate
+above), the Railway service is a public deployment by definition —
+Terraform sets `REQUIRE_SONG_CONSENT=true` as a service environment
+variable for it, distinct from (and not overriding) the `false` default
+`server/.env.example` documents for local dev.
+
+**Terraform provider**: the community-maintained
+[`terraform-community-providers/railway`](https://registry.terraform.io/providers/terraform-community-providers/railway)
+provider — Railway has no first-party official Terraform provider as of
+this writing. Documented here as an accepted, flagged dependency risk
+(third-party-maintained, not Railway-official), not a silent assumption;
+revisit if Railway ships an official provider or this one goes
+unmaintained.
+
+**Terraform state**: a local `infra/terraform.tfstate` file, gitignored
+— no remote state backend (e.g. Terraform Cloud) is introduced. Matches
+this project's existing single-operator/self-hosted reasoning elsewhere
+in this doc (no auth, no rate limiting, fixed-interval reconnect over
+exponential backoff): one operator, one deployment, nothing to
+coordinate across. Revisit only if multiple operators ever need to
+collaborate on the same infrastructure.
+
+**Config split.** Constitution Principle VIII's `.env`/`.env.example`
+convention governs local dev and CI config only — it has no bearing on
+the deployed Railway service's environment variables, which are
+Terraform-managed (`infra/`'s `.tf` files and variables) instead. These
+are two different mechanisms for two different environments, not one
+convention extended to cover both; a value like `REQUIRE_SONG_CONSENT`
+can therefore legitimately differ between `server/.env.example`'s
+documented local default and the value Terraform sets on the deployed
+service, per the point directly above.
+
+**New repo layout**: a top-level `Dockerfile` (builds the pnpm workspace,
+runs the server) and an `infra/` directory (Terraform config: Railway
+project, service, volume, and environment variables).
+
+**`[OPEN: custom domain]`** — the Railway-assigned `*.up.railway.app`
+domain is sufficient for this deployment; a custom domain is deferred,
+not resolved by this plan.
