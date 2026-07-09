@@ -34,7 +34,7 @@ status: in-progress
 
 ## Phase 2: Server serves the client build
 
-- [ ] T003 [artifacts: infrastructure] [parallel] Write a failing test
+- [x] T003 [artifacts: infrastructure] [parallel] Write a failing test
       (constitution Principle VII) for a new server request handler,
       mirroring `server/src/catalog-static.test.ts`'s shape and
       `server/src/catalog-static.ts`'s traversal-safety pattern: given a
@@ -43,7 +43,7 @@ status: in-progress
       returns `false` (falls through, unhandled) for any `/catalog/...`
       path so the existing catalog handler keeps owning those. Confirm
       it fails before implementing (the handler doesn't exist yet).
-- [ ] T004 [artifacts: infrastructure] Implement
+- [x] T004 [artifacts: infrastructure] Implement
       `server/src/client-static.ts`, following
       `server/src/catalog-static.ts`'s exact pattern (same
       `createXRequestHandler(root)` shape, same traversal guard, same
@@ -53,7 +53,7 @@ status: in-progress
       first, then client-static, then 404) — do not touch the WS
       upgrade path. Make T003's test pass; run the full server vitest
       suite to confirm no regressions.
-- [ ] T005 [parallel] Verify manually: run `pnpm --filter client build`
+- [x] T005 [parallel] Verify manually: run `pnpm --filter client build`
       then `pnpm --filter server build`, then start the built server
       (`node server/dist/index.js`) pointed at the client's `dist/` via
       whatever config `client-static.ts` reads, and confirm the built
