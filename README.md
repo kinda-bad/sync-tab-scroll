@@ -138,6 +138,50 @@ builds the client and starts its own server/client instances on
 alternate ports (see `client/playwright.config.ts`), so it doesn't
 collide with a `pnpm dev` session you already have running.
 
+## Deploying to Railway
+
+The system deploys as a single [Railway](https://railway.app/) service:
+one container runs the server, which serves the built client SPA, the
+song catalog, and the WebSocket upgrade all on one port (see
+`.project/artifacts/infrastructure.md`'s "Deployment (Railway +
+Terraform)" section for the full design). Infrastructure is provisioned
+with Terraform (`infra/`), not through Railway's dashboard.
+
+This is a **manual, one-time setup an operator runs themselves** — no
+part of this repo's tooling or CI ever runs `terraform apply`
+automatically:
+
+1. Create a [Railway](https://railway.app/) account and generate an
+   account/workspace API token.
+2. From `infra/`:
+   ```sh
+   export RAILWAY_TOKEN=<your token>
+   terraform init
+   terraform plan
+   ```
+3. **Review the plan output carefully** — it provisions real, billable
+   Railway resources (a project, a service built from this repo's
+   `Dockerfile`, a persistent volume for catalog content, and service
+   environment variables) under your own account.
+4. If it looks right:
+   ```sh
+   terraform apply
+   ```
+
+After provisioning, the catalog volume is empty — populate it the same
+way a local/personal deployment's `catalog/` directory is populated (see
+"Adding a song," above): each song gets its own `catalog/<song-slug>/`
+directory containing its `.gp`/`.lrc`/`meta.json`. There's no upload
+mechanism or web form; content reaches the volume the same
+operator-driven, offline way it always has (`.project/artifacts/
+pipeline.md`). The deployed service also runs with
+`REQUIRE_SONG_CONSENT=true` by default (unlike a local deployment's
+`false` default) — see `.project/artifacts/datamodel.md`'s Consent
+Record section for what that requires per song.
+
+See `infra/README.md` for the Terraform provider and state-management
+tradeoffs this config makes.
+
 ## Datamodel
 
 ```mermaid

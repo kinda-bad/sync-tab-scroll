@@ -1,7 +1,7 @@
 ---
 plan: plan-railway-terraform-deployment-2026-07-09.md
 generated: 2026-07-09
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -118,7 +118,7 @@ status: in-progress
 
 ## Phase 5: Documentation
 
-- [ ] T011 [parallel] Add a "Deploying to Railway" section to
+- [x] T011 [parallel] Add a "Deploying to Railway" section to
       `README.md`, pointing at `infra/` and walking through the manual
       steps an operator runs themselves: obtain a Railway account/API
       token, `terraform init`, review `terraform plan`'s output, then
@@ -127,7 +127,7 @@ status: in-progress
       for them. Include how to populate the catalog volume after
       provisioning (matches `pipeline.md`'s existing operator-driven
       model — no new upload mechanism).
-- [ ] T012 [parallel] Add `infra/README.md` documenting: the Terraform
+- [x] T012 [parallel] Add `infra/README.md` documenting: the Terraform
       provider choice caveat (community-maintained, not Railway-
       official) and the local-state tradeoff (single-operator, no
       remote backend) — referencing `infrastructure.md`'s Deployment

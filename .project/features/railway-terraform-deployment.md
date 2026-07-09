@@ -1,6 +1,6 @@
 ---
 slug: railway-terraform-deployment
-status: tasked
+status: implemented
 logged: 2026-07-08
 plan: plan-railway-terraform-deployment-2026-07-09.md
 tasks: tasks-railway-terraform-deployment-30b0.md
