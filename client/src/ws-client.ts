@@ -156,16 +156,31 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
 }
 
 /**
+ * Builds the WS URL to connect to (infrastructure.md "Deployment (Railway +
+ * Terraform)" — Client WS connection gains a same-origin production mode).
+ *
+ * VITE_BACKEND_PORT lets dev (6080) and e2e (6081) point the built client
+ * at a separate backend instance on an explicit port, without touching
+ * source per environment (client/vite.config.ts sets the matching default
+ * for its /catalog proxy). When it's unset — the production build, e.g. on
+ * Railway, where the server serves the client build itself on one
+ * Railway-assigned port — connect same-origin instead, matching the page's
+ * own protocol (wss: under https:, ws: under http:) with no explicit port.
+ */
+export function buildWsUrl(): string {
+  const backendPort = import.meta.env.VITE_BACKEND_PORT;
+  if (backendPort) return `ws://${location.hostname}:${backendPort}`;
+  const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${scheme}://${location.host}`;
+}
+
+/**
  * Single connection entry point (constitution Principle III) — creates the
  * one WsClient every view reads through `clientStore.wsClient`, instead of
  * each view opening its own socket and session independently.
  */
 export function connect(displayName: string, joinCode?: string, participantId?: string): void {
-  // VITE_BACKEND_PORT lets dev (6080) and e2e (6081) point the built client
-  // at different backend instances without touching source per environment
-  // (client/vite.config.ts sets the matching default for its /catalog proxy).
-  const backendPort = import.meta.env.VITE_BACKEND_PORT ?? '6080';
-  const wsClient = createWsClient(`ws://${location.hostname}:${backendPort}`);
+  const wsClient = createWsClient(buildWsUrl());
   clientStore.update((s) => ({ ...s, wsClient }));
   if (joinCode) {
     wsClient.send({ type: 'session-join', code: joinCode, displayName, participantId });

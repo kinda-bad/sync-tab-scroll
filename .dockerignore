@@ -1,0 +1,25 @@
+node_modules
+dist
+.env
+.git
+.github
+
+# Real catalog/test content never belongs in the image — the catalog is
+# populated via a mounted volume (infrastructure.md "Deployment (Railway +
+# Terraform)"), not baked in.
+catalog/
+client/public/test/
+client/test-fixtures/
+
+# Terraform config/state — irrelevant to the runtime image.
+infra/
+
+# Project tooling/docs — irrelevant to the runtime image.
+.project/
+.claude/
+
+*storybook.log
+storybook-static
+client/playwright/.cache/
+client/test-results/
+client/playwright-report/

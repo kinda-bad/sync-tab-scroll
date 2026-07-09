@@ -20,3 +20,12 @@ storybook-static
 client/playwright/.cache/
 client/test-results/
 client/playwright-report/
+
+# Local Terraform state and provider cache (infrastructure.md "Deployment
+# (Railway + Terraform)" — local state, gitignored, single-operator
+# posture). infra/.terraform.lock.hcl is NOT ignored — Terraform's own
+# convention is to commit the provider lock file, only the state/cache.
+infra/.terraform/
+infra/terraform.tfstate
+infra/terraform.tfstate.*
+infra/*.tfplan

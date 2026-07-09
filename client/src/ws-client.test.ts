@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@sync-tab-scroll/shared';
 import { clientStore } from './store';
 import { STORAGE_KEY } from './session-persistence';
 import { toastStore } from './toast-store';
-import { createWsClient } from './ws-client';
+import { createWsClient, buildWsUrl } from './ws-client';
 
 function fakeLocalStorage() {
   const data = new Map<string, string>();
@@ -83,6 +83,42 @@ afterEach(() => {
   // Prevent any accidental setTimeout(attachSocket, ...) scheduled by a
   // buggy implementation from firing into a later test.
   FakeWebSocket.instances = [];
+});
+
+describe('buildWsUrl', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('connects to the explicit backend port when VITE_BACKEND_PORT is set (dev/e2e)', () => {
+    vi.stubEnv('VITE_BACKEND_PORT', '6081');
+    (globalThis as unknown as { location: Partial<Location> }).location = {
+      hostname: 'localhost',
+      host: 'localhost:6000',
+      protocol: 'http:',
+    };
+    expect(buildWsUrl()).toBe('ws://localhost:6081');
+  });
+
+  it('connects same-origin over ws:// when VITE_BACKEND_PORT is unset and the page is http:', () => {
+    vi.stubEnv('VITE_BACKEND_PORT', '');
+    (globalThis as unknown as { location: Partial<Location> }).location = {
+      hostname: 'example.com',
+      host: 'example.com',
+      protocol: 'http:',
+    };
+    expect(buildWsUrl()).toBe('ws://example.com');
+  });
+
+  it('connects same-origin over wss:// when VITE_BACKEND_PORT is unset and the page is https: (Railway)', () => {
+    vi.stubEnv('VITE_BACKEND_PORT', '');
+    (globalThis as unknown as { location: Partial<Location> }).location = {
+      hostname: 'sync-tab-scroll.up.railway.app',
+      host: 'sync-tab-scroll.up.railway.app',
+      protocol: 'https:',
+    };
+    expect(buildWsUrl()).toBe('wss://sync-tab-scroll.up.railway.app');
+  });
 });
 
 describe('ws-client self-removal detection', () => {

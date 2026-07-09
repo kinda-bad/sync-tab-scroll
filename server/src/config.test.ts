@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
 
-const ENV_KEYS = ['PORT', 'CATALOG_ROOT', 'HOST_REASSIGN_GRACE_MS', 'REQUIRE_SONG_CONSENT'] as const;
+const ENV_KEYS = ['PORT', 'CATALOG_ROOT', 'HOST_REASSIGN_GRACE_MS', 'REQUIRE_SONG_CONSENT', 'CLIENT_ROOT'] as const;
 const original: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -19,16 +19,29 @@ afterEach(() => {
 });
 
 describe('loadConfig', () => {
-  it('reads PORT/CATALOG_ROOT/HOST_REASSIGN_GRACE_MS from process.env when set', () => {
+  it('reads PORT/CATALOG_ROOT/HOST_REASSIGN_GRACE_MS/CLIENT_ROOT from process.env when set', () => {
     process.env.PORT = '9999';
     process.env.CATALOG_ROOT = '/tmp/my-catalog';
     process.env.HOST_REASSIGN_GRACE_MS = '5000';
+    process.env.CLIENT_ROOT = '/tmp/my-client-dist';
 
-    expect(loadConfig()).toEqual({ port: 9999, catalogRoot: '/tmp/my-catalog', hostReassignGraceMs: 5000, requireSongConsent: false });
+    expect(loadConfig()).toEqual({
+      port: 9999,
+      catalogRoot: '/tmp/my-catalog',
+      hostReassignGraceMs: 5000,
+      requireSongConsent: false,
+      clientRoot: '/tmp/my-client-dist',
+    });
   });
 
   it('falls back to documented defaults when unset', () => {
-    expect(loadConfig()).toEqual({ port: 6080, catalogRoot: './catalog', hostReassignGraceMs: 120_000, requireSongConsent: false });
+    expect(loadConfig()).toEqual({
+      port: 6080,
+      catalogRoot: './catalog',
+      hostReassignGraceMs: 120_000,
+      requireSongConsent: false,
+      clientRoot: '../client/dist',
+    });
   });
 
   it('sets requireSongConsent to true when REQUIRE_SONG_CONSENT=true', () => {

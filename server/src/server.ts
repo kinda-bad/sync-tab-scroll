@@ -6,6 +6,7 @@ import { SessionStore } from './session-store.js';
 import { ConnectionRegistry } from './connections.js';
 import { loadCatalog } from './catalog-loader.js';
 import { createCatalogRequestHandler } from './catalog-static.js';
+import { createClientStaticRequestHandler } from './client-static.js';
 import { dispatch } from './dispatch.js';
 import { handleDisconnect } from './disconnect.js';
 import type { HandlerContext } from './handlers/context.js';
@@ -19,12 +20,18 @@ export function createServer(config: ServerConfig): WebSocketServer {
     catalog: loadCatalog(config.catalogRoot, config.requireSongConsent),
   };
 
-  // WS upgrade and the catalog's static-file serving share one http.Server
-  // (infrastructure.md "Song Catalog Delivery") instead of running as two
-  // separate listeners on two ports.
+  // WS upgrade, the catalog's static-file serving, and (in production) the
+  // built client SPA share one http.Server (infrastructure.md "Song
+  // Catalog Delivery" / "Deployment (Railway + Terraform)") instead of
+  // running as separate listeners/services. Catalog handler first, then
+  // client-static as the fallback, then 404 — client-static.ts's own
+  // /catalog/ guard means the ordering isn't load-bearing, just explicit.
   const catalogHandler = createCatalogRequestHandler(config.catalogRoot);
+  const clientStaticHandler = createClientStaticRequestHandler(config.clientRoot);
   const httpServer = http.createServer((req, res) => {
-    if (!catalogHandler(req, res)) res.writeHead(404).end();
+    if (catalogHandler(req, res)) return;
+    if (clientStaticHandler(req, res)) return;
+    res.writeHead(404).end();
   });
   httpServer.listen(config.port);
 
