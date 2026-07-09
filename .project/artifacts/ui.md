@@ -1,8 +1,8 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-07
-diagram_status: current
+last_updated: 2026-07-09
+diagram_status: stale
 ---
 
 # UI
@@ -47,7 +47,18 @@ selected for themselves; once both are set, the modal becomes dismissible
 and stays closed until reopened via the nav control. Inside it: host
 picks a song from the catalog (name + artist per entry, delivered once
 per client on session create/join — infrastructure.md, datamodel.md) via
-a simple list picker; selecting an entry broadcasts the choice to every
+a simple list picker, grouped by `Catalogue` (`catalog-activation-key-access`)
+when more than one is present — a public catalogue's songs list directly
+under its name; a private, not-yet-unlocked catalogue shows only its
+name plus a locked indicator, no song list. The host (and only the host)
+additionally sees an "Enter activation key" control on a locked
+catalogue's group header — submitting it sends `catalogue-unlock`
+(infrastructure.md); on success the group expands in place to show that
+catalogue's songs, same as if it had always been unlocked; on a wrong
+key, a toast (States, below), same terse pattern as other errors here. A
+non-host participant sees the same locked indicator with no interactive
+control — waiting on the host, same as every other host-gated action in
+this modal. Selecting an entry broadcasts the choice to every
 participant in the session so the part picker reflects the newly-selected
 song's `Session.availableParts`. Re-selecting a different song while
 participants already have parts chosen resets those choices (a part
@@ -372,7 +383,10 @@ every rule below assumes):
   showing the catalog picker only; the part picker within it appears
   once `Session.selectedSong` is set.
 - **Error**: join-by-code failure (invalid/expired code), part-not-found,
-  not-host action attempts, host-delegation/decline targeting a
+  wrong catalogue activation key (`catalog-activation-key-access` —
+  indistinguishable, by design, from any other reason a `catalogue-unlock`
+  might be declined, infrastructure.md), not-host action attempts,
+  host-delegation/decline targeting a
   participant who's no longer connected or no longer valid (a race
   between clicking a Host Transfer control and that participant's state
   changing), and requesting host while a request is already pending —

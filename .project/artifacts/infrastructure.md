@@ -244,31 +244,74 @@ session" state.
 
 ## Song Catalog Delivery
 
-The catalog (`CatalogSong[]`, loaded once at startup by `catalog-loader.ts`,
-datamodel.md) is server-global — it isn't part of any one `Session` and
-isn't re-scanned per request. A client receives the full catalog once,
-right after its `session-create`/`session-join` succeeds, as its own
-message distinct from `session-state` (which only ever carries one
-session's state, not the server-wide catalog).
+The catalog (`CatalogSong[]` grouped by `Catalogue`, loaded once at
+startup by `catalog-loader.ts`, datamodel.md) is server-global — it isn't
+part of any one `Session` and isn't re-scanned per request. A client
+receives the catalog once, right after its `session-create`/`session-join`
+succeeds, as its own message distinct from `session-state` (which only
+ever carries one session's state, not the server-wide catalog). Every
+`Catalogue`'s metadata (`id`, `name`, `public`) is always included in this
+message; a private catalogue's `CatalogSong[]` entries are withheld
+entirely from it (not merely hidden client-side) unless
+`Session.unlockedCatalogueIds` already contains that catalogue for this
+session — see Catalogue Activation Key Unlock, below, for the one case
+that re-sends this message mid-session.
 
 Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`)
-live on the server's disk under `catalog/<song-slug>/` (pipeline.md), but
-`CatalogSong` as published to a client carries a client-fetchable URL, not
-that disk path — the server exposes the catalog root as static HTTP
-content (e.g. `/catalog/<song-slug>/<file>`), and `catalog-loader.ts`
+live on the server's disk under `catalog/<song-slug>/`, or
+`catalog/<catalogue-slug>/<song-slug>/` for a song belonging to a
+non-default catalogue (pipeline.md), but `CatalogSong` as published to a
+client carries a client-fetchable URL, not that disk path — the server
+exposes the catalog root as static HTTP content (e.g.
+`/catalog/<catalogue-slug>/<song-slug>/<file>`), and `catalog-loader.ts`
 rewrites each on-disk path to its corresponding URL before the loaded
-`CatalogSong[]` is ever handed to a socket. This is the first HTTP surface
-this server exposes — until now it was WebSocket-only (`ws`) with no
-static-file serving at all; the WebSocket upgrade and the static catalog
-route share the same underlying `http.Server` instance rather than
-running as two separate listeners on two ports.
+`CatalogSong[]` is ever handed to a socket. `catalog-static.ts`'s existing
+handler needs no change for the nested layout — it already serves
+whatever's under `CATALOG_ROOT` by relative path, catalogue subdirectory
+or not. This is the first HTTP surface this server exposes — until now it
+was WebSocket-only (`ws`) with no static-file serving at all; the
+WebSocket upgrade and the static catalog route share the same underlying
+`http.Server` instance rather than running as two separate listeners on
+two ports.
 
 Song selection is host-only, following the same authorization check as
 `playback-control` (host id vs. the connection's participant id): the
 host picks a `CatalogSong.id`, which sets `Session.selectedSong` and
 `Session.availableParts` and is broadcast to all participants via the
 normal `session-state` broadcast — no separate message type is needed for
-the result, only for the host's selection action.
+the result, only for the host's selection action. Selecting a song from a
+catalogue the session hasn't unlocked is rejected as an error (mirroring
+an invalid `CatalogSong.id`) — this can only happen from a stale/tampered
+client, since an unlocked-catalogue's songs are the only ones a normal
+client ever has to pick from.
+
+## Catalogue Activation Key Unlock
+
+Host-only, same authorization pattern as song selection above. Message:
+`catalogue-unlock { catalogueId, key }`. The server looks up
+`catalogueId`'s `catalogue.json` (datamodel.md's Catalogue Activation
+Key), computes `crypto.scrypt(key, storedSalt, 64)`, and compares it to
+the stored hash with `crypto.timingSafeEqual` — not a plain `===`, to
+avoid a timing side-channel on the hash comparison itself. Rejected as an
+error (host-only violation, unknown `catalogueId`, or already-unlocked)
+before ever touching the key comparison; a wrong key is also just an
+`error` message (ui.md States), not a distinct response shape — the
+client can't tell "wrong key" from "server declined for another reason"
+today, consistent with this app's terse error-toast pattern elsewhere and
+the constitution's no-rate-limiting Production Posture (nothing here
+needs to distinguish failure reasons to a potential brute-forcer).
+
+On a correct key: `catalogueId` is appended to
+`Session.unlockedCatalogueIds`, and the server broadcasts **two**
+messages to every connected participant in the session, not one — the
+normal `session-state` broadcast (so every participant's UI reflects the
+newly-unlocked catalogue immediately) and a fresh `catalog` message
+carrying that catalogue's now-visible `CatalogSong[]` entries.
+Two messages because they're genuinely different payloads for different
+audiences by today's existing message shapes (`session-state` is
+per-session state, `catalog` is server-global song data) — introducing a
+combined message type only for this one case would duplicate what
+`session-state`/`catalog` already carry, not simplify anything.
 
 ## Tab Rendering
 

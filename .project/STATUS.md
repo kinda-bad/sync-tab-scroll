@@ -1,11 +1,14 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-09 (`/ardd-analyze`, after `railway-terraform-deployment`
-merged into `main`). Repo is on `main`. **Merge commit `b830366` is
-unsigned** — 1Password was locked; re-sign before pushing (e.g. `git
-commit --amend -S`). No cross-artifact contradictions found._
+_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-plan
+catalog-activation-key-access` drafted
+`plan-catalog-activation-key-access-2026-07-09.md` on branch
+`catalog-activation-key-access`). `main` still has 2 unsigned commits
+(the `railway-terraform-deployment` merge and its STATUS.md follow-up)
+awaiting re-signing/push from the prior session — unrelated to this
+branch. No cross-artifact contradictions found._
 
-ARDD update available: installed `9189817`, source at `759e03f` — run
+ARDD update available: installed `9189817`, source at `314183a` — run
 `/ardd-update`.
 
 ## Artifact Status
@@ -37,14 +40,14 @@ ARDD update available: installed `9189817`, source at `759e03f` — run
 These are documented defaults, not blockers. All three carry `[OPEN:
 ...]` markers in the artifact text despite already stating a resolved
 answer inline — cosmetic labeling drift, not an unresolved decision (see
-Within-Artifact Issues).
+Within-Artifact Issues). Unrelated to and untouched by this session's
+`catalog-activation-key-access` design work.
 
 ### infrastructure.md
 - `[OPEN: custom domain]` — the Railway-assigned `*.up.railway.app`
-  domain is sufficient for now (and is what's actually provisioned by
-  `infra/`'s `railway_service_domain` resource); a custom domain is
-  deferred, not resolved by the now-implemented
-  `railway-terraform-deployment` feature.
+  domain is sufficient for now; a custom domain is deferred, not
+  resolved by `railway-terraform-deployment`. Unrelated to this
+  session's `catalog-activation-key-access` design work.
 
 ## Cross-Artifact Issues
 
@@ -81,76 +84,81 @@ Within-Artifact Issues).
 
 ## Constitution Compliance
 
-No violations found this pass. Principle VIII is **fully satisfied** —
-the `.env`/`.env.example` key-parity lint runs pre-commit, typecheck +
-the full test suite (minus e2e, deliberately deferred) run in CI, and
-the new `CLIENT_ROOT` env var was added to both `server/.env.example`
-and `config.test.ts` alongside the code that reads it. The Deployment
-section explicitly reconciles itself with Principle VIII rather than
-conflicting (local `.env` governs dev/CI only; deployed env vars are
-Terraform-managed, a distinct mechanism for a distinct environment).
+No violations found this pass. `catalog-activation-key-access`'s design
+follows Principle V (Node's built-in `crypto` module for key hashing, no
+new dependency) and Principle II (`create-catalogue` mirrors
+`record-consent`'s existing CLI shape rather than introducing a new
+mechanism). Principle VIII remains fully satisfied — no new local `.env`
+keys were introduced by this session's design work.
 
 ## Diagrams
 
-- datamodel.md — current ✅
-- infrastructure.md — stale ⚠️ (run `/ardd-render infrastructure` if
-  desired — the Deployment section's Railway/Dockerfile/Terraform
-  topology isn't reflected in the container diagram; not blocking, and
-  arguably build/ops detail the diagram may not need at all)
-- ui.md — current ✅
+- datamodel.md — stale ⚠️ (new `Catalogue` entity + `CatalogSong.catalogueId`
+  + `Session.unlockedCatalogueIds`, not yet reflected in the ERD)
+- infrastructure.md — stale ⚠️ (Railway/Dockerfile/Terraform topology
+  from `railway-terraform-deployment`, not reflected in the container
+  diagram; not blocking)
+- ui.md — stale ⚠️ (new catalogue-grouped picker + host-only unlock
+  control, not yet reflected in the component hierarchy)
+
+All three are design-only right now — `catalog-activation-key-access` is
+still a `draft`-status plan, nothing implemented yet. Re-render once
+implementation lands rather than now, to avoid re-rendering twice.
 
 ## Code-vs-Artifact Defects
 
 0 known defects — see `DEFECTS.md`, last checked 2026-07-07. A fresh full
-`/ardd-verify` pass would be worth running once `railway-terraform-deployment`
-merges, given the volume of new server/client code this feature added.
+`/ardd-verify` pass would be worth running given the volume of new
+server/client code `railway-terraform-deployment` added, before this
+session's `catalog-activation-key-access` implementation adds more.
 
 ## Feature Backlog
 
-1 backlogged · 0 planned · 0 tasked · 13 implemented — see
+0 backlogged · 1 planned · 0 tasked · 13 implemented — see
 `.project/features/`:
-- `railway-terraform-deployment` — **implemented**, merged into `main`.
-  Same-origin WS client mode, server-serves-client-build static
-  fallback, `Dockerfile`, `infra/`'s Terraform config, and deployment
-  docs (`README.md`, `infra/README.md`).
-- `catalog-activation-key-access` (logged 2026-07-08, still
-  `backlogged`): private song catalogues on a public deployment,
-  unlockable by a per-catalog activation key (a shared secret, not a
-  per-user credential). A real design change to `datamodel.md`'s
-  currently-single-global `CatalogSong[]` model — expect `datamodel.md`,
-  `infrastructure.md`, and `ui.md` all affected, and likely overlap with
-  the Song Consent Gate and the now-implemented Railway deployment (e.g.
-  where the activation-key check would live in the deployed topology).
+- `catalog-activation-key-access` — design applied this session
+  (`Catalogue`/`unlockedCatalogueIds`/`catalogue-unlock`/`create-catalogue`
+  across `datamodel.md`, `infrastructure.md`, `pipeline.md`, `ui.md`);
+  plan drafted at `plan-catalog-activation-key-access-2026-07-09.md`,
+  `status: draft`. Still `backlogged` in the register (the flip to
+  `planned` happens at `/ardd-tasks` time, not `/ardd-plan` time).
+- `railway-terraform-deployment` — **implemented**, merged into `main`
+  (prior session).
 
 ## In Flight
 
-Nothing in flight — no other worktrees, no draft PRs. `railway-terraform-deployment`
-has merged. Real Docker/Terraform verification was done this session
-(Docker Desktop started locally, a real image built and run with a
-bind-mounted catalog; Terraform installed via Homebrew, `terraform
-validate` passed, `terraform plan` confirmed to fail only on a missing
-`RAILWAY_TOKEN` — no real Railway resources were provisioned). Working
-tree clean except an untracked `.project/.lock` (worth a manual look;
-not written/removed by this pass).
+Branch `catalog-activation-key-access` (current checkout, not a
+separate worktree) — `plan-catalog-activation-key-access-2026-07-09.md`
+at `status: draft`, not yet selected by `/ardd-tasks`. 5 phases / 11
+tasks: catalogue loading, `create-catalogue` CLI, session-aware catalog
+delivery, `catalogue-unlock` handler, UI. Also untracked:
+`.project/.lock` (worth a manual look; not written/removed by this
+pass).
+
+Separately, `main` still carries 2 unsigned commits from the prior
+session (`railway-terraform-deployment`'s merge `b830366` and its
+`STATUS.md` follow-up `54a99a4`) — not pushed yet, unrelated to this
+branch's work.
 
 ## Recommended Next Step
 
-1. Re-sign merge commit `b830366` once 1Password is unlocked (`git
-   commit --amend -S`), then push `main`.
-2. Once pushed, an operator can follow `README.md`'s "Deploying to
-   Railway" section to actually provision the deployment (requires a
-   Railway account/API token this session didn't have).
+1. Run `/ardd-tasks` to select
+   `plan-catalog-activation-key-access-2026-07-09.md` (flips it to
+   `approved`, flips `catalog-activation-key-access` to `tasked`), then
+   `/ardd-implement`.
+2. Separately: re-sign `main`'s 2 unsigned commits once 1Password is
+   unlocked, then push.
 3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `759e03f`).
-4. When ready, run `/ardd-plan catalog-activation-key-access` to design
-   the remaining backlogged feature.
+   available (installed `9189817`, source at `314183a`).
+4. Consider running `/ardd-verify` given the volume of code
+   `railway-terraform-deployment` added, before more implementation
+   lands on top of it.
 5. Consider a follow-up plan for e2e tests in CI, once the current
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-6. Consider running `/ardd-verify` given the volume of new server/client
-   code `railway-terraform-deployment` added.
-7. Not blocking: the `connectionStatus` naming overlap, the missing
+6. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, the stale `[OPEN:` labeling in
-   `datamodel.md`'s Consent Record section, and `infrastructure.md`'s
-   stale container diagram.
+   `datamodel.md`'s Consent Record section, and the three stale
+   diagrams (datamodel/infrastructure/ui) — worth a single
+   `/ardd-render` pass once `catalog-activation-key-access` implements.
