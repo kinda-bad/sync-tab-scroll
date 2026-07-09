@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Same-origin WS client
 
-- [ ] T001 [artifacts: infrastructure] [parallel] Write a failing test
+- [x] T001 [artifacts: infrastructure] [parallel] Write a failing test
       (constitution Principle VII: test-first) for
       `client/src/ws-client.ts`'s WS URL-building logic. Add cases
       covering the new same-origin production branch: when
@@ -19,7 +19,7 @@ status: in-progress
       to `ws://${location.hostname}:${backendPort}`) covered too, so the
       test proves both branches. Confirm the new case fails before
       implementing.
-- [ ] T002 [artifacts: infrastructure] Implement the same-origin branch
+- [x] T002 [artifacts: infrastructure] Implement the same-origin branch
       in `client/src/ws-client.ts`'s `connect()`: when
       `import.meta.env.VITE_BACKEND_PORT` is unset, build the WS URL from
       `location.protocol`/`location.host` with no explicit port instead
