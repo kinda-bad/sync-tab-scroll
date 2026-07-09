@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: catalog-activation-key-access
 created: 2026-07-09
 features: [catalog-activation-key-access]

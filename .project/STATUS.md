@@ -1,14 +1,14 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-plan
-catalog-activation-key-access` drafted
-`plan-catalog-activation-key-access-2026-07-09.md` on branch
+_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-tasks` approved
+`plan-catalog-activation-key-access-2026-07-09.md` and generated
+`tasks-catalog-activation-key-access-436e.md` on branch
 `catalog-activation-key-access`). `main` still has 2 unsigned commits
 (the `railway-terraform-deployment` merge and its STATUS.md follow-up)
-awaiting re-signing/push from the prior session — unrelated to this
+awaiting re-signing/push from an earlier session — unrelated to this
 branch. No cross-artifact contradictions found._
 
-ARDD update available: installed `9189817`, source at `314183a` — run
+ARDD update available: installed `9189817`, source at `1617960` — run
 `/ardd-update`.
 
 ## Artifact Status
@@ -114,42 +114,41 @@ session's `catalog-activation-key-access` implementation adds more.
 
 ## Feature Backlog
 
-0 backlogged · 1 planned · 0 tasked · 13 implemented — see
+0 backlogged · 0 planned · 1 tasked · 13 implemented — see
 `.project/features/`:
-- `catalog-activation-key-access` — design applied this session
-  (`Catalogue`/`unlockedCatalogueIds`/`catalogue-unlock`/`create-catalogue`
-  across `datamodel.md`, `infrastructure.md`, `pipeline.md`, `ui.md`);
-  plan drafted at `plan-catalog-activation-key-access-2026-07-09.md`,
-  `status: draft`. Still `backlogged` in the register (the flip to
-  `planned` happens at `/ardd-tasks` time, not `/ardd-plan` time).
+- `catalog-activation-key-access` — **tasked**. Design applied, plan
+  approved (`plan-catalog-activation-key-access-2026-07-09.md`), tasks
+  generated (`tasks-catalog-activation-key-access-436e.md`,
+  `status: ready`, 0/11). Next step is `/ardd-implement`.
 - `railway-terraform-deployment` — **implemented**, merged into `main`
   (prior session).
 
 ## In Flight
 
 Branch `catalog-activation-key-access` (current checkout, not a
-separate worktree) — `plan-catalog-activation-key-access-2026-07-09.md`
-at `status: draft`, not yet selected by `/ardd-tasks`. 5 phases / 11
-tasks: catalogue loading, `create-catalogue` CLI, session-aware catalog
-delivery, `catalogue-unlock` handler, UI. Also untracked:
-`.project/.lock` (worth a manual look; not written/removed by this
-pass).
+separate worktree) — `tasks-catalog-activation-key-access-436e.md` at
+`status: ready`, 0/11 complete. 5 phases: catalogue loading,
+`create-catalogue` CLI, session-aware catalog delivery,
+`catalogue-unlock` handler, UI. Also untracked: `.project/.lock` (worth
+a manual look; not written/removed by this pass).
 
-Separately, `main` still carries 2 unsigned commits from the prior
+Separately, `main` still carries 2 unsigned commits from an earlier
 session (`railway-terraform-deployment`'s merge `b830366` and its
 `STATUS.md` follow-up `54a99a4`) — not pushed yet, unrelated to this
 branch's work.
 
 ## Recommended Next Step
 
-1. Run `/ardd-tasks` to select
-   `plan-catalog-activation-key-access-2026-07-09.md` (flips it to
-   `approved`, flips `catalog-activation-key-access` to `tasked`), then
-   `/ardd-implement`.
+1. Run `/ardd-implement` to execute
+   `tasks-catalog-activation-key-access-436e.md` (11 tasks, all on
+   `catalog-activation-key-access`). Note T002 is a real breaking
+   change to `HandlerContext.catalog`'s type — expect it to ripple into
+   `song-select.ts`/`session-create.ts`/`session-join.ts`, as the task
+   itself calls out.
 2. Separately: re-sign `main`'s 2 unsigned commits once 1Password is
    unlocked, then push.
 3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `314183a`).
+   available (installed `9189817`, source at `1617960`).
 4. Consider running `/ardd-verify` given the volume of code
    `railway-terraform-deployment` added, before more implementation
    lands on top of it.
