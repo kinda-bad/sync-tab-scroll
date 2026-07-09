@@ -65,7 +65,7 @@ status: in-progress
 
 ## Phase 3: Dockerfile
 
-- [ ] T006 [artifacts: infrastructure] Write a top-level `Dockerfile`:
+- [x] T006 [artifacts: infrastructure] Write a top-level `Dockerfile`:
       multi-stage build — an install/build stage that runs `pnpm install`
       and `pnpm build` for the whole workspace (`client`, `server`,
       `packages/shared`), and a final runtime stage that runs `node
@@ -73,7 +73,7 @@ status: in-progress
       `packages/shared`'s build output copied in alongside it. No test
       task for this one — it's a build/ops artifact verified by actually
       building and running it (T007), not unit-testable.
-- [ ] T007 Verify: `docker build -t sync-tab-scroll .` succeeds locally.
+- [x] T007 Verify: `docker build -t sync-tab-scroll .` succeeds locally.
       Run the resulting image with `PORT`, `CATALOG_ROOT` env vars set
       and a local `catalog/` directory bind-mounted at `CATALOG_ROOT`;
       confirm the app serves and functions correctly through the
