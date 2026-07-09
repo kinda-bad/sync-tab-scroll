@@ -1,9 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-implement` completed
-`tasks-railway-terraform-deployment-30b0.md` (12/12) on branch
-`railway-terraform-deployment`). Not yet merged into `main`. No
-cross-artifact contradictions found._
+_Updated: 2026-07-09 (`/ardd-analyze`, after `railway-terraform-deployment`
+merged into `main`). Repo is on `main`. **Merge commit `b830366` is
+unsigned** — 1Password was locked; re-sign before pushing (e.g. `git
+commit --amend -S`). No cross-artifact contradictions found._
 
 ARDD update available: installed `9189817`, source at `759e03f` — run
 `/ardd-update`.
@@ -109,11 +109,10 @@ merges, given the volume of new server/client code this feature added.
 
 1 backlogged · 0 planned · 0 tasked · 13 implemented — see
 `.project/features/`:
-- `railway-terraform-deployment` — **implemented**. Same-origin WS
-  client mode, server-serves-client-build static fallback, `Dockerfile`,
-  `infra/`'s Terraform config, and deployment docs (`README.md`,
-  `infra/README.md`) are all done and committed on branch
-  `railway-terraform-deployment` (not yet merged into `main`).
+- `railway-terraform-deployment` — **implemented**, merged into `main`.
+  Same-origin WS client mode, server-serves-client-build static
+  fallback, `Dockerfile`, `infra/`'s Terraform config, and deployment
+  docs (`README.md`, `infra/README.md`).
 - `catalog-activation-key-access` (logged 2026-07-08, still
   `backlogged`): private song catalogues on a public deployment,
   unlockable by a per-catalog activation key (a shared secret, not a
@@ -125,21 +124,20 @@ merges, given the volume of new server/client code this feature added.
 
 ## In Flight
 
-Branch `railway-terraform-deployment` (current checkout, not a separate
-worktree) — `tasks-railway-terraform-deployment-30b0.md` completed,
-12/12, not yet merged into `main`. Real Docker/Terraform verification
-was done this session (Docker Desktop started locally, a real image
-built and run with a bind-mounted catalog; Terraform installed via
-Homebrew, `terraform validate` passed, `terraform plan` confirmed to
-fail only on a missing `RAILWAY_TOKEN` — no real Railway resources were
-provisioned). Also untracked: `.project/.lock` (worth a manual look; not
-written/removed by this pass).
+Nothing in flight — no other worktrees, no draft PRs. `railway-terraform-deployment`
+has merged. Real Docker/Terraform verification was done this session
+(Docker Desktop started locally, a real image built and run with a
+bind-mounted catalog; Terraform installed via Homebrew, `terraform
+validate` passed, `terraform plan` confirmed to fail only on a missing
+`RAILWAY_TOKEN` — no real Railway resources were provisioned). Working
+tree clean except an untracked `.project/.lock` (worth a manual look;
+not written/removed by this pass).
 
 ## Recommended Next Step
 
-1. Merge `railway-terraform-deployment` into `main` (all 12 tasks
-   complete, full test suites pass, real Docker build/run verified).
-2. Once merged, an operator can follow `README.md`'s "Deploying to
+1. Re-sign merge commit `b830366` once 1Password is unlocked (`git
+   commit --amend -S`), then push `main`.
+2. Once pushed, an operator can follow `README.md`'s "Deploying to
    Railway" section to actually provision the deployment (requires a
    Railway account/API token this session didn't have).
 3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
@@ -150,7 +148,9 @@ written/removed by this pass).
    typecheck+CT+vitest jobs have proven stable for a while (deliberately
    deferred — see `plan-github-actions-ci-workflow-2026-07-07.md`'s Open
    Questions).
-6. Not blocking: the `connectionStatus` naming overlap, the missing
+6. Consider running `/ardd-verify` given the volume of new server/client
+   code `railway-terraform-deployment` added.
+7. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, the stale `[OPEN:` labeling in
    `datamodel.md`'s Consent Record section, and `infrastructure.md`'s
    stale container diagram.
