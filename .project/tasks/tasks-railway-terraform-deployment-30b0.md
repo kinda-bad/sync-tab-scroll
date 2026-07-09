@@ -83,7 +83,7 @@ status: in-progress
 
 ## Phase 4: Terraform config
 
-- [ ] T008 [artifacts: infrastructure] Write `infra/` Terraform config:
+- [x] T008 [artifacts: infrastructure] Write `infra/` Terraform config:
       a provider block pinned to
       `terraform-community-providers/railway` (infrastructure.md's
       Deployment section — flagged as a community-maintained, non-
@@ -98,11 +98,11 @@ status: in-progress
       documented default unless the operator wants to override it via a
       Terraform variable. State stays local (`infra/terraform.tfstate`)
       — no remote backend configured.
-- [ ] T009 [parallel] Add `infra/terraform.tfstate`, `infra/*.tfstate.*`,
+- [x] T009 [parallel] Add `infra/terraform.tfstate`, `infra/*.tfstate.*`,
       and `infra/.terraform/` to the root `.gitignore`, alongside the
       existing `.env`/`catalog/` entries (same local-artifact-not-for-
       the-repo reasoning already documented there).
-- [ ] T010 Verify: run `terraform validate` against `infra/`'s config —
+- [x] T010 Verify: run `terraform validate` against `infra/`'s config —
       must succeed. Run `terraform plan` (read-only; never `terraform
       apply` — that provisions real, billable Railway resources under
       the operator's own account and is explicitly out of scope for this
