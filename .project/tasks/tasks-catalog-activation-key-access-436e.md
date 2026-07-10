@@ -113,7 +113,7 @@ catalogue set.
 
 ## Phase 4: `catalogue-unlock` message
 
-- [ ] T007 [artifacts: datamodel, infrastructure] Write a failing test
+- [x] T007 [artifacts: datamodel, infrastructure] Write a failing test
       (constitution Principle VII) for a new
       `server/src/handlers/catalogue-unlock.ts` handler, mirroring
       `song-select.ts`'s test shape (`song-select.test.ts`). Add
@@ -129,7 +129,7 @@ catalogue set.
       `catalogueId` with no `catalogue.json` (i.e. actually public, or
       already in `unlockedCatalogueIds`) is also an `error`, distinct
       message text but same shape.
-- [ ] T008 [artifacts: datamodel, infrastructure] Implement the
+- [x] T008 [artifacts: datamodel, infrastructure] Implement the
       `catalogue-unlock` handler: look up the catalogue's stored
       `{ salt, hash }` (needs `ctx.catalog.catalogues` to carry the raw
       salt/hash for private catalogues server-side — extend the

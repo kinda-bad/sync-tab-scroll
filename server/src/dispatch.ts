@@ -11,6 +11,7 @@ import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
 import { handleCountInSet } from './handlers/count-in-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
+import { handleCatalogueUnlock } from './handlers/catalogue-unlock.js';
 import { handlePlaybackTickReport } from './handlers/playback-tick-report.js';
 import { handleHostDelegate } from './handlers/host-delegate.js';
 import { handleRequestHost } from './handlers/request-host.js';
@@ -42,6 +43,8 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleCountInSet(ctx, socket, message);
     case 'song-select':
       return handleSongSelect(ctx, socket, message);
+    case 'catalogue-unlock':
+      return handleCatalogueUnlock(ctx, socket, message);
     case 'playback-tick-report':
       return handlePlaybackTickReport(ctx, socket, message);
     case 'host-delegate':
