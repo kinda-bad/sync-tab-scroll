@@ -1,7 +1,7 @@
 ---
 plan: plan-catalog-activation-key-access-2026-07-09.md
 generated: 2026-07-09
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -178,7 +178,7 @@ mid-session and see its songs appear in a subsequent `catalog` message.
       UI implementation task, not a test task in the Phase Breakdown's own
       terms) — write it against the real T009 implementation, confirm it
       passes.
-- [ ] T011 Manual verify: start the server with one public and one
+- [x] T011 Manual verify: start the server with one public and one
       private catalogue in its `CATALOG_ROOT` (use `create-catalogue`,
       T004, to set up the private one), open two browser sessions (one
       host, one participant) via `pnpm dev`. Confirm: the participant

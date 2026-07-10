@@ -1,6 +1,6 @@
 ---
 slug: catalog-activation-key-access
-status: tasked
+status: implemented
 logged: 2026-07-08
 plan: plan-catalog-activation-key-access-2026-07-09.md
 tasks: tasks-catalog-activation-key-access-436e.md
