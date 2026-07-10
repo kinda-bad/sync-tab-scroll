@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { loadCatalog } from './catalog-loader.js';
+import type { CatalogSong } from '@sync-tab-scroll/shared';
+import { loadCatalog, visibleCatalog } from './catalog-loader.js';
+import type { LoadedCatalog } from './catalog-loader.js';
 
 let catalogRoot: string;
 
@@ -181,5 +183,52 @@ describe('loadCatalog catalogue discovery', () => {
     const { songs } = loadCatalog(catalogRoot);
 
     expect(songs.find((s) => s.id === 'creep')?.gpFilePath).toBe('/catalog/premium-pack/creep/song.gp');
+  });
+});
+
+function song(id: string, catalogueId: string): CatalogSong {
+  return {
+    id,
+    catalogueId,
+    name: id,
+    artist: 'Artist',
+    gpFilePath: `/catalog/${id}/song.gp`,
+    parts: [],
+    lyricsLrc: null,
+    lyricsTrackIndex: null,
+    lyricsLineIndex: null,
+    lyricLineBreaks: null,
+  };
+}
+
+const mixedCatalog: LoadedCatalog = {
+  catalogues: [
+    { id: 'default', name: 'default', public: true },
+    { id: 'premium-pack', name: 'Premium Pack', public: false, salt: 'ab12', hash: 'deadbeef' },
+  ],
+  songs: [song('creep', 'default'), song('bonus', 'premium-pack')],
+};
+
+describe('visibleCatalog', () => {
+  it('excludes a private catalogue\'s songs but keeps its metadata for a session that has not unlocked it', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: [] });
+
+    expect(result.songs.map((s) => s.id)).toEqual(['creep']);
+    expect(result.catalogues.map((c) => c.id)).toEqual(['default', 'premium-pack']);
+  });
+
+  it('includes a private catalogue\'s songs once the session has unlocked it', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: ['premium-pack'] });
+
+    expect(result.songs.map((s) => s.id).sort()).toEqual(['bonus', 'creep']);
+  });
+
+  it('never leaks salt/hash in the returned catalogue metadata', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: ['premium-pack'] });
+
+    for (const c of result.catalogues) {
+      expect(c).not.toHaveProperty('salt');
+      expect(c).not.toHaveProperty('hash');
+    }
   });
 });

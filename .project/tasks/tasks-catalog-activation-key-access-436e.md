@@ -78,7 +78,7 @@ that Phase 1's loader (T002) correctly reads as private.
 
 ## Phase 3: Session-aware catalog delivery
 
-- [ ] T005 [artifacts: infrastructure] Write a failing test (constitution
+- [x] T005 [artifacts: infrastructure] Write a failing test (constitution
       Principle VII) for a new pure function (e.g.
       `server/src/catalog-loader.ts`'s `visibleCatalog(catalog, session)`
       or similar — co-locate near `loadCatalog`, same file, since it
@@ -91,7 +91,7 @@ that Phase 1's loader (T002) correctly reads as private.
       `unlockedCatalogueIds`. Cover: a session with `unlockedCatalogueIds:
       []` excludes a private catalogue's songs but keeps its metadata; a
       session that has already unlocked it includes those songs too.
-- [ ] T006 [artifacts: infrastructure] Implement `visibleCatalog` (make
+- [x] T006 [artifacts: infrastructure] Implement `visibleCatalog` (make
       T005 pass), then use it everywhere a `catalog` message is currently
       sent: `server/src/handlers/session-create.ts` and
       `server/src/handlers/session-join.ts`'s

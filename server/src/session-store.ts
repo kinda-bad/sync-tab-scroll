@@ -38,6 +38,7 @@ export class SessionStore {
       lobbyCursorTick: null,
       spotlightMode: false,
       pendingHostRequest: null,
+      unlockedCatalogueIds: [],
     };
     this.sessions.set(code, session);
     return session;

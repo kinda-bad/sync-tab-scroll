@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { CatalogPart, CatalogSong, Catalogue } from '@sync-tab-scroll/shared';
+import type { CatalogPart, CatalogSong, Catalogue, Session } from '@sync-tab-scroll/shared';
 import { hasConsent } from './consent.js';
 
 const DEFAULT_CATALOGUE_ID = 'default';
@@ -183,6 +183,25 @@ export function loadCatalog(catalogRoot: string, requireSongConsent = false): Lo
   if (hasDefaultSong) {
     catalogues.unshift({ id: DEFAULT_CATALOGUE_ID, name: DEFAULT_CATALOGUE_ID, public: true });
   }
+
+  return { catalogues, songs };
+}
+
+/**
+ * Filters the server-global catalogue set down to what a single session may
+ * actually receive (infrastructure.md Song Catalog Delivery). Every
+ * catalogue's client-safe metadata (`id`/`name`/`public`) is always
+ * included — a locked catalogue's *name* is still shown in the picker — but
+ * the raw `salt`/`hash` are stripped, never reaching a client. A song is
+ * included only if its catalogue is public or the session has already
+ * unlocked it (`Session.unlockedCatalogueIds`).
+ */
+export function visibleCatalog(catalog: LoadedCatalog, session: Pick<Session, 'unlockedCatalogueIds'>): { catalogues: Catalogue[]; songs: CatalogSong[] } {
+  const unlocked = new Set(session.unlockedCatalogueIds);
+  const publicIds = new Set(catalog.catalogues.filter((c) => c.public).map((c) => c.id));
+
+  const catalogues: Catalogue[] = catalog.catalogues.map(({ id, name, public: isPublic }) => ({ id, name, public: isPublic }));
+  const songs = catalog.songs.filter((s) => publicIds.has(s.catalogueId) || unlocked.has(s.catalogueId));
 
   return { catalogues, songs };
 }

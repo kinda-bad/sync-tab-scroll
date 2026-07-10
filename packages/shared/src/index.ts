@@ -86,4 +86,6 @@ export interface Session {
   spotlightMode: boolean;
   /** Participant.id of a non-host asking to become host; null when no request is outstanding. See infrastructure.md Host Transfer. */
   pendingHostRequest: string | null;
+  /** `Catalogue.id` values this session's host has successfully unlocked (`catalogue-unlock`, infrastructure.md). Only ever private catalogue ids; public catalogues need no entry. Starts empty; per-session, never persisted. */
+  unlockedCatalogueIds: string[];
 }

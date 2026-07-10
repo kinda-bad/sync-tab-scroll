@@ -39,6 +39,7 @@ describe('leaveSession', () => {
         lobbyCursorTick: null,
         spotlightMode: false,
         pendingHostRequest: null,
+        unlockedCatalogueIds: [],
       },
       selfParticipantId: 'p1',
       catalog: [],

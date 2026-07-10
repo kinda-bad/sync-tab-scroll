@@ -1,4 +1,4 @@
-import type { CatalogSong, ReadinessStatus, SelectedPart, Session } from './index.js';
+import type { CatalogSong, Catalogue, ReadinessStatus, SelectedPart, Session } from './index.js';
 
 export type ClientMessage =
   | { type: 'session-create'; displayName: string }
@@ -18,5 +18,5 @@ export type ClientMessage =
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }
-  | { type: 'catalog'; songs: CatalogSong[] }
+  | { type: 'catalog'; catalogues: Catalogue[]; songs: CatalogSong[] }
   | { type: 'error'; message: string };

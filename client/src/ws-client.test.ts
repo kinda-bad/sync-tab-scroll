@@ -67,6 +67,7 @@ function baseSession(participants: Session['participants']): Session {
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,
+    unlockedCatalogueIds: [],
   };
 }
 

@@ -30,6 +30,6 @@ describe('session-create', () => {
 
     expect(sent).toHaveLength(2);
     expect(sent[0]).toMatchObject({ type: 'session-state', selfParticipantId: conn!.participantId });
-    expect(sent[1]).toEqual({ type: 'catalog', songs: [] });
+    expect(sent[1]).toEqual({ type: 'catalog', catalogues: [], songs: [] });
   });
 });
