@@ -115,3 +115,71 @@ describe('loadCatalog', () => {
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
 });
+
+/** Writes a song directory nested one level inside a catalogue directory. */
+function writeNestedSong(catalogueSlug: string, dirName: string) {
+  const songDir = path.join(catalogRoot, catalogueSlug, dirName);
+  fs.mkdirSync(songDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(songDir, 'meta.json'),
+    JSON.stringify({
+      name: 'Creep',
+      artist: 'Radiohead',
+      parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+      lyricsTrackIndex: 0,
+      lyricsLineIndex: 0,
+      lyricLineBreaks: [4],
+    }),
+  );
+  fs.writeFileSync(path.join(songDir, 'song.gp'), '');
+  return songDir;
+}
+
+describe('loadCatalog catalogue discovery', () => {
+  it('tags a flat song directory with catalogueId "default" and lists a public "default" Catalogue', () => {
+    writeSong('creep');
+
+    const { catalogues, songs } = loadCatalog(catalogRoot);
+
+    expect(songs).toHaveLength(1);
+    expect(songs[0].catalogueId).toBe('default');
+    expect(catalogues).toContainEqual({ id: 'default', name: 'default', public: true });
+  });
+
+  it('treats a subdirectory containing catalogue.json as a private Catalogue and tags its nested songs', () => {
+    fs.mkdirSync(path.join(catalogRoot, 'premium-pack'), { recursive: true });
+    fs.writeFileSync(
+      path.join(catalogRoot, 'premium-pack', 'catalogue.json'),
+      JSON.stringify({ name: 'Premium Pack', salt: 'ab12', hash: 'deadbeef' }),
+    );
+    writeNestedSong('premium-pack', 'creep');
+
+    const { catalogues, songs } = loadCatalog(catalogRoot);
+
+    const premium = catalogues.find((c) => c.id === 'premium-pack');
+    expect(premium).toMatchObject({ id: 'premium-pack', name: 'Premium Pack', public: false });
+    expect(songs.map((s) => ({ id: s.id, catalogueId: s.catalogueId }))).toContainEqual({ id: 'creep', catalogueId: 'premium-pack' });
+  });
+
+  it('treats a subdirectory with nested song dirs but no catalogue.json as a public Catalogue', () => {
+    writeNestedSong('free-pack', 'creep');
+
+    const { catalogues, songs } = loadCatalog(catalogRoot);
+
+    const free = catalogues.find((c) => c.id === 'free-pack');
+    expect(free).toMatchObject({ id: 'free-pack', public: true });
+    expect(songs.find((s) => s.id === 'creep')?.catalogueId).toBe('free-pack');
+  });
+
+  it('rewrites a nested song\'s gpFilePath to include the catalogue slug', () => {
+    writeNestedSong('premium-pack', 'creep');
+    fs.writeFileSync(
+      path.join(catalogRoot, 'premium-pack', 'catalogue.json'),
+      JSON.stringify({ name: 'Premium Pack', salt: 'ab12', hash: 'deadbeef' }),
+    );
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs.find((s) => s.id === 'creep')?.gpFilePath).toBe('/catalog/premium-pack/creep/song.gp');
+  });
+});

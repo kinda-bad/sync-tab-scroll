@@ -1,14 +1,14 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-09 (`/ardd-analyze`, after `/ardd-tasks` approved
-`plan-catalog-activation-key-access-2026-07-09.md` and generated
-`tasks-catalog-activation-key-access-436e.md` on branch
+_Updated: 2026-07-10 (`/ardd-analyze` re-run; no disk state changed since
+the 2026-07-09 pass that approved `plan-catalog-activation-key-access-2026-07-09.md`
+and generated `tasks-catalog-activation-key-access-436e.md` on branch
 `catalog-activation-key-access`). `main` still has 2 unsigned commits
 (the `railway-terraform-deployment` merge and its STATUS.md follow-up)
 awaiting re-signing/push from an earlier session — unrelated to this
 branch. No cross-artifact contradictions found._
 
-ARDD update available: installed `9189817`, source at `1617960` — run
+ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
 
 ## Artifact Status
@@ -148,7 +148,7 @@ branch's work.
 2. Separately: re-sign `main`'s 2 unsigned commits once 1Password is
    unlocked, then push.
 3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `1617960`).
+   available (installed `9189817`, source at `8c68d84`).
 4. Consider running `/ardd-verify` given the volume of code
    `railway-terraform-deployment` added, before more implementation
    lands on top of it.

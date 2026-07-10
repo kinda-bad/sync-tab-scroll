@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Catalogue loading
 
-- [ ] T001 [artifacts: datamodel] Write a failing test (constitution
+- [x] T001 [artifacts: datamodel] Write a failing test (constitution
       Principle VII: test-first) for `server/src/catalog-loader.ts`'s new
       catalogue-discovery logic. Add `Catalogue` and `catalogueId` to
       `packages/shared/src/`'s types first (a new `Catalogue { id: string;
