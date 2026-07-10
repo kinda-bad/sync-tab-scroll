@@ -1,9 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze`, terminal step of `/ardd-implement`
-completing `tasks-catalog-activation-key-access-436e.md` — all 11 tasks
-done on branch `catalog-activation-key-access`, which is 12 commits ahead
-of `main` and not yet merged. No cross-artifact contradictions found.)_
+_Updated: 2026-07-10 (`/ardd-analyze` after merging
+`catalog-activation-key-access` into `main` — all 11 tasks done, the
+feature branch merged via a signed `--no-ff` merge (`f354caa`) and `main`
+typechecks clean. No cross-artifact contradictions found. Nothing in
+flight.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -113,45 +114,38 @@ before it) added.
 
 0 backlogged · 0 planned · 0 tasked · 14 implemented — see
 `.project/features/`:
-- `catalog-activation-key-access` — **implemented** on branch
-  `catalog-activation-key-access` (11/11 tasks,
+- `catalog-activation-key-access` — **implemented** and merged into
+  `main` (`f354caa`, 11/11 tasks,
   `tasks-catalog-activation-key-access-436e.md` at `status: completed`).
-  Not yet merged into `main`.
 - All 13 other features previously implemented and merged.
+
+Verified end-to-end before merge against a live server built from real
+`create-catalogue` output: a private catalogue's songs are withheld until
+unlocked, a wrong key is rejected with no state change or broadcast, and a
+correct key unlocks the catalogue so both the host and an already-joined
+participant receive the widened catalog without rejoining (11/11
+protocol-level checks; UI control visibility covered by the T010 Playwright
+CT suite). The literal two-browser `pnpm dev` walkthrough (T011's wording)
+was not driven through Chrome — the dev client runs on port 6000, which
+Chrome blocks — so the purely-visual pass remains available to run manually
+via the preview build (port 6001) if desired.
 
 ## In Flight
 
-Branch `catalog-activation-key-access` (current checkout, not a separate
-worktree) — 12 commits ahead of `main`, all signed and verified,
-implementing `catalog-activation-key-access` end to end. The tasks file
-is `completed` and the feature is flipped to `implemented`; both flips
-ride this branch and reach `main` only on merge. Nothing else is in
-flight (no sibling worktrees, no open draft PRs).
-
-Verified end-to-end before completion against a live server built from
-real `create-catalogue` output: a private catalogue's songs are withheld
-until unlocked, a wrong key is rejected with no state change or broadcast,
-and a correct key unlocks the catalogue so both the host and an
-already-joined participant receive the widened catalog without rejoining
-(11/11 protocol-level checks; UI control visibility covered by the T010
-Playwright CT suite). The literal two-browser `pnpm dev` walkthrough
-(T011's wording) was not driven through Chrome — the dev client runs on
-port 6000, which Chrome blocks — so the purely-visual pass remains
-available to run manually via the preview build (port 6001) if desired.
+Nothing in flight — no sibling worktrees, no open draft PRs. The
+`catalog-activation-key-access` branch has merged into `main`; the local
+branch ref can be deleted at leisure.
 
 ## Recommended Next Step
 
-1. Merge `catalog-activation-key-access` into `main` — this lands the
-   code and all its state (completed tasks file, `implemented` feature
-   flip) atomically. All 12 commits are signed.
-2. Run `/ardd-render datamodel`, `/ardd-render infrastructure`, and
+1. Run `/ardd-render datamodel`, `/ardd-render infrastructure`, and
    `/ardd-render ui` (or a single pass) now that the picker/unlock/
    catalogue-entity work has landed and the three diagrams are stale.
-3. Consider `/ardd-verify` given the volume of new code across
+2. Consider `/ardd-verify` given the volume of new code across
    `server`, `client`, `packages/shared`, and `packages/pipeline`.
-4. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
-5. Not blocking: the `connectionStatus` naming overlap, the missing
+4. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
    in `datamodel.md`'s Consent Record section — worth folding into a
    future `/ardd-refine`/`/ardd-verify` pass.
