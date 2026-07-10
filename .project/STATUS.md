@@ -1,10 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze` after merging
-`catalog-activation-key-access` into `main` — all 11 tasks done, the
-feature branch merged via a signed `--no-ff` merge (`f354caa`) and `main`
-typechecks clean. No cross-artifact contradictions found. Nothing in
-flight.)_
+_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-verify`'s full
+code-vs-artifact pass, which followed the `catalog-activation-key-access`
+merge and diagram re-render. Diagrams now current; one broken-contract
+defect recorded in `DEFECTS.md`. No cross-artifact contradictions.
+Nothing in flight.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -53,8 +53,9 @@ Within-Artifact Issues). Untouched by this session's
   per-participant socket state) share a name but describe different
   concepts. Not contradictory, just worth disambiguating later.
 - [GAP] `ui.md`/`infrastructure.md` still don't mention
-  `installCountInCursorGuard` (`client/src/playback-sync.ts`). Not a
-  contradiction, just drift for a future `/ardd-verify` to record.
+  `installCountInCursorGuard` (`client/src/playback-sync.ts`). An omission,
+  not a code-vs-artifact contradiction — the 2026-07-10 `/ardd-verify` pass
+  did not record it as a defect.
 - [MINOR] The feature register's pre-convention "Metronome toggle"/
   "Count-in toggle" entries still carry their original logging-time
   descriptions, superseded by the implemented design.
@@ -90,25 +91,30 @@ wrong-key rate limiting, per the constitution's Production Posture.
 
 ## Diagrams
 
-- datamodel.md — stale ⚠️ (new `Catalogue` entity + `CatalogSong.catalogueId`
-  + `Session.unlockedCatalogueIds`, now implemented but not yet in the ERD —
-  run `/ardd-render datamodel`)
-- infrastructure.md — stale ⚠️ (Railway/Dockerfile/Terraform topology plus
-  the new catalogue-unlock flow, not reflected in the container diagram —
-  run `/ardd-render infrastructure`)
-- ui.md — stale ⚠️ (catalogue-grouped picker + host-only unlock control,
-  now implemented but not in the component hierarchy — run
-  `/ardd-render ui`)
+- datamodel.md — current ✅ (ERD includes `Catalogue`, `CatalogSong.catalogueId`,
+  `Session.unlockedCatalogueIds`, and the activation-key record)
+- infrastructure.md — current ✅ (container diagram includes `create-catalogue`,
+  per-session filtering, and the `catalogue-unlock` flow)
+- ui.md — current ✅ (component hierarchy includes the catalogue-grouped
+  picker, locked indicator, and host unlock control)
 
-Implementation has now landed, so a single `/ardd-render` pass across all
-three is worth running (previously deferred until implementation).
+All three re-rendered into `README.md` on 2026-07-10.
 
 ## Code-vs-Artifact Defects
 
-0 known defects — see `DEFECTS.md`, last checked 2026-07-07. A fresh full
-`/ardd-verify` pass is worth running given the volume of new
-server/client/pipeline code this feature (and `railway-terraform-deployment`
-before it) added.
+**1 known defect** — see `DEFECTS.md`, last checked 2026-07-10:
+- **[broken-contract] infrastructure.md** — its Song Catalog Delivery
+  section says selecting a song from a not-yet-unlocked catalogue is
+  "rejected as an error," but `server/src/handlers/song-select.ts` searches
+  the full server-global song list with no `unlockedCatalogueIds` guard, so
+  a stale/tampered client can select a locked catalogue's song. Deliberate
+  T006 choice the artifact wasn't reconciled to. Resolve via
+  `/ardd-feedback` (add the guard) or `/ardd-refine infrastructure` (match
+  the claim to the code). Limited blast radius — only a tampered client can
+  reach it, and static `.gp` assets are already served ungated.
+
+Deployment, datamodel, pipeline, ui, and constitution surfaces verified
+clean this pass.
 
 ## Feature Backlog
 
@@ -138,14 +144,14 @@ branch ref can be deleted at leisure.
 
 ## Recommended Next Step
 
-1. Run `/ardd-render datamodel`, `/ardd-render infrastructure`, and
-   `/ardd-render ui` (or a single pass) now that the picker/unlock/
-   catalogue-entity work has landed and the three diagrams are stale.
-2. Consider `/ardd-verify` given the volume of new code across
-   `server`, `client`, `packages/shared`, and `packages/pipeline`.
-3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+1. Resolve the one open defect (`DEFECTS.md`): decide whether
+   `song-select.ts` should reject a locked-catalogue selection. Either
+   `/ardd-feedback` to capture adding the server-side guard for the next
+   plan, or `/ardd-refine infrastructure` to reconcile the artifact's claim
+   to the deliberately-chosen behavior.
+2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
-4. Not blocking: the `connectionStatus` naming overlap, the missing
+3. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
    in `datamodel.md`'s Consent Record section — worth folding into a
-   future `/ardd-refine`/`/ardd-verify` pass.
+   future `/ardd-refine` pass.
