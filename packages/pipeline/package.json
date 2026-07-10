@@ -11,7 +11,8 @@
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "extract-lyrics": "tsx src/extract-lyrics.ts",
-    "record-consent": "tsx src/record-consent.ts"
+    "record-consent": "tsx src/record-consent.ts",
+    "create-catalogue": "tsx src/create-catalogue.ts"
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.0",

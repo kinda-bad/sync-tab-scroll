@@ -50,7 +50,7 @@ songs and catalogue directories.
 
 ## Phase 2: `create-catalogue` pipeline CLI
 
-- [ ] T003 [artifacts: datamodel] [parallel] Write a failing test
+- [x] T003 [artifacts: datamodel] [parallel] Write a failing test
       (constitution Principle VII), in a new
       `packages/pipeline/src/create-catalogue.test.ts` mirroring
       `record-consent.test.ts`'s shape, for a new `createCatalogue`
@@ -61,7 +61,7 @@ songs and catalogue directories.
       for `visibility: 'public'` it creates the directory but writes no
       `catalogue.json`. Confirm it fails before implementing (the function
       doesn't exist yet).
-- [ ] T004 [artifacts: datamodel] Implement `createCatalogue` in a new
+- [x] T004 [artifacts: datamodel] Implement `createCatalogue` in a new
       `packages/pipeline/src/create-catalogue.ts`, mirroring
       `record-consent.ts`'s exact shape (an exported function plus a CLI
       `main()` guarded by the same `isMain` check, usage: `create-catalogue
