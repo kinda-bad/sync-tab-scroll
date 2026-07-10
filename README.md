@@ -186,6 +186,9 @@ tradeoffs this config makes.
 
 ```mermaid
 erDiagram
+    Catalogue ||--o{ CatalogSong : "songs (catalogueId)"
+    Catalogue ||--o| CatalogueKey : "activation key (private only)"
+    Catalogue ||--o{ Session : "unlockedCatalogueIds"
     Session ||--o{ Participant : "participants"
     Session ||--o{ CatalogPart : "availableParts"
     Session ||--|| PlaybackState : "playbackState"
@@ -193,6 +196,17 @@ erDiagram
     CatalogSong ||--o{ Session : "selectedSong"
     CatalogPart ||--o{ Participant : "selectedPart"
     CatalogSong ||--o| ConsentRecord : "consent (public deployment only)"
+
+    Catalogue {
+        string id "slug or 'default'"
+        string name "display name, shown even when locked"
+        boolean public "false only when an activation-key record exists"
+    }
+
+    CatalogueKey {
+        string salt "per-catalogue hex salt"
+        string hash "scrypt(key, salt, 64) - never sent to clients"
+    }
 
     Session {
         string code
@@ -202,6 +216,7 @@ erDiagram
         number lobbyCursorTick "null once playback starts"
         boolean spotlightMode
         string pendingHostRequest "Participant.id or null"
+        string_array unlockedCatalogueIds "private Catalogue.id values, per-session"
     }
 
     Participant {
@@ -216,6 +231,7 @@ erDiagram
 
     CatalogSong {
         string id "song slug"
+        string catalogueId "Catalogue.id, 'default' if no catalogue dir"
         string name
         string artist
         string gpFilePath "client-fetchable URL"
@@ -251,9 +267,10 @@ graph TD
     GP[Guitar Pro source files]
     Lrclib[lrclib.net<br/>external lyrics source]
     Pipeline[Offline lyrics-extraction pipeline<br/>alphaTab in Node]
-    Catalog[(Per-song catalog directory<br/>.gp + .lrc + meta.json + consent record)]
-    Server[Node + ws server<br/>in-memory sessions, host succession/transfer/removal,<br/>consent gate at catalog load]
-    HTTP[Static HTTP route<br/>/catalog/...]
+    CreateCat[create-catalogue CLI<br/>scrypt + salt, key never stored]
+    Catalog[(Catalog root<br/>flat songs = 'default' public catalogue;<br/>catalogue dirs, catalogue.json = private key record)]
+    Server[Node + ws server<br/>in-memory sessions; loadCatalog groups<br/>songs by catalogue; per-session visibleCatalog filter]
+    HTTP[Static HTTP route<br/>/catalog/... and /catalog/&lt;catalogue&gt;/...]
     Client[Svelte client<br/>single store, reconnect-by-identity,<br/>2s retry on connection loss]
     AlphaTab[alphaTab instance per participant<br/>visible renderer or headless<br/>renders tab + plays audio + native cursor]
     SoundFont[(SoundFont asset<br/>multi-MB, part of load readiness)]
@@ -261,10 +278,13 @@ graph TD
     GP --> Pipeline
     Lrclib -->|line breaks or full .lrc fallback| Pipeline
     Pipeline -->|writes .gp, .lrc, meta.json| Catalog
+    CreateCat -->|writes catalogue.json salt+hash| Catalog
     Catalog -->|loaded once at startup,<br/>paths rewritten to URLs| Server
     Server --- HTTP
     HTTP -->|.gp and .lrc fetches| Client
     Client <-->|WebSocket: session-state broadcasts,<br/>playback-control, song-select,<br/>host transfer/request, remove participant| Server
+    Client -->|host only: catalogue-unlock catalogueId+key| Server
+    Server -->|verify scrypt + timingSafeEqual;<br/>on success re-broadcast session-state + widened catalog| Client
     Client -->|host only: playback-tick-report ~1/s| Server
     Server -->|periodic PlaybackState broadcast<br/>drift correction against 50-tick threshold| Client
     Client --> AlphaTab
@@ -278,13 +298,16 @@ graph TD
     App[App / view-state router<br/>single client store]
     Banner[Connection-lost banner<br/>all views, non-dismissing]
     Bar[Persistent bar<br/>join code + song, Song & part,<br/>settings cog, Leave session]
-    Toasts[Error toasts]
+    Toasts[Error toasts<br/>incl. wrong activation key]
     Landing[Landing view<br/>create / join forms]
     Lobby[Lobby view<br/>state-dependent hint line]
     Playback[Playback view]
 
     SongPartModal[Song & part modal<br/>forced-open until both set]
-    CatalogPicker[Catalog picker - host only]
+    CatalogPicker[Catalog picker - host only<br/>grouped by catalogue when >1]
+    PublicGroup[Public catalogue group<br/>songs listed directly under its name]
+    LockedGroup[Locked private catalogue<br/>name + locked indicator, no songs]
+    UnlockControl[Enter activation key - host only<br/>sends catalogue-unlock, group expands on success]
     PartPicker[Part picker incl. Lyrics option]
 
     SettingsModal[Settings modal]
@@ -311,6 +334,9 @@ graph TD
     Bar --> SettingsModal
     SongPartModal --> CatalogPicker
     SongPartModal --> PartPicker
+    CatalogPicker --> PublicGroup
+    CatalogPicker --> LockedGroup
+    LockedGroup -.->|host only| UnlockControl
     SettingsModal --> TabParticipants
     SettingsModal --> TabSession
     SettingsModal --> TabPreferences
