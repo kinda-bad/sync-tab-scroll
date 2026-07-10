@@ -11,7 +11,7 @@ function fakeSocket(): WebSocket {
 
 describe('session-create', () => {
   it('creates a session, attaches the socket as host, and sends session-state + catalog', () => {
-    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] };
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } };
     const socket = fakeSocket();
     const sent: unknown[] = [];
     ctx.connections.send = (_socket, message) => {

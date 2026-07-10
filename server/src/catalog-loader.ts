@@ -1,7 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { CatalogPart, CatalogSong } from '@sync-tab-scroll/shared';
+import type { CatalogPart, CatalogSong, Catalogue } from '@sync-tab-scroll/shared';
 import { hasConsent } from './consent.js';
+
+const DEFAULT_CATALOGUE_ID = 'default';
 
 interface SongMeta {
   name: string;
@@ -12,18 +14,52 @@ interface SongMeta {
   lyricLineBreaks: number[] | null;
 }
 
-function loadSong(catalogRoot: string, dirName: string): CatalogSong {
-  const songDir = path.join(catalogRoot, dirName);
+/** On-disk `catalogue.json` shape (datamodel.md Catalogue Activation Key) — the raw key material for a private catalogue. */
+interface CatalogueRecord {
+  name: string;
+  salt: string;
+  hash: string;
+}
+
+/**
+ * A catalogue as held in server memory: the client-safe `Catalogue`
+ * (id/name/public) plus, for a private catalogue, the raw `salt`/`hash`
+ * key material used to verify `catalogue-unlock` attempts server-side.
+ * `salt`/`hash` are never sent to any client (datamodel.md Catalogue
+ * Activation Key) — `visibleCatalog` strips them before delivery.
+ */
+export interface LoadedCatalogue extends Catalogue {
+  salt?: string;
+  hash?: string;
+}
+
+/** What `loadCatalog` returns: the server-global catalogue list plus every loaded song, catalogue-tagged. */
+export interface LoadedCatalog {
+  catalogues: LoadedCatalogue[];
+  songs: CatalogSong[];
+}
+
+/**
+ * Reads a single song directory (identified by its path relative to
+ * `catalogRoot`, e.g. `creep` or `premium-pack/creep`) into a
+ * `CatalogSong`. `catalogueId` is the owning catalogue's id. The URL paths
+ * published to clients mirror the on-disk relative layout, so a nested
+ * catalogue's songs resolve under `/catalog/<catalogue-slug>/<song-slug>/`
+ * (infrastructure.md Song Catalog Delivery).
+ */
+function loadSong(catalogRoot: string, relPath: string, catalogueId: string): CatalogSong {
+  const songDir = path.join(catalogRoot, relPath);
   const meta: SongMeta = JSON.parse(fs.readFileSync(path.join(songDir, 'meta.json'), 'utf8'));
 
   const gpFile = fs.readdirSync(songDir).find((f) => f.endsWith('.gp'));
   if (!gpFile) throw new Error(`No .gp file found in catalog directory: ${songDir}`);
 
   const lrcPath = path.join(songDir, 'lyrics.lrc');
-  const urlPrefix = `/catalog/${dirName}`;
+  const urlPrefix = `/catalog/${relPath}`;
 
   return {
-    id: dirName,
+    id: path.basename(relPath),
+    catalogueId,
     name: meta.name,
     artist: meta.artist,
     gpFilePath: `${urlPrefix}/${gpFile}`,
@@ -35,39 +71,118 @@ function loadSong(catalogRoot: string, dirName: string): CatalogSong {
   };
 }
 
+/** True when `dir` is itself a song directory (has a `meta.json`). */
+function isSongDir(dir: string): boolean {
+  return fs.existsSync(path.join(dir, 'meta.json'));
+}
+
 /**
- * Scans catalog/<song-slug>/ directories at server startup and builds
- * in-memory CatalogSong entries from each directory's meta.json and file
- * contents. The pipeline is the only writer of this directory structure
- * (pipeline.md) — the server only ever reads it.
+ * Loads one song's `CatalogSong`, applying the `requireSongConsent` gate
+ * and swallowing/logging a malformed directory rather than throwing —
+ * shared by the flat (`default`) and nested (catalogue) scan paths.
+ * Returns `null` when the song is skipped.
+ */
+function tryLoadSong(catalogRoot: string, relPath: string, catalogueId: string, requireSongConsent: boolean): CatalogSong | null {
+  const songDir = path.join(catalogRoot, relPath);
+  if (requireSongConsent && !hasConsent(songDir)) {
+    console.log(`[catalog-loader] skipping "${relPath}": no consent record (REQUIRE_SONG_CONSENT is enabled)`);
+    return null;
+  }
+  try {
+    return loadSong(catalogRoot, relPath, catalogueId);
+  } catch (err) {
+    console.error(`[catalog-loader] skipping malformed catalog directory "${relPath}":`, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * Scans `CATALOG_ROOT` at server startup and builds the server-global
+ * catalogue set: a list of `Catalogue`s and every song tagged with its
+ * `catalogueId`. Two directory layouts are supported, distinguished by
+ * marker files rather than names (datamodel.md, infrastructure.md Song
+ * Catalog Delivery):
  *
- * A malformed song directory (missing/invalid meta.json, no .gp file) is
- * logged and skipped rather than thrown — one bad catalog entry shouldn't
- * take down the whole server's startup (infrastructure.md Song Catalog
- * Delivery).
+ * - A top-level directory with a `meta.json` is a song in the implicit,
+ *   always-public `"default"` catalogue — today's flat
+ *   `catalog/<song-slug>/` layout, unchanged and needing no migration.
+ * - A top-level directory with a `catalogue.json` is a *private* catalogue;
+ *   the record's `salt`/`hash` gate its songs behind an activation key. A
+ *   top-level directory with no `catalogue.json` of its own but containing
+ *   song subdirectories is a *public* catalogue. Either way its songs live
+ *   one level down, at `catalog/<catalogue-slug>/<song-slug>/`.
+ *
+ * The pipeline is the only writer of this structure (pipeline.md) — the
+ * server only reads it. A malformed song directory (missing/invalid
+ * meta.json, no .gp file) or catalogue record is logged and skipped rather
+ * than thrown, so one bad entry can't take down startup.
  *
  * `requireSongConsent` (infrastructure.md Song Consent Gate, off by
  * default) additionally skips any song directory lacking a valid consent
- * record — logged, not silently dropped, same as any other skipped
- * directory above.
+ * record — logged, not silently dropped, same as any other skip above.
  */
-export function loadCatalog(catalogRoot: string, requireSongConsent = false): CatalogSong[] {
-  if (!fs.existsSync(catalogRoot)) return [];
+export function loadCatalog(catalogRoot: string, requireSongConsent = false): LoadedCatalog {
+  if (!fs.existsSync(catalogRoot)) return { catalogues: [], songs: [] };
 
-  const songDirs = fs.readdirSync(catalogRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
+  const entries = fs.readdirSync(catalogRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
 
+  const catalogues: LoadedCatalogue[] = [];
   const songs: CatalogSong[] = [];
-  for (const dir of songDirs) {
-    const songDir = path.join(catalogRoot, dir.name);
-    if (requireSongConsent && !hasConsent(songDir)) {
-      console.log(`[catalog-loader] skipping "${dir.name}": no consent record (REQUIRE_SONG_CONSENT is enabled)`);
+  let hasDefaultSong = false;
+
+  for (const entry of entries) {
+    const entryDir = path.join(catalogRoot, entry.name);
+
+    // A flat song directory (today's layout) belongs to the implicit
+    // "default" catalogue.
+    if (isSongDir(entryDir)) {
+      const song = tryLoadSong(catalogRoot, entry.name, DEFAULT_CATALOGUE_ID, requireSongConsent);
+      if (song) {
+        songs.push(song);
+        hasDefaultSong = true;
+      }
       continue;
     }
-    try {
-      songs.push(loadSong(catalogRoot, dir.name));
-    } catch (err) {
-      console.error(`[catalog-loader] skipping malformed catalog directory "${dir.name}":`, err instanceof Error ? err.message : err);
+
+    const catalogueJsonPath = path.join(entryDir, 'catalogue.json');
+    const isPrivate = fs.existsSync(catalogueJsonPath);
+
+    // Otherwise this is a catalogue directory: private if it has a
+    // catalogue.json, public if it merely holds song subdirectories.
+    const songSubdirs = fs
+      .readdirSync(entryDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && isSongDir(path.join(entryDir, e.name)));
+
+    if (!isPrivate && songSubdirs.length === 0) {
+      // Neither a song directory, a catalogue.json holder, nor a directory
+      // of songs — not something this loader recognizes; skip it quietly.
+      continue;
+    }
+
+    let catalogue: LoadedCatalogue;
+    if (isPrivate) {
+      let record: CatalogueRecord;
+      try {
+        record = JSON.parse(fs.readFileSync(catalogueJsonPath, 'utf8'));
+      } catch (err) {
+        console.error(`[catalog-loader] skipping catalogue "${entry.name}": malformed catalogue.json:`, err instanceof Error ? err.message : err);
+        continue;
+      }
+      catalogue = { id: entry.name, name: record.name ?? entry.name, public: false, salt: record.salt, hash: record.hash };
+    } else {
+      catalogue = { id: entry.name, name: entry.name, public: true };
+    }
+    catalogues.push(catalogue);
+
+    for (const sub of songSubdirs) {
+      const song = tryLoadSong(catalogRoot, path.join(entry.name, sub.name), catalogue.id, requireSongConsent);
+      if (song) songs.push(song);
     }
   }
-  return songs;
+
+  if (hasDefaultSong) {
+    catalogues.unshift({ id: DEFAULT_CATALOGUE_ID, name: DEFAULT_CATALOGUE_ID, public: true });
+  }
+
+  return { catalogues, songs };
 }

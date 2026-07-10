@@ -1,9 +1,10 @@
-import type { CatalogSong } from '@sync-tab-scroll/shared';
 import type { SessionStore } from '../session-store.js';
 import type { ConnectionRegistry } from '../connections.js';
+import type { LoadedCatalog } from '../catalog-loader.js';
 
 export interface HandlerContext {
   sessionStore: SessionStore;
   connections: ConnectionRegistry;
-  catalog: CatalogSong[];
+  /** Server-global catalogue set (`{ catalogues, songs }`), loaded once at startup by `loadCatalog`. Per-session visibility filtering happens at send time via `visibleCatalog`. */
+  catalog: LoadedCatalog;
 }

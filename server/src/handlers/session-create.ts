@@ -18,5 +18,5 @@ export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, mess
 
   ctx.connections.attach(socket, { sessionCode: session.code, participantId: hostId });
   ctx.connections.send(socket, { type: 'session-state', session, selfParticipantId: hostId });
-  ctx.connections.send(socket, { type: 'catalog', songs: ctx.catalog });
+  ctx.connections.send(socket, { type: 'catalog', songs: ctx.catalog.songs });
 }

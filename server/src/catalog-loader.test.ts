@@ -39,13 +39,13 @@ function writeSong(dirName: string, opts: { meta?: object; gpFile?: boolean; lrc
 
 describe('loadCatalog', () => {
   it('returns [] for a nonexistent catalogRoot', () => {
-    expect(loadCatalog(path.join(catalogRoot, 'does-not-exist'))).toEqual([]);
+    expect(loadCatalog(path.join(catalogRoot, 'does-not-exist'))).toEqual({ catalogues: [], songs: [] });
   });
 
   it('loads a well-formed song directory into a matching CatalogSong', () => {
     writeSong('creep');
 
-    const songs = loadCatalog(catalogRoot);
+    const { songs } = loadCatalog(catalogRoot);
 
     expect(songs).toHaveLength(1);
     expect(songs[0]).toMatchObject({
@@ -64,7 +64,7 @@ describe('loadCatalog', () => {
   it('sets lyricsLrc to a URL path when lyrics.lrc is present', () => {
     writeSong('creep', { lrc: true });
 
-    const songs = loadCatalog(catalogRoot);
+    const { songs } = loadCatalog(catalogRoot);
 
     expect(songs[0].lyricsLrc).toBe('/catalog/creep/lyrics.lrc');
   });
@@ -73,7 +73,7 @@ describe('loadCatalog', () => {
     writeSong('broken', { meta: null as unknown as object });
     writeSong('creep');
 
-    const songs = loadCatalog(catalogRoot);
+    const { songs } = loadCatalog(catalogRoot);
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
@@ -82,7 +82,7 @@ describe('loadCatalog', () => {
     writeSong('no-gp', { gpFile: false });
     writeSong('creep');
 
-    const songs = loadCatalog(catalogRoot);
+    const { songs } = loadCatalog(catalogRoot);
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
@@ -90,7 +90,7 @@ describe('loadCatalog', () => {
   it('loads every song regardless of consent.json when requireSongConsent is false (default)', () => {
     writeSong('creep');
 
-    const songs = loadCatalog(catalogRoot, false);
+    const { songs } = loadCatalog(catalogRoot, false);
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
@@ -98,7 +98,7 @@ describe('loadCatalog', () => {
   it('excludes a song directory lacking a valid consent record when requireSongConsent is true', () => {
     writeSong('creep');
 
-    const songs = loadCatalog(catalogRoot, true);
+    const { songs } = loadCatalog(catalogRoot, true);
 
     expect(songs).toEqual([]);
   });
@@ -110,7 +110,7 @@ describe('loadCatalog', () => {
       JSON.stringify({ submitterName: 'Alice', tosVersion: 'dev-placeholder', acceptedAt: 1 }),
     );
 
-    const songs = loadCatalog(catalogRoot, true);
+    const { songs } = loadCatalog(catalogRoot, true);
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });

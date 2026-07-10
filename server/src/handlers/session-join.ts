@@ -50,5 +50,5 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   ctx.connections.attach(socket, { sessionCode: session.code, participantId });
   ctx.sessionStore.markActive(session.code);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
-  ctx.connections.send(socket, { type: 'catalog', songs: ctx.catalog });
+  ctx.connections.send(socket, { type: 'catalog', songs: ctx.catalog.songs });
 }

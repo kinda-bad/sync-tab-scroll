@@ -10,7 +10,7 @@ function fakeSocket(): WebSocket {
 }
 
 function makeCtx() {
-  const ctx = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] } satisfies HandlerContext;
+  const ctx = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
   ctx.connections.broadcast = () => {};
   return ctx;
 }

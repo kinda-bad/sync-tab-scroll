@@ -25,7 +25,7 @@ status: in-progress
       subdirectories (rather than its own `meta.json`) is a public
       catalogue. Confirm the new cases fail before implementing (today's
       `loadCatalog` treats every top-level directory as a song directory).
-- [ ] T002 [artifacts: datamodel] Implement the catalogue-discovery pass in
+- [x] T002 [artifacts: datamodel] Implement the catalogue-discovery pass in
       `server/src/catalog-loader.ts`: for each top-level entry under
       `catalogRoot`, decide song-directory (has `meta.json`) vs.
       catalogue-directory (has `catalogue.json`, or has subdirectories with

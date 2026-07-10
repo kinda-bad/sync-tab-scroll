@@ -11,7 +11,7 @@ function fakeSocket(): WebSocket {
 
 describe('part-select', () => {
   it('sets the requesting participant selectedPart and broadcasts session-state', () => {
-    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] };
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } };
     const session = ctx.sessionStore.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
     const socket = fakeSocket();
@@ -29,7 +29,7 @@ describe('part-select', () => {
   });
 
   it('is a no-op if the socket is not attached to any connection', () => {
-    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] };
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } };
     const broadcasts: unknown[] = [];
     ctx.connections.broadcast = (_code, buildMessage) => broadcasts.push(buildMessage('x'));
 
