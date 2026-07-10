@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
+import type { CatalogSong, Catalogue, Session } from '@sync-tab-scroll/shared';
 import type { WsClient, ConnectionStatus } from './ws-client';
 
 export type ViewState = 'landing' | 'lobby' | 'playback';
@@ -11,7 +11,10 @@ export interface ClientState {
   view: ViewState;
   session: Session | null;
   selfParticipantId: string | null;
+  /** Songs visible to this session (a private catalogue's songs appear only once unlocked — infrastructure.md). */
   catalog: CatalogSong[];
+  /** Every catalogue's client-safe metadata (id/name/public), always delivered even for a locked catalogue — drives the picker's catalogue grouping and locked indicators (ui.md). */
+  catalogues: Catalogue[];
   /** The single shared WsClient (constitution Principle III) — created once on Landing form submit, read by every later view instead of each view opening its own connection. */
   wsClient: WsClient | null;
   /** Real playback position (0–1), local to this participant's own alphaTab instance — updated by playback-engine.ts's `playerPositionChanged` subscription. Read by App.svelte's hazard-strip fill while in the Playback view. */
@@ -36,7 +39,7 @@ function createClientStore() {
     view: 'landing',
     session: null,
     selfParticipantId: null,
-    catalog: [],
+    catalog: [], catalogues: [],
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,

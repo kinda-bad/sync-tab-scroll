@@ -18,7 +18,7 @@
       view: 'lobby',
       session,
       selfParticipantId,
-      catalog: [],
+      catalog: [], catalogues: [],
       wsClient,
       playbackProgress: 0,
       engineReady: false,

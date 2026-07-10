@@ -149,7 +149,7 @@ mid-session and see its songs appear in a subsequent `catalog` message.
 
 ## Phase 5: UI
 
-- [ ] T009 [artifacts: ui] Implement catalogue grouping in the client's
+- [x] T009 [artifacts: ui] Implement catalogue grouping in the client's
       song/part modal catalog picker (find the existing flat list-picker
       component under `client/src/` — likely within the song-selection
       part of the settings/song-part modal component tree). Group

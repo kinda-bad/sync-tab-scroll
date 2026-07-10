@@ -16,7 +16,7 @@ export function leaveSession(): void {
     view: 'landing',
     session: null,
     selfParticipantId: null,
-    catalog: [],
+    catalog: [], catalogues: [],
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
