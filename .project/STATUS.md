@@ -1,10 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-verify`'s full
-code-vs-artifact pass, which followed the `catalog-activation-key-access`
-merge and diagram re-render. Diagrams now current; one broken-contract
-defect recorded in `DEFECTS.md`. No cross-artifact contradictions.
-Nothing in flight.)_
+_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-feedback` captured the
+song-select unlock-guard defect (F001) from the day's `/ardd-verify` pass.
+Diagrams current; 1 open defect, now mirrored as 1 open feedback item.
+No cross-artifact contradictions. Nothing in flight.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -108,13 +107,21 @@ All three re-rendered into `README.md` on 2026-07-10.
   "rejected as an error," but `server/src/handlers/song-select.ts` searches
   the full server-global song list with no `unlockedCatalogueIds` guard, so
   a stale/tampered client can select a locked catalogue's song. Deliberate
-  T006 choice the artifact wasn't reconciled to. Resolve via
-  `/ardd-feedback` (add the guard) or `/ardd-refine infrastructure` (match
-  the claim to the code). Limited blast radius — only a tampered client can
+  T006 choice the artifact wasn't reconciled to. **Now captured as
+  feedback** (F001, below) — the user chose to add the guard rather than
+  relax the artifact. Limited blast radius — only a tampered client can
   reach it, and static `.gp` assets are already served ungated.
 
 Deployment, datamodel, pipeline, ui, and constitution surfaces verified
 clean this pass.
+
+## Feedback
+
+- 1 open feedback file — `feedback-song-select-unlock-guard-705b.md`
+  (F001, a Bug tagged `[artifacts: infrastructure]`): add a server-side
+  guard so `song-select` rejects a locked-catalogue selection, honoring
+  `infrastructure.md`'s existing contract (the artifact needs no revision).
+  Will be picked up by the next `/ardd-plan`.
 
 ## Feature Backlog
 
@@ -144,11 +151,12 @@ branch ref can be deleted at leisure.
 
 ## Recommended Next Step
 
-1. Resolve the one open defect (`DEFECTS.md`): decide whether
-   `song-select.ts` should reject a locked-catalogue selection. Either
-   `/ardd-feedback` to capture adding the server-side guard for the next
-   plan, or `/ardd-refine infrastructure` to reconcile the artifact's claim
-   to the deliberately-chosen behavior.
+1. Run `/ardd-plan` to consume the open feedback
+   (`feedback-song-select-unlock-guard-705b.md`, F001) into a plan for the
+   `song-select` unlock guard. It's a small, self-contained server change
+   (add a `catalogueId`/`unlockedCatalogueIds` check in
+   `song-select.ts`, mirroring the invalid-id error path); the paired test
+   belongs in `song-select.test.ts`.
 2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
 3. Not blocking: the `connectionStatus` naming overlap, the missing
