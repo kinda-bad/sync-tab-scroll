@@ -13,7 +13,7 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     return;
   }
 
-  const song = ctx.catalog.find((s) => s.id === message.songId);
+  const song = ctx.catalog.songs.find((s) => s.id === message.songId);
   if (!song) {
     ctx.connections.send(socket, { type: 'error', message: `Song ${message.songId} not found` });
     return;

@@ -2,6 +2,7 @@ import * as crypto from 'node:crypto';
 import type { WebSocket } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
+import { visibleCatalog } from '../catalog-loader.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
   const session = ctx.sessionStore.get(message.code);
@@ -50,5 +51,5 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   ctx.connections.attach(socket, { sessionCode: session.code, participantId });
   ctx.sessionStore.markActive(session.code);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
-  ctx.connections.send(socket, { type: 'catalog', songs: ctx.catalog });
+  ctx.connections.send(socket, { type: 'catalog', ...visibleCatalog(ctx.catalog, session) });
 }

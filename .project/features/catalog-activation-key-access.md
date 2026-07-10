@@ -1,7 +1,9 @@
 ---
 slug: catalog-activation-key-access
-status: backlogged
+status: implemented
 logged: 2026-07-08
+plan: plan-catalog-activation-key-access-2026-07-09.md
+tasks: tasks-catalog-activation-key-access-436e.md
 ---
 
 In a public/deployed instance, one or more private song catalogues can be unlocked by entering a shared per-catalogue activation key; whichever catalogues the host has unlocked (plus any public ones) are what session members see and can pick songs from.

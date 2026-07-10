@@ -1,8 +1,8 @@
 ---
 name: datamodel
 status: draft
-last_updated: 2026-07-08
-diagram_status: current
+last_updated: 2026-07-09
+diagram_status: stale
 ---
 
 # Data Model
@@ -36,6 +36,19 @@ once it creates or joins a session, independent of `Session` itself
 (infrastructure.md). The host selects a song by `CatalogSong.id`, which
 populates `Session.selectedSong` and `Session.availableParts`.
 
+Every song belongs to exactly one `Catalogue` (`CatalogSong.catalogueId`,
+below). A catalogue is either public (its songs are always included in
+what a client receives) or private, gated behind an activation key a
+host unlocks per-session (`Session.unlockedCatalogueIds`,
+`catalog-activation-key-access` — infrastructure.md's `catalogue-unlock`
+message). This is the one exception to "delivered once, independent of
+`Session`" above: a private catalogue's songs are withheld from the
+initial delivery and only included once that session has unlocked it —
+see infrastructure.md's Song Catalog Delivery for how re-delivery works.
+Songs sitting directly under `catalog/<song-slug>/` (no catalogue
+directory) belong to an implicit `"default"` catalogue — always public,
+no key — so existing local/personal deployments need no migration.
+
 ## Entities
 
 ### Session
@@ -52,6 +65,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | lobbyCursorTick | number \| null | MIDI tick position the host is pointing at pre-playback (same unit as `PlaybackState.tickPosition`); null once playback starts. Only force-follows every participant's view while `spotlightMode` is true — otherwise each participant browses their own rendered tab independently |
 | spotlightMode | boolean | Host-only toggle (default false), same pattern as `countInEnabled`. Gates `lobbyCursorTick`'s force-follow effect. Resets to false when playback starts, same as `lobbyCursorTick` resetting to null |
 | pendingHostRequest | string \| null | `Participant.id` of a non-host participant who has asked to become host; null when no request is outstanding. Set by a `request-host` message; cleared either by the current host declining it (`host-request-decline`), by the host granting *any* host transfer that resolves it (accepting this request is not a separate action from `host-delegate` targeting the same participant — see infrastructure.md's Host Transfer), or by the requester disconnecting before the host responds. At most one outstanding request at a time — a second `request-host` while one is already pending is rejected as an error, not queued |
+| unlockedCatalogueIds | string[] | `Catalogue.id` values this session's host has successfully unlocked (`catalogue-unlock`, infrastructure.md). Only ever contains *private* catalogue ids — public catalogues need no entry, their songs are always included. Starts empty; nothing repopulates it from a prior session (unlocking is per-session, not persisted) |
 
 ### Participant
 
@@ -70,6 +84,7 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | Field | Type | Notes |
 |-------|------|-------|
 | id | string | Stable song slug (matches the catalog directory name, pipeline.md — e.g. `creep`); what `Session.selectedSong` and the song-selection message reference |
+| catalogueId | string | `Catalogue.id` this song belongs to — `"default"` for a song with no catalogue directory (backward compatibility, above) |
 | name | string | |
 | artist | string | |
 | gpFilePath | string | Client-fetchable URL path to the source `.gp` file (e.g. `/catalog/creep/creep.gp`), not a server filesystem path — the server serves the catalog directory statically over HTTP (infrastructure.md) and the loader rewrites the on-disk path to this URL before publishing `CatalogSong` to any client. One multi-track file per song, matching how Guitar Pro files are normally authored. Loaded once by the client and shared across every part; each `CatalogPart` selects a track within it via `trackIndex` |
@@ -78,6 +93,19 @@ populates `Session.selectedSong` and `Session.availableParts`.
 | lyricsTrackIndex | number \| null | Index into `gpFilePath`'s parsed score identifying which track's beats actually carry the GP-embedded lyrics (`Beat.lyrics`) — the track lyrics were authored on, not necessarily any `CatalogPart.trackIndex` (the lyrics-bearing track may not be offered as a selectable instrument part at all). Null whenever `lyricsLrc` came from the lrclib.net fallback (no GP-embedded lyrics to point at). The client reads this track's beats at render time to derive syllable text + tick position for the in-tab overlay — no separate tick-map artifact is published (see Normalization Rules) |
 | lyricsLineIndex | number \| null | Which index into a beat's `Beat.lyrics` array to read (`Beat.lyrics` is indexed by lyric line/channel — GP supports multiple simultaneous lyric channels, e.g. main vocal vs. a harmony line — not by syllable). Almost always `0`; the pipeline picks the first non-empty channel rather than the client guessing, in case a GP file's primary content isn't at index 0. Same nullability as `lyricsTrackIndex` |
 | lyricLineBreaks | number[] \| null | Syllable count per line, in the order syllables appear across `lyricsTrackIndex`'s beats at `lyricsLineIndex`. The client computes line groups from it (`lyrics-beat-walk.ts`'s `groupIntoLines`), but the current in-tab overlay (`ui.md`'s Playback View) is a single continuous scrolling ticker that flattens the syllable stream and never uses those line boundaries for layout — so this field currently has no visible effect on the rendered UI, though it's still computed and unit-tested. Whether it's worth keeping at all, given nothing reads the grouped result for layout, is an open question for a future pass, not resolved here. Same nullability as `lyricsTrackIndex` |
+
+### Catalogue
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | string | Stable catalogue slug (matches the catalogue directory name, pipeline.md — e.g. `premium-pack`), or the literal `"default"` for songs with no catalogue directory |
+| name | string | Display name shown in the lobby's catalogue picker (ui.md), including for a locked private catalogue — the *name* is always visible; only its songs are withheld until unlocked |
+| public | boolean | `false` only for a catalogue with a Catalogue Activation Key record (below). A catalogue directory with no key record is public — there's no separate flag to set; presence of the key record *is* the privacy signal, so the two can't drift out of sync |
+
+Delivered to every client at session join as part of the same `catalog`
+message infrastructure.md's Song Catalog Delivery already documents —
+every `Catalogue`'s metadata is always sent, but a private one's
+`CatalogSong[]` entries are withheld until that session unlocks it.
 
 ### CatalogPart
 
@@ -158,9 +186,36 @@ doesn't otherwise exist, and file-size/validation/staging concerns with
 no current evidence of need. Revisit if operators report the CLI step is
 actually a submission bottleneck in practice.
 
+## Catalogue Activation Key (Public Deployment Only)
+
+Not a field on `Catalogue` and never sent to any client in any form —
+an on-disk gate `catalog-loader.ts` reads at startup, same pattern as
+the Consent Record above but scoped to a whole catalogue directory
+rather than one song. Lives as `catalogue.json` in the catalogue's own
+directory (pipeline.md's Inputs & Outputs On Disk), one record per
+private catalogue. A catalogue directory with no `catalogue.json` is
+public (`Catalogue.public`, above).
+
+| Field | Type | Notes |
+|-------|------|-------|
+| salt | string | Random per-catalogue salt (hex), generated once when the catalogue is created |
+| hash | string | `crypto.scrypt(key, salt, 64)` (hex) of the activation key — the raw key itself is never written to disk anywhere; only entered once, on the operator's own machine, when running the pipeline's `create-catalogue` CLI (pipeline.md) |
+
+Verified server-side with `crypto.timingSafeEqual` against a
+freshly-computed hash of the submitted key (`catalogue-unlock`,
+infrastructure.md) — not a plain `===` string comparison, to avoid a
+timing side-channel. This is a deliberate, modest step up from the
+Consent Record's plaintext fields above: an activation key is meant to
+actually gate access to content, where a consent record's
+`submitterName` is explicitly *not* an access-control value — the two
+have different threat models even though both are simple on-disk JSON
+files read at catalog-load time. No rate limiting or lockout on repeated
+wrong-key attempts (Production Posture's existing no-rate-limiting scope
+already covers this).
+
 ## Indexes
 
 Not applicable — session state is in-memory only (infrastructure.md), with
 no persistence layer or query surface that would require an index. The
-Consent Record above is also not indexed — it's read once per song
-directory at catalog-load time, not queried.
+Consent Record and Catalogue Activation Key above are also not indexed —
+each is read once, at catalog-load time, not queried.

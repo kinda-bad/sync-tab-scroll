@@ -31,9 +31,20 @@ export interface CatalogPart {
   trackIndex: number;
 }
 
+export interface Catalogue {
+  /** Stable catalogue slug (matches the catalogue directory name), or the literal `"default"` for songs with no catalogue directory. */
+  id: string;
+  /** Display name shown in the lobby's catalogue picker — always visible, even for a locked private catalogue (only its songs are withheld). */
+  name: string;
+  /** `false` only for a catalogue with a Catalogue Activation Key record (`catalogue.json`). A catalogue directory with no key record is public — presence of the key record *is* the privacy signal (datamodel.md Catalogue). */
+  public: boolean;
+}
+
 export interface CatalogSong {
   /** Stable song slug, matches the catalog directory name. */
   id: string;
+  /** `Catalogue.id` this song belongs to — `"default"` for a song with no catalogue directory (datamodel.md CatalogSong). */
+  catalogueId: string;
   name: string;
   artist: string;
   /** Client-fetchable URL path to the source .gp file — one multi-track file per song. */
@@ -75,4 +86,6 @@ export interface Session {
   spotlightMode: boolean;
   /** Participant.id of a non-host asking to become host; null when no request is outstanding. See infrastructure.md Host Transfer. */
   pendingHostRequest: string | null;
+  /** `Catalogue.id` values this session's host has successfully unlocked (`catalogue-unlock`, infrastructure.md). Only ever private catalogue ids; public catalogues need no entry. Starts empty; per-session, never persisted. */
+  unlockedCatalogueIds: string[];
 }

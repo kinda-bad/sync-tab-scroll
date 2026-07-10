@@ -29,3 +29,6 @@ infra/.terraform/
 infra/terraform.tfstate
 infra/terraform.tfstate.*
 infra/*.tfplan
+
+# ardd advisory lock (transient, per-checkout)
+.project/.lock

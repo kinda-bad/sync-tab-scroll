@@ -67,6 +67,7 @@ function baseSession(participants: Session['participants']): Session {
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,
+    unlockedCatalogueIds: [],
   };
 }
 
@@ -128,7 +129,7 @@ describe('ws-client self-removal detection', () => {
       view: 'lobby',
       session: baseSession([hostParticipant, selfParticipant]),
       selfParticipantId: 'p1',
-      catalog: [],
+      catalog: [], catalogues: [],
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
@@ -159,7 +160,7 @@ describe('ws-client self-removal detection', () => {
       view: 'landing',
       session: null,
       selfParticipantId: null,
-      catalog: [],
+      catalog: [], catalogues: [],
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
@@ -178,7 +179,7 @@ describe('ws-client self-removal detection', () => {
       view: 'lobby',
       session: baseSession([hostParticipant, selfParticipant]),
       selfParticipantId: 'p1',
-      catalog: [],
+      catalog: [], catalogues: [],
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,

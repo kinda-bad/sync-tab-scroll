@@ -11,7 +11,7 @@ function fakeSocket(): WebSocket {
 
 describe('session-create', () => {
   it('creates a session, attaches the socket as host, and sends session-state + catalog', () => {
-    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] };
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } };
     const socket = fakeSocket();
     const sent: unknown[] = [];
     ctx.connections.send = (_socket, message) => {
@@ -30,6 +30,6 @@ describe('session-create', () => {
 
     expect(sent).toHaveLength(2);
     expect(sent[0]).toMatchObject({ type: 'session-state', selfParticipantId: conn!.participantId });
-    expect(sent[1]).toEqual({ type: 'catalog', songs: [] });
+    expect(sent[1]).toEqual({ type: 'catalog', catalogues: [], songs: [] });
   });
 });

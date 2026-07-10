@@ -200,6 +200,7 @@ describe('applyPlaybackSettings', () => {
       lobbyCursorTick: null,
       spotlightMode: false,
       pendingHostRequest: null,
+      unlockedCatalogueIds: [],
       ...overrides,
     };
   }

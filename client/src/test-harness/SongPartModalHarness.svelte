@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import SettingsModal from '../components/SettingsModal.svelte';
+  import SongPartModal from '../components/SongPartModal.svelte';
   import { clientStore } from '../store';
   import type { WsClient } from '../ws-client';
-  import type { Session } from '@sync-tab-scroll/shared';
+  import type { CatalogSong, Catalogue, Session } from '@sync-tab-scroll/shared';
 
   export let session: Session;
   export let selfParticipantId: string;
+  export let catalog: CatalogSong[] = [];
+  export let catalogues: Catalogue[] = [];
 
   onMount(() => {
     const sent: unknown[] = [];
@@ -18,7 +20,8 @@
       view: 'lobby',
       session,
       selfParticipantId,
-      catalog: [], catalogues: [],
+      catalog,
+      catalogues,
       wsClient,
       playbackProgress: 0,
       engineReady: false,
@@ -27,4 +30,4 @@
   });
 </script>
 
-<SettingsModal open={true} />
+<SongPartModal open={true} dismissible={false} />

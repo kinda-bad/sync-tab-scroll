@@ -13,6 +13,7 @@ function fakeSocket(): WebSocket {
 function fakeSong(id: string): CatalogSong {
   return {
     id,
+    catalogueId: 'default',
     name: id,
     artist: 'Artist',
     gpFilePath: `/catalog/${id}/song.gp`,
@@ -24,8 +25,8 @@ function fakeSong(id: string): CatalogSong {
   };
 }
 
-function makeCtx(catalog: CatalogSong[]) {
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog } satisfies HandlerContext;
+function makeCtx(songs: CatalogSong[]) {
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs } } satisfies HandlerContext;
 }
 
 describe('song-select', () => {

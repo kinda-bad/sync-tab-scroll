@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-03
+last_updated: 2026-07-09
 ---
 
 # Lyrics Extraction Pipeline
@@ -144,6 +144,17 @@ input and output trees. No intermediate/scratch output is written to this
 tree — the prior pipeline's stale leftover `.mid` files (from the
 no-longer-used MIDI approach) are the cautionary example this avoids.
 
+A song's directory can additionally live one level deeper, under a
+catalogue directory (`catalog/<catalogue-slug>/<song-slug>/`,
+`catalog-activation-key-access` — datamodel.md's `Catalogue`) — the
+pipeline's extraction/fallback/publish logic is completely unaware of
+this nesting and needs no code change for it: an operator just passes
+`catalog/<catalogue-slug>` as `<catalogRoot>` instead of `catalog`
+directly. A song with no catalogue directory (today's existing flat
+layout) belongs to the implicit `"default"` public catalogue.
+`create-catalogue` (below) is the only new pipeline surface this feature
+adds.
+
 ## Consent Recording (Public Deployment Only)
 
 Additive, optional step in the same one-directory-per-song model above —
@@ -156,6 +167,27 @@ its existing `catalog/<song-slug>/` directory, alongside the `.gp`/`.lrc`/
 `meta.json` outputs already documented below. A song's directory with no
 consent record behaves exactly as it does today (fully supported, no
 gate) unless the operator has opted into `REQUIRE_SONG_CONSENT`.
+
+## Catalogue Creation (Public Deployment Only)
+
+Additive, optional step, same operator-driven CLI model as Consent
+Recording above — not a web form (constitution Principle V spirit: no new
+mechanism where the existing shape already covers it). A small CLI,
+`create-catalogue <catalogRoot> <catalogue-slug> <name> <public|private>
+[key]`, writes:
+- for a public catalogue: nothing beyond the directory itself existing —
+  presence of a catalogue directory with no `catalogue.json` already
+  means public (datamodel.md's `Catalogue.public`);
+- for a private catalogue: `catalogue.json` (datamodel.md's Catalogue
+  Activation Key) into `catalog/<catalogue-slug>/`, computing the salt
+  and `crypto.scrypt` hash from the operator-supplied `key` argument at
+  creation time — the raw key is never written anywhere; the CLI's own
+  output is the only place the operator sees it again, to relay to
+  whoever should be able to unlock that catalogue.
+
+Run once per catalogue, before `extract-lyrics`/`record-consent` are ever
+pointed at its subdirectory — creating the catalogue directory is a
+prerequisite for populating it with songs, not the other way around.
 
 ## Dependencies
 

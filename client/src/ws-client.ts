@@ -107,7 +107,7 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
             view: 'landing',
             session: null,
             selfParticipantId: null,
-            catalog: [],
+            catalog: [], catalogues: [],
             wsClient: null,
             playbackProgress: 0,
             engineReady: false,
@@ -131,7 +131,7 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
           return { ...s, view, session: message.session, selfParticipantId: message.selfParticipantId };
         });
       } else if (message.type === 'catalog') {
-        clientStore.update((s) => ({ ...s, catalog: message.songs }));
+        clientStore.update((s) => ({ ...s, catalog: message.songs, catalogues: message.catalogues }));
       } else if (message.type === 'error') {
         // Errors (join-by-code failure, part-not-found, not-host attempts) are toasts, not blocking modals (ui.md States).
         toastStore.push(message.message);

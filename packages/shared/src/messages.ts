@@ -1,4 +1,4 @@
-import type { CatalogSong, ReadinessStatus, SelectedPart, Session } from './index.js';
+import type { CatalogSong, Catalogue, ReadinessStatus, SelectedPart, Session } from './index.js';
 
 export type ClientMessage =
   | { type: 'session-create'; displayName: string }
@@ -11,6 +11,7 @@ export type ClientMessage =
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'count-in-set'; enabled: boolean }
   | { type: 'song-select'; songId: string }
+  | { type: 'catalogue-unlock'; catalogueId: string; key: string }
   | { type: 'playback-tick-report'; tickPosition: number }
   | { type: 'host-delegate'; targetParticipantId: string }
   | { type: 'request-host' }
@@ -18,5 +19,5 @@ export type ClientMessage =
 
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }
-  | { type: 'catalog'; songs: CatalogSong[] }
+  | { type: 'catalog'; catalogues: Catalogue[]; songs: CatalogSong[] }
   | { type: 'error'; message: string };

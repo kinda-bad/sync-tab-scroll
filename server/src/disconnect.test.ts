@@ -5,7 +5,7 @@ import type { HandlerContext } from './handlers/context.js';
 import { handleDisconnect } from './disconnect.js';
 
 function makeCtx() {
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: [] } satisfies HandlerContext;
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
 }
 
 describe('handleDisconnect', () => {

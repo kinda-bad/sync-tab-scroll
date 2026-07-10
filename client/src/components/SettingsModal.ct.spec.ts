@@ -17,6 +17,7 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,
+    unlockedCatalogueIds: [],
     ...overrides,
   };
 }

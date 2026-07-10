@@ -22,7 +22,7 @@ test('a mounted component re-renders when clientStore.set is called', async ({ m
         spotlightMode: false,
       },
       selfParticipantId: 'p1',
-      catalog: [],
+      catalog: [], catalogues: [],
       wsClient: null,
     });
   });
