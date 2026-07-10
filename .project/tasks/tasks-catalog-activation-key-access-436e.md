@@ -166,7 +166,7 @@ mid-session and see its songs appear in a subsequent `catalog` message.
       activation key" control on a locked catalogue's group header that
       sends `catalogue-unlock { catalogueId, key }` via the existing
       `wsClient.send`. No test required for this task — covered by T010.
-- [ ] T010 [parallel] Write a Playwright CT test (`*.ct.spec.ts`,
+- [x] T010 [parallel] Write a Playwright CT test (`*.ct.spec.ts`,
       following an existing modal-related CT spec's shape, e.g.
       `SettingsModalHarness`'s pattern) covering: a public catalogue's
       songs render directly in the picker; a locked private catalogue
