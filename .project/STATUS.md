@@ -1,9 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-11 (`/ardd-analyze` after `/ardd-tasks` approved
-`plan-catalog-loader-dotfile-guard-2026-07-11.md` and generated its task
-list. On feature branch `catalog-loader-dotfile-guard`. All six artifacts
-`stable`; tasks file `ready` (0/5), awaiting `/ardd-implement`.)_
+_Updated: 2026-07-11 (`/ardd-analyze` after `/ardd-implement` completed
+`tasks-catalog-loader-dotfile-guard-b891.md` (5/5) and merged it into `main`.
+The AppleDouble tab bug is fixed, deployed, and live-verified. All six
+artifacts `stable`; nothing in flight.)_
 
 ARDD update available: installed `9189817`, source at `7883e7c` — run
 `/ardd-update`.
@@ -21,10 +21,7 @@ ARDD update available: installed `9189817`, source at `7883e7c` — run
 
 ## Open Questions
 
-None — all six artifacts are `stable` with no `[OPEN:` markers. (The draft
-plan carries one optional operational open question: whether to also delete
-the existing `._*` files from the Railway volume — not required once the code
-guard lands.)
+None — all six artifacts are `stable` with no `[OPEN:` markers.
 
 ## Cross-Artifact Issues
 
@@ -47,21 +44,22 @@ No violations found this pass.
 ## Diagrams
 
 - datamodel.md — current ✅
-- infrastructure.md — current ✅ (Phase 1 of the draft plan will add a
-  prose note to Song Catalog Delivery; layout unchanged, so still current)
+- infrastructure.md — current ✅ (2026-07-11 Song Catalog Delivery note on the
+  dotfile/AppleDouble skip is prose; layout unchanged)
 - ui.md — current ✅
 
 ## Code-vs-Artifact Defects
 
-**0 known defects** — `DEFECTS.md` all-clear, last checked 2026-07-10. The
-deployed-app tab bug (AppleDouble `._*` files selected as the `.gp`) is a
-data/robustness issue now captured as planned feedback, not yet a recorded
-defect; a post-fix `/ardd-verify` can confirm artifact/code alignment.
+**0 known defects** — `DEFECTS.md` all-clear, last checked 2026-07-10.
+`infrastructure.md`'s Song Catalog Delivery now documents the loader's
+dotfile skip and `catalog-loader.ts` enforces it, so code and artifact agree;
+a `/ardd-verify` pass could re-baseline `DEFECTS.md`'s date to confirm.
 
 ## Feedback
 
-No open feedback — `feedback-deployed-tab-loading-dc21.md` was consumed by
-`plan-catalog-loader-dotfile-guard-2026-07-11.md` (F001/F002 incorporated).
+No open feedback — `feedback-deployed-tab-loading-dc21.md` is `planned`,
+consumed by `plan-catalog-loader-dotfile-guard-2026-07-11.md`, and its fix
+(F001/F002) is merged and live-verified.
 
 ## Feature Backlog
 
@@ -70,18 +68,20 @@ No open feedback — `feedback-deployed-tab-loading-dc21.md` was consumed by
 
 ## In Flight
 
-- Approved plan `plan-catalog-loader-dotfile-guard-2026-07-11.md` with tasks
-  file `tasks-catalog-loader-dotfile-guard-b891.md` at `ready` (0/5) on branch
-  `catalog-loader-dotfile-guard` (this checkout) — awaits `/ardd-implement`.
-  No sibling worktrees, no draft PRs.
+Nothing in flight — no sibling worktrees, no draft PRs, no draft plans, no
+open feedback. `main` is **1 commit ahead of `origin/main`** (the tasks
+completion + this STATUS bookkeeping — the code fix itself is already pushed
+in merge `f488783` and deployed). The merged local branch
+`catalog-loader-dotfile-guard` can be deleted at leisure.
 
-The Railway deployment is live at https://sync-tab-scroll.up.railway.app with
-a populated catalog volume, but tab rendering/playback is currently broken
-there by the AppleDouble bug above — the ready tasks fix it.
+The Railway deployment at https://sync-tab-scroll.up.railway.app is live and
+functional: catalog volume populated (public `default` catalogue + private
+key-gated `kinda-bad` pack), and the dotfile fix is deployed — all 6 songs
+now resolve to their real `.gp`, so tabs render and playback starts.
 
 ## Recommended Next Step
 
-Run `/ardd-implement` to execute `tasks-catalog-loader-dotfile-guard-b891.md`
-(5 tasks, 3 phases). Test-first (T002→T003), lands the `infrastructure.md`
-note (T001) and README transfer runbook (T004), and verifies live after
-redeploy (T005).
+Optional cleanup: push the remaining bookkeeping commits to `origin/main`
+and delete the merged `catalog-loader-dotfile-guard` branch. Optionally run
+`/ardd-verify` to re-baseline `DEFECTS.md` now that the loader/artifact are
+aligned. Otherwise the deployment is complete and healthy.
