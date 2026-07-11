@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Artifact contract
 
-- [ ] T001 [artifacts: infrastructure] [parallel] In
+- [x] T001 [artifacts: infrastructure] [parallel] In
       `.project/artifacts/infrastructure.md`, update the Song Catalog
       Delivery section to state that `loadSong` ignores dotfile / macOS
       AppleDouble (`._*`) entries when selecting a song's `.gp` file —

@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-10
+last_updated: 2026-07-11
 diagram_status: current
 ---
 
@@ -265,7 +265,15 @@ client carries a client-fetchable URL, not that disk path — the server
 exposes the catalog root as static HTTP content (e.g.
 `/catalog/<catalogue-slug>/<song-slug>/<file>`), and `catalog-loader.ts`
 rewrites each on-disk path to its corresponding URL before the loaded
-`CatalogSong[]` is ever handed to a socket. `catalog-static.ts`'s existing
+`CatalogSong[]` is ever handed to a socket. When resolving a song's `.gp`,
+the loader selects the first *non-hidden* `*.gp` in the song directory:
+dotfile / macOS AppleDouble sidecars (a `._<name>` companion that encodes a
+file's extended attributes — e.g. left behind when the catalog is moved to
+the deployment volume with a `tar` that preserves xattrs) are ignored, never
+picked as the tab source, since a `._Foo.gp` both ends in `.gp` and sorts
+ahead of the real `Foo.gp`. This is the same skip-not-fatal posture the
+loader already applies to a malformed song or catalogue entry — an
+unrecognized `.`-prefixed file is noise, not a song asset. `catalog-static.ts`'s existing
 handler needs no change for the nested layout — it already serves
 whatever's under `CATALOG_ROOT` by relative path, catalogue subdirectory
 or not. This is the first HTTP surface this server exposes — until now it
