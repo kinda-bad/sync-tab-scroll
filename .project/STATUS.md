@@ -1,11 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-verify` re-checked the
-merged `song-select-unlock-guard` work. `song-select-unlock-guard` merged
-into `main` (`b65d5d0`); `DEFECTS.md` is all-clear (defect `31c5630a`
-resolved). Diagrams current; no open feedback, nothing in flight, no
-cross-artifact contradictions. `main` is 30 signed commits ahead of
-`origin/main` — unpushed.)_
+_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-refine` resolved the
+open questions in `datamodel.md` and `infrastructure.md` — both now
+`stable`, all `[OPEN:` markers gone project-wide. `DEFECTS.md` all-clear,
+diagrams current, no open feedback, nothing in flight. `main` is 32 signed
+commits ahead of `origin/main` — unpushed.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -15,37 +14,23 @@ ARDD update available: installed `9189817`, source at `8c68d84` — run
 | Artifact | Status | Open questions |
 |---|---|---|
 | constitution.md | stable ✅ | 0 |
-| datamodel.md | draft ⚠️ | 4 |
+| datamodel.md | stable ✅ | 0 |
 | pipeline.md | stable ✅ | 0 |
-| infrastructure.md | draft ⚠️ | 1 |
+| infrastructure.md | stable ✅ | 0 |
 | ui.md | stable ✅ | 0 |
 | brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
-### datamodel.md
-- Per-song vs. per-submitter consent recording — resolved for
-  `consented-song-submission` as per-song; revisit only if re-recording
-  consent per song becomes real friction for a repeat submitter.
-- CLI drop-in vs. web upload form for submission — resolved as CLI,
-  matching the pipeline's existing operator-driven model.
-- Real ToS legal text — not a design decision; a placeholder/dev value is
-  used (`record-consent`'s `tosVersion`, production-annotated) until an
-  operator supplies real text.
-- Whether `CatalogSong.lyricLineBreaks` is worth keeping — computed and
-  unit-tested, but the current single-line ticker overlay never uses the
-  grouped line boundaries for layout.
-
-These are documented defaults, not blockers, and all carry `[OPEN: ...]`
-markers stating a resolved answer inline (cosmetic labeling drift, see
-Within-Artifact Issues). Untouched by this session's
-`catalog-activation-key-access` implementation.
-
-### infrastructure.md
-- `[OPEN: custom domain]` — the Railway-assigned `*.up.railway.app`
-  domain is sufficient for now; a custom domain is deferred, not
-  resolved by `railway-terraform-deployment`. Unrelated to this
-  session's work.
+None — all six artifacts are `stable` with no `[OPEN:` markers. The
+2026-07-10 `/ardd-refine` pass resolved the last of them:
+- **datamodel** — the Consent Record's per-song-consent and
+  CLI-over-web-form decisions were reworded from `[OPEN:` to resolved; the
+  ToS placeholder moved to a Production Annotations section (a legal/operator
+  deferral, not a design gap); `CatalogSong.lyricLineBreaks` was recorded as
+  intentionally retained.
+- **infrastructure** — the custom domain was reworded as a deliberate
+  deferral (Railway subdomain suffices), not an undecided design question.
 
 ## Cross-Artifact Issues
 
@@ -63,20 +48,8 @@ Within-Artifact Issues). Untouched by this session's
 
 ## Within-Artifact Issues
 
-### datamodel.md
-- [OPEN] Per-song vs. per-submitter consent (see above)
-- [OPEN] CLI drop-in vs. web upload form (see above)
-- [OPEN] Real ToS legal text (see above)
-- [VAGUE] `lyricLineBreaks` retention — still unresolved whether it's
-  worth keeping given nothing reads the grouped result for layout
-- [VAGUE] The three `[OPEN: ...]` inline markers in the Consent Record
-  section already state a resolved decision in the same sentence — the
-  `[OPEN:` tag reads as still-undecided even though the prose isn't.
-  Non-blocking.
-
-### infrastructure.md
-- [OPEN] Custom domain (see above) — genuinely deferred, not a labeling
-  quirk.
+None — the 2026-07-10 `/ardd-refine` pass cleared every `[OPEN:`/`[VAGUE]`
+item in `datamodel.md` and `infrastructure.md` (see Open Questions above).
 
 ## Constitution Compliance
 
@@ -146,24 +119,19 @@ signed commits ahead of `origin/main` — unpushed.
 
 ## Recommended Next Step
 
-Project is at a clean resting state — all artifacts stable-or-known-draft,
-diagrams current, `DEFECTS.md` all-clear, no open feedback or in-flight
-work. Options:
+Project is at a clean resting state — all six artifacts `stable` with zero
+open questions, diagrams current, `DEFECTS.md` all-clear, no open feedback
+or in-flight work. Options:
 
-1. `git push` — `main` is 30 signed commits ahead of `origin/main`. All
+1. `git push` — `main` is 32 signed commits ahead of `origin/main`. All
    are signed and verify, so pushing is safe whenever you're ready.
 2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
-3. Not blocking: the `connectionStatus` naming overlap, the missing
-   `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
-   in `datamodel.md`'s Consent Record section — worth folding into a
-   future `/ardd-refine` pass.
-4. Start the next feature: `/ardd-feature <idea>` to log one, or
+3. Start the next feature: `/ardd-feature <idea>` to log one, or
    `/ardd-plan <slug>` against a backlogged entry (none currently
    backlogged).
-2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
-   available (installed `9189817`, source at `8c68d84`).
-3. Not blocking: the `connectionStatus` naming overlap, the missing
-   `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
-   in `datamodel.md`'s Consent Record section — worth folding into a
-   future `/ardd-refine` pass.
+4. Not blocking (cosmetic cross-artifact notes, not `[OPEN:` questions):
+   the `connectionStatus` naming overlap between `ui.md` and `datamodel.md`,
+   and the missing `installCountInCursorGuard` mention in
+   `ui.md`/`infrastructure.md` — fold into a future `/ardd-refine` if ever
+   worth it.
