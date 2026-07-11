@@ -1,11 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze`, terminal step of `/ardd-implement`
-completing `tasks-song-select-unlock-guard-6dcb.md` (2/2) on branch
-`song-select-unlock-guard`, 7 signed commits ahead of `main`, unmerged.
-The `song-select` locked-catalogue guard (defect `31c5630a` / feedback
-F001) is now implemented. Diagrams current; no cross-artifact
-contradictions.)_
+_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-verify` re-checked the
+merged `song-select-unlock-guard` work. `song-select-unlock-guard` merged
+into `main` (`b65d5d0`); `DEFECTS.md` is all-clear (defect `31c5630a`
+resolved). Diagrams current; no open feedback, nothing in flight, no
+cross-artifact contradictions. `main` is 30 signed commits ahead of
+`origin/main` — unpushed.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -103,21 +103,18 @@ All three re-rendered into `README.md` on 2026-07-10.
 
 ## Code-vs-Artifact Defects
 
-`DEFECTS.md` (last checked 2026-07-10) still lists **1 defect**
-(`31c5630a`, the `song-select` locked-catalogue gap) — but it is **now
-fixed in code** on branch `song-select-unlock-guard`
-(`server/src/handlers/song-select.ts` rejects a locked-catalogue
-selection, covered by `song-select.test.ts`). The entry will drop out on
-the next `/ardd-verify` pass after this branch merges; `DEFECTS.md` is
-regenerated from a fresh survey, so no manual edit is needed.
-
-Deployment, datamodel, pipeline, ui, and constitution surfaces verified
-clean at the 2026-07-10 pass.
+**0 known defects** — `DEFECTS.md` all-clear, last checked 2026-07-10. The
+prior `31c5630a` (`song-select` locked-catalogue gap) is resolved:
+`server/src/handlers/song-select.ts` now rejects a locked-catalogue
+selection, matching `infrastructure.md`'s contract, covered by
+`song-select.test.ts`. Datamodel, pipeline, infrastructure deployment, ui,
+and constitution surfaces were all clean at the same pass.
 
 ## Feedback
 
-No open feedback — F001 (`feedback-song-select-unlock-guard-705b.md`) is
-now `planned`, consumed by `plan-song-select-unlock-guard-2026-07-10.md`.
+No open feedback — F001 (`feedback-song-select-unlock-guard-705b.md`) was
+`planned`, consumed by `plan-song-select-unlock-guard-2026-07-10.md`, and
+its fix is now merged.
 
 ## Feature Backlog
 
@@ -141,27 +138,29 @@ via the preview build (port 6001) if desired.
 
 ## In Flight
 
-Current checkout is on branch `song-select-unlock-guard` (not a separate
-worktree), 7 signed commits ahead of `main` and unmerged: the approved
-plan, the **completed** tasks file
-`tasks-song-select-unlock-guard-6dcb.md` (2/2), the `planned` feedback
-F001, and the implemented guard. No sibling worktrees, no open draft PRs.
-The already-merged `catalog-activation-key-access` branch ref can be
-deleted at leisure.
+Nothing in flight — no sibling worktrees, no open draft PRs, no draft
+plans, no open feedback. Both recent feature branches
+(`catalog-activation-key-access`, `song-select-unlock-guard`) have merged
+into `main`; their local refs can be deleted at leisure. `main` is 30
+signed commits ahead of `origin/main` — unpushed.
 
 ## Recommended Next Step
 
-1. Merge `song-select-unlock-guard` into `main` (signed `--no-ff`,
-   matching the repo's merge pattern) — lands the guard, the completed
-   tasks file, and the planned feedback together.
-2. Run `/ardd-verify` after the merge — it will drop defect `31c5630a`
-   from `DEFECTS.md` now that `song-select.ts` honors the contract.
-3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+Project is at a clean resting state — all artifacts stable-or-known-draft,
+diagrams current, `DEFECTS.md` all-clear, no open feedback or in-flight
+work. Options:
+
+1. `git push` — `main` is 30 signed commits ahead of `origin/main`. All
+   are signed and verify, so pushing is safe whenever you're ready.
+2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
-4. Not blocking: the `connectionStatus` naming overlap, the missing
+3. Not blocking: the `connectionStatus` naming overlap, the missing
    `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
    in `datamodel.md`'s Consent Record section — worth folding into a
    future `/ardd-refine` pass.
+4. Start the next feature: `/ardd-feature <idea>` to log one, or
+   `/ardd-plan <slug>` against a backlogged entry (none currently
+   backlogged).
 2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
 3. Not blocking: the `connectionStatus` naming overlap, the missing
