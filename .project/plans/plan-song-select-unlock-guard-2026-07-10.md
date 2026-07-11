@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: song-select-unlock-guard
 created: 2026-07-10
 features: []
