@@ -51,7 +51,11 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
   const songDir = path.join(catalogRoot, relPath);
   const meta: SongMeta = JSON.parse(fs.readFileSync(path.join(songDir, 'meta.json'), 'utf8'));
 
-  const gpFile = fs.readdirSync(songDir).find((f) => f.endsWith('.gp'));
+  // Ignore dotfiles when picking the tab source: a macOS AppleDouble sidecar
+  // (`._<name>.gp`, an xattr blob left by a tar transfer that preserves
+  // extended attributes) both ends in `.gp` and sorts ahead of the real
+  // file, so a bare `.endsWith('.gp')` would select the unparseable blob.
+  const gpFile = fs.readdirSync(songDir).find((f) => f.endsWith('.gp') && !f.startsWith('.'));
   if (!gpFile) throw new Error(`No .gp file found in catalog directory: ${songDir}`);
 
   const lrcPath = path.join(songDir, 'lyrics.lrc');

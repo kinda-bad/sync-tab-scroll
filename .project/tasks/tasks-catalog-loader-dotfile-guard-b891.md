@@ -30,7 +30,7 @@ status: in-progress
       `Song-Title.gp`, never the `._`-prefixed name. Confirm the test FAILS
       against the current `.find((f) => f.endsWith('.gp'))` implementation
       before writing the fix. Fixes F001, F002.
-- [ ] T003 In `server/src/catalog-loader.ts`, change `loadSong`'s `.gp`
+- [x] T003 In `server/src/catalog-loader.ts`, change `loadSong`'s `.gp`
       selection from `fs.readdirSync(songDir).find((f) => f.endsWith('.gp'))`
       to also reject dotfiles:
       `f.endsWith('.gp') && !f.startsWith('.')` (covers `._*` AppleDouble
