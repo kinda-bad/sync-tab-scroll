@@ -1,7 +1,7 @@
 ---
 plan: plan-catalog-loader-dotfile-guard-2026-07-11.md
 generated: 2026-07-11
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -47,7 +47,7 @@ status: in-progress
       `--exclude='._*'`) so macOS never emits `._*` xattr sidecars onto the
       volume. Reference why (they get selected as bogus `.gp` files
       otherwise).
-- [ ] T005 Verify end-to-end on the live deployment: after the branch is
+- [x] T005 Verify end-to-end on the live deployment: after the branch is
       merged/pushed and `railway redeploy` completes, connect over WebSocket
       (`session-create`) and confirm every advertised `CatalogSong.gpFilePath`
       resolves to a real `.gp` (no `._` prefix), and that selecting a song
