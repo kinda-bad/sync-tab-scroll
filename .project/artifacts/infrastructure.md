@@ -1,7 +1,7 @@
 ---
 name: infrastructure
-status: draft
-last_updated: 2026-07-09
+status: stable
+last_updated: 2026-07-10
 diagram_status: current
 ---
 
@@ -657,6 +657,9 @@ service, per the point directly above.
 runs the server) and an `infra/` directory (Terraform config: Railway
 project, service, volume, and environment variables).
 
-**`[OPEN: custom domain]`** — the Railway-assigned `*.up.railway.app`
-domain is sufficient for this deployment; a custom domain is deferred,
-not resolved by this plan.
+**Custom domain — deliberately deferred.** The Railway-assigned
+`*.up.railway.app` domain is sufficient for this deployment, so no custom
+domain is provisioned; this is a resolved deferral, not an undecided
+design question. Revisit only if a public-facing branded URL becomes a
+real requirement — at which point it's a Terraform addition
+(`railway_custom_domain` plus DNS), not a rework of anything here.

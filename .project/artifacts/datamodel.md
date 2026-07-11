@@ -1,7 +1,7 @@
 ---
 name: datamodel
-status: draft
-last_updated: 2026-07-09
+status: stable
+last_updated: 2026-07-10
 diagram_status: current
 ---
 
@@ -92,7 +92,7 @@ no key — so existing local/personal deployments need no migration.
 | lyricsLrc | string \| null | Client-fetchable URL path to the raw `.lrc` synced-lyrics file (same URL-rewriting as `gpFilePath`, infrastructure.md). Normally derived from the GP file's embedded lyrics (per-line end timestamps come from GP's last-syllable timing, encoded as blank-text gap lines), with lrclib.net consulted only for line-break placement if GP lacks it; falls back to an lrclib.net-sourced `.lrc` entirely when the GP file has no embedded lyrics at all. Null if no lyrics found either way. Drives the primary lyrics view's timing animation directly from `.lrc` timestamps. Gates whether `'lyrics'` is selectable as a part in the lobby (ui.md) |
 | lyricsTrackIndex | number \| null | Index into `gpFilePath`'s parsed score identifying which track's beats actually carry the GP-embedded lyrics (`Beat.lyrics`) — the track lyrics were authored on, not necessarily any `CatalogPart.trackIndex` (the lyrics-bearing track may not be offered as a selectable instrument part at all). Null whenever `lyricsLrc` came from the lrclib.net fallback (no GP-embedded lyrics to point at). The client reads this track's beats at render time to derive syllable text + tick position for the in-tab overlay — no separate tick-map artifact is published (see Normalization Rules) |
 | lyricsLineIndex | number \| null | Which index into a beat's `Beat.lyrics` array to read (`Beat.lyrics` is indexed by lyric line/channel — GP supports multiple simultaneous lyric channels, e.g. main vocal vs. a harmony line — not by syllable). Almost always `0`; the pipeline picks the first non-empty channel rather than the client guessing, in case a GP file's primary content isn't at index 0. Same nullability as `lyricsTrackIndex` |
-| lyricLineBreaks | number[] \| null | Syllable count per line, in the order syllables appear across `lyricsTrackIndex`'s beats at `lyricsLineIndex`. The client computes line groups from it (`lyrics-beat-walk.ts`'s `groupIntoLines`), but the current in-tab overlay (`ui.md`'s Playback View) is a single continuous scrolling ticker that flattens the syllable stream and never uses those line boundaries for layout — so this field currently has no visible effect on the rendered UI, though it's still computed and unit-tested. Whether it's worth keeping at all, given nothing reads the grouped result for layout, is an open question for a future pass, not resolved here. Same nullability as `lyricsTrackIndex` |
+| lyricLineBreaks | number[] \| null | Syllable count per line, in the order syllables appear across `lyricsTrackIndex`'s beats at `lyricsLineIndex`. The client computes line groups from it (`lyrics-beat-walk.ts`'s `groupIntoLines`), but the current in-tab overlay (`ui.md`'s Playback View) is a single continuous scrolling ticker that flattens the syllable stream and never uses those line boundaries for layout — so this field currently has no visible effect on the rendered UI, though it's still computed and unit-tested. **Resolved as intentionally retained**: it's cheap to compute, already unit-tested, and a plausible input for a future multi-line/paged lyrics view; revisit only if a deliberate simplification pass wants it gone (which would be code work — pipeline extraction, `meta.json`, and `lyrics-beat-walk.ts` — not just an artifact edit). Same nullability as `lyricsTrackIndex` |
 
 ### Catalogue
 
@@ -159,26 +159,25 @@ on-disk gate `catalog-loader.ts` reads at startup (infrastructure.md's
 Song Consent Gate), only when an operator has opted into
 `requireSongConsent`. Lives as a companion file in a song's own directory
 alongside its `.gp`/`.lrc`/`meta.json` (pipeline.md's Inputs & Outputs On
-Disk), one record per song — **[OPEN: per-song, not per-submitter]**
-chosen for this plan as the simpler shape (no separate submitter registry/
-entity to introduce, no cross-song identity to reconcile), accepting that
-a submitter contributing multiple songs re-records consent per song
-rather than once; revisit only if that duplication becomes real friction,
-not preemptively.
+Disk), one record per song. **Resolved as per-song, not per-submitter** —
+the simpler shape (no separate submitter registry/entity to introduce, no
+cross-song identity to reconcile), accepting that a submitter contributing
+multiple songs re-records consent per song rather than once; revisit only
+if that duplication becomes real friction, not preemptively.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | submitterName | string | Free-text identifier the submitter gives (name/handle/contact) — not a validated or authenticated identity; this app has no auth (infrastructure.md Production Posture), so this is a record-keeping field, not an access-control key |
-| tosVersion | string | Which version/text of the distribution-license ToS clause was accepted — **[OPEN: exact ToS wording is a legal decision, not a design one]**, not resolved by this plan; a placeholder/dev version string is fine until an operator supplies real ToS text |
+| tosVersion | string | Which version/text of the distribution-license ToS clause was accepted. The exact ToS wording is a legal/operator decision, not a design one, so it's deliberately left to the operator — `record-consent` writes a production-annotated placeholder (`dev-placeholder`) until real ToS text is supplied (see Production Annotations) |
 | acceptedAt | number | Wall-clock timestamp consent was recorded |
 
 Written by a small companion CLI step to the existing lyrics-extraction
 pipeline (pipeline.md), not a web form — consistent with the pipeline's
 existing operator-driven, offline, source-controlled-inputs model
 (constitution Principle V spirit: no new mechanism built where the
-existing one already covers the workflow shape). **[OPEN: CLI-drop-in
-chosen over a web upload form]** — a web upload endpoint was considered
-and rejected for this pass: it would require a new HTTP surface accepting
+existing one already covers the workflow shape). **Resolved as a CLI drop-in
+over a web upload form** — a web upload endpoint was considered
+and rejected: it would require a new HTTP surface accepting
 arbitrary file uploads from the public internet (a materially different
 threat model than this app's stated self-hosted/small-group posture,
 infrastructure.md), submitter-facing identity/session handling that
@@ -219,3 +218,14 @@ Not applicable — session state is in-memory only (infrastructure.md), with
 no persistence layer or query surface that would require an index. The
 Consent Record and Catalogue Activation Key above are also not indexed —
 each is read once, at catalog-load time, not queried.
+
+## Production Annotations
+
+- **Placeholder ToS version in the Consent Record.** `Consent Record`'s
+  `tosVersion` is written as a placeholder string (`record-consent`'s
+  `dev-placeholder`), not a real distribution-license clause version. The
+  exact ToS wording is a legal/operator decision this model doesn't resolve
+  — an operator relying on recorded consent for a real public deployment
+  must replace the placeholder with the actual accepted ToS version before
+  the recorded consent means anything legally. Annotated at
+  `packages/pipeline/src/record-consent.ts`.
