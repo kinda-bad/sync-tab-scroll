@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Guard + test
 
-- [ ] T001 [artifacts: infrastructure] Write a failing test (constitution
+- [x] T001 [artifacts: infrastructure] Write a failing test (constitution
       Principle VII, test-first) in
       `server/src/handlers/song-select.test.ts`. Extend the existing
       `makeCtx` helper so its `catalog.catalogues` includes a private
