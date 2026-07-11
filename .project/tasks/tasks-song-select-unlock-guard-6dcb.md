@@ -1,7 +1,7 @@
 ---
 plan: plan-song-select-unlock-guard-2026-07-10.md
 generated: 2026-07-10
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -28,7 +28,7 @@ status: in-progress
       implementing — `infrastructure.md` (Song Catalog Delivery) documents
       this rejection as the intended behavior, so this is context only, no
       artifact edit. Addresses feedback F001 / `[defect: 31c5630a]`.
-- [ ] T002 Implement the guard in `server/src/handlers/song-select.ts`:
+- [x] T002 Implement the guard in `server/src/handlers/song-select.ts`:
       after the existing `if (!song)` not-found check, resolve the song's
       catalogue via `ctx.catalog.catalogues.find((c) => c.id ===
       song.catalogueId)` and, when that catalogue is private
