@@ -5,6 +5,14 @@
 
 resource "railway_project" "app" {
   name = var.project_name
+
+  # Which Railway workspace owns the project. Railway's projectCreate
+  # requires an explicit workspaceId even for a personal workspace, so this
+  # is always set (var.workspace_id, defaulted in variables.tf; override
+  # with TF_VAR_workspace_id to target a different workspace). It's a
+  # force-new field — changing it would destroy and recreate the project —
+  # so the default is pinned rather than left to drift to null.
+  workspace_id = var.workspace_id
 }
 
 resource "railway_service" "app" {

@@ -152,18 +152,29 @@ part of this repo's tooling or CI ever runs `terraform apply`
 automatically:
 
 1. Create a [Railway](https://railway.app/) account and generate an
-   account/workspace API token.
-2. From `infra/`:
+   **account API token** at
+   [railway.com/account/tokens](https://railway.com/account/tokens). It
+   must be an account (or team/workspace) token — a *project-scoped* token
+   can't create the project and will fail with `projectCreate ... Not
+   Authorized`.
+2. Set the target workspace. Railway's `projectCreate` requires an explicit
+   workspace ID even for a personal workspace. The `workspace_id` variable
+   in `infra/variables.tf` is defaulted to this deployment's workspace; to
+   deploy into a different one, find its ID (query `me { workspaces { id
+   name } }` against `https://backboard.railway.com/graphql/v2` with your
+   token, or read it from the dashboard URL) and pass it as
+   `TF_VAR_workspace_id`.
+3. From `infra/`:
    ```sh
-   export RAILWAY_TOKEN=<your token>
+   export RAILWAY_TOKEN=<your account token>
    terraform init
    terraform plan
    ```
-3. **Review the plan output carefully** — it provisions real, billable
+4. **Review the plan output carefully** — it provisions real, billable
    Railway resources (a project, a service built from this repo's
    `Dockerfile`, a persistent volume for catalog content, and service
    environment variables) under your own account.
-4. If it looks right:
+5. If it looks right:
    ```sh
    terraform apply
    ```

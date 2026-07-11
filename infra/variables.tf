@@ -4,6 +4,12 @@ variable "project_name" {
   default     = "sync-tab-scroll"
 }
 
+variable "workspace_id" {
+  description = "Railway workspace that owns the project. Railway's projectCreate requires an explicit workspaceId (even for a personal workspace), so this must be set. Not a secret — a workspace ID appears in Railway's own dashboard URLs and is inert without an API token — so it lives here as the default rather than in a token store. Find yours via the account token: `me { workspaces { id name } }` on the GraphQL API, or the dashboard URL. Override per-run with TF_VAR_workspace_id to deploy into a different workspace."
+  type        = string
+  default     = "29f1d275-83a4-45df-914a-49f073193182"
+}
+
 variable "source_repo" {
   description = "GitHub repo (owner/name) Railway builds the service from — its committed Dockerfile is auto-detected and used."
   type        = string
