@@ -1,7 +1,7 @@
 ---
 plan: plan-song-select-unlock-guard-2026-07-10.md
 generated: 2026-07-10
-status: ready
+status: in-progress
 ---
 
 # Tasks
