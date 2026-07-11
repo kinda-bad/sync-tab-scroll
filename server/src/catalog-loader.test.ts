@@ -89,6 +89,34 @@ describe('loadCatalog', () => {
     expect(songs.map((s) => s.id)).toEqual(['creep']);
   });
 
+  it('ignores a macOS AppleDouble (._*) sidecar and selects the real .gp', () => {
+    // A tar transfer that preserves xattrs (e.g. onto the Railway volume)
+    // leaves a `._<name>.gp` companion beside the real file. It ends in
+    // `.gp` and sorts/enumerates ahead of the real name, so a naive
+    // `readdir().find()` picks the xattr blob and alphaTab can't parse it.
+    // Create the sidecar first to bias enumeration toward the buggy pick.
+    const songDir = path.join(catalogRoot, 'appledouble');
+    fs.mkdirSync(songDir, { recursive: true });
+    fs.writeFileSync(path.join(songDir, '._song.gp'), 'appledouble-xattr-blob');
+    fs.writeFileSync(path.join(songDir, 'song.gp'), '');
+    fs.writeFileSync(
+      path.join(songDir, 'meta.json'),
+      JSON.stringify({
+        name: 'Creep',
+        artist: 'Radiohead',
+        parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+        lyricsTrackIndex: 0,
+        lyricsLineIndex: 0,
+        lyricLineBreaks: [4],
+      }),
+    );
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs).toHaveLength(1);
+    expect(songs[0].gpFilePath).toBe('/catalog/appledouble/song.gp');
+  });
+
   it('loads every song regardless of consent.json when requireSongConsent is false (default)', () => {
     writeSong('creep');
 

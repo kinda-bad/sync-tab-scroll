@@ -22,7 +22,7 @@ status: in-progress
 
 ## Phase 2: Code fix (test-first, constitution Principle VII)
 
-- [ ] T002 Write a FAILING test in `server/src/catalog-loader.test.ts`:
+- [x] T002 Write a FAILING test in `server/src/catalog-loader.test.ts`:
       construct (or fixture) a song directory containing BOTH a real
       `Song-Title.gp` and a macOS AppleDouble sidecar `._Song-Title.gp` (plus
       the usual `meta.json`), load it via `loadCatalog`/`loadSong`, and assert
