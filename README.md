@@ -190,6 +190,25 @@ pipeline.md`). The deployed service also runs with
 `false` default) — see `.project/artifacts/datamodel.md`'s Consent
 Record section for what that requires per song.
 
+A Railway volume has no upload UI, so content reaches it by streaming a
+tarball over `railway ssh` into the mount path (`/data/catalog`).
+**On macOS, disable AppleDouble metadata in the tar** — otherwise the OS
+writes a `._<name>` xattr sidecar for every file, and a `._Song.gp`
+companion gets picked up as a bogus (unparseable) tab, breaking rendering
+on the deployed app:
+
+```sh
+# From the repo root, with the Railway CLI logged in and the service linked:
+COPYFILE_DISABLE=1 tar czf - -C catalog . \
+  | railway ssh "mkdir -p /data/catalog && tar xzf - -C /data/catalog"
+railway redeploy   # the server scans the catalog only at startup
+```
+
+(`COPYFILE_DISABLE=1` is the macOS-specific guard; `--no-mac-metadata` or
+`--exclude='._*'` work too. The server also defensively ignores `._*`
+sidecars when selecting a song's `.gp`, but keeping them off the volume in
+the first place is cleaner.)
+
 See `infra/README.md` for the Terraform provider and state-management
 tradeoffs this config makes.
 

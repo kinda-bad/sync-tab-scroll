@@ -40,7 +40,7 @@ status: in-progress
 
 ## Phase 3: Runbook + live verification
 
-- [ ] T004 [parallel] In `README.md`'s "Deploying to Railway" populate
+- [x] T004 [parallel] In `README.md`'s "Deploying to Railway" populate
       steps, add an AppleDouble-free transfer note: when streaming the
       catalog to the Railway volume from macOS, use
       `COPYFILE_DISABLE=1 tar czf - -C catalog .` (or `--no-mac-metadata` /
