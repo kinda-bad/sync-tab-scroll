@@ -1,10 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-10 (`/ardd-analyze` after `/ardd-tasks` approved
-`plan-song-select-unlock-guard-2026-07-10.md` and generated
-`tasks-song-select-unlock-guard-6dcb.md` (ready, 0/2) on branch
-`song-select-unlock-guard`. Diagrams current; 1 open defect (`31c5630a`)
-scoped into this plan. No cross-artifact contradictions.)_
+_Updated: 2026-07-10 (`/ardd-analyze`, terminal step of `/ardd-implement`
+completing `tasks-song-select-unlock-guard-6dcb.md` (2/2) on branch
+`song-select-unlock-guard`, 7 signed commits ahead of `main`, unmerged.
+The `song-select` locked-catalogue guard (defect `31c5630a` / feedback
+F001) is now implemented. Diagrams current; no cross-artifact
+contradictions.)_
 
 ARDD update available: installed `9189817`, source at `8c68d84` — run
 `/ardd-update`.
@@ -102,21 +103,16 @@ All three re-rendered into `README.md` on 2026-07-10.
 
 ## Code-vs-Artifact Defects
 
-**1 known defect** — see `DEFECTS.md`, last checked 2026-07-10:
-- **[broken-contract] infrastructure.md** — its Song Catalog Delivery
-  section says selecting a song from a not-yet-unlocked catalogue is
-  "rejected as an error," but `server/src/handlers/song-select.ts` searches
-  the full server-global song list with no `unlockedCatalogueIds` guard, so
-  a stale/tampered client can select a locked catalogue's song. Deliberate
-  T006 choice the artifact wasn't reconciled to. **Scoped into
-  `plan-song-select-unlock-guard-2026-07-10.md`** (approved, tasks ready,
-  via feedback F001) — the fix adds the guard rather than relaxing the
-  artifact, and the next `/ardd-verify` after it lands will drop this
-  entry. Limited blast radius — only a tampered client can reach it, and
-  static `.gp` assets are already served ungated.
+`DEFECTS.md` (last checked 2026-07-10) still lists **1 defect**
+(`31c5630a`, the `song-select` locked-catalogue gap) — but it is **now
+fixed in code** on branch `song-select-unlock-guard`
+(`server/src/handlers/song-select.ts` rejects a locked-catalogue
+selection, covered by `song-select.test.ts`). The entry will drop out on
+the next `/ardd-verify` pass after this branch merges; `DEFECTS.md` is
+regenerated from a fresh survey, so no manual edit is needed.
 
 Deployment, datamodel, pipeline, ui, and constitution surfaces verified
-clean this pass.
+clean at the 2026-07-10 pass.
 
 ## Feedback
 
@@ -146,21 +142,26 @@ via the preview build (port 6001) if desired.
 ## In Flight
 
 Current checkout is on branch `song-select-unlock-guard` (not a separate
-worktree), carrying the approved plan
-`plan-song-select-unlock-guard-2026-07-10.md`, its tasks file
-`tasks-song-select-unlock-guard-6dcb.md` (ready, 0/2), and the `planned`
-feedback F001 — none on `main` yet. No sibling worktrees, no open draft
-PRs. The already-merged `catalog-activation-key-access` branch ref can be
+worktree), 7 signed commits ahead of `main` and unmerged: the approved
+plan, the **completed** tasks file
+`tasks-song-select-unlock-guard-6dcb.md` (2/2), the `planned` feedback
+F001, and the implemented guard. No sibling worktrees, no open draft PRs.
+The already-merged `catalog-activation-key-access` branch ref can be
 deleted at leisure.
 
 ## Recommended Next Step
 
-1. Run `/ardd-implement` on `tasks-song-select-unlock-guard-6dcb.md` (2
-   tasks, test-first: a failing `song-select.test.ts` case for a locked
-   selection, then the `catalogueId`/`unlockedCatalogueIds` guard in
-   `song-select.ts` reusing the invalid-id error). Then merge
-   `song-select-unlock-guard` into `main`. The next `/ardd-verify` after
-   that will drop defect `31c5630a` from `DEFECTS.md`.
+1. Merge `song-select-unlock-guard` into `main` (signed `--no-ff`,
+   matching the repo's merge pattern) — lands the guard, the completed
+   tasks file, and the planned feedback together.
+2. Run `/ardd-verify` after the merge — it will drop defect `31c5630a`
+   from `DEFECTS.md` now that `song-select.ts` honors the contract.
+3. Optional: run `/ardd-update` — a newer ARDD tooling commit is
+   available (installed `9189817`, source at `8c68d84`).
+4. Not blocking: the `connectionStatus` naming overlap, the missing
+   `installCountInCursorGuard` mention, and the stale `[OPEN:` labeling
+   in `datamodel.md`'s Consent Record section — worth folding into a
+   future `/ardd-refine` pass.
 2. Optional: run `/ardd-update` — a newer ARDD tooling commit is
    available (installed `9189817`, source at `8c68d84`).
 3. Not blocking: the `connectionStatus` naming overlap, the missing
