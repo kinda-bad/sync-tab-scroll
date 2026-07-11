@@ -19,6 +19,19 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     return;
   }
 
+  // A song in a private catalogue the session hasn't unlocked isn't
+  // selectable — a normal client never receives it in its filtered catalog
+  // (visibleCatalog, infrastructure.md), so this can only come from a
+  // stale/tampered client. Reject with the *same* error as an unknown id,
+  // keeping "locked" indistinguishable from "nonexistent" (a tampered
+  // client learns nothing about which private catalogues exist — same
+  // no-information posture as the catalogue-unlock handler).
+  const catalogue = ctx.catalog.catalogues.find((c) => c.id === song.catalogueId);
+  if (catalogue && !catalogue.public && !session.unlockedCatalogueIds.includes(catalogue.id)) {
+    ctx.connections.send(socket, { type: 'error', message: `Song ${message.songId} not found` });
+    return;
+  }
+
   // Re-selecting the song that's already selected is a no-op on parts/
   // readiness (ui.md) — e.g. re-clicking the same catalog entry shouldn't
   // wipe out everyone's part choice just because the host clicked again.
