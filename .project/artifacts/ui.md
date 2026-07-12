@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-09
+last_updated: 2026-07-12
 diagram_status: current
 ---
 
@@ -18,6 +18,13 @@ lifecycle hooks.
 Client reactivity/templating is Svelte + Vite (plain Svelte, not
 SvelteKit — see infrastructure.md).
 
+An **optional account layer** (Account & Sign-In, below) sits alongside this
+flow without changing it: every view works fully signed-out — the default — and
+signing in never gates anything. It only *adds* (a signed-in host's redeemed
+catalogue unlocks are remembered; in-app authoring later). When the server runs
+with no database configured (infrastructure.md's DB-optional boot), the sign-in
+affordances are simply absent and the app presents exactly as it does today.
+
 ## Landing View
 
 An initial chooser ("Create a session" / "Join a session") leads to one of
@@ -30,6 +37,44 @@ time. Both forms have a small "Back" control returning to the chooser.
 Persists session code + display name (e.g. to localStorage) so a refresh
 can silently rejoin, bypassing the chooser entirely when a stored session
 exists.
+
+## Account & Sign-In (Optional)
+
+Optional identity layer (constitution v1.5.0; infrastructure.md's User
+Accounts). **Strictly additive and never a gate**: create, join, pick, and play
+all work fully signed-out — the default — and no view is ever blocked behind
+sign-in.
+
+**Sign-in affordance.** A secondary "Sign in with Google / GitHub" control on
+the Landing View chooser, visually subordinate to Create/Join (it's optional),
+plus a small persistent **account menu** in the Lobby/Playback Bar's identity
+area showing the signed-in display name (from the provider profile) with a
+**Sign out** action. Signed-out, that menu is just a compact "Sign in" link.
+Choosing a provider hands off to the provider's OAuth consent screen
+(infrastructure.md's OAuth flow) as a full-page redirect; on return the app
+reloads and silently rejoins any stored session via the Landing View's existing
+refresh-rejoin path — so there is no special mid-session login handling.
+
+**What signing in changes — nothing is removed, only added:**
+- In the Lobby song picker, a private catalogue the **signed-in host is already
+  a member of shows as unlocked** — its songs list directly, with no "Enter
+  activation key" prompt, because it auto-unlocked from the host's membership
+  (infrastructure.md). The host never re-types a key they've redeemed before —
+  the motivating payoff of the feature.
+- Entering an activation key **while signed in** persists the unlock to the
+  host's account for future sessions (a subtle "remembered" affirmation),
+  versus the signed-out case where it unlocks only the current session.
+- In-app authoring (creating catalogues, adding songs) is a later phase and is
+  not part of this section yet.
+
+**States.**
+- *Signed-out* (default) — full functionality; the account menu is a "Sign in"
+  link. Indistinguishable from today's app for anyone who never signs in.
+- *Signed-in* — account menu shows display name + Sign out; member catalogues
+  appear pre-unlocked in the picker.
+- *Accounts unavailable* — when the server runs with no database configured
+  (infrastructure.md), the sign-in affordances are simply **absent**, not shown
+  disabled or errored; the app presents exactly as the signed-out case.
 
 ## Lobby View
 
@@ -55,7 +100,13 @@ additionally sees an "Enter activation key" control on a locked
 catalogue's group header — submitting it sends `catalogue-unlock`
 (infrastructure.md); on success the group expands in place to show that
 catalogue's songs, same as if it had always been unlocked; on a wrong
-key, a toast (States, below), same terse pattern as other errors here. A
+key, a toast (States, below), same terse pattern as other errors here. When
+the host is **signed in and already a member** of a private catalogue, that
+catalogue is **pre-unlocked** here — its songs list directly and no "Enter
+activation key" control is shown (Account & Sign-In, above); and entering a key
+while signed in **persists** the unlock to the host's account for future
+sessions, not just this one (infrastructure.md). Signed-out, the key control
+and its per-session-only unlock behave exactly as before. A
 non-host participant sees the same locked indicator with no interactive
 control — waiting on the host, same as every other host-gated action in
 this modal. Selecting an entry broadcasts the choice to every

@@ -1,6 +1,23 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.4.0 → 1.5.0
+Amended: Project Scope & Intent — deployment scale/audience posture.
+Reversed the "no auth / no durable datastore" scope decision now that the app
+is publicly deployed: sanctioned optional OAuth user accounts (Google/GitHub)
+and the project's first durable datastore (Postgres, for identity, catalogue
+membership, and revocable server-side sessions) as first-class directions.
+Strictly additive — the anonymous path stays fully functional, login is never
+forced, and the server runs with no DB configured (auth/persistence
+self-disable). Session state stays memory-only; infrastructure.md's "no
+durable backing store" is narrowed to session state, not deleted. Rate
+limiting still not required. No Core Principle removed or redefined (MINOR).
+Driver: .project/design-user-accounts-2026-07-12.reviewed.md (§12 owner
+decisions, §13 adversarial resolutions). Follow-ups (done): /ardd-refine
+datamodel (User, CatalogueMembership, AuthSession) and infrastructure (OAuth
+flow, cookie/WS identity + Origin check, out-of-band Postgres + sealed
+secrets, DB-optional boot, re-lock-on-host-change).
+
 Version change: (none) → 1.0.0
 Added sections: all (initial)
 
@@ -51,23 +68,6 @@ hold real secrets once a public-deployment posture is pursued) plus a
 lint-enforced `.env.example` closes exactly that class of drift going
 forward. Not yet implemented — no `.env`/`.env.example`/lint script exists
 yet; this records the intended design ahead of building it.
-
-Version change: 1.4.0 → 1.5.0
-Amended: Project Scope & Intent — deployment scale/audience posture.
-Reversed the "no auth / no durable datastore" scope decision now that the app
-is publicly deployed: sanctioned optional OAuth user accounts (Google/GitHub)
-and the project's first durable datastore (Postgres, for identity, catalogue
-membership, and revocable server-side sessions) as first-class directions.
-Strictly additive — the anonymous path stays fully functional, login is never
-forced, and the server runs with no DB configured (auth/persistence
-self-disable). Session state stays memory-only; infrastructure.md's "no
-durable backing store" is narrowed to session state, not deleted. Rate
-limiting still not required. No Core Principle removed or redefined (MINOR).
-Driver: .project/design-user-accounts-2026-07-12.reviewed.md (§12 owner
-decisions, §13 adversarial resolutions). Follow-ups: /ardd-refine datamodel
-(User, CatalogueMembership, sessions table) and infrastructure (OAuth flow,
-cookie/WS identity + Origin check, out-of-band Postgres + sealed secrets,
-DB-optional boot, re-lock-on-host-change).
 -->
 
 ---

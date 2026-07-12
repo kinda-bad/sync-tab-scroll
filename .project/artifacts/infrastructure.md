@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-11
+last_updated: 2026-07-12
 diagram_status: current
 ---
 
@@ -72,9 +72,14 @@ manageable, minor imprecision for now, consistent with the existing
 50-tick drift tolerance and this app's small-scale self-hosted trust
 model.
 
-Sessions are server-memory-only: a grace-period timer destroys empty
-sessions, and a server restart drops active ones. No durable backing
-store for session state.
+Realtime session state is server-memory-only: a grace-period timer destroys
+empty sessions, and a server restart drops active ones. **No durable backing
+store for *session state*** — this remains true after the accounts addition
+(constitution v1.5.0). The durable Postgres store introduced for user accounts
+holds only identity / catalogue-membership / auth-session records (User
+Accounts, below; datamodel.md's Account Layer); live `Session`, `Participant`,
+and `PlaybackState` are never persisted, and the server runs unchanged with no
+database configured.
 
 A closed socket triggers an immediate `session-state` broadcast to the
 rest of the session (`server/src/server.ts`'s `close` handler, right
@@ -144,6 +149,19 @@ timer above.
 This grace period is configurable (`ServerConfig.hostReassignGraceMs`,
 env `HOST_REASSIGN_GRACE_MS`) — mainly so it can be shortened for tests;
 production default is 2 minutes.
+
+**Catalogue unlock re-derives on host change.** Whenever `Session.hostId`
+changes — succession here, or an explicit Host Transfer (below) — the
+membership-derived slice of `Session.unlockedCatalogueIds` (datamodel.md) is
+recomputed from the *new* host's durable `CatalogueMembership` set, not left
+intact. A private catalogue unlocked *only* because the departed host was a
+member re-locks if the new host isn't a member (and no one typed its key this
+session); a catalogue unlocked by a key typed this session stays unlocked
+(that's a session fact, tied to no user). This keeps host-only auto-unlock
+coherent — private content never outlives the authenticated host that granted
+it, closing the leak an all-anonymous post-succession session would otherwise
+carry (accounts design §13 S4). With accounts disabled (no DB), there is no
+membership-derived slice and this recomputation is a no-op.
 
 ## Host Transfer
 
@@ -320,6 +338,19 @@ audiences by today's existing message shapes (`session-state` is
 per-session state, `catalog` is server-global song data) — introducing a
 combined message type only for this one case would duplicate what
 `session-state`/`catalog` already carry, not simplify anything.
+
+**Persisting the unlock (logged-in host only).** When the unlocking host is a
+logged-in `User` (their connection carries a valid `AuthSession` — User
+Accounts, below), a successful key unlock *also* writes a durable
+`CatalogueMembership` (`grantedVia:'key'`, `keyEpoch` = the catalogue's current
+Activation-Key `epoch`, datamodel.md). On that user's next session the
+catalogue auto-unlocks from the membership with no re-typing — the whole point
+of the accounts feature. An anonymous host's unlock stays per-session as today,
+persisting nothing. Rotating a leaked key bumps the catalogue's `epoch`,
+stranding memberships redeemed under an older epoch (§13 S5). Writing the
+membership is **best-effort**: if the durable store is unavailable the unlock
+still succeeds for the current session (graceful degradation, User Accounts
+below) — it just isn't remembered next time.
 
 ## Tab Rendering
 
@@ -544,13 +575,78 @@ hook, which sees a real local `.env`, does meaningful work for this
 specific check; CI running the same script would be theater, not defense
 in depth.
 
+## User Accounts (Optional — OAuth + Postgres)
+
+Optional identity layer (constitution v1.5.0). **Strictly additive**: with no
+database configured the server runs exactly as before — no accounts, every
+participant anonymous, per-session activation-key unlock the only access path.
+When configured, accounts add persisted catalogue unlock (and, later, in-app
+authoring/ownership). datamodel.md's Account Layer defines the durable
+entities; this section owns the mechanics. Design of record:
+`.project/design-user-accounts-2026-07-12.reviewed.md`.
+
+**Identity provider: hand-rolled Google/GitHub OAuth**, not a managed auth
+service. The server must bind a WebSocket connection to a user via an
+HTTP-only cookie; a client-driven managed provider (e.g. Supabase) keeps its
+token in JS-readable storage and would need a hand-rolled cookie-relay anyway,
+so a minimal server-side OAuth flow on the existing `http.Server` is the
+smaller-surface, safer fit (spike:
+`.project/spike-datastore-secrets-2026-07-12.md`).
+
+**OAuth flow.** New HTTP routes on the *same* `http.createServer` instance that
+already serves the catalog and the WS upgrade (`server/src/server.ts`):
+`/auth/<provider>/login` (redirect to the provider consent screen),
+`/auth/<provider>/callback` (exchange code → profile),
+`/auth/logout`, and `/me` (current user, or anonymous). The Authorization-Code
+flow MUST carry a `state` parameter, PKCE, and a nonce, all validated on
+callback (§13 S1) — without them the callback is login-CSRF-forgeable. On
+success the server upserts a `User` by `(oauthProvider, oauthSubject)` and
+creates an `AuthSession`.
+
+**Session identity (cookie).** The browser holds an **HTTP-only, `Secure`,
+`SameSite`** cookie carrying only the opaque `AuthSession.id` — never user data
+or a signed claim. Every authenticated HTTP request and the WebSocket upgrade
+resolve the cookie → `AuthSession`, rejecting it if expired or `revokedAt` is
+set. Server-side revocation is exactly why sessions are a durable table rather
+than a stateless long-lived cookie (§13 S2); logout / logout-everywhere set
+`revokedAt`.
+
+**WebSocket upgrade hardening.** The WS upgrade MUST validate the request
+`Origin` against an allowlist (§13 S3) — cookies ride the WS handshake
+cross-site, so `SameSite` is not the sole CSRF defense. Only after the Origin
+check does the upgrade read the cookie to attach a `userId` to the connection.
+
+**Interaction with Reconnect By Identity.** Participant reclaim stays keyed on
+`participantId` exactly as today (Reconnect By Identity, above); the account
+`userId` is layered on top, not a replacement. A valid auth cookie *by itself*
+never reclaims a participant or a host seat — reclaim still requires the
+matching `participantId` — so an auth session cannot be used to seize host
+control. `userId` only seeds host-only catalogue auto-unlock (Host Succession's
+re-derive, above).
+
+**DB-optional boot and mid-run degradation.** The server reads `DATABASE_URL`
+at startup; **absent, the whole account layer self-disables** — auth routes
+return unavailable, `/me` is always anonymous, and per-session key unlock is
+the only path. A hard `DATABASE_URL`-at-boot dependency (crashing without one)
+is a **defect**: local dev, CI, tests, and self-hosted mode must run with no
+DB. If the DB is reachable at boot but **fails mid-run**, auth-dependent
+operations **fail soft** (treated as logged-out / no persisted membership;
+unlock still works for the live session, the best-effort membership write is
+skipped) — the anonymous path and every live session stay fully functional and
+the server never crashes on a DB error (§13 S7).
+
 ## Production Posture
 
-Self-hosted / small-group tool: no auth, no rate limiting. Session/
-auth-adjacent code should still resolve "who is this participant" in one
-place rather than scattering that assumption across handlers, so that
-adding auth later is additive rather than a rewrite — but auth and rate
-limiting themselves are out of scope for this build.
+Originally a self-hosted / small-group tool with no auth and no rate limiting.
+**Optional OAuth user accounts are now part of this build** (User Accounts,
+above; constitution v1.5.0), added additively so the anonymous path is
+unchanged and the server still runs with no auth configured. **Rate limiting
+remains out of scope** — including on wrong activation-key and failed-login
+attempts, a separate still-open hardening concern the OAuth callback + Postgres
+raise the stakes of but do not resolve here. The long-standing intent that
+auth-adjacent code resolve "who is this participant" in one place rather than
+scattering that assumption across handlers still holds, now realized by the
+single cookie → `AuthSession` → `userId` resolution seam.
 
 ## Song Consent Gate (Public Deployment Only)
 
@@ -568,8 +664,10 @@ including it in the published `CatalogSong[]` — a song directory lacking
 one is skipped entirely at load time (logged once at startup, not silently
 dropped) rather than partially served. This is a load-time filter, not a
 per-request or per-client check: there is no mechanism to identify "the
-submitter's own connecting client" distinct from anyone else's (this app
-has no auth, per the Production Posture note above), so a song without
+submitter's own connecting client" distinct from anyone else's (the
+optional user-accounts layer authenticates app *users*, not song
+*submitters* — there is no authenticated submitter identity; User Accounts
+above), so a song without
 recorded consent is excluded from the catalog for every client uniformly,
 including its own submitter, rather than selectively visible to them —
 see datamodel.md's Consent Record section for why this is the resolved
@@ -587,8 +685,8 @@ deployment target: a public instance on [Railway](https://railway.app/),
 provisioned via Terraform rather than click-ops through Railway's
 dashboard. This section owns *how the system runs once deployed*;
 Production Posture and Song Consent Gate above still own the posture
-decisions (no auth, `REQUIRE_SONG_CONSENT`) this deployment target turns
-on.
+decisions (optional OAuth accounts, `REQUIRE_SONG_CONSENT`) this deployment
+target turns on.
 
 **Single Railway service, one process.** The server already serves the
 catalog directory statically over the same `http.Server` instance as the
@@ -646,8 +744,8 @@ unmaintained.
 **Terraform state**: a local `infra/terraform.tfstate` file, gitignored
 — no remote state backend (e.g. Terraform Cloud) is introduced. Matches
 this project's existing single-operator/self-hosted reasoning elsewhere
-in this doc (no auth, no rate limiting, fixed-interval reconnect over
-exponential backoff): one operator, one deployment, nothing to
+in this doc (single-operator infra, no rate limiting, fixed-interval reconnect
+over exponential backoff): one operator, one deployment, nothing to
 coordinate across. Revisit only if multiple operators ever need to
 collaborate on the same infrastructure.
 
@@ -661,9 +759,31 @@ can therefore legitimately differ between `server/.env.example`'s
 documented local default and the value Terraform sets on the deployed
 service, per the point directly above.
 
+**User-accounts datastore & secrets (out-of-band, not Terraform-managed).**
+The optional Postgres store (User Accounts, above) is **not** provisioned by
+Terraform — the community Railway provider has no database/plugin resource
+(spike: `.project/spike-datastore-secrets-2026-07-12.md`), and a DIY
+`postgres`-image service would force `POSTGRES_PASSWORD` into plaintext
+`terraform.tfstate`. Instead the operator creates the Postgres service **once,
+by hand in the Railway dashboard**; the app service receives `DATABASE_URL` as
+a Railway **reference variable** (`${{Postgres.DATABASE_URL}}`) resolved at
+deploy time, so only that non-secret reference string ever lives in state.
+**Secrets never enter tfstate** — Terraform's `sensitive = true` does *not*
+keep values out of state, so the separation is structural, not a flag: the
+OAuth client secrets and the `AuthSession`-signing/id secret live canonically
+in 1Password and are pushed to Railway as **sealed** service variables via the
+CLI (`railway variables --set "…=$(op read …)"`), out of band from Terraform,
+which manages only topology and non-secret variables. No Supabase (spike). Two
+operational caveats, tracked under Production Annotations: the hand-created
+Postgres service is invisible to Terraform (a project-level `terraform destroy`
+won't remove it and could orphan it), and sealed variables are not copied into
+a duplicated Railway environment.
+
 **New repo layout**: a top-level `Dockerfile` (builds the pnpm workspace,
 runs the server) and an `infra/` directory (Terraform config: Railway
-project, service, volume, and environment variables).
+project, service, volume, and environment variables — **not** the Postgres
+database or any secret, which are provisioned out-of-band per the point
+above).
 
 **Custom domain — deliberately deferred.** The Railway-assigned
 `*.up.railway.app` domain is sufficient for this deployment, so no custom
@@ -671,3 +791,27 @@ domain is provisioned; this is a resolved deferral, not an undecided
 design question. Revisit only if a public-facing branded URL becomes a
 real requirement — at which point it's a Terraform addition
 (`railway_custom_domain` plus DNS), not a rework of anything here.
+
+## Production Annotations
+
+- **User-accounts datastore and secrets are provisioned out-of-band, not in
+  IaC.** The Postgres service (created by hand in the Railway dashboard) and
+  every secret (OAuth client secrets + the `AuthSession` signing/id secret,
+  held in 1Password and pushed as Railway sealed variables) sit outside
+  Terraform (Deployment section). Consequences to hold: the deployment is *not*
+  fully reproducible from `infra/` alone (a runbook step recreates the DB and
+  sets the sealed vars); the hand-created Postgres service is invisible to
+  Terraform, so a project-level `terraform destroy` won't remove it and could
+  orphan it; and sealed variables don't propagate to a duplicated Railway
+  environment. This is a deliberate trade to keep secrets out of plaintext
+  `tfstate` without encrypting state (constitution v1.5.0 owner decision), not
+  an oversight — revisit if a first-party Railway Terraform Postgres resource
+  or a fully-IaC secret path becomes available.
+- **OAuth is hand-rolled, not a managed auth service.** The Google/GitHub
+  Authorization-Code flow (`state`/PKCE/nonce), the `AuthSession` table, and
+  cookie verification are implemented in-app rather than delegated to a managed
+  provider (User Accounts section; the spike rejected Supabase for the
+  cookie-on-WS requirement). This is a security-sensitive surface — the
+  `state`/PKCE/nonce validation, the `Origin` allowlist on the WS upgrade, and
+  session revocation are load-bearing and must be verified against current
+  OAuth/session best practice, not assumed correct.

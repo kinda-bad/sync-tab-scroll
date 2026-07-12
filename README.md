@@ -217,26 +217,18 @@ tradeoffs this config makes.
 ```mermaid
 erDiagram
     Catalogue ||--o{ CatalogSong : "songs (catalogueId)"
-    Catalogue ||--o| CatalogueKey : "activation key (private only)"
-    Catalogue ||--o{ Session : "unlockedCatalogueIds"
-    Session ||--o{ Participant : "participants"
-    Session ||--o{ CatalogPart : "availableParts"
-    Session ||--|| PlaybackState : "playbackState"
-    CatalogSong ||--o{ CatalogPart : "parts"
-    CatalogSong ||--o{ Session : "selectedSong"
-    CatalogPart ||--o{ Participant : "selectedPart"
+    Catalogue ||--o| CatalogueActivationKey : "activation key (private only)"
+    Catalogue ||..o{ CatalogueMembership : "stable id string, no cross-store FK"
+    Session ||--o{ Participant : participants
+    Session ||--|| PlaybackState : playbackState
+    Session ||--o{ CatalogPart : availableParts
+    Session }o--o| CatalogSong : selectedSong
+    CatalogSong ||--o{ CatalogPart : parts
     CatalogSong ||--o| ConsentRecord : "consent (public deployment only)"
-
-    Catalogue {
-        string id "slug or 'default'"
-        string name "display name, shown even when locked"
-        boolean public "false only when an activation-key record exists"
-    }
-
-    CatalogueKey {
-        string salt "per-catalogue hex salt"
-        string hash "scrypt(key, salt, 64) - never sent to clients"
-    }
+    CatalogPart |o--o{ Participant : selectedPart
+    User ||--o{ Participant : "userId (optional; null = anonymous)"
+    User ||--o{ CatalogueMembership : memberships
+    User ||--o{ AuthSession : sessions
 
     Session {
         string code
@@ -246,11 +238,11 @@ erDiagram
         number lobbyCursorTick "null once playback starts"
         boolean spotlightMode
         string pendingHostRequest "Participant.id or null"
-        string_array unlockedCatalogueIds "private Catalogue.id values, per-session"
+        string_array unlockedCatalogueIds "key-entered + host-membership-derived"
     }
-
     Participant {
         string id
+        string userId "User.id or null (anonymous)"
         string displayName
         string role "host | member"
         string connectionStatus "connected | disconnected"
@@ -258,35 +250,63 @@ erDiagram
         string readiness "no-part | loading | ready"
         number joinedAt
     }
-
     CatalogSong {
         string id "song slug"
-        string catalogueId "Catalogue.id, 'default' if no catalogue dir"
+        string catalogueId
         string name
         string artist
         string gpFilePath "client-fetchable URL"
         string lyricsLrc "URL or null"
-        number lyricsTrackIndex "null on lrclib fallback"
-        number lyricsLineIndex "lyric channel, usually 0"
-        number_array lyricLineBreaks "syllables per line"
+        number lyricsTrackIndex "or null"
+        number lyricsLineIndex "or null"
     }
-
+    Catalogue {
+        string id "slug or 'default'"
+        string name "shown even when locked"
+        boolean public
+    }
     CatalogPart {
         string instrumentName
-        number trackIndex "stable id for instrument parts"
+        number trackIndex
     }
-
     PlaybackState {
         string status "stopped | running | paused"
         number tickPosition "host-client-authoritative"
-        number bpm "informational only"
+        number bpm "display only"
         number serverTimestamp
     }
-
     ConsentRecord {
         string submitterName
         string tosVersion
         number acceptedAt
+    }
+    CatalogueActivationKey {
+        string salt
+        string hash "scrypt(key, salt, 64)"
+        number epoch "bumped on key rotation"
+    }
+    User {
+        string id "uuid"
+        string oauthProvider "google | github"
+        string oauthSubject
+        string displayName
+        string email "or null"
+        number createdAt
+    }
+    CatalogueMembership {
+        string id "uuid"
+        string userId FK
+        string catalogueId "stable id string, no cross-store FK"
+        string grantedVia "owner | key | invite"
+        number keyEpoch "or null (grantedVia:key only)"
+        number grantedAt
+    }
+    AuthSession {
+        string id "opaque, carried in HTTP-only cookie"
+        string userId FK
+        number createdAt
+        number expiresAt
+        number revokedAt "or null (revocation)"
     }
 ```
 
@@ -294,90 +314,61 @@ erDiagram
 
 ```mermaid
 graph TD
-    GP[Guitar Pro source files]
-    Lrclib[lrclib.net<br/>external lyrics source]
-    Pipeline[Offline lyrics-extraction pipeline<br/>alphaTab in Node]
-    CreateCat[create-catalogue CLI<br/>scrypt + salt, key never stored]
-    Catalog[(Catalog root<br/>flat songs = 'default' public catalogue;<br/>catalogue dirs, catalogue.json = private key record)]
-    Server[Node + ws server<br/>in-memory sessions; loadCatalog groups<br/>songs by catalogue; per-session visibleCatalog filter]
-    HTTP[Static HTTP route<br/>/catalog/... and /catalog/&lt;catalogue&gt;/...]
-    Client[Svelte client<br/>single store, reconnect-by-identity,<br/>2s retry on connection loss]
-    AlphaTab[alphaTab instance per participant<br/>visible renderer or headless<br/>renders tab + plays audio + native cursor]
-    SoundFont[(SoundFont asset<br/>multi-MB, part of load readiness)]
+    Browser["Browser — Svelte SPA + alphaTab<br/>(renders tab, plays audio)"]
 
-    GP --> Pipeline
-    Lrclib -->|line breaks or full .lrc fallback| Pipeline
-    Pipeline -->|writes .gp, .lrc, meta.json| Catalog
-    CreateCat -->|writes catalogue.json salt+hash| Catalog
-    Catalog -->|loaded once at startup,<br/>paths rewritten to URLs| Server
-    Server --- HTTP
-    HTTP -->|.gp and .lrc fetches| Client
-    Client <-->|WebSocket: session-state broadcasts,<br/>playback-control, song-select,<br/>host transfer/request, remove participant| Server
-    Client -->|host only: catalogue-unlock catalogueId+key| Server
-    Server -->|verify scrypt + timingSafeEqual;<br/>on success re-broadcast session-state + widened catalog| Client
-    Client -->|host only: playback-tick-report ~1/s| Server
-    Server -->|periodic PlaybackState broadcast<br/>drift correction against 50-tick threshold| Client
-    Client --> AlphaTab
-    SoundFont --> AlphaTab
+    subgraph Railway["Railway service — single Node process, one port"]
+      Server["http.Server<br/>(one http.createServer)"]
+      WS["WebSocket sync (ws)"]
+      Static["Static: SPA + alphaTab assets + /catalog/*"]
+      AuthR["Auth routes: /auth/&lt;provider&gt; login·callback, /logout, /me"]
+      Server --- WS
+      Server --- Static
+      Server --- AuthR
+    end
+
+    Volume[("Catalog volume<br/>.gp / .lrc / meta.json / catalogue.json")]
+    PG[("Postgres — OPTIONAL, out-of-band<br/>User · CatalogueMembership · AuthSession")]
+    OAuth["Google / GitHub OAuth"]
+
+    Browser -->|"HTTPS: load SPA + assets, fetch .gp/.lrc"| Static
+    Browser <-->|"wss: realtime sync<br/>(HTTP-only cookie identity, Origin-checked)"| WS
+    Browser -->|"sign in / callback / logout / me"| AuthR
+    Static -->|"scan at startup + serve"| Volume
+    AuthR -->|"Authorization Code + PKCE + state"| OAuth
+    Server -.->|"optional: identity, membership,<br/>revocable auth-session (server runs with no DB)"| PG
 ```
 
 ## UI
 
 ```mermaid
 graph TD
-    App[App / view-state router<br/>single client store]
-    Banner[Connection-lost banner<br/>all views, non-dismissing]
-    Bar[Persistent bar<br/>join code + song, Song & part,<br/>settings cog, Leave session]
-    Toasts[Error toasts<br/>incl. wrong activation key]
-    Landing[Landing view<br/>create / join forms]
-    Lobby[Lobby view<br/>state-dependent hint line]
-    Playback[Playback view]
+    App --> Landing["Landing View"]
+    App --> Lobby["Lobby View"]
+    App --> Playback["Playback View"]
+    App --> ConnBanner["Connection-lost banner (global)"]
+    App --> Toasts["Toasts (global)"]
 
-    SongPartModal[Song & part modal<br/>forced-open until both set]
-    CatalogPicker[Catalog picker - host only<br/>grouped by catalogue when >1]
-    PublicGroup[Public catalogue group<br/>songs listed directly under its name]
-    LockedGroup[Locked private catalogue<br/>name + locked indicator, no songs]
-    UnlockControl[Enter activation key - host only<br/>sends catalogue-unlock, group expands on success]
-    PartPicker[Part picker incl. Lyrics option]
+    Landing --> Chooser["Create / Join chooser"]
+    Landing --> CreateForm["Create form (name)"]
+    Landing --> JoinForm["Join form (name + code)"]
+    Landing --> SignIn["Sign in with Google / GitHub<br/>(optional — never gates the flow)"]
 
-    SettingsModal[Settings modal]
-    TabParticipants[Participants tab<br/>list + Make host, Remove,<br/>Request/Decline host controls]
-    TabSession[Session tab<br/>lobby cursor + Spotlight mode,<br/>host Count-in toggle]
-    TabPreferences[Preferences tab<br/>theme picker riot/cyberpunk<br/>+ light/dark toggle, personal metronome]
+    Lobby --> Bar["Persistent Bar (nav)"]
+    Playback --> Bar
+    Bar --> JoinCodeId["Join code + song / artist"]
+    Bar --> AccountMenu["Account menu<br/>(display name · Sign out, or 'Sign in')"]
+    Bar --> SongPartCtl["Song & part control"]
+    Bar --> SettingsCog["Settings cog"]
+    Bar --> Leave["Leave session"]
 
-    InstrumentView[Instrument part rendering]
-    AlphaTabVisible[Visible alphaTab renderer<br/>native cursor overlay]
-    Ticker[In-tab lyrics ticker<br/>single-line, snap-centered syllable]
-    LyricsView[Lyrics part rendering]
-    AlphaTabHeadless[Headless alphaTab instance<br/>audio + shared clock only]
-    FullLyrics[Full-lyrics sheet<br/>all .lrc lines, auto-scroll to active line]
-    GapIndicator[Gap timing indicator<br/>4-beat dot countdown + theme-styled drain bar]
-    LoadingBanner[Loading tab/lyrics banner]
+    SongPartCtl --> Modal["Song & Part modal"]
+    Modal --> CataloguePicker["Catalogue picker (grouped by catalogue)"]
+    CataloguePicker -->|"host, locked catalogue"| KeyCtl["Enter activation key<br/>(hidden when signed-in member: pre-unlocked)"]
+    Modal --> PartPicker["Part picker (instruments + Lyrics)"]
 
-    App --> Banner
-    App --> Bar
-    App --> Toasts
-    App --> Landing
-    App --> Lobby
-    App --> Playback
-    Bar --> SongPartModal
-    Bar --> SettingsModal
-    SongPartModal --> CatalogPicker
-    SongPartModal --> PartPicker
-    CatalogPicker --> PublicGroup
-    CatalogPicker --> LockedGroup
-    LockedGroup -.->|host only| UnlockControl
-    SettingsModal --> TabParticipants
-    SettingsModal --> TabSession
-    SettingsModal --> TabPreferences
-    Playback --> LoadingBanner
-    Playback --> InstrumentView
-    Playback --> LyricsView
-    InstrumentView --> AlphaTabVisible
-    InstrumentView -.->|optional toggle| Ticker
-    LyricsView --> AlphaTabHeadless
-    LyricsView --> FullLyrics
-    FullLyrics -.->|gap > 1 measure| GapIndicator
+    Playback --> TabRender["Tab renderer (alphaTab)"]
+    Playback --> LyricsOverlay["Lyrics view / in-tab overlay"]
+    SettingsCog --> SettingsModal["Settings modal"]
 ```
 
 ## Acknowledgements
