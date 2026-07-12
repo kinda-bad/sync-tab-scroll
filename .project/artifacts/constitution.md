@@ -51,12 +51,29 @@ hold real secrets once a public-deployment posture is pursued) plus a
 lint-enforced `.env.example` closes exactly that class of drift going
 forward. Not yet implemented — no `.env`/`.env.example`/lint script exists
 yet; this records the intended design ahead of building it.
+
+Version change: 1.4.0 → 1.5.0
+Amended: Project Scope & Intent — deployment scale/audience posture.
+Reversed the "no auth / no durable datastore" scope decision now that the app
+is publicly deployed: sanctioned optional OAuth user accounts (Google/GitHub)
+and the project's first durable datastore (Postgres, for identity, catalogue
+membership, and revocable server-side sessions) as first-class directions.
+Strictly additive — the anonymous path stays fully functional, login is never
+forced, and the server runs with no DB configured (auth/persistence
+self-disable). Session state stays memory-only; infrastructure.md's "no
+durable backing store" is narrowed to session state, not deleted. Rate
+limiting still not required. No Core Principle removed or redefined (MINOR).
+Driver: .project/design-user-accounts-2026-07-12.reviewed.md (§12 owner
+decisions, §13 adversarial resolutions). Follow-ups: /ardd-refine datamodel
+(User, CatalogueMembership, sessions table) and infrastructure (OAuth flow,
+cookie/WS identity + Origin check, out-of-band Postgres + sealed secrets,
+DB-optional boot, re-lock-on-host-change).
 -->
 
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-04
+last_updated: 2026-07-12
 ---
 
 # sync-tab-scroll Constitution
@@ -72,11 +89,27 @@ bolted-on features. The rebuild's purpose is to fix that drift at the root —
 not to change what the app does, but how its code is organized and kept
 honest over time.
 
-Deployment scale/audience: self-hosted/small-group tool, not public/
-untrusted traffic — same trust model as sync-scroll. No auth or rate
-limiting required by this constitution. Hardening remains a real future
-direction (see infrastructure.md's Production Posture), so code
-shouldn't make adding it later a rewrite, but it isn't built now.
+Deployment scale/audience: originally a self-hosted/small-group tool with
+the same trust model as sync-scroll. That premise no longer fully holds — the
+app is now publicly deployed (Railway, `*.up.railway.app`) and reachable by
+untrusted traffic. Accordingly this constitution now sanctions **optional
+user accounts** (OAuth — Google/GitHub) and the project's **first durable
+datastore** (Postgres, for identity, catalogue membership, and revocable
+server-side sessions) as first-class directions, reversing the earlier
+"no auth / no durable store" posture (design of record:
+`.project/design-user-accounts-2026-07-12.reviewed.md`).
+
+This reversal is strictly **additive and never coercive**: the anonymous /
+logged-out experience stays fully functional and login is never forced
+anywhere in the core loop; the server must run with **no database
+configured** — auth and persistence self-disable when unconfigured, so local
+dev, CI, tests, and self-hosted deployment keep working unchanged. Session
+state stays **memory-only** (the datastore holds durable identity/membership/
+session records, not live sessions); infrastructure.md's "no durable backing
+store" statement is therefore **narrowed to session state**, not deleted.
+Rate limiting is still not required by this constitution — a separate,
+still-open hardening concern. Code should not make adding these later a
+rewrite, per the standing intent.
 
 ## Core Principles
 
@@ -257,4 +290,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.4.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-04
+**Version**: 1.5.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-12
