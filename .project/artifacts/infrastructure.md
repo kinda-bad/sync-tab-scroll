@@ -2,6 +2,8 @@
 name: infrastructure
 status: stable
 last_updated: 2026-07-12
+diagram_type: graph TD
+render_section: Infrastructure
 diagram_status: current
 ---
 

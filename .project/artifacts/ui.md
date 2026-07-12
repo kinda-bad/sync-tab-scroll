@@ -2,6 +2,8 @@
 name: ui
 status: stable
 last_updated: 2026-07-12
+diagram_type: graph TD
+render_section: UI
 diagram_status: current
 ---
 
