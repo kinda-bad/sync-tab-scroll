@@ -48,6 +48,9 @@ export interface AccountStore {
   /** `false` for the null/absent store — auth routes are inert and `/me` is always anonymous. */
   readonly enabled: boolean;
 
+  /** Prepare the store for use (Postgres: apply migrations). Called once at boot; a no-op for the null store. */
+  init(): Promise<void>;
+
   /** Upsert by `(oauthProvider, oauthSubject)`, returning the durable `User` (or null when unavailable). */
   upsertUser(input: UpsertUserInput): Promise<User | null>;
   /** Look up a `User` by id (null when absent/unavailable). */

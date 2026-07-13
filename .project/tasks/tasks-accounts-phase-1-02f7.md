@@ -45,7 +45,7 @@ that carry them.
   (podman preferred, docker fallback — design §12.3) that starts a throwaway
   Postgres, applies migrations, and tears down; wire it into vitest setup and
   CI. Test: the harness brings a DB up and a trivial query succeeds.
-- [ ] T006 [artifacts: datamodel] Implement the Postgres repository against the
+- [x] T006 [artifacts: datamodel] Implement the Postgres repository against the
   T003 interface: `User` upsert-by-`(oauthProvider, oauthSubject)`,
   `CatalogueMembership` create/query-by-`userId`/query-by-`(userId, stableId)`,
   `AuthSession` create/lookup-by-`id`/revoke. Test (against the T005 harness):

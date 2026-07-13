@@ -13,6 +13,10 @@ import type { AccountStore, CreateAuthSessionInput, UpsertMembershipInput, Upser
 export class NullAccountStore implements AccountStore {
   readonly enabled = false;
 
+  async init(): Promise<void> {
+    // no-op — nothing to migrate when there's no database
+  }
+
   async upsertUser(_input: UpsertUserInput): Promise<User | null> {
     return null;
   }
