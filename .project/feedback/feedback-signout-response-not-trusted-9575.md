@@ -7,7 +7,7 @@ plan: null        # set to the consuming plan's filename once planned
 # Feedback
 
 ## Bugs
-- [ ] F001 Sign out still fails on prod (`sts.ty-pe.com`) AFTER the
+- [x] F001 Sign out still fails on prod (`sts.ty-pe.com`) AFTER the
       reload-race fix shipped (`a683a97`, deploy `3305a830`). **Live browser
       reproduction as the real signed-in user (2026-07-13):** clicking
       **SIGN OUT** shows the "Sign out failed — please try again." toast and
