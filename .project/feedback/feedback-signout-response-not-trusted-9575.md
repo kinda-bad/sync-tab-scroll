@@ -1,7 +1,7 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-13
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-signout-ws-reconnect-storm-2026-07-13-dd78.md
 ---
 
 # Feedback
@@ -32,7 +32,7 @@ plan: null        # set to the consuming plan's filename once planned
       is determined by re-reading `/me`, not the logout response — small, code
       is the core. [artifacts: ui]
 
-- [ ] F002 Stale-session WS rejoin loop reconnects forever (the aborter behind
+- [x] F002 Stale-session WS rejoin loop reconnects forever (the aborter behind
       F001). On the Landing page with a **stale stored session id** (observed:
       a "Session 8NAY not found" toast on every load), the WS client attempts
       to rejoin the non-existent session, the server rejects/closes the socket,
@@ -49,7 +49,7 @@ plan: null        # set to the consuming plan's filename once planned
       own), but this loop is the underlying cause and worth fixing so it stops
       aborting other requests and burning reconnects. [artifacts: ui]
 
-- [ ] F003 **F001's fix is deployed (`0f8a3db` / Railway `d5f8c8f3`) but a live
+- [x] F003 **F001's fix is deployed (`0f8a3db` / Railway `d5f8c8f3`) but a live
       signed-in browser re-verification (2026-07-13) shows sign-out STILL does
       not work — and F002 is confirmed as the real blocker.** Repro as the real
       GitHub-signed-in user: clicking **SIGN OUT** makes the account menu
