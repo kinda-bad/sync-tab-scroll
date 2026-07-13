@@ -352,6 +352,9 @@ graph TD
     Landing --> CreateForm["Create form (name)"]
     Landing --> JoinForm["Join form (name + code)"]
 
+    Landing --> StaleBoot["Stored session no longer on server<br/>→ bootstrap create/join handshake<br/>returns Error 'Session … not found'"]
+    StaleBoot -->|"error while session === null"| StaleClear["Clears persisted session identity<br/>+ stops own reconnect loop<br/>(no 2s rejoin storm aborting in-flight requests)"]
+
     Lobby --> Bar["Persistent Bar (nav)"]
     Playback --> Bar
     Bar --> JoinCodeId["Join code + song / artist"]
@@ -363,8 +366,9 @@ graph TD
     Bar --> AccountMenu
     AccountMenu -->|"Sign out → POST /auth/logout"| MeCheck["Re-read /me (source of truth)<br/>— the logout response is not trusted<br/>(it can be aborted even when the server succeeded)"]
     MeCheck -->|"/me anonymous"| SignedOut["Flips to signed-out in memory (no reload)"]
-    MeCheck -->|"/me still signed-in"| Toasts
-    Toasts -.->|"stays signed-in"| SignOutErr["'Sign out failed — please try again.'"]
+    MeCheck -->|"/me still signed-in"| SignOutErr
+    MeCheck -->|"/me unreachable/aborted<br/>— NOT 'accounts unavailable'"| SignOutErr["Stays Signed-in (menu not blanked)<br/>+ retryable Error toast<br/>'Sign out failed — please try again.'"]
+    SignOutErr --> Toasts
 
     SongPartCtl --> Modal["Song & Part modal<br/>(auto-opens once when song/part unset;<br/>dismissible — × / backdrop / Esc — so the Bar stays reachable)"]
     Modal --> SongPicker["Song picker — visible catalogues only<br/>(public + unlocked; grouped when &gt;1)"]
