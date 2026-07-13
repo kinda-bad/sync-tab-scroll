@@ -99,7 +99,7 @@ that carry them.
   pipeline CLI to write `epoch` on creation and bump it on key rotation
   (regenerating `salt`/`hash`). Test: loader defaults a missing `epoch` to 1; the
   CLI writes epoch on create and increments it on rotation.
-- [ ] T013 [artifacts: infrastructure, datamodel] On a correct `catalogue-unlock`
+- [x] T013 [artifacts: infrastructure, datamodel] On a correct `catalogue-unlock`
   from a logged-in host (connection carries `userId` from T011, read from the
   registry — not re-resolved), best-effort write a
   `CatalogueMembership(grantedVia:'key', keyEpoch = catalogue's current epoch)`

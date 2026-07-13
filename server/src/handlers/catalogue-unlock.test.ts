@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NullAccountStore } from '../accounts/null-store.js';
 import * as crypto from 'node:crypto';
 import type { WebSocket } from 'ws';
@@ -125,5 +125,56 @@ describe('catalogue-unlock', () => {
     expect(broadcasts).toEqual([]);
     expect(sent).toHaveLength(1);
     expect(sent[0].type).toBe('error');
+  });
+
+  describe('persisting the unlock for a logged-in host (T013)', () => {
+    /** Installs a spyable enabled store and stamps a userId on the host connection. */
+    function withSignedInHost(userId: string | null, upsert = vi.fn(async () => null)) {
+      const h = withHostSession();
+      const store = new NullAccountStore();
+      store.upsertMembership = upsert; // spy on the best-effort membership write
+      h.ctx.accountStore = store;
+      // Give the premium-pack catalogue a non-default current epoch (S5).
+      const premium = h.ctx.catalog.catalogues.find((c) => c.id === 'premium-pack')!;
+      (premium as { epoch?: number }).epoch = 2;
+      // Re-attach the host connection carrying the resolved userId (as the WS
+      // upgrade would have stamped it — T011).
+      h.ctx.connections.stampUserId(h.hostSocket, userId);
+      h.ctx.connections.attach(h.hostSocket, { sessionCode: h.session.code, participantId: 'host-1' });
+      return { ...h, upsert };
+    }
+
+    it('a signed-in host key-unlock persists a CatalogueMembership at the current epoch (S5, S8)', () => {
+      const { ctx, session, hostSocket, upsert } = withSignedInHost('user-1');
+
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+
+      expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
+      expect(upsert).toHaveBeenCalledTimes(1);
+      expect(upsert).toHaveBeenCalledWith({ userId: 'user-1', catalogueId: 'premium-pack', grantedVia: 'key', keyEpoch: 2 });
+    });
+
+    it('an anonymous host key-unlock persists nothing (unchanged behavior)', () => {
+      const { ctx, session, hostSocket, upsert } = withSignedInHost(null);
+
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+
+      expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
+      expect(upsert).not.toHaveBeenCalled();
+    });
+
+    it('still unlocks the live session when the membership write fails (DB down, best-effort, S7)', () => {
+      const failing = vi.fn(async () => {
+        throw new Error('DB down');
+      });
+      const { ctx, session, hostSocket, broadcasts } = withSignedInHost('user-1', failing);
+
+      expect(() =>
+        handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY }),
+      ).not.toThrow();
+
+      expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
+      expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
+    });
   });
 });

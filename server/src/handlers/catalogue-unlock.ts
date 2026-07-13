@@ -62,4 +62,19 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
   session.unlockedCatalogueIds.push(catalogue.id);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.broadcast(session.code, () => ({ type: 'catalog', ...visibleCatalog(ctx.catalog, session) }));
+
+  // Persist the unlock for a logged-in host (infrastructure.md "Persisting the
+  // unlock"). The connection already carries the resolved userId from the WS
+  // upgrade (T011) — read it from the registry, never re-resolve the cookie. An
+  // anonymous host (userId null) persists nothing, exactly as before accounts.
+  // The write is BEST-EFFORT (§13 S7): the live-session unlock above already
+  // succeeded and broadcast; if the store is unavailable/errors the membership
+  // just isn't remembered for next time — never a crash. It records the
+  // catalogue's CURRENT epoch (§13 S5) keyed on the stable catalogue id (§13 S8).
+  if (conn.userId) {
+    const keyEpoch = catalogue.epoch ?? 1;
+    void ctx.accountStore
+      .upsertMembership({ userId: conn.userId, catalogueId: catalogue.id, grantedVia: 'key', keyEpoch })
+      .catch((err) => console.error('[catalogue-unlock] best-effort membership write failed:', err instanceof Error ? err.message : err));
+  }
 }
