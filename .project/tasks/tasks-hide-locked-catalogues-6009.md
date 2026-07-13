@@ -68,7 +68,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Client (depends on T001, T003, T004)
 
-- [ ] T005 Test-first (Principle VII; Playwright CT per project convention).
+- [x] T005 Test-first (Principle VII; Playwright CT per project convention).
   First update `client/src/components/SongPartModal.ct.spec.ts` (red): a
   locked private catalogue's name and songs never render in the picker; a
   single **host-only** standalone "Enter activation key" control is present;

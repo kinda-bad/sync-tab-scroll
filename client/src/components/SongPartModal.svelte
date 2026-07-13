@@ -18,31 +18,31 @@
   // back at the "song selected" summary rather than wherever it was left.
   let browsingCatalog = false;
 
-  // Host-only inline activation-key entry: which locked catalogue's key
-  // field is currently open, and its in-progress value. Reset on submit or
-  // when the group unlocks (the group re-renders as its songs appear).
-  let unlockingCatalogueId: string | null = null;
+  // Host-only standalone activation-key entry: whether the key field is open,
+  // and its in-progress value. Not attached to any catalogue group — the host
+  // no longer picks which locked catalogue to unlock (locked catalogues are
+  // never sent to the client), they just type a key and the server resolves it
+  // (ui.md, infrastructure.md). Reset on submit.
+  let showUnlock = false;
   let keyInput = '';
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: catalog = $clientStore.catalog;
   $: catalogues = $clientStore.catalogues;
-  $: unlockedIds = session?.unlockedCatalogueIds ?? [];
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
   $: selfParticipant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: selectedSong = catalog.find((s) => s.id === session?.selectedSong);
 
-  // Only group under catalogue headers when more than one catalogue exists
-  // (ui.md) — a lone default catalogue keeps today's flat list.
+  // The server only ever sends catalogues this session may see (public +
+  // already-unlocked — infrastructure.md `visibleCatalog`), so grouping and the
+  // song lists work off the visible set directly; there is no locked group.
+  // Only group under catalogue headers when more than one visible catalogue
+  // exists (ui.md) — a lone default catalogue keeps today's flat list.
   $: grouped = catalogues.length > 1;
   $: groups = catalogues.map((c) => ({
     catalogue: c,
     songs: catalog.filter((s) => s.catalogueId === c.id),
-    // A private catalogue this session hasn't unlocked: its songs were
-    // withheld server-side (infrastructure.md), so show a locked indicator
-    // rather than an (empty) song list.
-    locked: !c.public && !unlockedIds.includes(c.id),
   }));
 
   function selectSong(songId: string) {
@@ -50,14 +50,15 @@
     browsingCatalog = false;
   }
 
-  function submitUnlock(catalogueId: string) {
-    // Success/failure is handled server-side: a correct key re-broadcasts
-    // session-state (unlockedCatalogueIds grows → this group re-renders with
-    // its songs) and catalog; a wrong key comes back as an error toast
+  function submitUnlock() {
+    // Key only — the server resolves which locked catalogue it matches
+    // (infrastructure.md). Success/failure is handled server-side: a correct
+    // key re-broadcasts session-state + a wider catalog (the newly-unlocked
+    // group appears); a key matching nothing comes back as an error toast
     // (ws-client.ts), same terse pattern as every other error here (ui.md).
-    wsClient?.send({ type: 'catalogue-unlock', catalogueId, key: keyInput });
+    wsClient?.send({ type: 'catalogue-unlock', key: keyInput });
     keyInput = '';
-    unlockingCatalogueId = null;
+    showUnlock = false;
   }
 
   function selectPart(part: import('@sync-tab-scroll/shared').SelectedPart) {
@@ -89,34 +90,39 @@
         {#each groups as group (group.catalogue.id)}
           <div class="catalogue-header">
             <span class="section-label">{group.catalogue.name}</span>
-            {#if group.locked}
-              <span class="locked-indicator" data-testid="locked-indicator">🔒 Locked</span>
-            {/if}
           </div>
 
-          {#if group.locked}
-            {#if isHost}
-              {#if unlockingCatalogueId === group.catalogue.id}
-                <form class="unlock-form" on:submit|preventDefault={() => submitUnlock(group.catalogue.id)}>
-                  <TextInput label="Activation key" bind:value={keyInput} placeholder="Enter activation key" />
-                  <Button type="submit" variant="riot" label="Unlock" />
-                </form>
-              {:else}
-                <Button variant="ghost" label="Enter activation key" onclick={() => { unlockingCatalogueId = group.catalogue.id; keyInput = ''; }} />
-              {/if}
-            {/if}
-          {:else}
-            <ul class="list">
-              {#each group.songs as song (song.id)}
-                <ListRow label={song.name} sublabel={song.artist}>
-                  {#if isHost}
-                    <Button variant="ghost" label="Select" onclick={() => selectSong(song.id)} />
-                  {/if}
-                </ListRow>
-              {/each}
-            </ul>
-          {/if}
+          <ul class="list">
+            {#each group.songs as song (song.id)}
+              <ListRow label={song.name} sublabel={song.artist}>
+                {#if isHost}
+                  <Button variant="ghost" label="Select" onclick={() => selectSong(song.id)} />
+                {/if}
+              </ListRow>
+            {/each}
+          </ul>
         {/each}
+      {/if}
+
+      {#if isHost}
+        <!--
+          One persistent, standalone activation-key control (host-only). Locked
+          catalogues are never sent to the client, so there is nothing to attach
+          a per-group unlock to — the host types a key and the server resolves
+          which locked catalogue it matches (ui.md, infrastructure.md). On
+          success the wider catalog broadcast makes the newly-unlocked group
+          appear above.
+        -->
+        <div class="unlock-control">
+          {#if showUnlock}
+            <form class="unlock-form" on:submit|preventDefault={submitUnlock}>
+              <TextInput label="Activation key" bind:value={keyInput} placeholder="Enter activation key" />
+              <Button type="submit" variant="riot" label="Unlock" />
+            </form>
+          {:else}
+            <Button variant="ghost" label="Enter activation key" onclick={() => { showUnlock = true; keyInput = ''; }} />
+          {/if}
+        </div>
       {/if}
     {:else}
       <div class="song-row">
@@ -196,13 +202,8 @@
     gap: var(--space-3);
   }
 
-  .locked-indicator {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-dim);
+  .unlock-control {
+    margin-top: var(--space-4);
   }
 
   .unlock-form {
