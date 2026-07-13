@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-13
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -483,6 +483,18 @@ every rule below assumes):
   was just removed from (infrastructure.md). This client's own reconnect
   loop is also stopped — it does not silently reattach to the same
   session.
+- **Stale session**: a stored session identity that no longer exists on
+  the server (e.g. the server restarted and forgot it, or the session
+  ended) — the bootstrap create/join handshake comes back as an *Error*
+  ("Session … not found") while this client has not yet established a
+  session. Rather than rejoining the dead session every reconnect interval
+  (~2s) forever, the client clears the persisted session identity and stops
+  its own reconnect loop (same terminal-socket shape as *Removed from
+  session*). The stale toast is still shown so the user sees why. Stopping
+  the loop is what keeps a stale session from repeatedly resetting the
+  HTTP/2-coalesced connection and aborting in-flight requests — the
+  confirmed aborter behind the broken sign-out and the spurious "Connection
+  lost" flash (feedback F002).
 - **Connection lost**: the server is unreachable — either the WS never
   connects at all (server down at load) or an established connection
   drops. Distinct from the Error state above: this isn't a per-action
