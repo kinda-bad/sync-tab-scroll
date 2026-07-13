@@ -1,7 +1,7 @@
 ---
 plan: plan-accounts-phase-1-2026-07-12-e375.md
 generated: 2026-07-12
-status: ready
+status: in-progress
 ---
 
 # Tasks — Accounts Phase 1: OAuth Identity + Persisted Catalogue Unlock
