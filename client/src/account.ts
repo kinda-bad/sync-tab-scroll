@@ -39,15 +39,31 @@ function createAccountStore() {
 export const accountStore = createAccountStore();
 
 /**
+ * Reads `/me` (the source of truth for account state) and maps it to an
+ * {@link AccountState}. Unlike {@link loadAccount}, this does NOT swallow
+ * failures: a non-ok response or a network/abort error **throws**, so callers
+ * can distinguish "the server says accounts are unavailable" from "I couldn't
+ * reach the server right now". {@link signOut} relies on that distinction —
+ * a transient `/me` failure mid-sign-out must not blank the account menu to
+ * *unavailable* (feedback F003).
+ */
+export async function fetchMe(fetchFn: typeof fetch = fetch): Promise<AccountState> {
+  const res = await fetchFn('/me');
+  if (!res.ok) throw new Error(`/me responded ${res.status}`);
+  return accountStateFromMe((await res.json()) as MeResponse);
+}
+
+/**
  * Fetches `/me` on load and updates {@link accountStore}. Any failure (network
  * error or non-200) resolves to `unavailable` — the safe, affordance-absent
- * state — so a server without the account layer never breaks the client.
+ * state — so a server without the account layer never breaks the client. This
+ * boot-time swallowing lives here, not in {@link fetchMe}, and is the single
+ * store write (Principle I).
  */
 export async function loadAccount(fetchFn: typeof fetch = fetch): Promise<AccountState> {
   let state: AccountState;
   try {
-    const res = await fetchFn('/me');
-    state = res.ok ? accountStateFromMe((await res.json()) as MeResponse) : { status: 'unavailable', displayName: null };
+    state = await fetchMe(fetchFn);
   } catch {
     state = { status: 'unavailable', displayName: null };
   }
@@ -70,6 +86,11 @@ export function signIn(provider: 'google' | 'github'): void {
  * wired to both AccountMenu instances) — the UI flips in memory with no page
  * reload and no race. If `/me` still reports `signed-in`, the logout genuinely
  * failed and a terse Error toast is surfaced (ui.md States).
+ *
+ * Uses {@link fetchMe} directly (not {@link loadAccount}) so an unreachable
+ * `/me` does NOT blank the menu to *unavailable* — that state is reserved for a
+ * DB-less server, not a transient failure. On an unreachable `/me` the menu
+ * stays *Signed-in* and the same retryable toast is surfaced (feedback F003).
  */
 export async function signOut(fetchFn: typeof fetch = fetch): Promise<void> {
   try {
@@ -78,8 +99,16 @@ export async function signOut(fetchFn: typeof fetch = fetch): Promise<void> {
   } catch {
     /* aborted/network error — the server may still have logged us out; /me decides */
   }
-  const state = await loadAccount(fetchFn);
-  if (state.status === 'signed-in') {
+  try {
+    const state = await fetchMe(fetchFn);
+    accountStore.set(state);
+    if (state.status === 'signed-in') {
+      toastStore.push('Sign out failed — please try again.');
+    }
+  } catch {
+    // Couldn't confirm via /me. Don't touch the store (the menu stays as it
+    // was, signed-in) — a transient failure must not masquerade as *Accounts
+    // unavailable*. Surface the same retryable toast (feedback F003).
     toastStore.push('Sign out failed — please try again.');
   }
 }
