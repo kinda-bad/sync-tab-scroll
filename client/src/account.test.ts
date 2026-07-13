@@ -52,7 +52,7 @@ describe('signOut (T001) — verify via /me', () => {
    */
   const routedFetch = (opts: {
     logout: 'ok' | 'throw';
-    me: { accountsEnabled: boolean; user: { displayName: string } | null } | 'throw';
+    me: { accountsEnabled: boolean; user: { displayName: string } | null } | 'throw' | 'notok';
   }): typeof fetch =>
     (async (url: string) => {
       if (url === '/auth/logout') {
@@ -61,6 +61,7 @@ describe('signOut (T001) — verify via /me', () => {
       }
       // '/me'
       if (opts.me === 'throw') throw new Error('offline');
+      if (opts.me === 'notok') return { ok: false, json: async () => ({}) } as unknown as Response;
       return { ok: true, json: async () => opts.me } as unknown as Response;
     }) as unknown as typeof fetch;
 
@@ -117,13 +118,72 @@ describe('signOut (T001) — verify via /me', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it('(d) both logout and /me fail → store unavailable, no toast', async () => {
+  it('(d) both logout and /me fail → menu stays signed-in, retryable toast (T004)', async () => {
+    // A transient /me failure must NOT blank the account menu to *unavailable*
+    // (that state is reserved for a DB-less server, feedback F003). The menu
+    // stays signed-in and the user gets a retryable Error toast.
     const before = get(toastStore).length;
 
     await signOut(routedFetch({ logout: 'throw', me: 'throw' }));
 
-    expect(get(accountStore).status).toBe('unavailable');
-    expect(get(toastStore).length).toBe(before);
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada' });
+    expect(get(toastStore).length).toBe(before + 1);
     expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('signOut (T004) — an unreachable /me keeps the menu signed-in (F003)', () => {
+  const routedFetch = (opts: {
+    logout: 'ok' | 'throw';
+    me: { accountsEnabled: boolean; user: { displayName: string } | null } | 'throw' | 'notok';
+  }): typeof fetch =>
+    (async (url: string) => {
+      if (url === '/auth/logout') {
+        if (opts.logout === 'throw') throw new Error('aborted');
+        return { ok: true } as Response;
+      }
+      if (opts.me === 'throw') throw new Error('offline');
+      if (opts.me === 'notok') return { ok: false, json: async () => ({}) } as unknown as Response;
+      return { ok: true, json: async () => opts.me } as unknown as Response;
+    }) as unknown as typeof fetch;
+
+  beforeEach(() => {
+    accountStore.set({ status: 'signed-in', displayName: 'Ada' });
+  });
+
+  it('(a-throw) logout ok but /me throws → store stays signed-in, retryable toast', async () => {
+    const before = get(toastStore).length;
+
+    await signOut(routedFetch({ logout: 'ok', me: 'throw' }));
+
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada' });
+    expect(get(toastStore).length).toBe(before + 1);
+  });
+
+  it('(a-notok) logout ok but /me is non-ok → store stays signed-in, retryable toast', async () => {
+    const before = get(toastStore).length;
+
+    await signOut(routedFetch({ logout: 'ok', me: 'notok' }));
+
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada' });
+    expect(get(toastStore).length).toBe(before + 1);
+  });
+});
+
+describe('loadAccount (T004) — boot behavior unchanged on a failed /me', () => {
+  it('(b-throw) a /me that throws still resolves the store to unavailable', async () => {
+    const throwing = (async () => {
+      throw new Error('offline');
+    }) as unknown as typeof fetch;
+    const state = await loadAccount(throwing);
+    expect(state).toEqual({ status: 'unavailable', displayName: null });
+    expect(get(accountStore).status).toBe('unavailable');
+  });
+
+  it('(b-notok) a non-ok /me still resolves the store to unavailable', async () => {
+    const notOk = (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch;
+    const state = await loadAccount(notOk);
+    expect(state).toEqual({ status: 'unavailable', displayName: null });
+    expect(get(accountStore).status).toBe('unavailable');
   });
 });
