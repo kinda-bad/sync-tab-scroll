@@ -1,21 +1,27 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**F002 + F003 planned & tasked** —
-`plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`) consumes the
-two remaining open items in `feedback-signout-response-not-trusted-9575.md`
-(now **planned**, so **0 open feedback**). Tasks
-`tasks-signout-ws-reconnect-storm-c60d.md` (`ready`, 6 tasks, all test-first
-per Principle VII). **F002** — the stale-session WS rejoin storm
-(`client/src/ws-client.ts`) that reconnects every 2s against a dead session and
-resets the HTTP/2-coalesced connection, aborting the in-flight sign-out
-requests — is the real remedy: a join rejected because the session no longer
-exists now clears the stored session identity + stops retrying (reusing the
-host-removal terminal-socket shape). **F003** — `signOut()`
-(`client/src/account.ts`) will stop blanking the account menu to `unavailable`
-when its post-logout `/me` re-check is itself unreachable; instead keep the menu
-signed-in + retryable Error toast (extract `fetchMe()` that throws; `loadAccount`
-keeps swallowing to `unavailable` for boot). Both include `ui.md` States edits.
-Next: **`/ardd-implement`**. Prior context below. — **Sign-out verify-via-`/me`
+_Updated: 2026-07-13 (**F002 + F003 SHIPPED to `main`** —
+`plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`), tasks
+`tasks-signout-ws-reconnect-storm-c60d.md` (`completed`, 6/6, all test-first per
+Principle VII). Implemented in a delegated worktree (RED→GREEN per pair) and
+**fast-forward-merged into `main` at `5857634`** (7 signed commits). **F002** —
+the stale-session WS rejoin storm (`client/src/ws-client.ts`) that reconnected
+every 2s against a dead session and reset the HTTP/2-coalesced connection,
+aborting the in-flight sign-out requests: a join rejected because the session no
+longer exists now `clearStoredSession()` + `suppressReconnect` + `socket.close()`
+(reusing the host-removal terminal-socket shape), when the `error` arrives while
+`clientStore.session === null`. **F003** — `signOut()` (`client/src/account.ts`)
+no longer blanks the account menu to `unavailable` when its post-logout `/me`
+re-check is unreachable: extracted `fetchMe()` (throws on failure), `loadAccount`
+wraps it (boot still → `unavailable`), and `signOut` uses `fetchMe` directly —
+on an unreachable `/me` it leaves the store untouched (menu stays signed-in) +
+retryable Error toast. `ui.md` States edited (Stale session + Signing out vs
+Accounts unavailable) — **diagram now stale** (run `/ardd-diagram ui`). Tests:
+client unit 81/81, ws-client CT 10/10. **0 open feedback.** **NOT yet pushed /
+deployed** — batch with a `main` push so Railway rebuilds once; then live
+signed-in browser re-verify of prod sign-out (F002 was the confirmed blocker
+that F001's fix alone couldn't satisfy). Prior context below. — **Sign-out
+verify-via-`/me`
 fix SHIPPED + deployed** (`plan-signout-verify-via-me-…-5d6b`, merged `0f8a3db`,
 Railway `d5f8c8f3`): **F001** removed the false "Sign out failed" toast + the
 false signed-out→signed-in masking. BUT live signed-in re-verification showed
@@ -48,13 +54,12 @@ status below).)_
 
 ## Open Questions
 
-None at the artifact level. Two **plan-level** open questions carried by
-`plan-signout-ws-reconnect-storm-…-dd78` (to resolve during implementation):
-- Client-side `session === null` heuristic vs. a typed `session-not-found`
-  ServerMessage for detecting the stale-session join failure (plan chose the
-  heuristic — smaller; the other error toasts only fire post-join).
-- Confirm stopping the stale reconnect doesn't leave `ConnectionBanner` stuck
-  `disconnected` on Landing after the terminal close.
+None at the artifact level. The two plan-level open questions from
+`plan-signout-ws-reconnect-storm-…-dd78` were resolved in implementation: the
+client-side `session === null` heuristic was used (no typed `session-not-found`
+message needed); the terminal close reuses the host-removal shape, which already
+resets to a non-error state, so `ConnectionBanner` isn't left stuck (CT-covered).
+The remaining validation is live prod re-verify (see Recommended next step).
 
 ## Cross-Artifact Issues
 
@@ -82,9 +87,10 @@ preserves the single account-store write (Principle I).
 
 ## Diagrams
 
-All three renderables **current ✅** (README.md). Tasks T003/T006 will edit
-`ui.md` States wording during implementation and mark its `diagram_status`
-stale — a `/ardd-diagram ui` pass is expected after that lands.
+- `datamodel.md` — current ✅
+- `infrastructure.md` — current ✅
+- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — T003/T006 edited the States
+  section (Stale session; Signing out vs Accounts unavailable) and stamped it stale.
 
 ## Code-vs-Artifact Defects
 
@@ -102,9 +108,10 @@ doesn't appear here.)
 
 ## Feedback
 
-**0 open.** `feedback-signout-response-not-trusted-9575.md` is now **planned**
-→ `plan-signout-ws-reconnect-storm-…-dd78` (F001 was already incorporated by the
-prior verify-via-`/me` plan; F002 + F003 consumed by this one).
+**0 open.** `feedback-signout-response-not-trusted-9575.md` is **planned** →
+`plan-signout-ws-reconnect-storm-…-dd78` (F001 was already incorporated by the
+prior verify-via-`/me` plan; F002 + F003 consumed by this one, now shipped to
+`main` at `5857634`).
 
 Prior (all `planned`, shipped/deployed):
 - `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped `a683a97`; deployed `3305a830`).
@@ -116,14 +123,16 @@ Prior (all `planned`, shipped/deployed):
 
 - **Stale-session WS reconnect storm + sign-out `/me` hardening (F002, F003)** —
   `plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`), tasks
-  `tasks-signout-ws-reconnect-storm-c60d.md` (`ready`, 6 tasks, 0/6). Two phases:
-  **Phase 1 (F002)** makes a stale-session rejoin terminal in `ws-client.ts`
-  (clear stored session + suppress reconnect + close when an `error` arrives
-  while `clientStore.session === null`); **Phase 2 (F003)** extracts
-  `fetchMe()` (throws on failure) so `signOut()` keeps the menu signed-in +
-  retryable toast when `/me` is unreachable instead of blanking to `unavailable`.
-  Both phases add `ui.md` States edits. All test-first (Principle VII). **Not yet
-  implemented.**
+  `tasks-signout-ws-reconnect-storm-c60d.md` (`completed`, 6/6). **Merged to
+  `main` at `5857634`** (fast-forward, 7 signed commits) via a delegated
+  worktree, all test-first (RED→GREEN). **Phase 1 (F002)** made a stale-session
+  rejoin terminal in `ws-client.ts` (`clearStoredSession` + `suppressReconnect` +
+  `socket.close()` when an `error` arrives while `clientStore.session === null`);
+  **Phase 2 (F003)** extracted `fetchMe()` (throws on failure) so `signOut()`
+  keeps the menu signed-in + retryable toast when `/me` is unreachable instead of
+  blanking to `unavailable`. `ui.md` States edited (diagram now stale). Client
+  unit 81/81, ws-client CT 10/10. **Not yet pushed/deployed; live prod re-verify
+  pending.**
 - **Sign-out verify-via-`/me` fix (F001)** — `plan-signout-verify-via-me-2026-07-13-5d6b.md`
   (`approved`), tasks `tasks-signout-verify-via-me-7739.md` (`completed`, 3/3).
   **Merged to `main` at `0f8a3db`** (fast-forward, 3 signed commits),
@@ -171,16 +180,19 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-**`/ardd-implement`** — execute `tasks-signout-ws-reconnect-storm-c60d.md`
-(6 test-first tasks). Phase 1 (F002) is the actual fix for the still-broken prod
-sign-out, so it's the priority; Phase 2 (F003) hardens the failure mode. After
-it merges, run a live signed-in browser re-verification of sign-out on prod
-(the recurring "does it actually land?" check that F001's fix couldn't satisfy
-on its own), then `/ardd-diagram ui` if the States edits marked it stale.
-
-Note: several docs-only commits (feedback/status/plan/tasks) are committed
-locally but **not yet pushed** — batch them with the sign-out fix so `main` gets
-one deploy, not several redundant Railway rebuilds.
+F002 + F003 are implemented and merged to `main` at `5857634` but **not yet
+pushed or deployed**. Remaining, in order:
+1. **`/ardd-diagram ui`** — regenerate the UI diagram (States edits marked
+   `ui.md` stale).
+2. **Push `main` → Railway deploy** — several local commits (this fix + the
+   earlier docs/plan/tasks/status commits) are unpushed; batch them into one
+   push so Railway rebuilds once, not several times.
+3. **Live prod sign-out re-verify** — as the real signed-in user on
+   https://sts.ty-pe.com, confirm SIGN OUT now completes end-to-end (F002 was
+   the confirmed blocker that F001's verify-via-`/me` fix couldn't satisfy
+   alone) and that an unreachable `/me` no longer blanks the account menu.
+4. **Finish browser OAuth validation** — the operator-only redirect-URI
+   registration checks (Deploy status below) are still open.
 
 After this, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
