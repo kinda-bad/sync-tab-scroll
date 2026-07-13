@@ -1,29 +1,31 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-12 (`/ardd-refine ui` added the optional Account & Sign-In
-layer. The accounts design is now propagated across **all four** core artifacts
-— constitution, datamodel, infrastructure, ui. Only diagram re-renders remain
-before `/ardd-plan` Phase 1.)_
-
-ARDD update available: installed `9189817`, source at `a4f7f9c` — run
-`/ardd-update`.
+_Updated: 2026-07-12 (`/ardd-plan phase 1` drafted, approved, and tasked
+**Accounts Phase 1** — OAuth identity + persisted catalogue unlock. Plan
+`plan-accounts-phase-1-2026-07-12-e375.md` is `approved`; tasks file
+`tasks-accounts-phase-1-02f7.md` is `ready` with 20 tasks across 7 phases.
+Next: `/ardd-implement`.)_
 
 ## Artifact Status
 
 | Artifact | Status | Open questions |
 |---|---|---|
 | constitution.md | stable ✅ (v1.5.0) | 0 |
-| datamodel.md | stable ✅ | 0 (diagram stale) |
+| datamodel.md | stable ✅ | 0 |
 | pipeline.md | stable ✅ | 0 |
-| infrastructure.md | stable ✅ | 0 (diagram stale) |
-| ui.md | stable ✅ | 0 (diagram stale) |
+| infrastructure.md | stable ✅ | 0 |
+| ui.md | stable ✅ | 0 |
 | brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
-None. Every accounts design decision (design-of-record
-`.project/design-user-accounts-2026-07-12.reviewed.md` §12 + §13) is now written
-into constitution + datamodel + infrastructure + ui.
+None at the artifact level. The **accounts Phase 1 plan** carries two of its own
+(non-blocking, resolved at implementation time):
+- Ownership-bootstrap CLI representation — `CatalogueMembership(grantedVia:
+  'owner')` vs. pulling a `CatalogueOwnership` table forward from Phase 2
+  (plan Q1). datamodel.md labels `'owner'` as Phase 2, so the tension is real.
+- Repository granularity — one `AccountStore` facade vs. three focused repos
+  (plan Q2).
 
 ## Cross-Artifact Issues
 
@@ -35,57 +37,52 @@ into constitution + datamodel + infrastructure + ui.
 - [MINOR] Feature register's pre-convention "Metronome/Count-in toggle"
   descriptions are superseded (pre-existing).
 
-(The prior "ui lacks a login entry" gap is now closed by the Account & Sign-In
-section.)
-
 ## Within-Artifact Issues
 
-None. `lint-project.sh` is clean for all four accounts artifacts; the
-pre-existing `tasks-lyrics-ticker` / `tasks-settings-modal-followup` /
-`feedback-manual-verification-pass` status warnings are unrelated.
+None. `lint-project.sh` is clean for all artifacts.
 
 ## Constitution Compliance
 
-No violations. Accounts artifacts conform to v1.5.0's additive posture (DB
-optional, anonymous never gated) and Principles I/VI.
+No violations. The accounts Phase 1 plan conforms to v1.5.0's additive posture
+(DB optional, anonymous never gated), is test-first per Principle VII (Phase 7
+deployment is operational and test-exempt), and uses named shared types
+(Principle VI) and `.env`-based config (Principle VIII). The constitution
+declares no simplicity/complexity-tracking or production-annotations principle,
+so the plan omits those sections by design.
 
 ## Diagrams
 
-All three renderables **current ✅** — re-rendered into `README.md` on
-2026-07-12 with the accounts additions:
-- datamodel.md — ERD now includes `User`, `CatalogueMembership`, `AuthSession`,
+All three renderables **current ✅** (README.md, re-rendered 2026-07-12 with the
+accounts additions):
+- datamodel.md — ERD includes `User`, `CatalogueMembership`, `AuthSession`,
   `Participant.userId`, and the Activation-Key `epoch`.
-- infrastructure.md — container diagram now includes the OAuth flow, cookie/WS
+- infrastructure.md — container diagram includes the OAuth flow, cookie/WS
   identity, and the optional out-of-band Postgres.
-- ui.md — component hierarchy now includes the sign-in control + account menu.
+- ui.md — component hierarchy includes the sign-in control + account menu.
+
+_Phase 1 implementation adds no new entities beyond those already in the
+datamodel ERD; the `AuthSession.id`-only cookie and `epoch` are already
+reflected, so diagrams stay current through Phase 1._
 
 ## Code-vs-Artifact Defects
 
-**0 known defects** — `DEFECTS.md` all-clear, last checked 2026-07-10. The
-account entities/flows/UI are design-only; no code exists yet, so no drift.
-
-## Feedback
-
-No open feedback.
+No defects — `DEFECTS.md` last checked 2026-07-10; artifacts match the codebase
+as of the `song-select-unlock-guard` scoped re-verification. Run `/ardd-defects`
+to refresh (recommended once Phase 1 code lands).
 
 ## Feature Backlog
 
-0 backlogged · 0 planned · 0 tasked · 14 implemented. The accounts feature
-enters the register when `/ardd-plan` scopes Phase 1.
+14 implemented · 0 backlogged · 0 planned · 0 tasked — see `.project/features/`.
+(Accounts Phase 1 is tracked as a design-of-record phase, not a register
+feature, so it does not appear here.)
 
-## In Flight
+## Plans & Tasks
 
-**User-accounts feature — design complete across all core artifacts.**
-Committed so far: constitution v1.5.0 (`48b8d59`), datamodel (`fb5e4d1`).
-Uncommitted: the constitution Sync-Impact reorder, infrastructure, ui, STATUS.
-Design-of-record + full review trail in `.project/design-user-accounts-*` /
-`spike-datastore-secrets-*`. No worktrees, no draft PRs.
+- **Accounts Phase 1** — `plan-accounts-phase-1-2026-07-12-e375.md` (`approved`),
+  tasks `tasks-accounts-phase-1-02f7.md` (`ready`, 20 tasks / 7 phases). Ready
+  for `/ardd-implement`.
 
-## Recommended Next Step
+## Recommended next step
 
-Design is complete and diagrams are current. **`/ardd-plan` for Phase 1**
-(accounts + persisted unlock + minimal ownership-bootstrap CLI) →
-`/ardd-tasks` → `/ardd-implement`. Note the operator prerequisites Phase 1
-surfaces (register Google/GitHub OAuth apps; create the Railway Postgres
-service by hand + wire `DATABASE_URL` reference + sealed secrets — spike doc)
-before the implemented auth can run against real providers.
+Run `/ardd-implement` to execute `tasks-accounts-phase-1-02f7.md` (start with
+Phase 1: the DB-optional repository foundation). ARDD is up to date.
