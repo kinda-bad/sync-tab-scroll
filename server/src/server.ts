@@ -10,10 +10,21 @@ import { createClientStaticRequestHandler } from './client-static.js';
 import { dispatch } from './dispatch.js';
 import { handleDisconnect } from './disconnect.js';
 import type { HandlerContext } from './handlers/context.js';
+import { createAccountStore } from './accounts/factory.js';
+import { createProviderRegistry } from './auth/providers.js';
+import { createAuthRequestHandler } from './auth/auth-routes.js';
 
 const BROADCAST_INTERVAL_MS = 1000;
 
 export function createServer(config: ServerConfig): WebSocketServer {
+  // Optional account store: null/absent when no DATABASE_URL is configured, so
+  // the whole account layer self-disables and the anonymous path is unchanged
+  // (infrastructure.md User Accounts; design §2). Migrations run in the
+  // background — a brief window before they finish fails soft to anonymous
+  // (§13 S7), never crashing boot.
+  const accountStore = createAccountStore(config.account.databaseUrl);
+  void accountStore.init().catch((err) => console.error('[account-store] init (migrations) failed:', err instanceof Error ? err.message : err));
+
   const ctx: HandlerContext = {
     sessionStore: new SessionStore(config.hostReassignGraceMs),
     connections: new ConnectionRegistry(),
@@ -23,12 +34,19 @@ export function createServer(config: ServerConfig): WebSocketServer {
   // WS upgrade, the catalog's static-file serving, and (in production) the
   // built client SPA share one http.Server (infrastructure.md "Song
   // Catalog Delivery" / "Deployment (Railway + Terraform)") instead of
-  // running as separate listeners/services. Catalog handler first, then
-  // client-static as the fallback, then 404 — client-static.ts's own
-  // /catalog/ guard means the ordering isn't load-bearing, just explicit.
+  // running as separate listeners/services. Auth routes mount FIRST (ahead of
+  // catalog/static/404 — infrastructure.md OAuth flow); when accounts are
+  // disabled the auth handler makes /auth/* inert and /me anonymous. Then the
+  // catalog handler, then client-static as the fallback, then 404.
+  const authHandler = createAuthRequestHandler({
+    store: accountStore,
+    config: config.account,
+    providers: createProviderRegistry(config.account),
+  });
   const catalogHandler = createCatalogRequestHandler(config.catalogRoot);
   const clientStaticHandler = createClientStaticRequestHandler(config.clientRoot);
   const httpServer = http.createServer((req, res) => {
+    if (authHandler(req, res)) return;
     if (catalogHandler(req, res)) return;
     if (clientStaticHandler(req, res)) return;
     res.writeHead(404).end();

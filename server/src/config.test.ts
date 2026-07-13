@@ -1,7 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
 
-const ENV_KEYS = ['PORT', 'CATALOG_ROOT', 'HOST_REASSIGN_GRACE_MS', 'REQUIRE_SONG_CONSENT', 'CLIENT_ROOT'] as const;
+const ENV_KEYS = [
+  'PORT',
+  'CATALOG_ROOT',
+  'HOST_REASSIGN_GRACE_MS',
+  'REQUIRE_SONG_CONSENT',
+  'CLIENT_ROOT',
+  'DATABASE_URL',
+  'SESSION_COOKIE_SECRET',
+  'PUBLIC_BASE_URL',
+  'GOOGLE_OAUTH_CLIENT_ID',
+  'GOOGLE_OAUTH_CLIENT_SECRET',
+  'GITHUB_OAUTH_CLIENT_ID',
+  'GITHUB_OAUTH_CLIENT_SECRET',
+] as const;
+
+const DEFAULT_ACCOUNT = {
+  databaseUrl: undefined,
+  sessionCookieSecret: '',
+  publicBaseUrl: 'http://localhost:5173',
+  google: { clientId: '', clientSecret: '' },
+  github: { clientId: '', clientSecret: '' },
+};
 const original: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -31,6 +52,7 @@ describe('loadConfig', () => {
       hostReassignGraceMs: 5000,
       requireSongConsent: false,
       clientRoot: '/tmp/my-client-dist',
+      account: DEFAULT_ACCOUNT,
     });
   });
 
@@ -41,7 +63,31 @@ describe('loadConfig', () => {
       hostReassignGraceMs: 120_000,
       requireSongConsent: false,
       clientRoot: '../client/dist',
+      account: DEFAULT_ACCOUNT,
     });
+  });
+
+  it('reads the account layer from env (databaseUrl, cookie secret, OAuth creds)', () => {
+    process.env.DATABASE_URL = 'postgres://localhost/db';
+    process.env.SESSION_COOKIE_SECRET = 'shh';
+    process.env.PUBLIC_BASE_URL = 'https://example.test';
+    process.env.GOOGLE_OAUTH_CLIENT_ID = 'gid';
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET = 'gsec';
+    process.env.GITHUB_OAUTH_CLIENT_ID = 'hid';
+    process.env.GITHUB_OAUTH_CLIENT_SECRET = 'hsec';
+
+    expect(loadConfig().account).toEqual({
+      databaseUrl: 'postgres://localhost/db',
+      sessionCookieSecret: 'shh',
+      publicBaseUrl: 'https://example.test',
+      google: { clientId: 'gid', clientSecret: 'gsec' },
+      github: { clientId: 'hid', clientSecret: 'hsec' },
+    });
+  });
+
+  it('treats an empty DATABASE_URL as unset (accounts disabled)', () => {
+    process.env.DATABASE_URL = '';
+    expect(loadConfig().account.databaseUrl).toBeUndefined();
   });
 
   it('sets requireSongConsent to true when REQUIRE_SONG_CONSENT=true', () => {

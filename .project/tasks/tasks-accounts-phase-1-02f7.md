@@ -58,7 +58,7 @@ that carry them.
   (verifier/challenge), and `nonce` (S1). Test: a well-formed state/PKCE/nonce
   round-trip validates; a tampered or missing `state`/`nonce`/verifier is
   rejected.
-- [ ] T008 [artifacts: infrastructure, datamodel] Mount `/auth/<provider>/login`,
+- [x] T008 [artifacts: infrastructure, datamodel] Mount `/auth/<provider>/login`,
   `/auth/<provider>/callback`, `/auth/logout`, `/me` on the shared
   `http.createServer` **ahead of** the catalog/static/404 chain, for Google +
   GitHub: `login` redirects to the provider consent screen with the T007
