@@ -6,7 +6,9 @@ completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 OAuth identity + optional Postgres + persisted catalogue unlock now live in
 the codebase. `/ardd-defects` then verified the merged account code against
 every artifact — **no defects**. Live Railway/secret deploy steps (T019/T020)
-still need the operator.)_
+still need the operator. **2026-07-13:** deployed to production — `main` pushed,
+Postgres wired via Terraform, sealed OAuth/session vars pushed; only OAuth
+redirect-URI registration + final verify remain. See Deploy status below.)_
 
 ## Artifact Status
 
@@ -80,21 +82,33 @@ doesn't appear here.)
   tasks `tasks-accounts-phase-1-02f7.md` (`completed`, 20/20). Merged to `main`
   at `e2747b2`.
 
-## Operator follow-ups (live steps the worktree could not perform)
+## Deploy status (Accounts Phase 1 → production, 2026-07-13)
 
-- **T019** — create the Railway Postgres service by hand (name it `Postgres`),
-  `terraform apply`, verify the `${{Postgres.DATABASE_URL}}` reference resolves.
-  In-repo Terraform (`infra/main.tf`, `prevent_destroy` guard) + runbook
-  (`infra/README.md`) already landed.
-- **T020** — register prod OAuth redirect URIs; push OAuth client id/secret +
-  `SESSION_COOKIE_SECRET` as sealed Railway vars via
-  `railway variables --set "…=$(op read op://sync-tab-scroll/…)"`; verify prod
-  sign-in end-to-end.
+Canonical public domain: **https://sts.ty-pe.com** (custom domain; the
+Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
+
+- **T019 — done.** Postgres created by hand; `terraform apply` wired
+  `DATABASE_URL = ${{Postgres.DATABASE_URL}}` (resolves to
+  `postgres.railway.internal:5432`); `prevent_destroy` guard active. `/me`
+  returns `{"accountsEnabled":true,...}` on both domains.
+- **T020 — mostly done.** Sealed vars pushed from 1Password:
+  `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`,
+  `SESSION_COOKIE_SECRET` (newly generated + stored in the vault), and
+  `PUBLIC_BASE_URL=https://sts.ty-pe.com`. Login redirects now carry the correct
+  prod `redirect_uri`.
+- **Remaining (operator-only):**
+  1. Register the redirect URIs in the provider dashboards —
+     GitHub OAuth app `Ov23liE98uUnST7Ycht7` → `https://sts.ty-pe.com/auth/github/callback`;
+     Google client `607753971873-…` → `https://sts.ty-pe.com/auth/google/callback`.
+  2. Verify sign-in end-to-end (both providers), a key-unlock persists across
+     sessions, and the anonymous path still serves.
+- **Cleanup (optional):** the legacy mis-named `GOOGLE_CLIENT_ID` /
+  `GITHUB_CLIENT_ID` Railway vars are inert (the code reads the `_OAUTH_` names)
+  and can be deleted.
 
 ## Recommended next step
 
-Code verification is done (`/ardd-defects` clean). The remaining work is
-**operational, yours to run**: perform the T019/T020 live deploy steps above
-(create the Railway Postgres, apply Terraform, push sealed secrets, register
-OAuth redirect URIs, verify prod sign-in). After that, Phase 2 — in-app
-authoring + dynamic catalog — is the next design-of-record milestone.
+The deploy is wired end-to-end; the only remaining step is **registering the two
+OAuth redirect URIs** in the Google + GitHub dashboards (see Deploy status
+above), then verifying sign-in. After that, Phase 2 — in-app authoring + dynamic
+catalog — is the next design-of-record milestone.
