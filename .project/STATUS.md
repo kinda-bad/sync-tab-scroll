@@ -1,16 +1,20 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Hide-locked-catalogues SHIPPED** — all 5 tasks of
-`tasks-hide-locked-catalogues-6009.md` implemented in a delegated worktree and
-fast-forward-merged into `main` at `a1e8446` (6 signed commits). Locked private
-catalogues no longer appear in the song picker; the host unlocks via one
-standalone key control; `catalogue-unlock` dropped `catalogueId` (server now
-resolves the key across all locked catalogues) and `visibleCatalog` withholds
-locked catalogue metadata entirely. Revised `ui.md` + `infrastructure.md` (both
-now have **stale diagrams** — run `/ardd-diagram`). Suites green: 175 server,
-93 CT, 72 client; workspace typechecks. **2 open feedback files remain**
-(bar-controls-blocked-by-modal, landing-signin-missing) for the next
-`/ardd-plan`. Prior context:
+_Updated: 2026-07-13 (**reachable-account-controls planned & tasked** — the two
+open feedback items (landing-signin-missing, Reconsidered; bar-controls-blocked-
+by-modal) became an approved plan
+(`plan-reachable-account-controls-2026-07-13-ca49.md`) with a `ready` tasks file
+(`tasks-reachable-account-controls-1787.md`, 3 tasks): revise `ui.md` (T001),
+then two parallel client tasks — reuse `AccountMenu` on the Landing view (T002)
+and make `SongPartModal` dismissible with an auto-open-once/stay-dismissed flag
+(T003). User decisions: Landing reuses the existing AccountMenu; the
+bar-controls fix is dismissibility, NOT a z-index override (Modal already
+dismisses on ×/backdrop/Escape). Committed to `main` at `1618a45`; **ready for
+`/ardd-implement`**. Prior: **Hide-locked-catalogues SHIPPED** — all 5 tasks
+merged into `main` at `a1e8446` (6 signed commits); locked catalogues hidden,
+keyless `catalogue-unlock`, `visibleCatalog` withholds locked metadata; ui.md +
+infrastructure.md diagrams regenerated (both **current** now). Suites green.
+Prior context:
 **Accounts Phase 1 shipped** — `/ardd-implement`
 completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 `main` at `e2747b2` (fast-forward, 80 files, +3363/−69, all commits signed).
@@ -67,14 +71,11 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-- `datamodel.md` — **current ✅** (README.md); hide-locked-catalogues added no
-  entities.
-- `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`) — the
-  `catalogue-unlock` protocol changed (keyless message, server-side key
-  resolution).
-- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — the song-picker /
-  catalogue-unlock flow changed (locked catalogues hidden, standalone key
-  control).
+All three renderables **current ✅** (README.md). `ui.md` and
+`infrastructure.md` were regenerated after hide-locked-catalogues (commits
+`9443237`, `bd1c6a1`); `datamodel.md` unchanged. Note: the approved
+`reachable-account-controls` plan's T001 will re-stale `ui.md` once
+implemented — run `/ardd-diagram ui` again after that lands.
 
 ## Code-vs-Artifact Defects
 
@@ -94,20 +95,21 @@ doesn't appear here.)
 
 ## Feedback
 
-**2 open feedback files** — will be picked up by the next `/ardd-plan`:
-- `feedback-landing-signin-missing-2ebd.md` (Reconsidered, `[artifacts: ui]`):
-  account controls should be on the create/join (Landing) page in both states —
-  sign-in when signed-out (already there) and identity + sign-out when signed-in
-  (missing; the account menu is Bar-only per ui.md:50–54). Reverses that
-  placement decision.
-- `feedback-bar-controls-blocked-by-modal-f0e8.md` (open; not filed this
-  session).
-
-`feedback-hide-locked-catalogues-69a3.md` is `planned` (consumed by
-`plan-hide-locked-catalogues-2026-07-13-6db8.md`).
+None open. All three feedback files are `planned`:
+- `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped).
+- `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49`.
+- `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49`.
 
 ## Plans & Tasks
 
+- **Reachable account controls** — `plan-reachable-account-controls-2026-07-13-ca49.md`
+  (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`ready`, 0/3).
+  Consumes landing-signin + bar-controls feedback. T001 revises `ui.md`
+  (account controls on Landing; dismissible SongPartModal); T002 reuses
+  `AccountMenu` on `Landing.svelte`; T003 makes `SongPartModal` dismissible in
+  `App.svelte` (auto-open-once/stay-dismissed flag). T002/T003 parallel (different
+  files); all test-first (Playwright). Committed to `main` at `1618a45`.
+  **Next: `/ardd-implement`.**
 - **Hide locked catalogues** — `plan-hide-locked-catalogues-2026-07-13-6db8.md`
   (`approved`), tasks `tasks-hide-locked-catalogues-6009.md` (`completed`, 5/5).
   **Merged to `main` at `a1e8446`** (fast-forward, 6 signed commits). Locked
@@ -146,15 +148,11 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-Hide-locked-catalogues is shipped. Open threads, in rough priority:
-1. **`/ardd-diagram ui` + `/ardd-diagram infrastructure`** — both diagrams went
-   stale from this change (quick, deterministic).
-2. **`/ardd-plan`** — consume the 2 open feedback files (Landing account
-   controls + bar-controls-blocked-by-modal).
-3. **Deploy operator step** — **register the two OAuth redirect URIs** in the
+1. **`/ardd-implement`** — the `reachable-account-controls` tasks file is
+   `ready` (3 tasks: Landing AccountMenu + dismissible SongPartModal). After it
+   lands, run **`/ardd-diagram ui`** (T001 re-stales the UI diagram).
+2. **Deploy operator step** — **register the two OAuth redirect URIs** in the
    Google + GitHub dashboards (see Deploy status above), then verify sign-in.
-   (Note: the landing-signin feedback may resolve once accounts are verified
-   working on prod.)
 
 After those, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
