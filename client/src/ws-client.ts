@@ -135,6 +135,20 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
       } else if (message.type === 'error') {
         // Errors (join-by-code failure, part-not-found, not-host attempts) are toasts, not blocking modals (ui.md States).
         toastStore.push(message.message);
+        // A stale-session bootstrap failure (feedback F002): if this client
+        // never established a session (session still null), the error is a
+        // failed create/join against a session that no longer exists — not a
+        // mid-session action error like part/song-not-found, which can only
+        // fire once a session exists. Reconnecting every reconnectDelayMs
+        // against that dead session resets the HTTP/2-coalesced connection and
+        // aborts in-flight fetches (the confirmed sign-out aborter). Clear the
+        // stale persisted identity and make this socket terminal, reusing the
+        // host-removal terminal-socket shape (see the wasRemoved branch above).
+        if (get(clientStore).session === null) {
+          clearStoredSession();
+          suppressReconnect = true;
+          socket.close();
+        }
       }
     });
   }
