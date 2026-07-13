@@ -142,7 +142,7 @@ that carry them.
   the signed-in host is already a member of as **pre-unlocked** — its songs list
   directly with no "Enter activation key" prompt (ui.md). Test (Playwright): a
   member catalogue lists its songs without showing the activation-key prompt.
-- [ ] T018 [artifacts: datamodel, infrastructure] Add a minimal
+- [x] T018 [artifacts: datamodel, infrastructure] Add a minimal
   ownership-bootstrap CLI (`set-catalogue-owner <catalogue-stable-id>
   <user-email | provider:subject>`) that grants the named account a
   `CatalogueMembership(grantedVia:'owner')` for an existing filesystem catalogue

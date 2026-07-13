@@ -1,4 +1,4 @@
-import type { AuthSession, CatalogueMembership, User } from '@sync-tab-scroll/shared';
+import type { AuthSession, CatalogueMembership, OAuthProvider, User } from '@sync-tab-scroll/shared';
 import type { AccountStore, CreateAuthSessionInput, UpsertMembershipInput, UpsertUserInput } from './store.js';
 
 /**
@@ -22,6 +22,14 @@ export class NullAccountStore implements AccountStore {
   }
 
   async getUser(_id: string): Promise<User | null> {
+    return null;
+  }
+
+  async getUserByEmail(_email: string): Promise<User | null> {
+    return null;
+  }
+
+  async getUserByProviderSubject(_oauthProvider: OAuthProvider, _oauthSubject: string): Promise<User | null> {
     return null;
   }
 

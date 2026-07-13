@@ -112,6 +112,23 @@ export class PgAccountStore implements AccountStore {
     });
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    return this.guard('getUserByEmail', null, async () => {
+      const { rows } = await this.pool.query<UserRow>('SELECT * FROM app_user WHERE email = $1 ORDER BY created_at LIMIT 1', [email]);
+      return rows[0] ? toUser(rows[0]) : null;
+    });
+  }
+
+  async getUserByProviderSubject(oauthProvider: OAuthProvider, oauthSubject: string): Promise<User | null> {
+    return this.guard('getUserByProviderSubject', null, async () => {
+      const { rows } = await this.pool.query<UserRow>(
+        'SELECT * FROM app_user WHERE oauth_provider = $1 AND oauth_subject = $2',
+        [oauthProvider, oauthSubject],
+      );
+      return rows[0] ? toUser(rows[0]) : null;
+    });
+  }
+
   async createAuthSession(input: CreateAuthSessionInput): Promise<AuthSession | null> {
     return this.guard('createAuthSession', null, async () => {
       const id = crypto.randomBytes(32).toString('base64url'); // opaque, high-entropy

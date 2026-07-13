@@ -55,6 +55,10 @@ export interface AccountStore {
   upsertUser(input: UpsertUserInput): Promise<User | null>;
   /** Look up a `User` by id (null when absent/unavailable). */
   getUser(id: string): Promise<User | null>;
+  /** Look up a `User` by email — for the ownership-bootstrap CLI (T018). Null if none/unavailable. */
+  getUserByEmail(email: string): Promise<User | null>;
+  /** Look up a `User` by its `(oauthProvider, oauthSubject)` login key — for the ownership-bootstrap CLI (T018). */
+  getUserByProviderSubject(oauthProvider: OAuthProvider, oauthSubject: string): Promise<User | null>;
 
   /** Create a revocable `AuthSession` (null when unavailable). */
   createAuthSession(input: CreateAuthSessionInput): Promise<AuthSession | null>;
