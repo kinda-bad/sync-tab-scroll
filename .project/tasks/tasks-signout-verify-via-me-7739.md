@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-verify-via-me-2026-07-13-5d6b.md   # exact filename of the source plan — authoritative binding
 generated: 2026-07-13
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
                      # completed is terminal — post-completion failures become
                      # new feedback (/ardd-feedback), never a status edit.
 ---
@@ -41,7 +41,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
       not modify `AccountMenu.svelte` or the `onSignOut={signOut}` wiring in
       `App.svelte` / `views/Landing.svelte`. Addresses feedback F001.
 
-- [ ] T003 [artifacts: ui] Update `.project/artifacts/ui.md`'s *Signing out*
+- [x] T003 [artifacts: ui] Update `.project/artifacts/ui.md`'s *Signing out*
       bullet in the Account & Sign-In States list so it states that a
       sign-out's success is confirmed by **re-reading `/me`** (the source of
       truth), not by the `/auth/logout` response — which can be aborted
