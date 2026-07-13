@@ -1,7 +1,7 @@
 ---
 plan: plan-hide-locked-catalogues-2026-07-13-6db8.md
 generated: 2026-07-13
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
