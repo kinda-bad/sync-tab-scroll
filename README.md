@@ -361,14 +361,15 @@ graph TD
     Bar --> SettingsCog["Settings cog"]
     Bar --> Leave["Leave session"]
 
-    SongPartCtl --> Modal["Song & Part modal"]
-    Modal --> CataloguePicker["Catalogue picker (grouped by catalogue)"]
-    CataloguePicker -->|"host, locked catalogue"| KeyCtl["Enter activation key<br/>(hidden when signed-in member: pre-unlocked)"]
+    SongPartCtl --> Modal["Song & Part modal<br/>(host-forced-open until song + part set)"]
+    Modal --> SongPicker["Song picker — visible catalogues only<br/>(public + unlocked; grouped when &gt;1)"]
+    Modal --> KeyCtl["Standalone 'Enter activation key'<br/>(host-only; locked catalogues never shown)"]
+    KeyCtl -->|"catalogue-unlock { key }"| Unlocked["Server matches key across locked catalogues<br/>→ that catalogue's group appears"]
     Modal --> PartPicker["Part picker (instruments + Lyrics)"]
 
     Playback --> TabRender["Tab renderer (alphaTab)"]
     Playback --> LyricsOverlay["Lyrics view / in-tab overlay"]
-    SettingsCog --> SettingsModal["Settings modal"]
+    SettingsCog --> SettingsModal["Settings modal<br/>(Participants · Session · Preferences)"]
 ```
 
 ## Acknowledgements
