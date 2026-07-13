@@ -1,15 +1,17 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Sign-out STILL fails on prod — new open bug, root-caused
-via live browser** — the reload-race fix shipped + deployed (below) but a live
-signed-in reproduction shows sign-out still shows "Sign out failed" and stays
-visually signed-in, EVEN THOUGH the server processes the logout (`/me` goes
-anonymous, reload shows signed-out). The client `fetch('/auth/logout')` throws
-before reading the 200; the aborter is the **2s WS rejoin storm** against a
-stale stored session resetting Railway's coalesced HTTP/2 connection (not the
-removed reload). Filed `feedback-signout-response-not-trusted-9575.md` (F001
-verify-via-`/me` fix; F002 the WS reconnect-storm/backoff). **1 open feedback**,
-next `/ardd-plan`. Prior context below. — **Sign-out reload-race fix SHIPPED to
+_Updated: 2026-07-13 (**Sign-out verify-via-`/me` fix PLANNED + TASKED, ready to
+implement** — the live-browser root cause (below) is now planned:
+`plan-signout-verify-via-me-2026-07-13-5d6b.md` (`approved`) +
+`tasks-signout-verify-via-me-7739.md` (`ready`, 3 tasks, test-first) fixes
+**F001** — `signOut()` re-reads `/me` as the source of truth instead of trusting
+the aborted `/auth/logout` response, so sign-out succeeds whenever the server
+processed it. Run `/ardd-implement`. **F002** (the 2s WS stale-session rejoin
+storm that resets Railway's coalesced HTTP/2 connection and is the underlying
+aborter) is left **open** in `feedback-signout-response-not-trusted-9575.md` for
+a follow-up plan — **1 open feedback**. Reminder: the reload-race fix (below)
+DID ship + deploy correctly; the aborter was simply different (the WS storm, not
+the removed reload). Prior context below. — **Sign-out reload-race fix SHIPPED to
 `main`** —
 `plan-signout-reload-race-2026-07-13-2e98.md` implemented via a delegated
 worktree (test-first, Principle VII) and **fast-forward-merged into `main` at
@@ -123,14 +125,12 @@ doesn't appear here.)
 
 ## Feedback
 
-**1 open** — `feedback-signout-response-not-trusted-9575.md` (root-caused via
-live browser repro): **F001** sign-out shows a false failure while the server
-succeeds — the client trusts the aborted `/auth/logout` response instead of
-verifying via `/me`; fix in `client/src/account.ts` `signOut()` (confirm state
-via `loadAccount`/`/me`, toast only if still signed-in). **F002** the 2s WS
-rejoin storm against a stale stored session (`ws-client.ts` `reconnectDelayMs`)
-is the aborter and needs backoff/give-up. Both `[artifacts: ui]` only for tiny
-States wording; core is code. For the next `/ardd-plan`.
+**1 open** — `feedback-signout-response-not-trusted-9575.md`: **F001**
+incorporated into `plan-signout-verify-via-me-…-5d6b` (tasks `ready`, not yet
+implemented). **F002** — the 2s WS stale-session rejoin storm (`ws-client.ts`
+`reconnectDelayMs`) that resets the coalesced h2 connection and is F001's
+underlying aborter — **remains open** for a follow-up `/ardd-plan` (needs
+backoff/give-up). The file stays `open` until F002 is planned.
 
 Prior (all `planned`, shipped):
 - `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped `a683a97`; **deployed to prod**, deployment `3305a830`).
@@ -140,6 +140,14 @@ Prior (all `planned`, shipped):
 
 ## Plans & Tasks
 
+- **Sign-out verify-via-`/me` fix (F001)** — `plan-signout-verify-via-me-2026-07-13-5d6b.md`
+  (`approved`), tasks `tasks-signout-verify-via-me-7739.md` (`ready`, 0/3).
+  **Not yet implemented** — run `/ardd-implement`. Single phase, test-first
+  (Principle VII): T001 failing test (4 cases incl. logout-throws-but-`/me`-
+  anonymous → signed-out, no toast), T002 `signOut()` re-reads `/me` via
+  `loadAccount` and toasts only if still signed-in, T003 `ui.md` States
+  wording. Supersedes the reload-race fix's response-`ok`-only check. F002
+  (WS reconnect storm) deliberately out of scope, still open.
 - **Sign-out reload race fix** — `plan-signout-reload-race-2026-07-13-2e98.md`
   (`approved`), tasks `tasks-signout-reload-race-e126.md` (`completed`, 3/3).
   **Merged to `main` at `a683a97`** (fast-forward, 4 signed commits) via a
