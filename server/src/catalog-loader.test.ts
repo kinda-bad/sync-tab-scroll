@@ -262,16 +262,19 @@ const mixedCatalog: LoadedCatalog = {
 };
 
 describe('visibleCatalog', () => {
-  it('excludes a private catalogue\'s songs but keeps its metadata for a session that has not unlocked it', () => {
+  it('excludes a locked private catalogue entirely — both its songs and its metadata — for a session that has not unlocked it', () => {
     const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: [] });
 
     expect(result.songs.map((s) => s.id)).toEqual(['creep']);
-    expect(result.catalogues.map((c) => c.id)).toEqual(['default', 'premium-pack']);
+    // The locked catalogue's metadata is withheld too: the client never learns
+    // it exists, its id, or its name (infrastructure.md).
+    expect(result.catalogues.map((c) => c.id)).toEqual(['default']);
   });
 
-  it('includes a private catalogue\'s songs once the session has unlocked it', () => {
+  it('includes a private catalogue\'s metadata and songs once the session has unlocked it', () => {
     const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: ['premium-pack'] });
 
+    expect(result.catalogues.map((c) => c.id).sort()).toEqual(['default', 'premium-pack']);
     expect(result.songs.map((s) => s.id).sort()).toEqual(['bonus', 'creep']);
   });
 

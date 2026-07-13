@@ -47,7 +47,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   both ends. Verify with a package build/typecheck; the behavioral assertions
   land in T004/T005's suites.
 
-- [ ] T004 [artifacts: infrastructure, datamodel] Test-first (constitution
+- [x] T004 [artifacts: infrastructure, datamodel] Test-first (constitution
   Principle VII). First extend `server/src/handlers/catalogue-unlock.test.ts`
   (red): with the new keyless-of-catalogueId message, a correct key unlocks the
   correct catalogue (assert it lands in `unlockedCatalogueIds` and the wider

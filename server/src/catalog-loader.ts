@@ -198,19 +198,23 @@ export function loadCatalog(catalogRoot: string, requireSongConsent = false): Lo
 
 /**
  * Filters the server-global catalogue set down to what a single session may
- * actually receive (infrastructure.md Song Catalog Delivery). Every
- * catalogue's client-safe metadata (`id`/`name`/`public`) is always
- * included — a locked catalogue's *name* is still shown in the picker — but
- * the raw `salt`/`hash` are stripped, never reaching a client. A song is
- * included only if its catalogue is public or the session has already
- * unlocked it (`Session.unlockedCatalogueIds`).
+ * actually receive (infrastructure.md Song Catalog Delivery). A **locked,
+ * not-yet-unlocked** private catalogue is withheld **entirely** — not only its
+ * songs but its metadata (`id`/`name`) too — so the client never learns it
+ * exists (that's what makes the picker hide it, and it's why a `catalogue-unlock`
+ * carries only a key, never an id). A public catalogue, and a private catalogue
+ * this session has already unlocked, are included; the raw `salt`/`hash` are
+ * always stripped, never reaching a client.
  */
 export function visibleCatalog(catalog: LoadedCatalog, session: Pick<Session, 'unlockedCatalogueIds'>): { catalogues: Catalogue[]; songs: CatalogSong[] } {
   const unlocked = new Set(session.unlockedCatalogueIds);
-  const publicIds = new Set(catalog.catalogues.filter((c) => c.public).map((c) => c.id));
+  const isVisible = (c: LoadedCatalogue): boolean => c.public || unlocked.has(c.id);
 
-  const catalogues: Catalogue[] = catalog.catalogues.map(({ id, name, public: isPublic }) => ({ id, name, public: isPublic }));
-  const songs = catalog.songs.filter((s) => publicIds.has(s.catalogueId) || unlocked.has(s.catalogueId));
+  const catalogues: Catalogue[] = catalog.catalogues
+    .filter(isVisible)
+    .map(({ id, name, public: isPublic }) => ({ id, name, public: isPublic }));
+  const visibleIds = new Set(catalogues.map((c) => c.id));
+  const songs = catalog.songs.filter((s) => visibleIds.has(s.catalogueId));
 
   return { catalogues, songs };
 }

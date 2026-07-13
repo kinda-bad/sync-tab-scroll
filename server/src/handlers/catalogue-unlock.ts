@@ -5,14 +5,31 @@ import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
 
 /**
- * Handles a host's `catalogue-unlock { catalogueId, key }` (infrastructure.md
- * Catalogue Activation Key Unlock). Host-only, same authorization pattern as
- * song selection. The submitted key is hashed with the catalogue's stored
- * salt and compared to the stored hash with `crypto.timingSafeEqual` (never
- * a plain `===`, to avoid a timing side-channel — datamodel.md Catalogue
- * Activation Key). On success the catalogue id is appended to
- * `Session.unlockedCatalogueIds` and two messages are broadcast: the normal
- * `session-state` and a fresh, now-wider `catalog` (via `visibleCatalog`).
+ * True when `key` hashes (with `salt`) to `storedHashHex`. Uses
+ * `crypto.timingSafeEqual` (never a plain `===`, to avoid a timing
+ * side-channel — datamodel.md Catalogue Activation Key). A length mismatch (a
+ * corrupt stored hash) can't be a correct key, so it's a failure rather than
+ * letting `timingSafeEqual` throw.
+ */
+function verifyKey(key: string, salt: string, storedHashHex: string): boolean {
+  const storedHash = Buffer.from(storedHashHex, 'hex');
+  const computed = crypto.scryptSync(key, salt, storedHash.length);
+  return storedHash.length === computed.length && crypto.timingSafeEqual(storedHash, computed);
+}
+
+/**
+ * Handles a host's `catalogue-unlock { key }` (infrastructure.md Catalogue
+ * Activation Key Unlock). Host-only, same authorization pattern as song
+ * selection. The message carries **no catalogueId** — a locked catalogue's
+ * id/name is never sent to the client — so the server resolves *which*
+ * catalogue the key belongs to by trying it against every locked,
+ * not-yet-unlocked catalogue and unlocking the first whose stored hash matches.
+ * Public and already-unlocked catalogues are never in that set, so nothing
+ * leaks which catalogue ids exist. On success the matched catalogue id is
+ * appended to `Session.unlockedCatalogueIds` and two messages are broadcast:
+ * the normal `session-state` and a fresh, now-wider `catalog` (via
+ * `visibleCatalog`). A key matching nothing is the same terse `error` as a
+ * wrong key — the client can't tell "wrong key" from "no such catalogue".
  *
  * PRODUCTION ANNOTATION: no rate limiting or lockout on repeated wrong-key
  * attempts here — the constitution's Production Posture already scopes rate
@@ -30,31 +47,15 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
     return;
   }
 
-  const catalogue = ctx.catalog.catalogues.find((c) => c.id === message.catalogueId);
+  // Try the key against every locked, not-yet-unlocked catalogue and take the
+  // first match. Public catalogues (no salt/hash) and already-unlocked ones are
+  // excluded from the set, so there's no per-id early-return that could leak
+  // which catalogues exist.
+  const unlocked = new Set(session.unlockedCatalogueIds);
+  const catalogue = ctx.catalog.catalogues.find(
+    (c) => !c.public && !!c.salt && !!c.hash && !unlocked.has(c.id) && verifyKey(message.key, c.salt, c.hash),
+  );
   if (!catalogue) {
-    ctx.connections.send(socket, { type: 'error', message: `Catalogue ${message.catalogueId} not found` });
-    return;
-  }
-
-  // A public catalogue has no key record (no salt/hash) — there's nothing to
-  // unlock; its songs are always visible already.
-  if (catalogue.public || !catalogue.salt || !catalogue.hash) {
-    ctx.connections.send(socket, { type: 'error', message: `Catalogue ${message.catalogueId} is not locked` });
-    return;
-  }
-
-  if (session.unlockedCatalogueIds.includes(catalogue.id)) {
-    ctx.connections.send(socket, { type: 'error', message: `Catalogue ${message.catalogueId} is already unlocked` });
-    return;
-  }
-
-  const storedHash = Buffer.from(catalogue.hash, 'hex');
-  const computed = crypto.scryptSync(message.key, catalogue.salt, storedHash.length);
-  // timingSafeEqual requires equal-length buffers; a length mismatch (a
-  // corrupt stored hash) can't be a correct key, so treat it as a failure
-  // rather than letting timingSafeEqual throw.
-  const ok = storedHash.length === computed.length && crypto.timingSafeEqual(storedHash, computed);
-  if (!ok) {
     ctx.connections.send(socket, { type: 'error', message: 'Incorrect activation key' });
     return;
   }

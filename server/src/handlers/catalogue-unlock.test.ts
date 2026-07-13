@@ -60,11 +60,15 @@ function withHostSession() {
 }
 
 describe('catalogue-unlock', () => {
-  it('unlocks with the correct key and broadcasts session-state + catalog', () => {
+  it('resolves the key against the locked catalogue and broadcasts session-state + catalog', () => {
     const { ctx, session, hostSocket, sent, broadcasts } = withHostSession();
 
-    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+    // No catalogueId supplied — the server figures out which locked catalogue
+    // the key belongs to.
+    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
 
+    // Only the matched private catalogue is unlocked; the public 'default'
+    // catalogue is never added by a key unlock.
     expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
     expect(sent).toEqual([]);
     expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
@@ -75,7 +79,7 @@ describe('catalogue-unlock', () => {
   it('rejects a wrong key with an error to the requester only, no broadcast, no state change', () => {
     const { ctx, session, hostSocket, sent, broadcasts } = withHostSession();
 
-    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: 'wrong' });
+    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: 'wrong' });
 
     expect(session.unlockedCatalogueIds).toEqual([]);
     expect(broadcasts).toEqual([]);
@@ -89,39 +93,36 @@ describe('catalogue-unlock', () => {
     const memberSocket = fakeSocket();
     ctx.connections.attach(memberSocket, { sessionCode: session.code, participantId: 'member-1' });
 
-    handleCatalogueUnlock(ctx, memberSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+    handleCatalogueUnlock(ctx, memberSocket, { type: 'catalogue-unlock', key: KEY });
 
     expect(session.unlockedCatalogueIds).toEqual([]);
     expect(broadcasts).toEqual([]);
     expect(sent).toEqual([{ type: 'error', message: 'Only the host can unlock a catalogue' }]);
   });
 
-  it('rejects an unknown catalogueId with an error', () => {
-    const { ctx, hostSocket, sent, broadcasts } = withHostSession();
+  it('errors and unlocks nothing when no locked catalogue exists (only public)', () => {
+    const { ctx, session, hostSocket, sent, broadcasts } = withHostSession();
+    // Drop the only private catalogue: nothing is left for any key to match, so
+    // even the "correct" key must fail — a key never unlocks a public catalogue.
+    ctx.catalog.catalogues = ctx.catalog.catalogues.filter((c) => c.public);
 
-    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'nope', key: KEY });
+    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
 
+    expect(session.unlockedCatalogueIds).toEqual([]);
     expect(broadcasts).toEqual([]);
     expect(sent).toHaveLength(1);
     expect(sent[0].type).toBe('error');
   });
 
-  it('rejects a public catalogue (no key record) with an error', () => {
-    const { ctx, hostSocket, sent, broadcasts } = withHostSession();
-
-    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'default', key: KEY });
-
-    expect(broadcasts).toEqual([]);
-    expect(sent).toHaveLength(1);
-    expect(sent[0].type).toBe('error');
-  });
-
-  it('rejects an already-unlocked catalogue with an error', () => {
+  it('does not re-unlock an already-unlocked catalogue (matches nothing left, errors, no duplicate)', () => {
     const { ctx, session, hostSocket, sent, broadcasts } = withHostSession();
     session.unlockedCatalogueIds.push('premium-pack');
 
-    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+    // premium-pack is the only locked catalogue and it is already unlocked, so
+    // the key matches nothing still-locked — a terse error, and no duplicate id.
+    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
 
+    expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
     expect(broadcasts).toEqual([]);
     expect(sent).toHaveLength(1);
     expect(sent[0].type).toBe('error');
@@ -147,7 +148,7 @@ describe('catalogue-unlock', () => {
     it('a signed-in host key-unlock persists a CatalogueMembership at the current epoch (S5, S8)', () => {
       const { ctx, session, hostSocket, upsert } = withSignedInHost('user-1');
 
-      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
 
       expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
       expect(upsert).toHaveBeenCalledTimes(1);
@@ -157,7 +158,7 @@ describe('catalogue-unlock', () => {
     it('an anonymous host key-unlock persists nothing (unchanged behavior)', () => {
       const { ctx, session, hostSocket, upsert } = withSignedInHost(null);
 
-      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY });
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
 
       expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
       expect(upsert).not.toHaveBeenCalled();
@@ -170,7 +171,7 @@ describe('catalogue-unlock', () => {
       const { ctx, session, hostSocket, broadcasts } = withSignedInHost('user-1', failing);
 
       expect(() =>
-        handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', catalogueId: 'premium-pack', key: KEY }),
+        handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY }),
       ).not.toThrow();
 
       expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
