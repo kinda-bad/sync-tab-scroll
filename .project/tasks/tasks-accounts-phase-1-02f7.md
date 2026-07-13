@@ -34,7 +34,7 @@ that carry them.
   returns the null impl with no `DATABASE_URL`; null-impl reads return
   empty/anonymous and writes are no-ops (this is the seam that makes the
   DB-optional guarantee fall out of normal code paths, infrastructure.md).
-- [ ] T004 [artifacts: datamodel] Write the Postgres schema + migrations matching
+- [x] T004 [artifacts: datamodel] Write the Postgres schema + migrations matching
   datamodel.md and its Indexes section: `User` unique on
   `(oauthProvider, oauthSubject)`; `CatalogueMembership` keyed on the catalogue's
   **stable id** as a plain string with a `keyEpoch` column (S8), index on
