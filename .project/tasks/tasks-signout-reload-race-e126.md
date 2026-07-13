@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-reload-race-2026-07-13-2e98.md   # exact filename of the source plan — authoritative binding
 generated: 2026-07-13
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
                      # completed is terminal — post-completion failures become
                      # new feedback (/ardd-feedback), never a status edit.
 ---
@@ -41,7 +41,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
       change `AccountMenu.svelte` or the `onSignOut={signOut}` wiring in
       `App.svelte`/`views/Landing.svelte`. Addresses feedback F001.
 
-- [ ] T003 [artifacts: ui] Update `.project/artifacts/ui.md` (Account & Sign-In
+- [x] T003 [artifacts: ui] Update `.project/artifacts/ui.md` (Account & Sign-In
       section and/or its States list) to document the failure-surfacing
       decision: a **confirmed** sign-out flips the account menu to signed-out
       in-memory (no page reload); a **failed** sign-out keeps the user

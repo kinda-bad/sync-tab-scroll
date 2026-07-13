@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-13
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -79,6 +79,14 @@ and Bar):
   anyone who never signs in.
 - *Signed-in* — account menu shows display name + Sign out (on both Landing and
   the Bar); member catalogues appear pre-unlocked in the picker.
+- *Signing out* — **Sign out** revokes the session server-side, then, on a
+  **confirmed** success, flips the account menu to *Signed-out* **in memory**,
+  with no page reload. A **failed** sign-out (non-OK response or network error)
+  keeps the user *Signed-in* and surfaces a terse **Error toast** ("Sign out
+  failed — please try again."), rather than reloading into a signed-out-looking
+  state — same terse-toast Error pattern as other per-action failures (States,
+  below). No reload avoids the race where a trailing `window.location.reload()`
+  aborted the in-flight logout and left the user still signed in (feedback F001).
 - *Accounts unavailable* — when the server runs with no database configured
   (infrastructure.md), the account menu renders nothing anywhere; the sign-in
   affordances are simply **absent** (on both Landing and the Bar), not shown
