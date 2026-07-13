@@ -191,6 +191,30 @@ describe('loadCatalog catalogue discovery', () => {
     expect(songs.map((s) => ({ id: s.id, catalogueId: s.catalogueId }))).toContainEqual({ id: 'creep', catalogueId: 'premium-pack' });
   });
 
+  it('defaults a private catalogue\'s epoch to 1 when catalogue.json omits it (T012)', () => {
+    fs.mkdirSync(path.join(catalogRoot, 'premium-pack'), { recursive: true });
+    fs.writeFileSync(
+      path.join(catalogRoot, 'premium-pack', 'catalogue.json'),
+      JSON.stringify({ name: 'Premium Pack', salt: 'ab12', hash: 'deadbeef' }), // no epoch
+    );
+    writeNestedSong('premium-pack', 'creep');
+
+    const premium = loadCatalog(catalogRoot).catalogues.find((c) => c.id === 'premium-pack');
+    expect(premium?.epoch).toBe(1);
+  });
+
+  it('reads a private catalogue\'s epoch from catalogue.json when present (T012)', () => {
+    fs.mkdirSync(path.join(catalogRoot, 'premium-pack'), { recursive: true });
+    fs.writeFileSync(
+      path.join(catalogRoot, 'premium-pack', 'catalogue.json'),
+      JSON.stringify({ name: 'Premium Pack', salt: 'ab12', hash: 'deadbeef', epoch: 3 }),
+    );
+    writeNestedSong('premium-pack', 'creep');
+
+    const premium = loadCatalog(catalogRoot).catalogues.find((c) => c.id === 'premium-pack');
+    expect(premium?.epoch).toBe(3);
+  });
+
   it('treats a subdirectory with nested song dirs but no catalogue.json as a public Catalogue', () => {
     writeNestedSong('free-pack', 'creep');
 

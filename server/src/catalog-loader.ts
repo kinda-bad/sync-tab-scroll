@@ -19,18 +19,23 @@ interface CatalogueRecord {
   name: string;
   salt: string;
   hash: string;
+  /** Monotonic key generation (datamodel.md); absent ⇒ treated as `1` (pre-epoch records). */
+  epoch?: number;
 }
 
 /**
  * A catalogue as held in server memory: the client-safe `Catalogue`
  * (id/name/public) plus, for a private catalogue, the raw `salt`/`hash`
- * key material used to verify `catalogue-unlock` attempts server-side.
- * `salt`/`hash` are never sent to any client (datamodel.md Catalogue
- * Activation Key) — `visibleCatalog` strips them before delivery.
+ * key material used to verify `catalogue-unlock` attempts server-side, and the
+ * activation-key `epoch` (datamodel.md; §13 S5) a persisted `CatalogueMembership`
+ * must match to still grant access. `salt`/`hash`/`epoch` are never sent to any
+ * client — `visibleCatalog` strips them before delivery.
  */
 export interface LoadedCatalogue extends Catalogue {
   salt?: string;
   hash?: string;
+  /** Activation-key epoch (private catalogues only); defaults to 1 when catalogue.json omits it. */
+  epoch?: number;
 }
 
 /** What `loadCatalog` returns: the server-global catalogue list plus every loaded song, catalogue-tagged. */
@@ -172,7 +177,7 @@ export function loadCatalog(catalogRoot: string, requireSongConsent = false): Lo
         console.error(`[catalog-loader] skipping catalogue "${entry.name}": malformed catalogue.json:`, err instanceof Error ? err.message : err);
         continue;
       }
-      catalogue = { id: entry.name, name: record.name ?? entry.name, public: false, salt: record.salt, hash: record.hash };
+      catalogue = { id: entry.name, name: record.name ?? entry.name, public: false, salt: record.salt, hash: record.hash, epoch: record.epoch ?? 1 };
     } else {
       catalogue = { id: entry.name, name: entry.name, public: true };
     }

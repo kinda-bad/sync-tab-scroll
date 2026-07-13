@@ -93,7 +93,7 @@ that carry them.
 
 ## Phase 4: Activation-key epoch + persisted unlock
 
-- [ ] T012 [artifacts: datamodel, pipeline] Add the `epoch` field to
+- [x] T012 [artifacts: datamodel, pipeline] Add the `epoch` field to
   `catalogue.json` (datamodel.md Catalogue Activation Key), read by
   `catalog-loader.ts` with absent ⇒ treated as `1`; extend the `create-catalogue`
   pipeline CLI to write `epoch` on creation and bump it on key rotation

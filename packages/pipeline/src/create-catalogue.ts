@@ -31,14 +31,52 @@ export function createCatalogue(catalogRoot: string, slug: string, name: string,
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(key, salt, 64).toString('hex');
 
-  const record = { name, salt, hash };
+  // epoch starts at 1 (datamodel.md Catalogue Activation Key); rotating the key
+  // bumps it, stranding memberships redeemed under an older epoch (§13 S5).
+  const record = { name, salt, hash, epoch: 1 };
   fs.writeFileSync(path.join(catalogueDir, 'catalogue.json'), JSON.stringify(record, null, 2) + '\n', 'utf8');
 }
 
+/**
+ * Rotates a private catalogue's activation key (datamodel.md; §13 S5):
+ * regenerates `salt`/`hash` for `newKey` and **bumps `epoch`** (an absent epoch
+ * on a legacy record is treated as `1`, so it becomes `2`). Bumping the epoch is
+ * what actually revokes previously-redeemed leaked-key access — a durable
+ * `CatalogueMembership` granted under the old epoch no longer matches. Throws if
+ * the catalogue doesn't exist or is public (no key record to rotate).
+ */
+export function rotateCatalogueKey(catalogRoot: string, slug: string, newKey: string): void {
+  const catalogueJsonPath = path.join(catalogRoot, slug, 'catalogue.json');
+  if (!fs.existsSync(catalogueJsonPath)) {
+    throw new Error(`No private catalogue.json to rotate at ${catalogueJsonPath} (a public catalogue has no key).`);
+  }
+  const existing = JSON.parse(fs.readFileSync(catalogueJsonPath, 'utf8')) as { name: string; epoch?: number };
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(newKey, salt, 64).toString('hex');
+  const record = { name: existing.name, salt, hash, epoch: (existing.epoch ?? 1) + 1 };
+  fs.writeFileSync(catalogueJsonPath, JSON.stringify(record, null, 2) + '\n', 'utf8');
+}
+
 async function main(): Promise<void> {
-  const [catalogRoot, slug, name, visibilityArg, key] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+
+  // `rotate` subcommand: create-catalogue rotate <catalogRoot> <slug> <newKey>
+  if (args[0] === 'rotate') {
+    const [, catalogRoot, slug, newKey] = args;
+    if (!catalogRoot || !slug || !newKey) {
+      console.error('Usage: create-catalogue rotate <catalogRoot> <slug> <newKey>');
+      process.exit(1);
+    }
+    rotateCatalogueKey(catalogRoot, slug, newKey);
+    console.log(`Rotated activation key for catalogue ${slug} (${catalogRoot}) — epoch bumped, old key-grants stranded`);
+    return;
+  }
+
+  const [catalogRoot, slug, name, visibilityArg, key] = args;
   if (!catalogRoot || !slug || !name || (visibilityArg !== 'public' && visibilityArg !== 'private')) {
     console.error('Usage: create-catalogue <catalogRoot> <slug> <name> <public|private> [key]');
+    console.error('       create-catalogue rotate <catalogRoot> <slug> <newKey>');
     process.exit(1);
   }
   if (visibilityArg === 'private' && !key) {
