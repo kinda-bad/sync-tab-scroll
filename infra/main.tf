@@ -13,6 +13,16 @@ resource "railway_project" "app" {
   # force-new field — changing it would destroy and recreate the project —
   # so the default is pinned rather than left to drift to null.
   workspace_id = var.workspace_id
+
+  # Guard the hand-created, Terraform-UNMANAGED Postgres service (design §12.4;
+  # the community provider has no DB resource, so the operator creates it in the
+  # dashboard) against a project-level `terraform destroy`: tearing down the
+  # project would orphan the DB Terraform can't see. This makes such a destroy
+  # fail loudly — remove it deliberately only if you truly intend to tear the
+  # whole project (and its Postgres) down.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "railway_service" "app" {
@@ -45,6 +55,20 @@ locals {
   base_variables = {
     CATALOG_ROOT         = local.catalog_root
     REQUIRE_SONG_CONSENT = "true"
+
+    # DATABASE_URL reaches the app as a Railway REFERENCE variable to the
+    # hand-created Postgres service (design §12.4 — the community provider has
+    # no DB resource, so Postgres is created by hand in the dashboard). The
+    # `$${{...}}` escaping makes Terraform emit the LITERAL
+    # `${{Postgres.DATABASE_URL}}` for Railway to resolve at deploy time, so
+    # only this non-secret reference string ever lives in tfstate — never the
+    # real DSN. Requires the hand-created Postgres service to be named
+    # "Postgres". Verify on first apply that the provider wrote the reference
+    # verbatim; if not, set this one var in the dashboard instead (runbook:
+    # infra/README.md). With the account layer absent at runtime the app still
+    # serves the anonymous path (infrastructure.md User Accounts), so a
+    # reference that fails to resolve degrades gracefully rather than breaking.
+    DATABASE_URL = "$${{Postgres.DATABASE_URL}}"
   }
 
   # HOST_REASSIGN_GRACE_MS is only set here if the operator overrode the

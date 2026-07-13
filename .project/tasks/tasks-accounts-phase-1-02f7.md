@@ -152,14 +152,14 @@ that carry them.
 
 ## Phase 7: Railway deployment (operational, test-exempt)
 
-- [ ] T019 [artifacts: infrastructure] Create the Railway Postgres service by
+- [x] T019 [artifacts: infrastructure] Create the Railway Postgres service by
   hand in the dashboard (community TF provider has no DB resource, design §12.4);
   add `DATABASE_URL` to Terraform as the `${{Postgres.DATABASE_URL}}` reference
   variable and verify on first apply it is written verbatim (fallback: set that
   one var in the dashboard); guard the unmanaged Postgres service against a
   project-level `terraform destroy`. Operational — verified by deploy, not an
   automated test.
-- [ ] T020 [artifacts: infrastructure] Push the OAuth client id/secret (Google +
+- [x] T020 [artifacts: infrastructure] Push the OAuth client id/secret (Google +
   GitHub) and the session/cookie signing secret to Railway as **sealed**
   variables via `railway variables --set "…=$(op read op://sync-tab-scroll/…)"`
   (creds already in 1Password), never through tfstate (design §12.4). Verify
