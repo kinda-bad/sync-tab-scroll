@@ -27,7 +27,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
       current unconditional-reload implementation before proceeding. Addresses
       feedback F001 (bug: sign-out silently fails on prod via reload race).
 
-- [ ] T002 Implement the `signOut()` fix in `client/src/account.ts` to make
+- [x] T002 Implement the `signOut()` fix in `client/src/account.ts` to make
       T001 pass. Await `fetchFn('/auth/logout', { method: 'POST' })`; on a
       confirmed `res.ok`, set `accountStore` to `{ status: 'signed-out',
       displayName: null }` and do NOT reload (remove the unconditional
