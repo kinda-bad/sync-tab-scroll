@@ -1,18 +1,20 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Sign-out verify-via-`/me` fix PLANNED + TASKED, ready to
-implement** — the live-browser root cause (below) is now planned:
-`plan-signout-verify-via-me-2026-07-13-5d6b.md` (`approved`) +
-`tasks-signout-verify-via-me-7739.md` (`ready`, 3 tasks, test-first) fixes
-**F001** — `signOut()` re-reads `/me` as the source of truth instead of trusting
-the aborted `/auth/logout` response, so sign-out succeeds whenever the server
-processed it. Run `/ardd-implement`. **F002** (the 2s WS stale-session rejoin
-storm that resets Railway's coalesced HTTP/2 connection and is the underlying
-aborter) is left **open** in `feedback-signout-response-not-trusted-9575.md` for
-a follow-up plan — **1 open feedback**. Reminder: the reload-race fix (below)
-DID ship + deploy correctly; the aborter was simply different (the WS storm, not
-the removed reload). Prior context below. — **Sign-out reload-race fix SHIPPED to
-`main`** —
+_Updated: 2026-07-13 (**Sign-out verify-via-`/me` fix SHIPPED to `main`,
+deploying** — `plan-signout-verify-via-me-2026-07-13-5d6b.md` implemented via a
+delegated worktree (test-first: RED 3-failed → GREEN 77/77) and
+**fast-forward-merged into `main` at `0f8a3db`** (3 signed commits), then pushed
+→ **deployed to prod** (Railway deployment `d5f8c8f3`, `● Online`, bundle
+`index-DkTwxyzp.js`, `/me` healthy). **F001** fixed: `signOut()` now re-reads
+`/me` as the source of truth after `POST /auth/logout` (ignoring the abortable
+logout response) and only toasts if still signed-in — so sign-out succeeds
+whenever the server processed it, even while the WS storm resets the h2
+connection. **Live browser re-verification pending the deploy** (needs a
+signed-in session — the user must re-auth via OAuth, then the sign-out path can
+be driven). **F002** (the WS stale-session reconnect storm — F001's underlying
+aborter) remains **open** in `feedback-signout-response-not-trusted-9575.md` for
+a follow-up plan — **1 open feedback**. Prior context below. — **Sign-out
+reload-race fix SHIPPED to `main`** —
 `plan-signout-reload-race-2026-07-13-2e98.md` implemented via a delegated
 worktree (test-first, Principle VII) and **fast-forward-merged into `main` at
 `a683a97`** (4 signed commits). `signOut()` (`client/src/account.ts`) no longer
@@ -103,9 +105,10 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-All three renderables **current ✅** (README.md). `ui.md` regenerated at
-`cc02684` (AccountMenu sign-out flow: confirmed→in-memory signed-out / failed→
-Error toast); `infrastructure.md` (`bd1c6a1`) and `datamodel.md` unchanged.
+All three renderables **current ✅** (README.md). `ui.md` regenerated for the
+verify-via-`/me` sign-out flow (re-read `/me` → anonymous = signed-out /
+still-signed-in = Error toast); `infrastructure.md` (`bd1c6a1`) and
+`datamodel.md` unchanged.
 
 ## Code-vs-Artifact Defects
 
@@ -141,13 +144,15 @@ Prior (all `planned`, shipped):
 ## Plans & Tasks
 
 - **Sign-out verify-via-`/me` fix (F001)** — `plan-signout-verify-via-me-2026-07-13-5d6b.md`
-  (`approved`), tasks `tasks-signout-verify-via-me-7739.md` (`ready`, 0/3).
-  **Not yet implemented** — run `/ardd-implement`. Single phase, test-first
-  (Principle VII): T001 failing test (4 cases incl. logout-throws-but-`/me`-
+  (`approved`), tasks `tasks-signout-verify-via-me-7739.md` (`completed`, 3/3).
+  **Merged to `main` at `0f8a3db`** (fast-forward, 3 signed commits) via a
+  delegated worktree, **deployed to prod** (Railway `d5f8c8f3`). Test-first
+  (RED 3-failed → GREEN 77/77): T001 4-case test (incl. logout-throws-but-`/me`-
   anonymous → signed-out, no toast), T002 `signOut()` re-reads `/me` via
-  `loadAccount` and toasts only if still signed-in, T003 `ui.md` States
-  wording. Supersedes the reload-race fix's response-`ok`-only check. F002
-  (WS reconnect storm) deliberately out of scope, still open.
+  `loadAccount` and toasts only if still signed-in, T003 `ui.md` States wording.
+  Supersedes the reload-race fix's response-`ok`-only check. **Live re-verify
+  pending** (needs a signed-in session — user re-auth via OAuth). F002 (WS
+  reconnect storm) still open for a follow-up plan.
 - **Sign-out reload race fix** — `plan-signout-reload-race-2026-07-13-2e98.md`
   (`approved`), tasks `tasks-signout-reload-race-e126.md` (`completed`, 3/3).
   **Merged to `main` at `a683a97`** (fast-forward, 4 signed commits) via a

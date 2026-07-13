@@ -361,8 +361,9 @@ graph TD
 
     Landing --> AccountMenu["AccountMenu — same component in both places<br/>(display name + Sign out when signed-in;<br/>'Sign in' when signed-out; nothing when accounts unavailable)"]
     Bar --> AccountMenu
-    AccountMenu -->|"Sign out → confirmed logout"| SignedOut["Flips to signed-out in memory<br/>(no page reload — avoids the logout race, F001)"]
-    AccountMenu -->|"Sign out failed (non-OK / network)"| Toasts
+    AccountMenu -->|"Sign out → POST /auth/logout"| MeCheck["Re-read /me (source of truth)<br/>— the logout response is not trusted<br/>(it can be aborted even when the server succeeded)"]
+    MeCheck -->|"/me anonymous"| SignedOut["Flips to signed-out in memory (no reload)"]
+    MeCheck -->|"/me still signed-in"| Toasts
     Toasts -.->|"stays signed-in"| SignOutErr["'Sign out failed — please try again.'"]
 
     SongPartCtl --> Modal["Song & Part modal<br/>(auto-opens once when song/part unset;<br/>dismissible — × / backdrop / Esc — so the Bar stays reachable)"]
