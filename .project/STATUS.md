@@ -143,16 +143,17 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-Both feature plans are shipped to `main`; nothing is in flight and all diagrams
-are current. Remaining, in order:
-1. **Deploy `main` to production** (Railway) — carries the hide-locked-catalogues
-   + reachable-account-controls changes live.
-2. **Browser OAuth validation (deferred by the user until the above deploys).**
-   Validate the two OAuth redirect URIs are registered AND exercise the new
-   Landing account menu / dismissible-modal sign-in→sign-out flow live on
-   `sts.ty-pe.com`. (A ready-to-paste Chrome-extension prompt was drafted this
-   session.) The user believes the redirect URIs are already registered; this
-   confirms it.
+Both feature plans are shipped to `main` AND **deployed to production**
+(`main`@`daf1361` pushed to `origin`, Railway auto-built and promoted deployment
+`de20c5fa`, `● Online` at https://sts.ty-pe.com; smoke check: `/me` 200
+`{"accountsEnabled":true,"user":null}`, root SPA 200). Nothing in flight; all
+diagrams current. Remaining:
+1. **Browser OAuth validation (deferred by the user until deployed — now
+   unblocked).** Validate the two OAuth redirect URIs are registered AND
+   exercise the new Landing account menu / dismissible-modal sign-in→sign-out
+   flow live on `sts.ty-pe.com`. (A ready-to-paste Chrome-extension prompt was
+   drafted this session.) The user believes the redirect URIs are already
+   registered; this confirms it.
 
 After those, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
