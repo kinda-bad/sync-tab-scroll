@@ -53,7 +53,7 @@ that carry them.
 
 ## Phase 2: OAuth flow + revocable cookie sessions
 
-- [ ] T007 [artifacts: infrastructure] Implement provider-agnostic
+- [x] T007 [artifacts: infrastructure] Implement provider-agnostic
   Authorization-Code helpers: generate + validate `state`, PKCE
   (verifier/challenge), and `nonce` (S1). Test: a well-formed state/PKCE/nonce
   round-trip validates; a tampered or missing `state`/`nonce`/verifier is
