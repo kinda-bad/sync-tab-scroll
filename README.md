@@ -361,6 +361,9 @@ graph TD
 
     Landing --> AccountMenu["AccountMenu — same component in both places<br/>(display name + Sign out when signed-in;<br/>'Sign in' when signed-out; nothing when accounts unavailable)"]
     Bar --> AccountMenu
+    AccountMenu -->|"Sign out → confirmed logout"| SignedOut["Flips to signed-out in memory<br/>(no page reload — avoids the logout race, F001)"]
+    AccountMenu -->|"Sign out failed (non-OK / network)"| Toasts
+    Toasts -.->|"stays signed-in"| SignOutErr["'Sign out failed — please try again.'"]
 
     SongPartCtl --> Modal["Song & Part modal<br/>(auto-opens once when song/part unset;<br/>dismissible — × / backdrop / Esc — so the Bar stays reachable)"]
     Modal --> SongPicker["Song picker — visible catalogues only<br/>(public + unlocked; grouped when &gt;1)"]
