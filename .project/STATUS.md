@@ -4,8 +4,9 @@ _Updated: 2026-07-12 (**Accounts Phase 1 shipped** — `/ardd-implement`
 completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 `main` at `e2747b2` (fast-forward, 80 files, +3363/−69, all commits signed).
 OAuth identity + optional Postgres + persisted catalogue unlock now live in
-the codebase. Live Railway/secret deploy steps (T019/T020) still need the
-operator.)_
+the codebase. `/ardd-defects` then verified the merged account code against
+every artifact — **no defects**. Live Railway/secret deploy steps (T019/T020)
+still need the operator.)_
 
 ## Artifact Status
 
@@ -59,11 +60,13 @@ beyond those already in the datamodel ERD (`User`, `CatalogueMembership`,
 
 ## Code-vs-Artifact Defects
 
-`DEFECTS.md` last checked **2026-07-10** — now **stale**: Accounts Phase 1 added
-~3,300 lines across `server/src/accounts/`, `server/src/auth/`,
-`membership-unlock`, the client account UI, and infra Terraform since that pass.
-**Run `/ardd-defects`** to verify the new code matches datamodel.md /
-infrastructure.md / ui.md.
+**No defects** — `DEFECTS.md` last checked **2026-07-12**. A focused
+`/ardd-defects` pass over the freshly-merged Accounts Phase 1 layer (~3,300
+lines) confirmed the account code matches datamodel.md, infrastructure.md,
+ui.md, pipeline.md, and constitution Principles I/II/VI/VII/VIII — all
+adversarial resolutions S1–S8 verified present in the implementation. The
+pre-accounts codebase (clean at 2026-07-10) is unchanged except for additive
+account wiring.
 
 ## Feature Backlog
 
@@ -90,7 +93,8 @@ doesn't appear here.)
 
 ## Recommended next step
 
-Run **`/ardd-defects`** to verify the freshly-merged account code against the
-artifacts, then perform the T019/T020 live deploy steps above to bring accounts
-online in production. (Phase 2 — in-app authoring + dynamic catalog — remains
-the next design-of-record milestone.)
+Code verification is done (`/ardd-defects` clean). The remaining work is
+**operational, yours to run**: perform the T019/T020 live deploy steps above
+(create the Railway Postgres, apply Terraform, push sealed secrets, register
+OAuth redirect URIs, verify prod sign-in). After that, Phase 2 — in-app
+authoring + dynamic catalog — is the next design-of-record milestone.
