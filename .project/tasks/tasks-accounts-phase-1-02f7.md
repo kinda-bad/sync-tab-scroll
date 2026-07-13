@@ -129,7 +129,7 @@ that carry them.
 
 ## Phase 6: Client sign-in UI + ownership-bootstrap CLI
 
-- [ ] T016 [artifacts: ui] Add the sign-in affordances (ui.md Account &
+- [x] T016 [artifacts: ui] Add the sign-in affordances (ui.md Account &
   Sign-In): a subordinate "Sign in with Google / GitHub" control on the Landing
   chooser and a persistent account menu in the Lobby/Playback bar (display name +
   Sign out when signed in; a compact "Sign in" link when signed out); wire `/me`

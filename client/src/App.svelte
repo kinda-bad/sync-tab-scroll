@@ -12,6 +12,8 @@
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
+  import AccountMenu from './components/AccountMenu.svelte';
+  import { accountStore, signIn, signOut } from './account';
   import { leaveSession } from './leave-session';
 
   let tabContainer: HTMLDivElement;
@@ -158,6 +160,9 @@
       {#if participant}
         <ReadinessBadge readiness={participant.readiness} connected={participant.connectionStatus === 'connected'} />
       {/if}
+      <!-- Persistent account menu (ui.md Account & Sign-In). Absent when
+           accounts are unavailable (no DB) — AccountMenu renders nothing. -->
+      <AccountMenu status={$accountStore.status} displayName={$accountStore.displayName} onSignIn={signIn} onSignOut={signOut} />
     {/snippet}
   </Bar>
 {/if}

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { connect } from '../ws-client';
   import { loadStoredSession } from '../session-persistence';
+  import { accountStore, signIn } from '../account';
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
 
@@ -38,6 +39,18 @@
         <Button variant="riot" label="Create a session" onclick={() => (mode = 'create')} />
         <Button variant="ghost" label="Join a session" onclick={() => (mode = 'join')} />
       </div>
+      <!-- Subordinate sign-in control (ui.md Account & Sign-In) — optional, never
+           a gate. Shown only when accounts are available and signed-out; absent
+           when unavailable (no DB) or already signed in. -->
+      {#if $accountStore.status === 'signed-out'}
+        <div class="landing-signin">
+          <span class="landing-signin-label">Optional — sign in to remember unlocked setlists</span>
+          <div class="landing-signin-actions">
+            <button type="button" class="landing-signin-btn" onclick={() => signIn('google')}>Sign in with Google</button>
+            <button type="button" class="landing-signin-btn" onclick={() => signIn('github')}>Sign in with GitHub</button>
+          </div>
+        </div>
+      {/if}
     {:else if mode === 'create'}
       <form onsubmit={(e) => { e.preventDefault(); createSession(); }}>
         <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
@@ -120,5 +133,43 @@
 
   .landing-back:hover {
     color: var(--ink);
+  }
+
+  /* Subordinate to Create/Join — smaller, dimmer, clearly optional (ui.md). */
+  .landing-signin {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--ink-dim);
+  }
+
+  .landing-signin-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+  }
+
+  .landing-signin-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .landing-signin-btn {
+    background: none;
+    border: 1px solid var(--ink-dim);
+    padding: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+
+  .landing-signin-btn:hover {
+    color: var(--ink);
+    border-color: var(--ink);
   }
 </style>
