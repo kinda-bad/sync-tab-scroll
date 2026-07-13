@@ -22,7 +22,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `ardd-state.sh stamp .project/artifacts/ui.md last_updated 2026-07-13` and
   `diagram_status stale`. (Feedback F001.)
 
-- [ ] T002 [artifacts: infrastructure] [parallel] Revise `infrastructure.md`'s
+- [x] T002 [artifacts: infrastructure] [parallel] Revise `infrastructure.md`'s
   "Catalogue Activation Key Unlock" section (~lines 316–342). The message is
   now `catalogue-unlock { key }` — no `catalogueId`. The server resolves the
   key by hashing it (`scrypt` + `timingSafeEqual`) against **every** locked,

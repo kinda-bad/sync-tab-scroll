@@ -1,10 +1,10 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-12
+last_updated: 2026-07-13
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -269,13 +269,15 @@ startup by `catalog-loader.ts`, datamodel.md) is server-global — it isn't
 part of any one `Session` and isn't re-scanned per request. A client
 receives the catalog once, right after its `session-create`/`session-join`
 succeeds, as its own message distinct from `session-state` (which only
-ever carries one session's state, not the server-wide catalog). Every
-`Catalogue`'s metadata (`id`, `name`, `public`) is always included in this
-message; a private catalogue's `CatalogSong[]` entries are withheld
-entirely from it (not merely hidden client-side) unless
-`Session.unlockedCatalogueIds` already contains that catalogue for this
-session — see Catalogue Activation Key Unlock, below, for the one case
-that re-sends this message mid-session.
+ever carries one session's state, not the server-wide catalog). A **public** `Catalogue`'s metadata (`id`, `name`, `public`) and its
+`CatalogSong[]` are always included. A **private, not-yet-unlocked**
+catalogue is withheld **entirely** — not just its songs but its metadata
+(`id`, `name`) too — so the client never learns a locked catalogue exists,
+its id, or its name (`visibleCatalog` in `catalog-loader.ts` omits it from the
+emitted `catalogues`). Only once `Session.unlockedCatalogueIds` contains that
+catalogue for this session does it appear — metadata and songs together — in
+the delivered catalog. See Catalogue Activation Key Unlock, below, for the one
+case that re-sends this message mid-session.
 
 Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`)
 live on the server's disk under `catalog/<song-slug>/`, or
@@ -316,20 +318,26 @@ client ever has to pick from.
 ## Catalogue Activation Key Unlock
 
 Host-only, same authorization pattern as song selection above. Message:
-`catalogue-unlock { catalogueId, key }`. The server looks up
-`catalogueId`'s `catalogue.json` (datamodel.md's Catalogue Activation
-Key), computes `crypto.scrypt(key, storedSalt, 64)`, and compares it to
-the stored hash with `crypto.timingSafeEqual` — not a plain `===`, to
-avoid a timing side-channel on the hash comparison itself. Rejected as an
-error (host-only violation, unknown `catalogueId`, or already-unlocked)
-before ever touching the key comparison; a wrong key is also just an
-`error` message (ui.md States), not a distinct response shape — the
-client can't tell "wrong key" from "server declined for another reason"
-today, consistent with this app's terse error-toast pattern elsewhere and
-the constitution's no-rate-limiting Production Posture (nothing here
-needs to distinguish failure reasons to a potential brute-forcer).
+`catalogue-unlock { key }` — **no `catalogueId`**. Because a locked
+catalogue's metadata is never sent to the client (Song Catalog Delivery,
+above), the host has nothing to name; they type a key only, and the server
+resolves *which* catalogue it unlocks. The server iterates every **locked,
+not-yet-unlocked** catalogue (`!public && salt && hash && id ∉
+Session.unlockedCatalogueIds`), computes `crypto.scrypt(key, storedSalt, 64)`
+for each, and compares it to that catalogue's stored hash with
+`crypto.timingSafeEqual` — not a plain `===`, to avoid a timing side-channel
+on the hash comparison itself. The first catalogue whose hash matches is
+unlocked. The comparison runs against every locked catalogue rather than
+early-returning on a public/already-unlocked one, so neither timing nor
+behavior leaks which ids exist. A non-host request is rejected before any key
+comparison. A key matching no locked catalogue is just an `error` message
+(ui.md States), not a distinct response shape — the client can't tell "wrong
+key" from "no such catalogue" or "server declined for another reason",
+consistent with this app's terse error-toast pattern elsewhere and the
+constitution's no-rate-limiting Production Posture (nothing here needs to
+distinguish failure reasons to a potential brute-forcer).
 
-On a correct key: `catalogueId` is appended to
+On a correct key: the matched catalogue's id is appended to
 `Session.unlockedCatalogueIds`, and the server broadcasts **two**
 messages to every connected participant in the session, not one — the
 normal `session-state` broadcast (so every participant's UI reflects the
