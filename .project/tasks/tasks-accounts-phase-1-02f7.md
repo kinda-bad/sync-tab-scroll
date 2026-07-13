@@ -27,7 +27,7 @@ that carry them.
   including the `oauthProvider`/`grantedVia` unions, `keyEpoch: number | null`,
   `email: string | null`, and `revokedAt: number | null`. Test: compile-time
   type assertions pin the field shapes. [parallel]
-- [ ] T003 [artifacts: datamodel, infrastructure] Define the account repository
+- [x] T003 [artifacts: datamodel, infrastructure] Define the account repository
   interface (`AccountStore` facade or `UserRepo`/`MembershipRepo`/
   `AuthSessionRepo` — decide per plan Open Question 2) and a **null/absent**
   implementation selected when `DATABASE_URL` is unset. Test: the factory
