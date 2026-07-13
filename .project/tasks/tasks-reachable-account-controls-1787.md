@@ -45,7 +45,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   Keep it visually subordinate on the chooser (optional, never a gate, per
   ui.md). Touches `Landing.svelte` only — parallel-safe with T003.
 
-- [ ] T003 [artifacts: ui] [parallel] Dismissible song/part modal (bar-controls
+- [x] T003 [artifacts: ui] [parallel] Dismissible song/part modal (bar-controls
   F001). Test-first (Principle VII; Playwright). First write a test (red): in
   the Lobby with the session's song or this participant's part unset, the
   `SongPartModal` can be dismissed via the × and via a backdrop click, then

@@ -7,6 +7,48 @@ test('a fresh session auto-opens the song/part modal', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Song & part' })).toBeVisible({ timeout: 10_000 });
 });
 
+// ui.md Lobby View (T003, bar-controls F001): the auto-opened song/part modal
+// is dismissible even while song/part is still unset, so the persistent Bar
+// (Leave session, Sign out) is never permanently trapped behind its backdrop.
+// Once dismissed it stays closed until reopened via the "Song & part" control.
+
+test('the song/part modal is dismissible via × while still unset, leaving the Bar reachable', async ({ page }) => {
+  await createSessionAsHost(page, 'Host');
+
+  const modal = page.getByRole('dialog', { name: 'Song & part' });
+  await expect(modal).toBeVisible({ timeout: 10_000 });
+
+  // Dismiss via the × even though no song/part is selected yet.
+  await modal.getByRole('button', { name: 'Close' }).click();
+  await expect(modal).not.toBeVisible();
+
+  // It stays closed while still unset — it does not immediately re-open.
+  await page.waitForTimeout(500);
+  await expect(modal).not.toBeVisible();
+
+  // The persistent Bar is reachable: its "Leave session" control is clickable.
+  await expect(page.getByRole('button', { name: 'Leave session' })).toBeEnabled();
+
+  // Reopens via the "Song & part" nav control.
+  await page.getByRole('button', { name: 'Song & part' }).click();
+  await expect(modal).toBeVisible();
+});
+
+test('the song/part modal is dismissible via a backdrop click while still unset', async ({ page }) => {
+  await createSessionAsHost(page, 'Host');
+
+  const modal = page.getByRole('dialog', { name: 'Song & part' });
+  await expect(modal).toBeVisible({ timeout: 10_000 });
+
+  // Click the backdrop (top-left corner, outside the centered panel).
+  await page.locator('.modal-backdrop').click({ position: { x: 5, y: 5 } });
+  await expect(modal).not.toBeVisible();
+
+  // Stays closed while still unset.
+  await page.waitForTimeout(500);
+  await expect(modal).not.toBeVisible();
+});
+
 test('selecting a part auto-closes the modal', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
 

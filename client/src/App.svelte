@@ -21,6 +21,7 @@
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
   let songPartModalOpen = false;
+  let songPartDismissed = false;
   let settingsModalOpen = false;
 
   $: session = $clientStore.session;
@@ -75,20 +76,30 @@
   $: barProgress = $clientStore.view === 'playback' ? $clientStore.playbackProgress : totalCount > 0 ? readyCount / totalCount : 0;
 
   // Song/part selection lives in a modal (ui.md Lobby View), not inline —
-  // forced open whenever either is missing (pre-playback only; once
-  // playback starts every participant necessarily already has a part).
-  // One-directional: this only ever forces `songPartModalOpen` to `true`,
-  // never back to `false` — otherwise the instant selection completes and
-  // `needsSongOrPart` flips false, an OR'd derived value would snap the
-  // modal shut on its own before the user ever chose to close it.
+  // auto-opened ONCE whenever either is missing (pre-playback only; once
+  // playback starts every participant necessarily already has a part). The
+  // modal is always dismissible: a persistent Bar control (Sign out, Leave)
+  // must stay reachable, so no modal may permanently trap the user. Once
+  // dismissed it stays closed (even while still unset) until the user reopens
+  // it via the "Song & part" nav control — tracked by `songPartDismissed`.
+  // The auto-open guard is still one-directional (only forces `true`), gated
+  // by the dismissed flag so a completed selection or a manual dismiss doesn't
+  // get snapped back open.
   $: needsSongOrPart = $clientStore.view === 'lobby' && (!session?.selectedSong || !hasPart);
-  $: if (needsSongOrPart) songPartModalOpen = true;
+  $: if (needsSongOrPart && !songPartDismissed) songPartModalOpen = true;
 
   function toggleSongPartModal() {
-    songPartModalOpen = !songPartModalOpen;
+    if (songPartModalOpen) {
+      // Closing via the nav control behaves like a dismiss — stays closed.
+      songPartDismissed = true;
+      songPartModalOpen = false;
+    } else {
+      songPartModalOpen = true;
+    }
   }
 
   function closeSongPartModal() {
+    songPartDismissed = true;
     songPartModalOpen = false;
   }
 
@@ -167,7 +178,7 @@
   </Bar>
 {/if}
 
-<SongPartModal open={songPartModalOpen} dismissible={!needsSongOrPart} onClose={closeSongPartModal} />
+<SongPartModal open={songPartModalOpen} dismissible={true} onClose={closeSongPartModal} />
 <SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
 
 <Toasts />
