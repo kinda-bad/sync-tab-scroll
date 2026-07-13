@@ -1,13 +1,13 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-13
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-reachable-account-controls-2026-07-13-ca49.md
 ---
 
 # Feedback
 
 ## Reconsidered
-- [ ] F001 Account controls should be available on the create/join (Landing)
+- [x] F001 Account controls should be available on the create/join (Landing)
       page whether signed in or out — you shouldn't need to be in a session to
       manage auth. Today the Landing page shows a sign-in control **only when
       signed-out** (`client/src/views/Landing.svelte:45`, `{#if status ===

@@ -1,13 +1,13 @@
 ---
-status: open
+status: planned
 created: 2026-07-13
-plan: null
+plan: plan-reachable-account-controls-2026-07-13-ca49.md
 ---
 
 # Feedback
 
 ## Bugs
-- [ ] F001 Persistent bottom-`Bar` controls — including the new account menu's
+- [x] F001 Persistent bottom-`Bar` controls — including the new account menu's
   **Sign out** (and Sign in, Leave session, ReadinessBadge) — are unclickable
   whenever a modal is open. Root cause is a z-index/layering conflict: `Bar` is
   `position:fixed; bottom:0; z-index:100` (`Bar.svelte`), but `Modal`'s backdrop
