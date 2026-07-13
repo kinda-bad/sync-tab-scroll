@@ -1,6 +1,16 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Sign-out fix SHIPPED to `main`** —
+_Updated: 2026-07-13 (**Sign-out STILL fails on prod — new open bug, root-caused
+via live browser** — the reload-race fix shipped + deployed (below) but a live
+signed-in reproduction shows sign-out still shows "Sign out failed" and stays
+visually signed-in, EVEN THOUGH the server processes the logout (`/me` goes
+anonymous, reload shows signed-out). The client `fetch('/auth/logout')` throws
+before reading the 200; the aborter is the **2s WS rejoin storm** against a
+stale stored session resetting Railway's coalesced HTTP/2 connection (not the
+removed reload). Filed `feedback-signout-response-not-trusted-9575.md` (F001
+verify-via-`/me` fix; F002 the WS reconnect-storm/backoff). **1 open feedback**,
+next `/ardd-plan`. Prior context below. — **Sign-out reload-race fix SHIPPED to
+`main`** —
 `plan-signout-reload-race-2026-07-13-2e98.md` implemented via a delegated
 worktree (test-first, Principle VII) and **fast-forward-merged into `main` at
 `a683a97`** (4 signed commits). `signOut()` (`client/src/account.ts`) no longer
@@ -113,8 +123,14 @@ doesn't appear here.)
 
 ## Feedback
 
-**None open.** `feedback-signout-reload-masks-failure-9a29.md` was consumed by
-`plan-signout-reload-race-2026-07-13-2e98.md` (now `planned`).
+**1 open** — `feedback-signout-response-not-trusted-9575.md` (root-caused via
+live browser repro): **F001** sign-out shows a false failure while the server
+succeeds — the client trusts the aborted `/auth/logout` response instead of
+verifying via `/me`; fix in `client/src/account.ts` `signOut()` (confirm state
+via `loadAccount`/`/me`, toast only if still signed-in). **F002** the 2s WS
+rejoin storm against a stale stored session (`ws-client.ts` `reconnectDelayMs`)
+is the aborter and needs backoff/give-up. Both `[artifacts: ui]` only for tiny
+States wording; core is code. For the next `/ardd-plan`.
 
 Prior (all `planned`, shipped):
 - `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped `a683a97`; **deployed to prod**, deployment `3305a830`).
