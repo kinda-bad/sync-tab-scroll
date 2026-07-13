@@ -1,6 +1,14 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-12 (**Accounts Phase 1 shipped** — `/ardd-implement`
+_Updated: 2026-07-13 (**Hide-locked-catalogues planned & tasked** — the
+Reconsidered feedback F001 became an approved plan
+(`plan-hide-locked-catalogues-2026-07-13-6db8.md`) with a `ready` tasks file
+(`tasks-hide-locked-catalogues-6009.md`, 5 tasks). Scope grew past the
+feedback's `[artifacts: ui]` tag: the standalone key control forces a
+protocol + server change (server resolves the key across all locked
+catalogues, `visibleCatalog` stops leaking locked metadata), so it also
+revises `infrastructure.md`. Ready for `/ardd-implement`. Prior context:
+**Accounts Phase 1 shipped** — `/ardd-implement`
 completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 `main` at `e2747b2` (fast-forward, 80 files, +3363/−69, all commits signed).
 OAuth identity + optional Postgres + persisted catalogue unlock now live in
@@ -76,8 +84,31 @@ account wiring.
 (Accounts Phase 1 is a design-of-record phase, not a register feature, so it
 doesn't appear here.)
 
+## Feedback
+
+**2 open feedback files** — will be picked up by the next `/ardd-plan`:
+- `feedback-landing-signin-missing-2ebd.md` (Reconsidered, `[artifacts: ui]`):
+  account controls should be on the create/join (Landing) page in both states —
+  sign-in when signed-out (already there) and identity + sign-out when signed-in
+  (missing; the account menu is Bar-only per ui.md:50–54). Reverses that
+  placement decision.
+- `feedback-bar-controls-blocked-by-modal-f0e8.md` (open; not filed this
+  session).
+
+`feedback-hide-locked-catalogues-69a3.md` is `planned` (consumed by
+`plan-hide-locked-catalogues-2026-07-13-6db8.md`).
+
 ## Plans & Tasks
 
+- **Hide locked catalogues** — `plan-hide-locked-catalogues-2026-07-13-6db8.md`
+  (`approved`), tasks `tasks-hide-locked-catalogues-6009.md` (`ready`, 0/5).
+  Phase 1: revise `ui.md` (T001) + `infrastructure.md` (T002). Phase 2: drop
+  `catalogueId` from the shared `catalogue-unlock` type (T003) + server key
+  resolution / `visibleCatalog` non-leak (T004). Phase 3: client picker + standalone
+  unlock control (T005). All test-first (Principle VII). Resolved design
+  decisions: host types a key only (no catalogue picker); server matches it
+  across all locked catalogues; server no longer sends locked catalogue
+  metadata to the client. **Next: `/ardd-implement`.**
 - **Accounts Phase 1** — `plan-accounts-phase-1-2026-07-12-e375.md` (`approved`),
   tasks `tasks-accounts-phase-1-02f7.md` (`completed`, 20/20). Merged to `main`
   at `e2747b2`.
@@ -108,7 +139,10 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-The deploy is wired end-to-end; the only remaining step is **registering the two
-OAuth redirect URIs** in the Google + GitHub dashboards (see Deploy status
-above), then verifying sign-in. After that, Phase 2 — in-app authoring + dynamic
-catalog — is the next design-of-record milestone.
+**`/ardd-implement`** — the `hide-locked-catalogues` tasks file is `ready`
+(5 tasks). Then **`/ardd-plan`** to consume the 2 open feedback files (Landing
+account controls + bar-controls-blocked-by-modal). Also still pending: the
+deploy's last operator step — **registering the two OAuth redirect URIs** in the
+Google + GitHub dashboards (see Deploy status above), then verifying sign-in.
+After those, Phase 2 — in-app authoring + dynamic catalog — is the next
+design-of-record milestone.
