@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NullAccountStore } from '../accounts/null-store.js';
 import type { WebSocket } from 'ws';
 import { SessionStore } from '../session-store.js';
 import { ConnectionRegistry } from '../connections.js';
@@ -10,7 +11,7 @@ function fakeSocket(): WebSocket {
 }
 
 function makeCtx() {
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
 }
 
 describe('host-delegate', () => {

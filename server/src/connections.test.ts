@@ -7,12 +7,12 @@ function fakeSocket() {
 }
 
 describe('ConnectionRegistry', () => {
-  it('attach + get round-trips connection info', () => {
+  it('attach + get round-trips connection info (anonymous userId defaults to null)', () => {
     const registry = new ConnectionRegistry();
     const socket = fakeSocket();
     registry.attach(socket, { sessionCode: 'ABCD', participantId: 'p1' });
 
-    expect(registry.get(socket)).toEqual({ sessionCode: 'ABCD', participantId: 'p1' });
+    expect(registry.get(socket)).toEqual({ sessionCode: 'ABCD', participantId: 'p1', userId: null });
   });
 
   it('detach removes the connection and returns the removed info', () => {
@@ -20,8 +20,26 @@ describe('ConnectionRegistry', () => {
     const socket = fakeSocket();
     registry.attach(socket, { sessionCode: 'ABCD', participantId: 'p1' });
 
-    expect(registry.detach(socket)).toEqual({ sessionCode: 'ABCD', participantId: 'p1' });
+    expect(registry.detach(socket)).toEqual({ sessionCode: 'ABCD', participantId: 'p1', userId: null });
     expect(registry.get(socket)).toBeUndefined();
+  });
+
+  it('stampUserId before attach carries the authenticated userId onto the connection (T011)', () => {
+    const registry = new ConnectionRegistry();
+    const socket = fakeSocket();
+    // The WS upgrade resolves the cookie → userId and stamps it before the
+    // session-create/join handler attaches the participant.
+    registry.stampUserId(socket, 'user-42');
+    registry.attach(socket, { sessionCode: 'ABCD', participantId: 'p1' });
+
+    expect(registry.get(socket)?.userId).toBe('user-42');
+  });
+
+  it('a socket with no stamped userId attaches as anonymous (null)', () => {
+    const registry = new ConnectionRegistry();
+    const socket = fakeSocket();
+    registry.attach(socket, { sessionCode: 'ABCD', participantId: 'p1' });
+    expect(registry.get(socket)?.userId).toBeNull();
   });
 
   it('detach on a never-attached socket returns undefined', () => {

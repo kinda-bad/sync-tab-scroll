@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NullAccountStore } from '../accounts/null-store.js';
 import type { WebSocket } from 'ws';
 import { SessionStore } from '../session-store.js';
 import { ConnectionRegistry } from '../connections.js';
@@ -10,7 +11,7 @@ function fakeSocket(): WebSocket {
 }
 
 function makeCtx() {
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
 }
 
 describe('session-join', () => {
@@ -78,7 +79,31 @@ describe('session-join', () => {
     expect(participant.connectionStatus).toBe('connected');
     expect(participant.readiness).toBe('no-part');
     expect(participant.selectedPart).toBe(2);
-    expect(ctx.connections.get(socket)).toEqual({ sessionCode: session.code, participantId: 'existing-1' });
+    expect(ctx.connections.get(socket)).toEqual({ sessionCode: session.code, participantId: 'existing-1', userId: null });
+  });
+
+  it('an auth cookie alone never reclaims a seat — reclaim stays keyed on participantId (T011)', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    ctx.connections.broadcast = () => {};
+
+    // A socket carrying a resolved userId (as the WS upgrade would stamp) but no
+    // matching participantId must NOT seize the host seat — it mints a new
+    // member. The auth identity is layered on top of participant reclaim, never
+    // a replacement for it (infrastructure.md Reconnect By Identity).
+    const socket = fakeSocket();
+    ctx.connections.stampUserId(socket, 'user-abc');
+    handleSessionJoin(ctx, socket, { type: 'session-join', code: session.code, displayName: 'Intruder' });
+
+    expect(session.hostId).toBe('host-1');
+    expect(session.participants).toHaveLength(2);
+    const minted = session.participants.find((p) => p.displayName === 'Intruder')!;
+    expect(minted.role).toBe('member');
+    expect(minted.id).not.toBe('host-1');
+    // The connection still carries the authenticated userId (connection-level
+    // identity), it just didn't grant the host seat.
+    expect(ctx.connections.get(socket)?.userId).toBe('user-abc');
   });
 
   it('cancels a pending host-reassignment timer when the reconnecting participant is the host', () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NullAccountStore } from '../accounts/null-store.js';
 import * as crypto from 'node:crypto';
 import type { WebSocket } from 'ws';
 import type { CatalogSong, ServerMessage } from '@sync-tab-scroll/shared';
@@ -39,7 +40,7 @@ function makeCtx(): HandlerContext {
     ],
     songs: [fakeSong('creep', 'default'), fakeSong('bonus', 'premium-pack')],
   };
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog } satisfies HandlerContext;
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog } satisfies HandlerContext;
 }
 
 /** Sets up a session with a connected host and returns the ctx + host socket, capturing sent + broadcast messages. */

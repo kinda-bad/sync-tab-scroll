@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NullAccountStore } from '../accounts/null-store.js';
 import type { WebSocket } from 'ws';
 import { SessionStore } from '../session-store.js';
 import { ConnectionRegistry } from '../connections.js';
@@ -11,7 +12,7 @@ function fakeSocket(): WebSocket {
 
 describe('session-create', () => {
   it('creates a session, attaches the socket as host, and sends session-state + catalog', () => {
-    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } };
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } };
     const socket = fakeSocket();
     const sent: unknown[] = [];
     ctx.connections.send = (_socket, message) => {

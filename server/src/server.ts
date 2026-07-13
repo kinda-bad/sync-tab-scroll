@@ -14,6 +14,7 @@ import { createAccountStore } from './accounts/factory.js';
 import { createProviderRegistry } from './auth/providers.js';
 import { createAuthRequestHandler } from './auth/auth-routes.js';
 import { isOriginAllowed } from './auth/origin.js';
+import { resolveUserIdFromCookie } from './auth/session.js';
 
 const BROADCAST_INTERVAL_MS = 1000;
 
@@ -30,6 +31,7 @@ export function createServer(config: ServerConfig): http.Server {
     sessionStore: new SessionStore(config.hostReassignGraceMs),
     connections: new ConnectionRegistry(),
     catalog: loadCatalog(config.catalogRoot, config.requireSongConsent),
+    accountStore,
   };
 
   // WS upgrade, the catalog's static-file serving, and (in production) the
@@ -64,8 +66,15 @@ export function createServer(config: ServerConfig): http.Server {
       socket.destroy();
       return;
     }
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req);
+    // After the Origin check, resolve the cookie → userId (fail-soft to null,
+    // §13 S7) BEFORE completing the handshake, then stamp it so the
+    // session-create/join handler's attach carries the identity (T011). This is
+    // the single cookie → AuthSession → userId resolution seam.
+    void resolveUserIdFromCookie(accountStore, req.headers.cookie).then((userId) => {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        ctx.connections.stampUserId(ws, userId);
+        wss.emit('connection', ws, req);
+      });
     });
   });
 

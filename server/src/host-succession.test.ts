@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { NullAccountStore } from './accounts/null-store.js';
 import { SessionStore } from './session-store.js';
 import { ConnectionRegistry } from './connections.js';
 import type { HandlerContext } from './handlers/context.js';
 import { promoteNextHost } from './host-succession.js';
 
 function makeCtx() {
-  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
+  return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
 }
 
 describe('promoteNextHost', () => {

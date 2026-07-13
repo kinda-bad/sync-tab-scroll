@@ -81,7 +81,7 @@ that carry them.
   WebSocket upgrade handler (`server/src/server.ts`), rejecting disallowed
   origins **before** any cookie is read (S3) — `SameSite` is not the sole CSRF
   defense. Test: an allowed origin upgrades; a disallowed origin is rejected.
-- [ ] T011 [artifacts: infrastructure, datamodel] After the Origin check, resolve
+- [x] T011 [artifacts: infrastructure, datamodel] After the Origin check, resolve
   the request cookie → `AuthSession` (reject expired/`revokedAt`) → stamp
   `userId` (or null) onto the `ConnectionRegistry` entry at attach time; this is
   the single cookie→session→`userId` resolution seam (infrastructure.md
