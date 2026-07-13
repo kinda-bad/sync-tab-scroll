@@ -13,10 +13,11 @@ import type { HandlerContext } from './handlers/context.js';
 import { createAccountStore } from './accounts/factory.js';
 import { createProviderRegistry } from './auth/providers.js';
 import { createAuthRequestHandler } from './auth/auth-routes.js';
+import { isOriginAllowed } from './auth/origin.js';
 
 const BROADCAST_INTERVAL_MS = 1000;
 
-export function createServer(config: ServerConfig): WebSocketServer {
+export function createServer(config: ServerConfig): http.Server {
   // Optional account store: null/absent when no DATABASE_URL is configured, so
   // the whole account layer self-disables and the anonymous path is unchanged
   // (infrastructure.md User Accounts; design §2). Migrations run in the
@@ -53,7 +54,20 @@ export function createServer(config: ServerConfig): WebSocketServer {
   });
   httpServer.listen(config.port);
 
-  const wss = new WebSocketServer({ server: httpServer });
+  // `noServer` mode so the upgrade is validated by hand: the Origin allowlist
+  // (§13 S3) rejects a disallowed origin BEFORE any cookie is read — cookies
+  // ride the WS handshake cross-site, so SameSite is not the sole CSRF defense.
+  const wss = new WebSocketServer({ noServer: true });
+  httpServer.on('upgrade', (req, socket, head) => {
+    if (!isOriginAllowed(req.headers.origin, config.account.publicBaseUrl)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req);
+    });
+  });
 
   wss.on('connection', (socket) => {
     socket.on('message', (data) => {
@@ -96,5 +110,5 @@ export function createServer(config: ServerConfig): WebSocketServer {
     }
   }, BROADCAST_INTERVAL_MS);
 
-  return wss;
+  return httpServer;
 }

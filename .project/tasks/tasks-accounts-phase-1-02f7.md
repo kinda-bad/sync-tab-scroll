@@ -77,7 +77,7 @@ that carry them.
 
 ## Phase 3: WS-upgrade hardening + connection identity
 
-- [ ] T010 [artifacts: infrastructure] Add `Origin`-allowlist validation to the
+- [x] T010 [artifacts: infrastructure] Add `Origin`-allowlist validation to the
   WebSocket upgrade handler (`server/src/server.ts`), rejecting disallowed
   origins **before** any cookie is read (S3) — `SameSite` is not the sole CSRF
   defense. Test: an allowed origin upgrades; a disallowed origin is rejected.
