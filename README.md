@@ -351,17 +351,18 @@ graph TD
     Landing --> Chooser["Create / Join chooser"]
     Landing --> CreateForm["Create form (name)"]
     Landing --> JoinForm["Join form (name + code)"]
-    Landing --> SignIn["Sign in with Google / GitHub<br/>(optional — never gates the flow)"]
 
     Lobby --> Bar["Persistent Bar (nav)"]
     Playback --> Bar
     Bar --> JoinCodeId["Join code + song / artist"]
-    Bar --> AccountMenu["Account menu<br/>(display name · Sign out, or 'Sign in')"]
     Bar --> SongPartCtl["Song & part control"]
     Bar --> SettingsCog["Settings cog"]
     Bar --> Leave["Leave session"]
 
-    SongPartCtl --> Modal["Song & Part modal<br/>(host-forced-open until song + part set)"]
+    Landing --> AccountMenu["AccountMenu — same component in both places<br/>(display name + Sign out when signed-in;<br/>'Sign in' when signed-out; nothing when accounts unavailable)"]
+    Bar --> AccountMenu
+
+    SongPartCtl --> Modal["Song & Part modal<br/>(auto-opens once when song/part unset;<br/>dismissible — × / backdrop / Esc — so the Bar stays reachable)"]
     Modal --> SongPicker["Song picker — visible catalogues only<br/>(public + unlocked; grouped when &gt;1)"]
     Modal --> KeyCtl["Standalone 'Enter activation key'<br/>(host-only; locked catalogues never shown)"]
     KeyCtl -->|"catalogue-unlock { key }"| Unlocked["Server matches key across locked catalogues<br/>→ that catalogue's group appears"]
