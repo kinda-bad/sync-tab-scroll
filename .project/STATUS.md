@@ -1,13 +1,16 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Hide-locked-catalogues planned & tasked** — the
-Reconsidered feedback F001 became an approved plan
-(`plan-hide-locked-catalogues-2026-07-13-6db8.md`) with a `ready` tasks file
-(`tasks-hide-locked-catalogues-6009.md`, 5 tasks). Scope grew past the
-feedback's `[artifacts: ui]` tag: the standalone key control forces a
-protocol + server change (server resolves the key across all locked
-catalogues, `visibleCatalog` stops leaking locked metadata), so it also
-revises `infrastructure.md`. Ready for `/ardd-implement`. Prior context:
+_Updated: 2026-07-13 (**Hide-locked-catalogues SHIPPED** — all 5 tasks of
+`tasks-hide-locked-catalogues-6009.md` implemented in a delegated worktree and
+fast-forward-merged into `main` at `a1e8446` (6 signed commits). Locked private
+catalogues no longer appear in the song picker; the host unlocks via one
+standalone key control; `catalogue-unlock` dropped `catalogueId` (server now
+resolves the key across all locked catalogues) and `visibleCatalog` withholds
+locked catalogue metadata entirely. Revised `ui.md` + `infrastructure.md` (both
+now have **stale diagrams** — run `/ardd-diagram`). Suites green: 175 server,
+93 CT, 72 client; workspace typechecks. **2 open feedback files remain**
+(bar-controls-blocked-by-modal, landing-signin-missing) for the next
+`/ardd-plan`. Prior context:
 **Accounts Phase 1 shipped** — `/ardd-implement`
 completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 `main` at `e2747b2` (fast-forward, 80 files, +3363/−69, all commits signed).
@@ -64,9 +67,14 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-All three renderables **current ✅** (README.md). Phase 1 added no entities
-beyond those already in the datamodel ERD (`User`, `CatalogueMembership`,
-`AuthSession`, Activation-Key `epoch`), so no re-render is needed.
+- `datamodel.md` — **current ✅** (README.md); hide-locked-catalogues added no
+  entities.
+- `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`) — the
+  `catalogue-unlock` protocol changed (keyless message, server-side key
+  resolution).
+- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — the song-picker /
+  catalogue-unlock flow changed (locked catalogues hidden, standalone key
+  control).
 
 ## Code-vs-Artifact Defects
 
@@ -101,14 +109,13 @@ doesn't appear here.)
 ## Plans & Tasks
 
 - **Hide locked catalogues** — `plan-hide-locked-catalogues-2026-07-13-6db8.md`
-  (`approved`), tasks `tasks-hide-locked-catalogues-6009.md` (`ready`, 0/5).
-  Phase 1: revise `ui.md` (T001) + `infrastructure.md` (T002). Phase 2: drop
-  `catalogueId` from the shared `catalogue-unlock` type (T003) + server key
-  resolution / `visibleCatalog` non-leak (T004). Phase 3: client picker + standalone
-  unlock control (T005). All test-first (Principle VII). Resolved design
-  decisions: host types a key only (no catalogue picker); server matches it
-  across all locked catalogues; server no longer sends locked catalogue
-  metadata to the client. **Next: `/ardd-implement`.**
+  (`approved`), tasks `tasks-hide-locked-catalogues-6009.md` (`completed`, 5/5).
+  **Merged to `main` at `a1e8446`** (fast-forward, 6 signed commits). Locked
+  catalogues hidden from the picker; standalone host-only key control; keyless
+  `catalogue-unlock` with server-side key resolution; `visibleCatalog` withholds
+  locked metadata. All test-first (Principle VII); suites green (175 server, 93
+  CT, 72 client). Follow-up: `ui.md`/`infrastructure.md` diagrams are stale
+  (run `/ardd-diagram`).
 - **Accounts Phase 1** — `plan-accounts-phase-1-2026-07-12-e375.md` (`approved`),
   tasks `tasks-accounts-phase-1-02f7.md` (`completed`, 20/20). Merged to `main`
   at `e2747b2`.
@@ -139,10 +146,15 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-**`/ardd-implement`** — the `hide-locked-catalogues` tasks file is `ready`
-(5 tasks). Then **`/ardd-plan`** to consume the 2 open feedback files (Landing
-account controls + bar-controls-blocked-by-modal). Also still pending: the
-deploy's last operator step — **registering the two OAuth redirect URIs** in the
-Google + GitHub dashboards (see Deploy status above), then verifying sign-in.
+Hide-locked-catalogues is shipped. Open threads, in rough priority:
+1. **`/ardd-diagram ui` + `/ardd-diagram infrastructure`** — both diagrams went
+   stale from this change (quick, deterministic).
+2. **`/ardd-plan`** — consume the 2 open feedback files (Landing account
+   controls + bar-controls-blocked-by-modal).
+3. **Deploy operator step** — **register the two OAuth redirect URIs** in the
+   Google + GitHub dashboards (see Deploy status above), then verify sign-in.
+   (Note: the landing-signin feedback may resolve once accounts are verified
+   working on prod.)
+
 After those, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
