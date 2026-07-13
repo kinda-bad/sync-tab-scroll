@@ -11,7 +11,7 @@ export type ClientMessage =
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'count-in-set'; enabled: boolean }
   | { type: 'song-select'; songId: string }
-  | { type: 'catalogue-unlock'; catalogueId: string; key: string }
+  | { type: 'catalogue-unlock'; key: string }
   | { type: 'playback-tick-report'; tickPosition: number }
   | { type: 'host-delegate'; targetParticipantId: string }
   | { type: 'request-host' }

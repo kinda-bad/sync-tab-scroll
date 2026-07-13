@@ -38,7 +38,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Shared + server (depends on T002)
 
-- [ ] T003 [artifacts: infrastructure] In `packages/shared/src/index.ts`,
+- [x] T003 [artifacts: infrastructure] In `packages/shared/src/index.ts`,
   change the `catalogue-unlock` client message type to drop the required
   `catalogueId` field, leaving `{ type: 'catalogue-unlock'; key: string }`.
   Update every type-level consumer that constructs or destructures the message
