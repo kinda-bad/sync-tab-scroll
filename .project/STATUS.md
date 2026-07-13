@@ -5,16 +5,18 @@ deploying** — `plan-signout-verify-via-me-2026-07-13-5d6b.md` implemented via 
 delegated worktree (test-first: RED 3-failed → GREEN 77/77) and
 **fast-forward-merged into `main` at `0f8a3db`** (3 signed commits), then pushed
 → **deployed to prod** (Railway deployment `d5f8c8f3`, `● Online`, bundle
-`index-DkTwxyzp.js`, `/me` healthy). **F001** fixed: `signOut()` now re-reads
-`/me` as the source of truth after `POST /auth/logout` (ignoring the abortable
-logout response) and only toasts if still signed-in — so sign-out succeeds
-whenever the server processed it, even while the WS storm resets the h2
-connection. **Live browser re-verification pending the deploy** (needs a
-signed-in session — the user must re-auth via OAuth, then the sign-out path can
-be driven). **F002** (the WS stale-session reconnect storm — F001's underlying
-aborter) remains **open** in `feedback-signout-response-not-trusted-9575.md` for
-a follow-up plan — **1 open feedback**. Prior context below. — **Sign-out
-reload-race fix SHIPPED to `main`** —
+`index-DkTwxyzp.js`, `/me` healthy). **F001** removed the false "Sign out
+failed" toast + the false signed-out→signed-in masking. **BUT live signed-in
+browser re-verification (2026-07-13) shows sign-out STILL does not work** —
+clicking SIGN OUT leaves the session active (`/me` keeps returning the user) and
+the account menu blanks to `unavailable` with no error/retry; the app's own
+`signOut` fetches get aborted while a direct console `POST /auth/logout` returns
+200 and 12/12 `/me` GETs succeed. **F002 (the WS reconnect storm) is confirmed
+as the real blocker** — filed as **F003** in
+`feedback-signout-response-not-trusted-9575.md` (still **open**, F002+F003), which
+also flags reconsidering F001's `unavailable` fallback (hides the menu / no
+retry). Next: plan **F002**. **1 open feedback (F002, F003 pending).** Prior
+context below. — **Sign-out reload-race fix SHIPPED to `main`** —
 `plan-signout-reload-race-2026-07-13-2e98.md` implemented via a delegated
 worktree (test-first, Principle VII) and **fast-forward-merged into `main` at
 `a683a97`** (4 signed commits). `signOut()` (`client/src/account.ts`) no longer

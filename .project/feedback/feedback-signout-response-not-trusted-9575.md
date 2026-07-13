@@ -48,3 +48,28 @@ plan: null        # set to the consuming plan's filename once planned
       every 2s. Independent of F001's fix (which makes sign-out robust on its
       own), but this loop is the underlying cause and worth fixing so it stops
       aborting other requests and burning reconnects. [artifacts: ui]
+
+- [ ] F003 **F001's fix is deployed (`0f8a3db` / Railway `d5f8c8f3`) but a live
+      signed-in browser re-verification (2026-07-13) shows sign-out STILL does
+      not work — and F002 is confirmed as the real blocker.** Repro as the real
+      GitHub-signed-in user: clicking **SIGN OUT** makes the account menu
+      **vanish** (store goes to `unavailable` → renders nothing) with **no**
+      error toast, but `GET /me` still returns the user for 3s+ afterward — the
+      **session is not revoked** and the logout did not happen. Meanwhile a
+      direct `POST /auth/logout` run in the page console returns `200` and
+      immediately clears the session, and 12/12 plain `GET /me` calls in a loop
+      all succeed — so the endpoint and connection are fine in isolation; only
+      the **app's own `signOut` fetches fail** (both the logout POST and the
+      follow-up `/me` in `loadAccount` get aborted), matching the F002
+      WS-reconnect-storm resetting the app's coalesced connection *at the moment
+      of the signOut flow*. Net: **F001 correctly removed the false "Sign out
+      failed" toast and the false signed-out→signed-in masking, but sign-out is
+      still broken end-to-end until F002 is fixed.** Two follow-ups: (1) **fix
+      F002** — the real remedy (make sign-out's requests actually land); (2)
+      **reconsider F001's `unavailable` fallback** in `signOut()`: when the
+      post-logout `/me` verification is itself aborted, `loadAccount` sets
+      `unavailable`, which *hides the account menu entirely* — so the user sees
+      a misleading blank/"signed-out-looking" state while still signed in, with
+      no SIGN OUT button to retry. Prefer keeping the menu signed-in and showing
+      a retryable Error toast when `/me` can't be reached, rather than blanking
+      to `unavailable`. [artifacts: ui]
