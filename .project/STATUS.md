@@ -1,16 +1,21 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Sign-out fix planned + tasked** — the post-deploy
-sign-out bug is now planned: `plan-signout-reload-race-2026-07-13-2e98.md`
-(`approved`) with `tasks-signout-reload-race-e126.md` (`ready`, 3 tasks,
-test-first) is ready for `/ardd-implement`. Root cause confirmed via live prod
-repro: `signOut()`'s trailing `window.location.reload()` races/aborts
-`/auth/logout` so the cookie-clear `Set-Cookie` never lands; the fresh page
-re-derives signed-in. Fix: on confirmed `res.ok`, flip `accountStore` to
-signed-out in-memory (no reload); on failure keep signed-in + terse error
-toast; document the States decision in `ui.md`. Consumed the
-signout-reload-masks-failure feedback → **0 open feedback** now. Prior: **Prod
-deployed** — `main` is live on Railway (`de20c5fa`, sts.ty-pe.com). Prior:
+_Updated: 2026-07-13 (**Sign-out fix SHIPPED to `main`** —
+`plan-signout-reload-race-2026-07-13-2e98.md` implemented via a delegated
+worktree (test-first, Principle VII) and **fast-forward-merged into `main` at
+`a683a97`** (4 signed commits). `signOut()` (`client/src/account.ts`) no longer
+hard-reloads: on confirmed `res.ok` it flips `accountStore` to signed-out
+in-memory (no reload race); on non-OK/thrown fetch it keeps the menu signed-in
+and pushes a terse error toast — a failed logout is no longer masked as
+success. Root cause was the trailing `window.location.reload()` racing/aborting
+`/auth/logout` so its cookie-clear `Set-Cookie` never landed. `ui.md` States
+documents the failure-surfacing decision. Tests: `account.test.ts` signOut
+suite (3 cases, red-before-green), full client suite **75/0**, workspace
+typechecks clean. **Note:** the fix is merged but **not yet deployed to prod**
+— `main` on Railway is still `de20c5fa`; a redeploy is needed to close the live
+bug. Also `ui.md`'s diagram is now **stale** (run `/ardd-diagram ui`). Consumed
+the signout feedback → **0 open feedback**. Prior: **Prod deployed** — `main`
+is live on Railway (`de20c5fa`, sts.ty-pe.com). Prior:
 **reachable-account-controls SHIPPED**
 — all 3 tasks
 implemented in a delegated worktree and fast-forward-merged into `main` at
@@ -85,9 +90,9 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-All three renderables **current ✅** (README.md). `ui.md` regenerated at
-`a6776c9` (AccountMenu on Landing + dismissible modal); `infrastructure.md` at
-`bd1c6a1`; `datamodel.md` unchanged.
+`ui.md` **stale ⚠️** (run `/ardd-diagram ui`) — the sign-out States bullet
+(`a683a97`) edited the artifact and stamped its diagram stale.
+`infrastructure.md` (`bd1c6a1`) and `datamodel.md` remain **current ✅**.
 
 ## Code-vs-Artifact Defects
 
@@ -111,7 +116,7 @@ doesn't appear here.)
 `plan-signout-reload-race-2026-07-13-2e98.md` (now `planned`).
 
 Prior (all `planned`, shipped):
-- `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (tasks `ready`, not yet implemented).
+- `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped to `main` `a683a97`; not yet deployed).
 - `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped `a1e8446`).
 - `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 - `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
@@ -119,11 +124,14 @@ Prior (all `planned`, shipped):
 ## Plans & Tasks
 
 - **Sign-out reload race fix** — `plan-signout-reload-race-2026-07-13-2e98.md`
-  (`approved`), tasks `tasks-signout-reload-race-e126.md` (`ready`, 0/3).
-  **Not yet implemented** — run `/ardd-implement`. Single phase, test-first
-  (Principle VII): T001 failing test for all 3 `signOut()` outcomes, T002 the
-  `client/src/account.ts` fix (confirmed-OK → in-memory signed-out, no reload;
-  failure → keep signed-in + error toast), T003 `ui.md` States note.
+  (`approved`), tasks `tasks-signout-reload-race-e126.md` (`completed`, 3/3).
+  **Merged to `main` at `a683a97`** (fast-forward, 4 signed commits) via a
+  delegated worktree. Test-first (Principle VII): T001 failing `signOut` test
+  (3 outcomes, red-before-green), T002 the `client/src/account.ts` fix
+  (confirmed-OK → in-memory signed-out, no reload; failure → keep signed-in +
+  terse error toast), T003 `ui.md` States note. Client suite 75/0, typechecks
+  clean. **Not yet deployed** — Railway still runs `de20c5fa`; redeploy to
+  close the live prod bug. `ui.md` diagram stale (run `/ardd-diagram ui`).
 - **Reachable account controls** — `plan-reachable-account-controls-2026-07-13-ca49.md`
   (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`completed`, 3/3).
   **Merged to `main` at `318b7d2`** (fast-forward, 6 signed commits). `AccountMenu`
