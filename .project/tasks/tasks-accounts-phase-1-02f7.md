@@ -41,7 +41,7 @@ that carry them.
   `userId`, unique `(userId, catalogueId)`; `AuthSession` primary key `id`, index
   on `userId`. No cross-store FK on `catalogueId`. Test: migration applies
   cleanly and the constraints/indexes exist.
-- [ ] T005 [artifacts: infrastructure] Add a containerized-Postgres test harness
+- [x] T005 [artifacts: infrastructure] Add a containerized-Postgres test harness
   (podman preferred, docker fallback — design §12.3) that starts a throwaway
   Postgres, applies migrations, and tears down; wire it into vitest setup and
   CI. Test: the harness brings a DB up and a trivial query succeeds.

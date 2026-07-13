@@ -30,6 +30,11 @@ jobs:
       - name: Typecheck
         run: pnpm check
 
+      # The account-layer DB tests spin up a throwaway Postgres via the
+      # container harness (server/src/accounts/pg-test-container.ts, design
+      # §12.3). It prefers podman, falls back to docker — pre-installed on
+      # ubuntu-latest — and skips cleanly if neither runtime is reachable, so
+      # this step needs no separate `services:` Postgres block.
       - name: Test server
         run: pnpm --filter @sync-tab-scroll/server test
 
