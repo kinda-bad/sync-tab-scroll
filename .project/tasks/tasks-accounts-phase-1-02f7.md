@@ -21,7 +21,7 @@ that carry them.
   holds placeholders. Extend the existing key-shape lint check to cover the new
   keys. Test: lint fails when a key exists in one file and is missing from the
   other. [parallel]
-- [ ] T002 [artifacts: datamodel] Define named, exported shared TypeScript types
+- [x] T002 [artifacts: datamodel] Define named, exported shared TypeScript types
   (Principle VI) for `User`, `CatalogueMembership`, `AuthSession` in
   `packages/shared`, matching datamodel.md's Account Layer fields exactly —
   including the `oauthProvider`/`grantedVia` unions, `keyEpoch: number | null`,

@@ -1,5 +1,71 @@
 export * from './messages.js';
 
+// --- Durable Account Layer (datamodel.md Account Layer; constitution v1.5.0) ---
+// Optional OAuth accounts backed by an optional Postgres store. These three
+// entities are the ONLY persisted records anywhere; realtime Session/
+// Participant/PlaybackState stay in-memory. Named, exported, single-source-of-
+// truth types (Principle VI) so the repository seam, handlers, and any wire
+// use share one shape.
+
+/** Which OAuth provider authenticated a `User` (datamodel.md User). */
+export type OAuthProvider = 'google' | 'github';
+
+/** How a `CatalogueMembership` was granted (datamodel.md CatalogueMembership). `'key'` is Phase 1; `'owner'`/`'invite'` are authoring/Phase 2. */
+export type CatalogueGrantVia = 'owner' | 'key' | 'invite';
+
+/**
+ * A durable OAuth user (datamodel.md User). `(oauthProvider, oauthSubject)` is
+ * the unique login key — no account-linking across providers (two rows for the
+ * same human signing in with Google vs GitHub, accepted deliberately).
+ */
+export interface User {
+  /** Server-generated durable id (uuid). */
+  id: string;
+  oauthProvider: OAuthProvider;
+  /** The provider's stable subject (`sub`) id. */
+  oauthSubject: string;
+  displayName: string;
+  /** From the provider; may be absent/unverified — record-keeping only, not an access-control key. */
+  email: string | null;
+  /** Wall-clock time the account was first created. */
+  createdAt: number;
+}
+
+/**
+ * The durable form of "this user has unlocked this catalogue" (datamodel.md
+ * CatalogueMembership). Seeds the host-only membership-derived slice of
+ * `Session.unlockedCatalogueIds`.
+ */
+export interface CatalogueMembership {
+  id: string;
+  /** References `User.id` (same store — a real FK). */
+  userId: string;
+  /** The catalogue's **stable id** as a plain string — no cross-store FK (§13 S8). */
+  catalogueId: string;
+  grantedVia: CatalogueGrantVia;
+  /** For `grantedVia:'key'` only: the Activation Key `epoch` this grant redeemed; access requires it to equal the catalogue's current `epoch` (§13 S5). Null for `'owner'`/`'invite'`. */
+  keyEpoch: number | null;
+  /** Wall-clock time access was granted. */
+  grantedAt: number;
+}
+
+/**
+ * Revocable server-side session (§13 S2) — the opaque `id` is the only value
+ * carried in the HTTP-only cookie. Named `AuthSession` to avoid collision with
+ * the in-memory realtime `Session` entity, which is unrelated.
+ */
+export interface AuthSession {
+  /** Opaque high-entropy session id — the value carried in the HTTP-only cookie. */
+  id: string;
+  /** References `User.id`. */
+  userId: string;
+  createdAt: number;
+  /** Server-enforced expiry; a session past this is invalid regardless of the cookie. */
+  expiresAt: number;
+  /** Set to invalidate the session before expiry (logout, logout-everywhere, security revocation). */
+  revokedAt: number | null;
+}
+
 export type ReadinessStatus = 'no-part' | 'loading' | 'ready';
 
 /**
