@@ -2,9 +2,10 @@
   import { onMount } from 'svelte';
   import { connect } from '../ws-client';
   import { loadStoredSession } from '../session-persistence';
-  import { accountStore, signIn } from '../account';
+  import { accountStore, signIn, signOut } from '../account';
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
+  import AccountMenu from '../components/AccountMenu.svelte';
 
   let mode: 'choice' | 'create' | 'join' = 'choice';
 
@@ -39,15 +40,22 @@
         <Button variant="riot" label="Create a session" onclick={() => (mode = 'create')} />
         <Button variant="ghost" label="Join a session" onclick={() => (mode = 'join')} />
       </div>
-      <!-- Subordinate sign-in control (ui.md Account & Sign-In) — optional, never
-           a gate. Shown only when accounts are available and signed-out; absent
-           when unavailable (no DB) or already signed in. -->
-      {#if $accountStore.status === 'signed-out'}
+      <!-- The same AccountMenu component that renders in the Bar (ui.md Account
+           & Sign-In) — identity + Sign out when signed-in, a "Sign in" link when
+           signed-out, nothing when accounts are unavailable. Kept visually
+           subordinate to Create/Join: optional, never a gate. -->
+      {#if $accountStore.status === 'signed-in' || $accountStore.status === 'signed-out'}
         <div class="landing-signin">
-          <span class="landing-signin-label">Optional — sign in to remember unlocked setlists</span>
+          {#if $accountStore.status === 'signed-out'}
+            <span class="landing-signin-label">Optional — sign in to remember unlocked setlists</span>
+          {/if}
           <div class="landing-signin-actions">
-            <button type="button" class="landing-signin-btn" onclick={() => signIn('google')}>Sign in with Google</button>
-            <button type="button" class="landing-signin-btn" onclick={() => signIn('github')}>Sign in with GitHub</button>
+            <AccountMenu
+              status={$accountStore.status}
+              displayName={$accountStore.displayName}
+              onSignIn={signIn}
+              onSignOut={signOut}
+            />
           </div>
         </div>
       {/if}
@@ -153,23 +161,8 @@
 
   .landing-signin-actions {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .landing-signin-btn {
-    background: none;
-    border: 1px solid var(--ink-dim);
-    padding: var(--space-2);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    color: var(--ink-dim);
-    cursor: pointer;
-  }
-
-  .landing-signin-btn:hover {
-    color: var(--ink);
-    border-color: var(--ink);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
   }
 </style>

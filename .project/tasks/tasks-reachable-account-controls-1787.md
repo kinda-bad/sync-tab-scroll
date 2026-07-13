@@ -30,7 +30,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Implementation (both depend on T001)
 
-- [ ] T002 [artifacts: ui] [parallel] Landing account menu (landing-signin
+- [x] T002 [artifacts: ui] [parallel] Landing account menu (landing-signin
   F001). Test-first (constitution Principle VII; Playwright CT per project
   convention). First write/adjust a component test (red) asserting that on the
   Landing view: when `accountStore.status` is `signed-in`, the display name and
