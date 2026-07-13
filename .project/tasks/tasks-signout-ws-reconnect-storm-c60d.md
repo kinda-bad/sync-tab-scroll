@@ -1,14 +1,14 @@
 ---
 plan: plan-signout-ws-reconnect-storm-2026-07-13-dd78.md   # exact filename of the source plan — authoritative binding
 generated: 2026-07-13
-status: ready   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
 
 ## Phase 1: Kill the stale-session reconnect storm (F002)
 
-- [ ] T001 [artifacts: constitution] Write a FAILING test (Principle VII, test-first) for the stale-session join failure in `client/src/ws-client.ts`. Add it to `client/src/ws-client.ct.spec.ts` (preferred — it already drives a real socket with `reconnectDelayMs: 50`) or `client/src/ws-client.test.ts` if a unit-level harness is cleaner. Scenario: a client connects, sends `session-join`, and the server replies with `{ type: 'error', message: 'Session … not found' }` **while `clientStore.session` is still null** (the initial bootstrap handshake, e.g. a stored session that no longer exists). Assert that the client (a) calls `clearStoredSession()` / removes the persisted session from localStorage, (b) does NOT open a new socket after `reconnectDelayMs` elapses (reconnect suppressed), and (c) closes the socket. The test must fail against current code (today the `error` branch only pushes a toast and the socket keeps reconnecting).
+- [x] T001 [artifacts: constitution] Write a FAILING test (Principle VII, test-first) for the stale-session join failure in `client/src/ws-client.ts`. Add it to `client/src/ws-client.ct.spec.ts` (preferred — it already drives a real socket with `reconnectDelayMs: 50`) or `client/src/ws-client.test.ts` if a unit-level harness is cleaner. Scenario: a client connects, sends `session-join`, and the server replies with `{ type: 'error', message: 'Session … not found' }` **while `clientStore.session` is still null** (the initial bootstrap handshake, e.g. a stored session that no longer exists). Assert that the client (a) calls `clearStoredSession()` / removes the persisted session from localStorage, (b) does NOT open a new socket after `reconnectDelayMs` elapses (reconnect suppressed), and (c) closes the socket. The test must fail against current code (today the `error` branch only pushes a toast and the socket keeps reconnecting).
 
 - [ ] T002 Implement the fix in `client/src/ws-client.ts` to make T001 pass. In the `message` handler's `else if (message.type === 'error')` branch, before/alongside the existing `toastStore.push(message.message)`, check `get(clientStore).session === null` — meaning this client never established a session, so the error is a failed create/join (a stale/non-existent session), not a mid-session action error like part/song-not-found (those only fire once a session exists). When session is null: call `clearStoredSession()` (already imported), set `suppressReconnect = true`, and `socket.close()` — reusing the terminal-socket shape from the host-removal path (`ws-client.ts:97-116`). Keep the existing toast so the user still sees why. Do not alter the normal fixed-interval reconnect for live-session drops. Verify T001 now passes.
 

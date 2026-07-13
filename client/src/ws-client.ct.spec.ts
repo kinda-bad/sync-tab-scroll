@@ -146,6 +146,43 @@ test('resends session-join to reattach after a reconnect, but not on the first c
   await expect.poll(() => receivedTypes).toContain('session-join');
 });
 
+test('a stale-session join failure (error while session is still null) clears the stored session, closes the socket, and stops reconnecting (T001)', async ({ mount, page }) => {
+  // Track every connection the server accepts and every client-initiated
+  // close it sees — a stale-session error must terminate the socket once and
+  // never reconnect (no 2s rejoin storm against a dead session, feedback F002).
+  let connectionCount = 0;
+  const closes: number[] = [];
+  wss.on('connection', (socket) => {
+    connectionCount++;
+    socket.on('close', () => closes.push(Date.now()));
+    // The bootstrap handshake fails: a stored session that no longer exists on
+    // the server. The server replies with an error and — crucially — leaves the
+    // socket open, so any reconnect must come from the client's own decision.
+    socket.send(JSON.stringify({ type: 'error', message: 'Session WXYZ not found' }));
+  });
+
+  // Seed a stale persisted session before mount; the fix must clear it.
+  await page.evaluate(
+    (key) => localStorage.setItem(key, JSON.stringify({ code: 'WXYZ', displayName: 'Ada', participantId: 'p1' })),
+    'sync-tab-scroll:session',
+  );
+
+  await mount(WsClientHarness, { props: { url: `ws://localhost:${port}`, reconnectDelayMs: 50 } });
+
+  // (a) the persisted session identity is cleared from localStorage.
+  await expect
+    .poll(() => page.evaluate((key) => localStorage.getItem(key), 'sync-tab-scroll:session'), { timeout: 5_000 })
+    .toBeNull();
+
+  // (c) the client closes its socket (the server sees the close).
+  await expect.poll(() => closes.length, { timeout: 5_000 }).toBeGreaterThanOrEqual(1);
+
+  // (b) no new socket is opened after reconnectDelayMs elapses — reconnect is
+  // suppressed, so the server never accepts a second connection.
+  await page.waitForTimeout(300); // comfortably past reconnectDelayMs (50ms)
+  expect(connectionCount).toBe(1);
+});
+
 test('retries repeatedly against a server that is down at load time, connecting once it starts listening', async ({ mount }) => {
   const deadPort = port + 1;
   const component = await mount(WsClientHarness, {
