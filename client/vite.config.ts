@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
 import type { Plugin } from 'vite';
+import { accountDevProxy } from './src/dev-proxy';
 
 // @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
 // from the published 1.8.3 package — a packaging bug, not a config error
@@ -80,16 +81,15 @@ export default defineConfig({
     // Proxy target stays localhost — this request is made by the Vite dev
     // server process itself (same machine as the WS server), not by
     // whatever device/origin the browser is on.
-    proxy: {
-      '/catalog': `http://localhost:${backendPort}`
-    }
+    // /auth/* and /me join /catalog in the proxy so the OAuth redirect dance
+    // and the SameSite=Lax cookie stay same-origin in dev (design §6); the map
+    // is defined once in src/dev-proxy.ts.
+    proxy: accountDevProxy(backendPort)
   },
   preview: {
     port: 6001,
     strictPort: true,
-    proxy: {
-      '/catalog': `http://localhost:${backendPort}`
-    }
+    proxy: accountDevProxy(backendPort)
   },
   test: {
     // Vitest's default include glob also matches Playwright's *.spec.ts

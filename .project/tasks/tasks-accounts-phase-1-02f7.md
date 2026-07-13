@@ -70,7 +70,7 @@ that carry them.
   anonymous. When the null repo is active (no DB), every route is inert
   (unavailable/404). Test: full flow against a mock provider; revoked/expired
   session ⇒ `/me` anonymous; no-DB ⇒ all routes inert.
-- [ ] T009 [artifacts: infrastructure] Extend Vite's dev proxy to forward
+- [x] T009 [artifacts: infrastructure] Extend Vite's dev proxy to forward
   `/auth/*` and `/me` to the backend so the OAuth redirect dance is same-origin
   in dev (design §6 dev-mode wrinkle). Test: the dev-proxy config routes those
   paths to the backend port.

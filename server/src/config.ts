@@ -46,7 +46,7 @@ export function loadConfig(): ServerConfig {
       // `!databaseUrl` selects the null store either way (design §2).
       databaseUrl: process.env.DATABASE_URL || undefined,
       sessionCookieSecret: process.env.SESSION_COOKIE_SECRET ?? '',
-      publicBaseUrl: process.env.PUBLIC_BASE_URL ?? 'http://localhost:5173',
+      publicBaseUrl: process.env.PUBLIC_BASE_URL ?? 'http://localhost:6000',
       google: {
         clientId: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
         clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '',
