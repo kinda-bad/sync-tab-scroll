@@ -331,7 +331,7 @@ graph TD
     OAuth["Google / GitHub OAuth"]
 
     Browser -->|"HTTPS: load SPA + assets, fetch .gp/.lrc"| Static
-    Browser <-->|"wss: realtime sync<br/>(HTTP-only cookie identity, Origin-checked)"| WS
+    Browser <-->|"wss: realtime sync + catalog delivery<br/>(locked catalogues withheld until unlocked;<br/>HTTP-only cookie identity, Origin-checked)"| WS
     Browser -->|"sign in / callback / logout / me"| AuthR
     Static -->|"scan at startup + serve"| Volume
     AuthR -->|"Authorization Code + PKCE + state"| OAuth
