@@ -41,9 +41,28 @@ describe('loadAccount (T016)', () => {
   });
 });
 
-describe('signOut (T001)', () => {
+describe('signOut (T001) — verify via /me', () => {
   let reload: ReturnType<typeof vi.fn>;
   let originalWindow: unknown;
+
+  /**
+   * Builds a fetch mock that routes by URL: `/auth/logout` (POST) either
+   * resolves `{ok:true}` or throws (an aborted response the server still
+   * processed), and `/me` (GET) either resolves a `MeResponse` body or throws.
+   */
+  const routedFetch = (opts: {
+    logout: 'ok' | 'throw';
+    me: { accountsEnabled: boolean; user: { displayName: string } | null } | 'throw';
+  }): typeof fetch =>
+    (async (url: string) => {
+      if (url === '/auth/logout') {
+        if (opts.logout === 'throw') throw new Error('aborted');
+        return { ok: true } as Response;
+      }
+      // '/me'
+      if (opts.me === 'throw') throw new Error('offline');
+      return { ok: true, json: async () => opts.me } as unknown as Response;
+    }) as unknown as typeof fetch;
 
   beforeEach(() => {
     // signOut must NOT reload; stub window.location.reload to observe it.
@@ -58,36 +77,53 @@ describe('signOut (T001)', () => {
     (globalThis as unknown as { window?: unknown }).window = originalWindow;
   });
 
-  it('confirmed logout (res.ok) flips the store to signed-out with no reload', async () => {
-    const okFetch = (async () => ({ ok: true })) as unknown as typeof fetch;
+  it('(a) logout throws but /me confirms signed-out → store signed-out, no toast', async () => {
+    const before = get(toastStore).length;
 
-    await signOut(okFetch);
+    await signOut(routedFetch({ logout: 'throw', me: { accountsEnabled: true, user: null } }));
 
     expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null });
+    expect(get(toastStore).length).toBe(before);
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it('non-OK logout leaves the store signed-in and pushes exactly one toast', async () => {
-    const notOk = (async () => ({ ok: false })) as unknown as typeof fetch;
+  it('(b) logout resolves ok and /me confirms signed-out → store signed-out, no toast', async () => {
     const before = get(toastStore).length;
 
-    await signOut(notOk);
+    await signOut(routedFetch({ logout: 'ok', me: { accountsEnabled: true, user: null } }));
+
+    expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null });
+    expect(get(toastStore).length).toBe(before);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('(c) /me still returns a user → store signed-in, exactly one toast', async () => {
+    const before = get(toastStore).length;
+
+    await signOut(routedFetch({ logout: 'ok', me: { accountsEnabled: true, user: { displayName: 'Ada' } } }));
 
     expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada' });
     expect(get(toastStore).length).toBe(before + 1);
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it('a thrown fetch leaves the store signed-in and pushes exactly one toast', async () => {
-    const throwing = (async () => {
-      throw new Error('offline');
-    }) as unknown as typeof fetch;
+  it('(c) logout throws and /me still returns a user → store signed-in, exactly one toast', async () => {
     const before = get(toastStore).length;
 
-    await signOut(throwing);
+    await signOut(routedFetch({ logout: 'throw', me: { accountsEnabled: true, user: { displayName: 'Ada' } } }));
 
     expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada' });
     expect(get(toastStore).length).toBe(before + 1);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('(d) both logout and /me fail → store unavailable, no toast', async () => {
+    const before = get(toastStore).length;
+
+    await signOut(routedFetch({ logout: 'throw', me: 'throw' }));
+
+    expect(get(accountStore).status).toBe('unavailable');
+    expect(get(toastStore).length).toBe(before);
     expect(reload).not.toHaveBeenCalled();
   });
 });

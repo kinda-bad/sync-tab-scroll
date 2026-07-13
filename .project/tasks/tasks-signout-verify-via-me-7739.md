@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-verify-via-me-2026-07-13-5d6b.md   # exact filename of the source plan — authoritative binding
 generated: 2026-07-13
-status: ready   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
                      # completed is terminal — post-completion failures become
                      # new feedback (/ardd-feedback), never a status edit.
 ---
@@ -10,7 +10,7 @@ status: ready   # generating -> ready -> in-progress -> completed (schema-of-rec
 
 ## Phase 1: Verify sign-out via /me, test-first
 
-- [ ] T001 [artifacts: constitution] Write a **failing** vitest test
+- [x] T001 [artifacts: constitution] Write a **failing** vitest test
       (Principle VII, red-before-green) for the new `signOut()` behavior in
       `client/src/account.ts`, added to `client/src/account.test.ts`. Use a
       mock `fetchFn` that routes by URL — `/auth/logout` (POST) and `/me`
