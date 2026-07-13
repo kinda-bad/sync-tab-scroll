@@ -1,20 +1,19 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**reachable-account-controls planned & tasked** — the two
-open feedback items (landing-signin-missing, Reconsidered; bar-controls-blocked-
-by-modal) became an approved plan
-(`plan-reachable-account-controls-2026-07-13-ca49.md`) with a `ready` tasks file
-(`tasks-reachable-account-controls-1787.md`, 3 tasks): revise `ui.md` (T001),
-then two parallel client tasks — reuse `AccountMenu` on the Landing view (T002)
-and make `SongPartModal` dismissible with an auto-open-once/stay-dismissed flag
-(T003). User decisions: Landing reuses the existing AccountMenu; the
-bar-controls fix is dismissibility, NOT a z-index override (Modal already
-dismisses on ×/backdrop/Escape). Committed to `main` at `1618a45`; **ready for
-`/ardd-implement`**. Prior: **Hide-locked-catalogues SHIPPED** — all 5 tasks
-merged into `main` at `a1e8446` (6 signed commits); locked catalogues hidden,
-keyless `catalogue-unlock`, `visibleCatalog` withholds locked metadata; ui.md +
-infrastructure.md diagrams regenerated (both **current** now). Suites green.
-Prior context:
+_Updated: 2026-07-13 (**reachable-account-controls SHIPPED** — all 3 tasks
+implemented in a delegated worktree and fast-forward-merged into `main` at
+`318b7d2` (6 signed commits); UI diagram regenerated at `a6776c9`. `AccountMenu`
+now renders on the Landing view too (identity + Sign out when signed-in, 'Sign
+in' when signed-out), and `SongPartModal` is dismissible (× / backdrop / Escape,
+auto-open-once then stays dismissed) so the persistent Bar stays reachable — no
+z-index change, Modal.svelte untouched. Consumed the landing-signin +
+bar-controls feedback. Tests: Landing account-menu CT (signed-in/out/unavailable)
++ song-part-modal e2e dismissal (7/7); workspace typechecks. All three diagrams
+**current**. Note: e2e runs with no DB so AccountMenu renders nothing there —
+the signed-in-Sign-out-on-Landing path is CT-covered only; the deferred browser
+validation will cover it live. Prior: **Hide-locked-catalogues SHIPPED** —
+merged at `a1e8446`; locked catalogues hidden, keyless `catalogue-unlock`,
+`visibleCatalog` withholds locked metadata. Prior context:
 **Accounts Phase 1 shipped** — `/ardd-implement`
 completed all 20 tasks of `tasks-accounts-phase-1-02f7.md` and merged into
 `main` at `e2747b2` (fast-forward, 80 files, +3363/−69, all commits signed).
@@ -71,11 +70,9 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-All three renderables **current ✅** (README.md). `ui.md` and
-`infrastructure.md` were regenerated after hide-locked-catalogues (commits
-`9443237`, `bd1c6a1`); `datamodel.md` unchanged. Note: the approved
-`reachable-account-controls` plan's T001 will re-stale `ui.md` once
-implemented — run `/ardd-diagram ui` again after that lands.
+All three renderables **current ✅** (README.md). `ui.md` regenerated at
+`a6776c9` (AccountMenu on Landing + dismissible modal); `infrastructure.md` at
+`bd1c6a1`; `datamodel.md` unchanged.
 
 ## Code-vs-Artifact Defects
 
@@ -95,21 +92,19 @@ doesn't appear here.)
 
 ## Feedback
 
-None open. All three feedback files are `planned`:
-- `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped).
-- `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49`.
-- `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49`.
+None open. All three feedback files are `planned` and their plans have shipped:
+- `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped `a1e8446`).
+- `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
+- `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 
 ## Plans & Tasks
 
 - **Reachable account controls** — `plan-reachable-account-controls-2026-07-13-ca49.md`
-  (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`ready`, 0/3).
-  Consumes landing-signin + bar-controls feedback. T001 revises `ui.md`
-  (account controls on Landing; dismissible SongPartModal); T002 reuses
-  `AccountMenu` on `Landing.svelte`; T003 makes `SongPartModal` dismissible in
-  `App.svelte` (auto-open-once/stay-dismissed flag). T002/T003 parallel (different
-  files); all test-first (Playwright). Committed to `main` at `1618a45`.
-  **Next: `/ardd-implement`.**
+  (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`completed`, 3/3).
+  **Merged to `main` at `318b7d2`** (fast-forward, 6 signed commits). `AccountMenu`
+  on Landing + dismissible `SongPartModal`; consumed landing-signin + bar-controls
+  feedback. UI diagram regenerated (`a6776c9`). All test-first (Playwright); suites
+  green, workspace typechecks.
 - **Hide locked catalogues** — `plan-hide-locked-catalogues-2026-07-13-6db8.md`
   (`approved`), tasks `tasks-hide-locked-catalogues-6009.md` (`completed`, 5/5).
   **Merged to `main` at `a1e8446`** (fast-forward, 6 signed commits). Locked
@@ -148,11 +143,16 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** — the `reachable-account-controls` tasks file is
-   `ready` (3 tasks: Landing AccountMenu + dismissible SongPartModal). After it
-   lands, run **`/ardd-diagram ui`** (T001 re-stales the UI diagram).
-2. **Deploy operator step** — **register the two OAuth redirect URIs** in the
-   Google + GitHub dashboards (see Deploy status above), then verify sign-in.
+Both feature plans are shipped to `main`; nothing is in flight and all diagrams
+are current. Remaining, in order:
+1. **Deploy `main` to production** (Railway) — carries the hide-locked-catalogues
+   + reachable-account-controls changes live.
+2. **Browser OAuth validation (deferred by the user until the above deploys).**
+   Validate the two OAuth redirect URIs are registered AND exercise the new
+   Landing account menu / dismissible-modal sign-in→sign-out flow live on
+   `sts.ty-pe.com`. (A ready-to-paste Chrome-extension prompt was drafted this
+   session.) The user believes the redirect URIs are already registered; this
+   confirms it.
 
 After those, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
