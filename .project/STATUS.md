@@ -11,11 +11,12 @@ success. Root cause was the trailing `window.location.reload()` racing/aborting
 `/auth/logout` so its cookie-clear `Set-Cookie` never landed. `ui.md` States
 documents the failure-surfacing decision. Tests: `account.test.ts` signOut
 suite (3 cases, red-before-green), full client suite **75/0**, workspace
-typechecks clean. **Note:** the fix is merged but **not yet deployed to prod**
-— `main` on Railway is still `de20c5fa`; a redeploy is needed to close the live
-bug. Also `ui.md`'s diagram is now **stale** (run `/ardd-diagram ui`). Consumed
-the signout feedback → **0 open feedback**. Prior: **Prod deployed** — `main`
-is live on Railway (`de20c5fa`, sts.ty-pe.com). Prior:
+typechecks clean. **DEPLOYED TO PROD** — `main` pushed (`cc02684`) and Railway
+auto-deployed (deployment `3305a830`, `● Online`, sts.ty-pe.com); the live
+bundle (`index-w6LO5fy5.js`) carries the fix — verified via its unique
+"Sign out failed" toast string, absent from the prior build — and `/me` is
+healthy. **The live sign-out bug (F001) is closed.** UI diagram regenerated
+(`cc02684`). Consumed the signout feedback → **0 open feedback**. Prior:
 **reachable-account-controls SHIPPED**
 — all 3 tasks
 implemented in a delegated worktree and fast-forward-merged into `main` at
@@ -90,9 +91,9 @@ host change, key-epoch revocation, fail-soft DB, stable-id membership keying).
 
 ## Diagrams
 
-`ui.md` **stale ⚠️** (run `/ardd-diagram ui`) — the sign-out States bullet
-(`a683a97`) edited the artifact and stamped its diagram stale.
-`infrastructure.md` (`bd1c6a1`) and `datamodel.md` remain **current ✅**.
+All three renderables **current ✅** (README.md). `ui.md` regenerated at
+`cc02684` (AccountMenu sign-out flow: confirmed→in-memory signed-out / failed→
+Error toast); `infrastructure.md` (`bd1c6a1`) and `datamodel.md` unchanged.
 
 ## Code-vs-Artifact Defects
 
@@ -116,7 +117,7 @@ doesn't appear here.)
 `plan-signout-reload-race-2026-07-13-2e98.md` (now `planned`).
 
 Prior (all `planned`, shipped):
-- `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped to `main` `a683a97`; not yet deployed).
+- `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped `a683a97`; **deployed to prod**, deployment `3305a830`).
 - `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped `a1e8446`).
 - `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 - `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
@@ -130,8 +131,9 @@ Prior (all `planned`, shipped):
   (3 outcomes, red-before-green), T002 the `client/src/account.ts` fix
   (confirmed-OK → in-memory signed-out, no reload; failure → keep signed-in +
   terse error toast), T003 `ui.md` States note. Client suite 75/0, typechecks
-  clean. **Not yet deployed** — Railway still runs `de20c5fa`; redeploy to
-  close the live prod bug. `ui.md` diagram stale (run `/ardd-diagram ui`).
+  clean. **Deployed to prod** (`cc02684` pushed → Railway deployment
+  `3305a830`, `● Online`); live bundle carries the fix, F001 closed. UI diagram
+  regenerated (`cc02684`, all renderables current).
 - **Reachable account controls** — `plan-reachable-account-controls-2026-07-13-ca49.md`
   (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`completed`, 3/3).
   **Merged to `main` at `318b7d2`** (fast-forward, 6 signed commits). `AccountMenu`
