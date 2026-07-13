@@ -10,7 +10,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Fix sign-out, test-first, and document the failure state
 
-- [ ] T001 [artifacts: constitution] Write a **failing** test (Principle VII,
+- [x] T001 [artifacts: constitution] Write a **failing** test (Principle VII,
       red-before-green) for `signOut()` in `client/src/account.ts`. Place it in
       the existing client test suite (e.g. `client/src/account.test.ts`; create
       it if absent, matching the vitest style of sibling `*.test.ts` files like
