@@ -138,7 +138,7 @@ that carry them.
   the affordances are simply **absent**. Test (Playwright): signed-out shows
   "Sign in"; after a mock sign-in the menu shows the display name + Sign out;
   accounts-unavailable ⇒ affordances absent. [parallel]
-- [ ] T017 [artifacts: ui] In the Lobby song picker, render a private catalogue
+- [x] T017 [artifacts: ui] In the Lobby song picker, render a private catalogue
   the signed-in host is already a member of as **pre-unlocked** — its songs list
   directly with no "Enter activation key" prompt (ui.md). Test (Playwright): a
   member catalogue lists its songs without showing the activation-key prompt.

@@ -82,6 +82,24 @@ test('a non-host participant sees the locked indicator but no unlock control', a
   await expect(component.getByRole('button', { name: 'Enter activation key' })).toHaveCount(0);
 });
 
+test('a member catalogue the signed-in host already unlocked lists its songs with no key prompt (T017)', async ({ mount }) => {
+  // When the signed-in host is a member, the server auto-unlocks the private
+  // catalogue (T014): its id is in unlockedCatalogueIds and its songs are
+  // delivered. The picker must render it pre-unlocked — songs list directly, no
+  // locked indicator, no "Enter activation key" control (ui.md).
+  const unlocked = baseSession({ unlockedCatalogueIds: ['premium-pack'] });
+  const fullCatalog: CatalogSong[] = [song('creep', 'default'), song('bonus', 'premium-pack')];
+
+  const component = await mount(SongPartModalHarness, {
+    props: { session: unlocked, selfParticipantId: 'host-1', catalog: fullCatalog, catalogues },
+  });
+
+  await expect(component.getByText('Premium Pack')).toBeVisible();
+  await expect(component.getByText('bonus')).toBeVisible();
+  await expect(component.getByTestId('locked-indicator')).toHaveCount(0);
+  await expect(component.getByRole('button', { name: 'Enter activation key' })).toHaveCount(0);
+});
+
 test('submitting an activation key sends a catalogue-unlock message', async ({ mount, page }) => {
   const component = await mount(SongPartModalHarness, {
     props: { session: baseSession(), selfParticipantId: 'host-1', catalog, catalogues },
