@@ -1,6 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**reachable-account-controls SHIPPED** — all 3 tasks
+_Updated: 2026-07-13 (**Prod deployed; 1 new open bug** — `main` is live on
+Railway (`de20c5fa`, sts.ty-pe.com). Post-deploy browser validation found that
+**Sign out on the Landing page silently fails** (`signOut` swallows a failed
+`/auth/logout` and reloads into a still-signed-in state) — filed as open
+feedback for the next `/ardd-plan`. Prior: **reachable-account-controls SHIPPED**
+— all 3 tasks
 implemented in a delegated worktree and fast-forward-merged into `main` at
 `318b7d2` (6 signed commits); UI diagram regenerated at `a6776c9`. `AccountMenu`
 now renders on the Landing view too (identity + Sign out when signed-in, 'Sign
@@ -92,7 +97,14 @@ doesn't appear here.)
 
 ## Feedback
 
-None open. All three feedback files are `planned` and their plans have shipped:
+**1 open** — `feedback-signout-reload-masks-failure-9a29.md` (Bug,
+`[artifacts: ui]`): Sign out on the Landing page silently fails on prod —
+`signOut()` (`client/src/account.ts:63`) swallows a failed `/auth/logout` fetch
+and reloads anyway, re-deriving signed-in from the surviving cookie. Server
+logout verified working; fix is primarily client-side (don't fake success on a
+failed logout). For the next `/ardd-plan`.
+
+Prior (all `planned`, shipped):
 - `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped `a1e8446`).
 - `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 - `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
@@ -143,17 +155,20 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-Both feature plans are shipped to `main` AND **deployed to production**
-(`main`@`daf1361` pushed to `origin`, Railway auto-built and promoted deployment
-`de20c5fa`, `● Online` at https://sts.ty-pe.com; smoke check: `/me` 200
-`{"accountsEnabled":true,"user":null}`, root SPA 200). Nothing in flight; all
-diagrams current. Remaining:
-1. **Browser OAuth validation (deferred by the user until deployed — now
-   unblocked).** Validate the two OAuth redirect URIs are registered AND
-   exercise the new Landing account menu / dismissible-modal sign-in→sign-out
-   flow live on `sts.ty-pe.com`. (A ready-to-paste Chrome-extension prompt was
-   drafted this session.) The user believes the redirect URIs are already
-   registered; this confirms it.
+Both feature plans are shipped to `main` AND deployed to production (Railway
+`de20c5fa`, `● Online` at https://sts.ty-pe.com). During post-deploy browser
+validation a **new prod bug** surfaced (open feedback, above): **Sign out on the
+Landing page silently fails**. Remaining, in order:
+1. **`/ardd-plan`** — consume the open sign-out feedback → fix
+   `client/src/account.ts` `signOut` (don't fake success on a failed logout;
+   surface/retry). Small; likely 1–2 tasks.
+2. **Finish browser OAuth validation** — the redirect-URI registration checks
+   (a ready-to-paste Chrome-extension prompt was drafted this session) are
+   still worth running; the sign-out portion is now a known bug.
+
+Note: several docs-only commits (feedback/status) are committed locally but
+**not yet pushed** — batch them with the sign-out fix so `main` gets one deploy,
+not several redundant Railway rebuilds.
 
 After those, Phase 2 — in-app authoring + dynamic catalog — is the next
 design-of-record milestone.
