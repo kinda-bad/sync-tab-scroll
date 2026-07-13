@@ -1,14 +1,14 @@
 ---
 plan: plan-hide-locked-catalogues-2026-07-13-6db8.md
 generated: 2026-07-13
-status: ready   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
 
 ## Phase 1: Artifact revisions
 
-- [ ] T001 [artifacts: ui] Revise `ui.md`'s Lobby-View song-picker paragraph
+- [x] T001 [artifacts: ui] Revise `ui.md`'s Lobby-View song-picker paragraph
   (currently ~lines 97–113, the "grouped by `Catalogue` … locked catalogue's
   group header" passage) and reconcile the Account & Sign-In "What signing in
   changes" / "States" bullets. New decision-of-record: a private,

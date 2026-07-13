@@ -1,10 +1,10 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-12
+last_updated: 2026-07-13
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -59,10 +59,10 @@ refresh-rejoin path — so there is no special mid-session login handling.
 
 **What signing in changes — nothing is removed, only added:**
 - In the Lobby song picker, a private catalogue the **signed-in host is already
-  a member of shows as unlocked** — its songs list directly, with no "Enter
-  activation key" prompt, because it auto-unlocked from the host's membership
-  (infrastructure.md). The host never re-types a key they've redeemed before —
-  the motivating payoff of the feature.
+  a member of appears pre-unlocked** — its group and songs list directly,
+  without the host entering its activation key, because it auto-unlocked from
+  the host's membership (infrastructure.md). The host never re-types a key
+  they've redeemed before — the motivating payoff of the feature.
 - Entering an activation key **while signed in** persists the unlock to the
   host's account for future sessions (a subtle "remembered" affirmation),
   versus the signed-out case where it unlocks only the current session.
@@ -95,21 +95,27 @@ and stays closed until reopened via the nav control. Inside it: host
 picks a song from the catalog (name + artist per entry, delivered once
 per client on session create/join — infrastructure.md, datamodel.md) via
 a simple list picker, grouped by `Catalogue` (`catalog-activation-key-access`)
-when more than one is present — a public catalogue's songs list directly
-under its name; a private, not-yet-unlocked catalogue shows only its
-name plus a locked indicator, no song list. The host (and only the host)
-additionally sees an "Enter activation key" control on a locked
-catalogue's group header — submitting it sends `catalogue-unlock`
-(infrastructure.md); on success the group expands in place to show that
-catalogue's songs, same as if it had always been unlocked; on a wrong
-key, a toast (States, below), same terse pattern as other errors here. When
-the host is **signed in and already a member** of a private catalogue, that
-catalogue is **pre-unlocked** here — its songs list directly and no "Enter
-activation key" control is shown (Account & Sign-In, above); and entering a key
-while signed in **persists** the unlock to the host's account for future
-sessions, not just this one (infrastructure.md). Signed-out, the key control
-and its per-session-only unlock behave exactly as before. A
-non-host participant sees the same locked indicator with no interactive
+when more than one **visible** catalogue is present — a public catalogue's
+songs list directly under its name. A private, not-yet-unlocked catalogue
+**does not appear in the picker at all** — no name, no locked indicator, no
+song list; the client never even learns it exists, because the server's
+`visibleCatalog` withholds locked catalogue metadata entirely
+(infrastructure.md). The host (and only the host) instead sees a **single
+standalone "Enter activation key" control** in the modal body — persistent, not
+attached to any catalogue group, since the host no longer picks *which* locked
+catalogue to unlock (there is nothing shown to pick). Submitting a key sends
+`catalogue-unlock { key }` (infrastructure.md — no catalogue id); the server
+resolves the key against every locked catalogue and, on a match, the
+newly-unlocked catalogue's group appears in the list, exactly as an
+already-unlocked private catalogue would; on a wrong key (or a key matching no
+catalogue — indistinguishable by design), a toast (States, below), same terse
+pattern as other errors here. When the host is **signed in and already a
+member** of a private catalogue, that catalogue is **pre-unlocked** here — its
+group appears from the start, without the host entering any key (Account &
+Sign-In, above); and entering a key while signed in **persists** the unlock to
+the host's account for future sessions, not just this one (infrastructure.md).
+Signed-out, the key control and its per-session-only unlock behave exactly as
+before. A non-host participant never sees the locked catalogues nor the unlock
 control — waiting on the host, same as every other host-gated action in
 this modal. Selecting an entry broadcasts the choice to every
 participant in the session so the part picker reflects the newly-selected
