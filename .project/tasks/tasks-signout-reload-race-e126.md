@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-reload-race-2026-07-13-2e98.md   # exact filename of the source plan — authoritative binding
 generated: 2026-07-13
-status: ready   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
                      # completed is terminal — post-completion failures become
                      # new feedback (/ardd-feedback), never a status edit.
 ---
