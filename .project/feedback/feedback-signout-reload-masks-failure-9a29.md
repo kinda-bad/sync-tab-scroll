@@ -1,13 +1,13 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-13
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-signout-reload-race-2026-07-13-2e98.md
 ---
 
 # Feedback
 
 ## Bugs
-- [ ] F001 Sign out doesn't work on production (`sts.ty-pe.com`): clicking
+- [x] F001 Sign out doesn't work on production (`sts.ty-pe.com`): clicking
       **Sign out** on the Landing (splash) page flashes the "Connection lost"
       banner, the page reloads, and you're **still signed in**. Server side is
       verified correct — `POST /auth/logout` returns `200` with `Set-Cookie:

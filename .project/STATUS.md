@@ -1,10 +1,17 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**Prod deployed; 1 new open bug** — `main` is live on
-Railway (`de20c5fa`, sts.ty-pe.com). Post-deploy browser validation found that
-**Sign out on the Landing page silently fails** (`signOut` swallows a failed
-`/auth/logout` and reloads into a still-signed-in state) — filed as open
-feedback for the next `/ardd-plan`. Prior: **reachable-account-controls SHIPPED**
+_Updated: 2026-07-13 (**Sign-out fix planned + tasked** — the post-deploy
+sign-out bug is now planned: `plan-signout-reload-race-2026-07-13-2e98.md`
+(`approved`) with `tasks-signout-reload-race-e126.md` (`ready`, 3 tasks,
+test-first) is ready for `/ardd-implement`. Root cause confirmed via live prod
+repro: `signOut()`'s trailing `window.location.reload()` races/aborts
+`/auth/logout` so the cookie-clear `Set-Cookie` never lands; the fresh page
+re-derives signed-in. Fix: on confirmed `res.ok`, flip `accountStore` to
+signed-out in-memory (no reload); on failure keep signed-in + terse error
+toast; document the States decision in `ui.md`. Consumed the
+signout-reload-masks-failure feedback → **0 open feedback** now. Prior: **Prod
+deployed** — `main` is live on Railway (`de20c5fa`, sts.ty-pe.com). Prior:
+**reachable-account-controls SHIPPED**
 — all 3 tasks
 implemented in a delegated worktree and fast-forward-merged into `main` at
 `318b7d2` (6 signed commits); UI diagram regenerated at `a6776c9`. `AccountMenu`
@@ -28,6 +35,9 @@ every artifact — **no defects**. Live Railway/secret deploy steps (T019/T020)
 still need the operator. **2026-07-13:** deployed to production — `main` pushed,
 Postgres wired via Terraform, sealed OAuth/session vars pushed; only OAuth
 redirect-URI registration + final verify remain. See Deploy status below.)_
+
+> **ARDD update available:** installed `7c5dcd0`, latest release `v0.10.0` —
+> run `/ardd-update`.
 
 ## Artifact Status
 
@@ -97,20 +107,23 @@ doesn't appear here.)
 
 ## Feedback
 
-**1 open** — `feedback-signout-reload-masks-failure-9a29.md` (Bug,
-`[artifacts: ui]`): Sign out on the Landing page silently fails on prod —
-`signOut()` (`client/src/account.ts:63`) swallows a failed `/auth/logout` fetch
-and reloads anyway, re-deriving signed-in from the surviving cookie. Server
-logout verified working; fix is primarily client-side (don't fake success on a
-failed logout). For the next `/ardd-plan`.
+**None open.** `feedback-signout-reload-masks-failure-9a29.md` was consumed by
+`plan-signout-reload-race-2026-07-13-2e98.md` (now `planned`).
 
 Prior (all `planned`, shipped):
+- `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (tasks `ready`, not yet implemented).
 - `feedback-hide-locked-catalogues-69a3.md` → `plan-hide-locked-catalogues-…-6db8` (shipped `a1e8446`).
 - `feedback-landing-signin-missing-2ebd.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 - `feedback-bar-controls-blocked-by-modal-f0e8.md` → `plan-reachable-account-controls-…-ca49` (shipped `318b7d2`).
 
 ## Plans & Tasks
 
+- **Sign-out reload race fix** — `plan-signout-reload-race-2026-07-13-2e98.md`
+  (`approved`), tasks `tasks-signout-reload-race-e126.md` (`ready`, 0/3).
+  **Not yet implemented** — run `/ardd-implement`. Single phase, test-first
+  (Principle VII): T001 failing test for all 3 `signOut()` outcomes, T002 the
+  `client/src/account.ts` fix (confirmed-OK → in-memory signed-out, no reload;
+  failure → keep signed-in + error toast), T003 `ui.md` States note.
 - **Reachable account controls** — `plan-reachable-account-controls-2026-07-13-ca49.md`
   (`approved`), tasks `tasks-reachable-account-controls-1787.md` (`completed`, 3/3).
   **Merged to `main` at `318b7d2`** (fast-forward, 6 signed commits). `AccountMenu`
