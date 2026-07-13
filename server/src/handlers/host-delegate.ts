@@ -2,6 +2,7 @@ import type { WebSocket } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 import { transferHost } from '../host-succession.js';
+import { rederiveHostMembershipUnlocks } from '../membership-unlock.js';
 
 export function handleHostDelegate(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'host-delegate' }>): void {
   const conn = ctx.connections.get(socket);
@@ -29,4 +30,8 @@ export function handleHostDelegate(ctx: HandlerContext, socket: WebSocket, messa
   if (session.pendingHostRequest === target.id) session.pendingHostRequest = null;
 
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
+
+  // Host changed → re-derive the membership-unlock slice from the new host's
+  // memberships (§13 S4); key-typed unlocks persist. No-op with no DB.
+  void rederiveHostMembershipUnlocks(ctx, session.code);
 }

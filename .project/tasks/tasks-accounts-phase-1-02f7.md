@@ -119,7 +119,7 @@ that carry them.
   authenticated participants do **not** cause unlock (host-only, design §12.1).
   Test: a signed-in host with a prior current-epoch membership auto-unlocks on
   join; a stale-epoch membership does not; a non-host's membership does not.
-- [ ] T015 [artifacts: infrastructure] On host change — succession (Host
+- [x] T015 [artifacts: infrastructure] On host change — succession (Host
   Succession) and explicit Host Transfer — re-derive the membership-derived slice
   of `Session.unlockedCatalogueIds` from the *new* host's memberships rather than
   leaving the set intact (S4); catalogues unlocked by a key typed this session

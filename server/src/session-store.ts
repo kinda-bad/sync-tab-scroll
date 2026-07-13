@@ -20,6 +20,15 @@ export class SessionStore {
   private sessions = new Map<string, Session>();
   private graceTimers = new Map<string, NodeJS.Timeout>();
   private hostReassignTimers = new Map<string, NodeJS.Timeout>();
+  /**
+   * The **key-entered** slice of each session's unlocks (datamodel.md
+   * `unlockedCatalogueIds`): catalogues a host unlocked by typing the activation
+   * key this session. It is a session fact — sticky, tied to no user — and
+   * survives host change, unlike the membership-derived slice which is
+   * re-derived on host change (§13 S4). Tracked here so `rederiveHost...` can
+   * recompute `unlockedCatalogueIds = key-typed ∪ new-host-memberships`.
+   */
+  private keyUnlocked = new Map<string, Set<string>>();
 
   constructor(private hostReassignGraceMs: number = DEFAULT_HOST_REASSIGN_GRACE_MS) {}
 
@@ -41,7 +50,20 @@ export class SessionStore {
       unlockedCatalogueIds: [],
     };
     this.sessions.set(code, session);
+    this.keyUnlocked.set(code, new Set());
     return session;
+  }
+
+  /** Records that `catalogueId` was unlocked by a typed activation key this session (the sticky slice, §13 S4). */
+  recordKeyUnlock(code: string, catalogueId: string): void {
+    const key = code.toUpperCase();
+    if (!this.keyUnlocked.has(key)) this.keyUnlocked.set(key, new Set());
+    this.keyUnlocked.get(key)!.add(catalogueId);
+  }
+
+  /** The key-typed unlock slice for a session (survives host change). */
+  keyUnlockedIds(code: string): string[] {
+    return [...(this.keyUnlocked.get(code.toUpperCase()) ?? [])];
   }
 
   /**
@@ -79,6 +101,7 @@ export class SessionStore {
 
     const timer = setTimeout(() => {
       this.sessions.delete(code);
+      this.keyUnlocked.delete(code);
       this.graceTimers.delete(code);
     }, GRACE_PERIOD_MS);
     this.graceTimers.set(code, timer);

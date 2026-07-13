@@ -67,3 +67,35 @@ export async function seedHostMembershipUnlocks(ctx: HandlerContext, code: strin
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.broadcast(session.code, () => ({ type: 'catalog', ...visibleCatalog(ctx.catalog, session) }));
 }
+
+/**
+ * Re-derives the membership slice of `Session.unlockedCatalogueIds` on host
+ * change — succession or explicit transfer (infrastructure.md Host Succession;
+ * §13 S4). Recomputes the set as `key-typed-this-session ∪ new-host-memberships`
+ * rather than leaving it intact: a catalogue unlocked ONLY by the departed
+ * host's membership re-locks if the new host isn't a member, while a
+ * key-typed-this-session unlock persists (a session fact tied to no user). With
+ * no DB the new host resolves to no memberships and a key-only session is
+ * unchanged — a no-op. Broadcasts the `session-state` + `catalog` pair only when
+ * the set actually changed.
+ */
+export async function rederiveHostMembershipUnlocks(ctx: HandlerContext, code: string): Promise<void> {
+  const session = ctx.sessionStore.get(code);
+  if (!session) return;
+
+  const hostConn = ctx.connections.getByParticipant(session.code, session.hostId);
+  const hostUserId = hostConn?.userId ?? null;
+  const memberships = hostUserId ? await ctx.accountStore.getMembershipsByUser(hostUserId) : [];
+  const derived = membershipDerivedUnlocks(memberships, ctx.catalog.catalogues);
+
+  const keyTyped = ctx.sessionStore.keyUnlockedIds(session.code);
+  const next = [...new Set([...keyTyped, ...derived])];
+
+  const before = [...session.unlockedCatalogueIds].sort();
+  const after = [...next].sort();
+  if (before.length === after.length && before.every((id, i) => id === after[i])) return; // unchanged
+
+  session.unlockedCatalogueIds = next;
+  ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
+  ctx.connections.broadcast(session.code, () => ({ type: 'catalog', ...visibleCatalog(ctx.catalog, session) }));
+}

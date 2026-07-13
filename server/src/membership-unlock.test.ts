@@ -6,7 +6,7 @@ import { ConnectionRegistry } from './connections.js';
 import { NullAccountStore } from './accounts/null-store.js';
 import type { HandlerContext } from './handlers/context.js';
 import type { LoadedCatalog, LoadedCatalogue } from './catalog-loader.js';
-import { membershipDerivedUnlocks, seedHostMembershipUnlocks } from './membership-unlock.js';
+import { membershipDerivedUnlocks, rederiveHostMembershipUnlocks, seedHostMembershipUnlocks } from './membership-unlock.js';
 
 const CATALOGUES: LoadedCatalogue[] = [
   { id: 'default', name: 'default', public: true },
@@ -99,5 +99,57 @@ describe('seedHostMembershipUnlocks — host-only auto-unlock (T014)', () => {
     await seedHostMembershipUnlocks(ctx, session.code, socket);
 
     expect(session.unlockedCatalogueIds).toEqual([]);
+  });
+});
+
+describe('rederiveHostMembershipUnlocks — re-lock on host change (T015, S4)', () => {
+  it('succession to a non-member re-locks a membership-only catalogue while a key-typed one stays', async () => {
+    // New host (participant B) is a member of nothing.
+    const { ctx, broadcasts } = ctxWith([]);
+    const session = ctx.sessionStore.create('B'); // hostId is already B (post-succession)
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+
+    // The session currently has 'kinda-bad' unlocked by the departed host's
+    // membership, and 'default'... use another catalogue: 'other'. Represent a
+    // key-typed unlock of 'kinda-bad'-style; here 'kinda-bad' is membership-only
+    // and a separate key-typed catalogue stays. Register a key-typed unlock.
+    ctx.sessionStore.recordKeyUnlock(session.code, 'keyed-pack');
+    session.unlockedCatalogueIds = ['kinda-bad', 'keyed-pack']; // kinda-bad from departed host's membership
+    // Make 'keyed-pack' a loaded catalogue so it isn't dropped as unknown.
+    ctx.catalog.catalogues.push({ id: 'keyed-pack', name: 'Keyed', public: false, salt: 's', hash: 'h', epoch: 1 });
+    attachHost(ctx, session.code, 'user-B', 'B');
+
+    await rederiveHostMembershipUnlocks(ctx, session.code);
+
+    // kinda-bad (membership-only, new host isn't a member) re-locks; keyed-pack
+    // (typed this session) persists.
+    expect(session.unlockedCatalogueIds).toEqual(['keyed-pack']);
+    expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
+  });
+
+  it('succession to a member keeps that catalogue unlocked', async () => {
+    const { ctx } = ctxWith([membership('kinda-bad', 2)]); // new host IS a member
+    const session = ctx.sessionStore.create('B');
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+    session.unlockedCatalogueIds = ['kinda-bad'];
+    attachHost(ctx, session.code, 'user-B', 'B');
+
+    await rederiveHostMembershipUnlocks(ctx, session.code);
+
+    expect(session.unlockedCatalogueIds).toEqual(['kinda-bad']);
+  });
+
+  it('with no DB (anonymous new host) only the key-typed slice remains — a no-op on a key-only session', async () => {
+    const { ctx, broadcasts } = ctxWith([]);
+    const session = ctx.sessionStore.create('B');
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+    ctx.sessionStore.recordKeyUnlock(session.code, 'kinda-bad');
+    session.unlockedCatalogueIds = ['kinda-bad']; // was key-typed this session
+    attachHost(ctx, session.code, null, 'B'); // anonymous host
+
+    await rederiveHostMembershipUnlocks(ctx, session.code);
+
+    expect(session.unlockedCatalogueIds).toEqual(['kinda-bad']); // key-typed stays
+    expect(broadcasts).toEqual([]); // unchanged ⇒ no re-broadcast
   });
 });

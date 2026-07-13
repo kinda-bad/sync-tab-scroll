@@ -1,5 +1,6 @@
 import type { Session } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './handlers/context.js';
+import { rederiveHostMembershipUnlocks } from './membership-unlock.js';
 
 /**
  * Moves host privileges to `toParticipantId`: the outgoing host (if any)
@@ -40,4 +41,9 @@ export function promoteNextHost(ctx: HandlerContext, code: string): void {
   transferHost(session, nextHost.id);
 
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
+
+  // Host changed → re-derive the membership-unlock slice from the NEW host's
+  // memberships (§13 S4): a catalogue unlocked only by the departed host's
+  // membership re-locks; key-typed unlocks persist. No-op with no DB.
+  void rederiveHostMembershipUnlocks(ctx, session.code);
 }

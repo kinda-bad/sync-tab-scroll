@@ -60,6 +60,10 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
   }
 
   session.unlockedCatalogueIds.push(catalogue.id);
+  // Record this as the key-typed slice (a sticky session fact that survives host
+  // change, §13 S4) — distinct from the membership-derived slice re-derived on
+  // host change (membership-unlock.ts).
+  ctx.sessionStore.recordKeyUnlock(session.code, catalogue.id);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.broadcast(session.code, () => ({ type: 'catalog', ...visibleCatalog(ctx.catalog, session) }));
 

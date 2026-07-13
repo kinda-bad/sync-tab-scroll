@@ -46,6 +46,20 @@ export class ConnectionRegistry {
     return this.info.get(socket);
   }
 
+  /**
+   * Looks up a session's connection by participant id — used to read the new
+   * host's resolved `userId` when re-deriving membership unlocks on host change
+   * (T015). Returns undefined if that participant has no live connection (e.g.
+   * a promoted-but-not-yet-reconnected host).
+   */
+  getByParticipant(sessionCode: string, participantId: string): ConnectionInfo | undefined {
+    for (const socket of this.sockets.get(sessionCode) ?? []) {
+      const conn = this.info.get(socket);
+      if (conn?.participantId === participantId) return conn;
+    }
+    return undefined;
+  }
+
   detach(socket: WebSocket): ConnectionInfo | undefined {
     const conn = this.info.get(socket);
     if (conn) this.sockets.get(conn.sessionCode)?.delete(socket);
