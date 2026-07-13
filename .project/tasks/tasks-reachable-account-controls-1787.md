@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Artifact revision
 
-- [ ] T001 [artifacts: ui] Revise `ui.md` for both feedback items.
+- [x] T001 [artifacts: ui] Revise `ui.md` for both feedback items.
   **(a) Account controls on Landing** — in the "Account & Sign-In (Optional)"
   section (~lines 45–79): state that account controls (the `AccountMenu`
   component) also render on the **Landing** create/join view, not only in the

@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-13
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -47,12 +47,15 @@ Accounts). **Strictly additive and never a gate**: create, join, pick, and play
 all work fully signed-out — the default — and no view is ever blocked behind
 sign-in.
 
-**Sign-in affordance.** A secondary "Sign in with Google / GitHub" control on
-the Landing View chooser, visually subordinate to Create/Join (it's optional),
-plus a small persistent **account menu** in the Lobby/Playback Bar's identity
-area showing the signed-in display name (from the provider profile) with a
-**Sign out** action. Signed-out, that menu is just a compact "Sign in" link.
-Choosing a provider hands off to the provider's OAuth consent screen
+**Sign-in affordance.** The same small **account menu** (the `AccountMenu`
+component) renders in both the **Landing View** chooser and the Lobby/Playback
+Bar's identity area, so a signed-in user can see who they are and sign out from
+anywhere — before joining a session and inside one. It shows the signed-in
+display name (from the provider profile) with a **Sign out** action when
+signed-in, and a compact "Sign in" link when signed-out; on Landing it stays
+visually subordinate to Create/Join (it's optional, never a gate). When
+accounts are unavailable it renders nothing (see States). Choosing a provider
+hands off to the provider's OAuth consent screen
 (infrastructure.md's OAuth flow) as a full-page redirect; on return the app
 reloads and silently rejoins any stored session via the Landing View's existing
 refresh-rejoin path — so there is no special mid-session login handling.
@@ -69,13 +72,16 @@ refresh-rejoin path — so there is no special mid-session login handling.
 - In-app authoring (creating catalogues, adding songs) is a later phase and is
   not part of this section yet.
 
-**States.**
+**States** (the account menu behaves identically wherever it renders — Landing
+and Bar):
 - *Signed-out* (default) — full functionality; the account menu is a "Sign in"
-  link. Indistinguishable from today's app for anyone who never signs in.
-- *Signed-in* — account menu shows display name + Sign out; member catalogues
-  appear pre-unlocked in the picker.
+  link (on both Landing and the Bar). Indistinguishable from today's app for
+  anyone who never signs in.
+- *Signed-in* — account menu shows display name + Sign out (on both Landing and
+  the Bar); member catalogues appear pre-unlocked in the picker.
 - *Accounts unavailable* — when the server runs with no database configured
-  (infrastructure.md), the sign-in affordances are simply **absent**, not shown
+  (infrastructure.md), the account menu renders nothing anywhere; the sign-in
+  affordances are simply **absent** (on both Landing and the Bar), not shown
   disabled or errored; the app presents exactly as the signed-out case.
 
 ## Lobby View
@@ -88,10 +94,13 @@ others after song selection.
 
 Song and part selection happens in a modal, not inline in the Lobby body
 — opened via a "Song & part" control in the persistent nav bar, and
-opened automatically (non-dismissibly, while either is unset) whenever
-the current participant has no song selected for the session or no part
-selected for themselves; once both are set, the modal becomes dismissible
-and stays closed until reopened via the nav control. Inside it: host
+opened **automatically once** whenever the current participant has no song
+selected for the session or no part selected for themselves. The modal is
+always **dismissible** (× / backdrop click / Escape); once dismissed it
+stays closed until reopened via the "Song & part" nav control, even while
+song or part is still unset. Rationale: a persistent Bar control (Sign out,
+Leave) must stay reachable, so no modal may permanently trap the user —
+dismissing the picker always reveals the Bar beneath it. Inside it: host
 picks a song from the catalog (name + artist per entry, delivered once
 per client on session create/join — infrastructure.md, datamodel.md) via
 a simple list picker, grouped by `Catalogue` (`catalog-activation-key-access`)
@@ -280,10 +289,12 @@ just a single state-dependent hint line, checked in this order:
 5. Both are set: "`{readyCount}` of `{totalCount}` ready — waiting for
    host to start."
 
-Cases 2-4 normally render behind the song/part modal's existing
-forced-open, non-dismissible backdrop (unchanged scope) — reachable in
-principle, not literally dead code, just usually covered immediately in
-today's normal flow.
+Cases 2-4 normally render behind the song/part modal's auto-opened
+backdrop — reachable in principle, not literally dead code, just usually
+covered immediately in today's normal flow. Because the modal is
+dismissible (above), a user who dismisses it while song or part is still
+unset sees these Lobby-body messages directly, with the Bar reachable
+beneath.
 
 ## Playback View
 
