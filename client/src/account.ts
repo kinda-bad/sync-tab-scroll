@@ -61,25 +61,25 @@ export function signIn(provider: 'google' | 'github'): void {
 }
 
 /**
- * Revokes the session server-side, then transitions {@link accountStore} to
- * `signed-out` **in memory** — no page reload. The single reactive store
- * (Principle I) is wired to both AccountMenu instances, so the UI flips with no
- * navigation and no race. Only a confirmed `res.ok` (the logout's
- * cookie-clearing `Set-Cookie` has committed) flips the store; a non-OK
- * response or a thrown fetch leaves the store signed-in and surfaces a terse
- * Error toast (ui.md States) rather than presenting a failed logout as success.
- * A trailing `window.location.reload()` used to race the in-flight request and
- * abort it, so logout silently failed — see feedback F001.
+ * Revokes the session server-side, then confirms the outcome by re-reading
+ * `/me` (the source of truth) rather than trusting the `/auth/logout` response.
+ * The logout response can be aborted client-side even when the server already
+ * cleared the session cookie (feedback F001), so its `res.ok` is not reliable;
+ * `/me` reflects the committed server state. {@link loadAccount} performs that
+ * fetch and updates {@link accountStore} (the single reactive store, Principle I,
+ * wired to both AccountMenu instances) — the UI flips in memory with no page
+ * reload and no race. If `/me` still reports `signed-in`, the logout genuinely
+ * failed and a terse Error toast is surfaced (ui.md States).
  */
 export async function signOut(fetchFn: typeof fetch = fetch): Promise<void> {
   try {
-    const res = await fetchFn('/auth/logout', { method: 'POST' });
-    if (!res.ok) {
-      toastStore.push('Sign out failed — please try again.');
-      return;
-    }
-    accountStore.set({ status: 'signed-out', displayName: null });
+    // The response can be aborted even when the server succeeded — verify via /me.
+    await fetchFn('/auth/logout', { method: 'POST' });
   } catch {
+    /* aborted/network error — the server may still have logged us out; /me decides */
+  }
+  const state = await loadAccount(fetchFn);
+  if (state.status === 'signed-in') {
     toastStore.push('Sign out failed — please try again.');
   }
 }

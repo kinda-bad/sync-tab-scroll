@@ -27,7 +27,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
       Confirm the test FAILS against the current response-`ok`-only
       implementation before implementing. Addresses feedback F001.
 
-- [ ] T002 Implement the `signOut()` change in `client/src/account.ts` to make
+- [x] T002 Implement the `signOut()` change in `client/src/account.ts` to make
       T001 pass. New shape: `try { await fetchFn('/auth/logout', {method:'POST'}) }
       catch { /* response can be aborted even when server succeeded — verify
       via /me */ }`, then `const state = await loadAccount(fetchFn);` (the
