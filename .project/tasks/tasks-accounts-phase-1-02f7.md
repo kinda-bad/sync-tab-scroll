@@ -13,7 +13,7 @@ that carry them.
 
 ## Phase 1: Durable store foundation (DB-optional)
 
-- [ ] T001 [artifacts: constitution, infrastructure] Add `.env` / `.env.example`
+- [x] T001 [artifacts: constitution, infrastructure] Add `.env` / `.env.example`
   config surface for the account layer per Principle VIII: `DATABASE_URL` plus
   placeholder keys for each OAuth provider's client id/secret
   (`GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`) and a
