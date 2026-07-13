@@ -111,7 +111,7 @@ that carry them.
 
 ## Phase 5: Host-only auto-unlock + re-lock on host change
 
-- [ ] T014 [artifacts: infrastructure, datamodel] On `session-create` /
+- [x] T014 [artifacts: infrastructure, datamodel] On `session-create` /
   `session-join`, union the **host's** epoch-current `CatalogueMembership`s into
   `Session.unlockedCatalogueIds` (skip any whose `keyEpoch` is below the
   catalogue's current epoch, S5), then emit the existing `session-state` +

@@ -3,6 +3,7 @@ import type { WebSocket } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
+import { seedHostMembershipUnlocks } from '../membership-unlock.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
   const session = ctx.sessionStore.get(message.code);
@@ -52,4 +53,9 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   ctx.sessionStore.markActive(session.code);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.send(socket, { type: 'catalog', ...visibleCatalog(ctx.catalog, session) });
+
+  // Host-only membership auto-unlock (T014): fires only if this joiner IS the
+  // session host (e.g. the host reconnecting/reclaiming their seat) — a normal
+  // member join is a no-op inside the helper. Best-effort/async (§13 S7).
+  void seedHostMembershipUnlocks(ctx, session.code, socket);
 }
