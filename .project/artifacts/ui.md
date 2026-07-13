@@ -90,10 +90,19 @@ and Bar):
   other per-action failures (States, below). Re-reading `/me` instead of trusting
   the logout response fixes the race where a trailing `window.location.reload()`
   aborted the in-flight logout and left the user still signed in (feedback F001).
+  If the post-logout `/me` confirmation is itself **unreachable/aborted** (a
+  transient network failure, not a server answer), the account menu stays
+  *Signed-in* and surfaces the same retryable **Error toast** — it does **not**
+  fall through to *Accounts unavailable* (that state means "the server has no
+  accounts", a claim only an actual `/me` answer can make; a failed fetch never
+  touches the account store). The user simply retries (feedback F003).
 - *Accounts unavailable* — when the server runs with no database configured
   (infrastructure.md), the account menu renders nothing anywhere; the sign-in
   affordances are simply **absent** (on both Landing and the Bar), not shown
-  disabled or errored; the app presents exactly as the signed-out case.
+  disabled or errored; the app presents exactly as the signed-out case. This is
+  reserved for a server that reports accounts are off (`/me` with
+  `accountsEnabled: false`) — never a transient `/me` fetch failure, which
+  leaves whatever account state was already resolved untouched.
 
 ## Lobby View
 
