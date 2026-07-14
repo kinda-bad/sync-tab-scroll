@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-stale-session-terminal-2026-07-14-2e22.md
 generated: 2026-07-14
-status: ready
+status: in-progress
 ---
 
 # Tasks
