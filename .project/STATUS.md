@@ -77,10 +77,10 @@ prefix redesign). Will be picked up by the next `/ardd-plan`.
 
 ## Feature Backlog
 
-14 implemented · **2 backlogged** · 0 planned · 0 tasked — see `.project/features/`.
-New backlog (host controls): `host-end-session-control`,
-`host-restart-session-from-star`. Target one with `/ardd-plan <slug>`.
-(`host-kick-freezes-session` was removed — it belonged to a different project.)
+14 implemented · **0 backlogged** · 0 planned · 0 tasked — see `.project/features/`.
+(The three `host-*` control items — `host-kick-freezes-session`,
+`host-restart-session-from-star`, `host-end-session-control` — were removed;
+they belonged to a different project.)
 
 ## Plans & Tasks
 
@@ -135,13 +135,9 @@ Sign-out is fixed, deployed, and verified — the core account loop works end to
 end in prod. Options from here:
 1. **Plan the new lyrics-overlay feedback** — `/ardd-plan` will pick up
    `feedback-lyrics-overlay-timing-display-5456.md` (timing offset + several
-   display bugs) alongside the host-control backlog.
+   display bugs).
 2. **Optional:** `/ardd-defects` to re-verify artifacts against the newer client
    fixes; confirm the Google `29801536638` client's redirect URI.
 
-_Note: `host-kick-freezes-session` was removed (misplaced from another project).
-The remaining two host-control backlog items may also belong to that project —
-`host-restart-session-from-star` references "the game / turn 0", which has no
-counterpart in this model — pending owner confirmation._
-
-_Main: `9478c55`, 0 ahead / 0 behind `origin/main`._
+_Note: all three `host-*` control backlog items were removed — they were logged
+against this project by mistake and belonged to a different project._
