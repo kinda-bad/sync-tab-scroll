@@ -1,7 +1,7 @@
 ---
 plan: plan-signout-stale-session-terminal-2026-07-14-2e22.md
 generated: 2026-07-14
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -56,9 +56,22 @@ status: in-progress
 
 ## Phase 3: Live prod re-verify
 
-- [ ] T005 After merge and Railway deploy, re-run the production repro on
+- [x] T005 After merge and Railway deploy, re-run the production repro on
   https://sts.ty-pe.com as a signed-in user holding a stale stored session
   (reconnect banner + "Session … not found" toast): confirm the banner now
   clears (socket goes terminal, no 2s storm), then click SIGN OUT and confirm it
   completes end-to-end — menu returns to SIGN IN and, after a reload, `/me`
   returns `user:null`. Empirical close-out; not a code change. Depends on T004.
+
+  **Close-out (2026-07-14):** verified in prod (`index-DQukAlQa.js`) — banner
+  gone from Landing, SIGN OUT completes, `/me` → `user:null`; user confirmed.
+  IMPORTANT: browser investigation found the actual prod sign-out failure was
+  **not** the stale-session storm this plan targeted, but a client binding bug —
+  `AccountMenu` bound `onclick={onSignOut}`, passing the click event into
+  `signOut`'s defaulted `fetchFn` param so the real fetch never fired. That, plus
+  a false "Connection lost" banner on Landing (default `connectionStatus`,
+  ungated by `wsClient`), were fixed separately in `9478c55`. The T001–T004 typed
+  `session-not-found` machinery here is **kept as defensive hardening** (owner
+  decision) for the genuine restored-stale-session storm case — green, CT-covered
+  — even though it was not what unblocked sign-out. See memory
+  `signout-real-cause-event-arg`.
