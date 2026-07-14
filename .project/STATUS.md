@@ -1,11 +1,26 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**UI diagram regenerated + `main` pushed** — the F002+F003
-UI diagram was regenerated at commit `1020217` (`ui.md` `diagram_status: current`
-again), and `main` was pushed to `origin` through `d6795c3`. HEAD is now **1
-ahead / 0 behind** `origin/main` — only the diagram-regen commit `1020217`
-remains unpushed. Remaining work is the deploy/verify tail, not code. Prior
-context below.) (**F002 + F003 SHIPPED to `main`** —
+_Updated: 2026-07-14 (**PROD SIGN-OUT STILL BROKEN — F002 fix insufficient; new
+fix planned + tasked.** Live prod verify on https://sts.ty-pe.com (F002/F003
+confirmed deployed — the served bundle `index-xPHdO0FD.js` is byte-identical to a
+fresh HEAD build) found: ✅ anonymous path serves, ✅ **GitHub OAuth sign-in works
+end-to-end** (name renders; redirect-URI registration confirmed), but ❌ **SIGN
+OUT still fails** ("Sign out failed — please try again", menu stays signed in;
+post-fail reload shows `/me` still returns the user → `/auth/logout` never
+revoked server-side). **Root cause** (`client/src/ws-client.ts`): the
+reconnect-rejoin (`:50-61`) fires only when `session` is non-null, while F002's
+terminal-close (`:147`) fires only when `session === null` — mutually exclusive,
+so a **restored** stale session rejoins forever (the 2s storm that aborts logout)
+and never terminates. F002 only fixed the fresh-join-never-established case, not
+the persisted-stale-session case the original feedback described. Filed
+`feedback-signout-stale-session-reconnec-3e5b` (F001, now `planned`) → **plan
+`plan-signout-stale-session-terminal-2026-07-14-2e22.md` (`approved`)** + tasks
+**`tasks-signout-stale-session-terminal-d509.md` (`ready`, 5 tasks, test-first)**:
+replace the heuristic with a typed `session-not-found` ServerMessage the client
+treats as unconditionally terminal. **Also done this session:** ARDD updated
+v0.9.0→v0.10.0 (`a7165c4`); workflow fields stamped (`next_step_prompt`/`delegation:eager`/`merge_policy:auto`);
+`main` at `8c80a29`, 0 ahead/0 behind `origin`. **Next: `/ardd-implement` the new
+tasks.** Prior context below.) (**F002 + F003 SHIPPED to `main`** —
 `plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`), tasks
 `tasks-signout-ws-reconnect-storm-c60d.md` (`completed`, 6/6, all test-first per
 Principle VII). Implemented in a delegated worktree (RED→GREEN per pair) and
@@ -58,12 +73,12 @@ status below).)_
 
 ## Open Questions
 
-None at the artifact level. The two plan-level open questions from
-`plan-signout-ws-reconnect-storm-…-dd78` were resolved in implementation: the
-client-side `session === null` heuristic was used (no typed `session-not-found`
-message needed); the terminal close reuses the host-removal shape, which already
-resets to a non-error state, so `ConnectionBanner` isn't left stuck (CT-covered).
-The remaining validation is live prod re-verify (see Recommended next step).
+None at the artifact level. Note: `plan-signout-ws-reconnect-storm-…-dd78`
+resolved its open question by choosing the client-side `session === null`
+heuristic over a typed `session-not-found` message — and that choice is exactly
+what live prod verify proved insufficient (it misses a restored stale session).
+`plan-signout-stale-session-terminal-…-2e22` (the active fix) **reverses that
+decision**, adopting the typed `session-not-found` ServerMessage after all.
 
 ## Cross-Artifact Issues
 
@@ -81,13 +96,13 @@ None.
 
 ## Constitution Compliance
 
-No violations. The planned sign-out/WS work is test-first (Principle VII — all 6
-tasks in `tasks-signout-ws-reconnect-storm-c60d.md` write a failing test before
-implementation). No Simplicity/YAGNI or production-annotation principle is
-declared, so neither a Complexity Tracking table nor a Production Annotation
-Summary applies. The F002 fix reuses the existing host-removal terminal-socket
-mechanism (no second reconnect-teardown path — Principle II); the F003 refactor
-preserves the single account-store write (Principle I).
+No violations. The new sign-out fix (`tasks-signout-stale-session-terminal-d509.md`)
+is test-first (Principle VII — the P1/P2 tasks write a failing test before
+implementation), uses a typed `session-not-found` ServerMessage (Principle VI —
+named type over a stringly-typed `error`), and reuses the existing host-removal
+terminal-socket teardown rather than adding a second one (Principle II). No
+Simplicity/YAGNI or production-annotation principle is declared, so neither a
+Complexity Tracking table nor a Production Annotation Summary applies.
 
 ## Diagrams
 
@@ -112,10 +127,13 @@ doesn't appear here.)
 
 ## Feedback
 
-**0 open.** `feedback-signout-response-not-trusted-9575.md` is **planned** →
-`plan-signout-ws-reconnect-storm-…-dd78` (F001 was already incorporated by the
-prior verify-via-`/me` plan; F002 + F003 consumed by this one, now shipped to
-`main` at `5857634`).
+**0 open.** `feedback-signout-stale-session-reconnec-3e5b.md` is **planned** →
+`plan-signout-stale-session-terminal-…-2e22` (F001 — prod sign-out still broken
+because F002's `session === null` heuristic misses the restored-stale-session
+case; fix tasked, see Plans & Tasks). Prior:
+`feedback-signout-response-not-trusted-9575.md` is **planned** →
+`plan-signout-ws-reconnect-storm-…-dd78` (F002 + F003 shipped to `main` at
+`5857634` — but verify showed F002 was insufficient, hence the new plan above).
 
 Prior (all `planned`, shipped/deployed):
 - `feedback-signout-reload-masks-failure-9a29.md` → `plan-signout-reload-race-…-2e98` (shipped `a683a97`; deployed `3305a830`).
@@ -125,6 +143,17 @@ Prior (all `planned`, shipped/deployed):
 
 ## Plans & Tasks
 
+- **Sign-out stale-session terminal via typed server signal (F001)** —
+  `plan-signout-stale-session-terminal-2026-07-14-2e22.md` (`approved`), tasks
+  `tasks-signout-stale-session-terminal-d509.md` (`ready`, 5 tasks, 0/5). **The
+  active fix.** Replaces F002's `session === null` heuristic (which misses a
+  restored stale session, so the rejoin storm never terminates and keeps aborting
+  `/auth/logout`) with a typed `{ type: 'session-not-found'; code }` ServerMessage:
+  P1 add it to `packages/shared` + emit from `session-join.ts`; P2 client treats
+  it as unconditionally terminal and the `session === null` branch is removed
+  (test-first CT reproducing the restored-stale-session storm→terminal + a
+  regression CT for first-open-bad-code and live-drop reconnect); P3 live prod
+  re-verify. Not yet implemented — **run `/ardd-implement`.**
 - **Stale-session WS reconnect storm + sign-out `/me` hardening (F002, F003)** —
   `plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`), tasks
   `tasks-signout-ws-reconnect-storm-c60d.md` (`completed`, 6/6). **Merged to
@@ -167,34 +196,47 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
   `DATABASE_URL = ${{Postgres.DATABASE_URL}}` (resolves to
   `postgres.railway.internal:5432`); `prevent_destroy` guard active. `/me`
   returns `{"accountsEnabled":true,...}` on both domains.
-- **T020 — mostly done.** Sealed vars pushed from 1Password:
+- **T020 — done.** Sealed vars pushed from 1Password:
   `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`,
   `SESSION_COOKIE_SECRET` (newly generated + stored in the vault), and
-  `PUBLIC_BASE_URL=https://sts.ty-pe.com`. Login redirects now carry the correct
-  prod `redirect_uri`.
+  `PUBLIC_BASE_URL=https://sts.ty-pe.com`. Both providers' login redirects
+  verified live on prod (2026-07-13, curl):
+  - GitHub `/auth/github/login` → `302` github.com, client_id
+    `Ov23liE98uUnST7Ycht7`, `redirect_uri=…/auth/github/callback`, PKCE+state.
+  - Google `/auth/google/login` → `302` accounts.google.com, client_id
+    **`29801536638-b983rjtrlrsl5oin6sdo5rfoecdis4ud`**,
+    `redirect_uri=…/auth/google/callback`, PKCE+state+nonce.
+  Redirect URIs are registered provider-side (operator confirmed).
+  ⚠️ **Doc mismatch:** an earlier note here cited Google client_id
+  `607753971873-…`; the deployed client is `29801536638-…`. Confirm the
+  registered-callback client matches the deployed one.
+- **Interactive sign-in — GitHub verified (2026-07-14).** Signed in end-to-end
+  as the real user via the browser: redirect → callback → cookie → `/me` → name
+  renders. Google not clicked through interactively (GitHub answered the
+  question); the anonymous path serves.
 - **Remaining (operator-only):**
-  1. Register the redirect URIs in the provider dashboards —
-     GitHub OAuth app `Ov23liE98uUnST7Ycht7` → `https://sts.ty-pe.com/auth/github/callback`;
-     Google client `607753971873-…` → `https://sts.ty-pe.com/auth/google/callback`.
-  2. Verify sign-in end-to-end (both providers), a key-unlock persists across
-     sessions, and the anonymous path still serves.
+  1. (Optional) Google interactive sign-in click-through + confirm a key-unlock
+     persists across sessions. Confirm the deployed Google client_id
+     `29801536638-…` is the one whose callback URI is registered.
+  2. Prod sign-out end-to-end — **blocked on the F001 fix**
+     (`tasks-signout-stale-session-terminal-d509.md`); sign-out is confirmed
+     still broken live (see header). Re-verify after that ships (plan T005).
 - **Cleanup (optional):** the legacy mis-named `GOOGLE_CLIENT_ID` /
   `GITHUB_CLIENT_ID` Railway vars are inert (the code reads the `_OAUTH_` names)
   and can be deleted.
 
 ## Recommended next step
 
-F002 + F003 are merged to `main` at `5857634` and **pushed to `origin`** through
-`d6795c3`; the UI diagram was regenerated (`1020217`, still unpushed). Remaining,
-in order:
-1. **Push `main`** — the one unpushed commit `1020217` (UI diagram regen); push
-   to trigger the Railway rebuild.
-2. **Live prod sign-out re-verify** — as the real signed-in user on
-   https://sts.ty-pe.com, confirm SIGN OUT now completes end-to-end (F002 was
-   the confirmed blocker that F001's verify-via-`/me` fix couldn't satisfy
-   alone) and that an unreachable `/me` no longer blanks the account menu.
-3. **Finish browser OAuth validation** — the operator-only redirect-URI
-   registration checks (Deploy status below) are still open.
+**`/ardd-implement`** the sign-out fix — `tasks-signout-stale-session-terminal-d509.md`
+(`ready`, 5 tasks, test-first). This is the confirmed blocker for prod sign-out
+(F002's heuristic is insufficient; see header + Plans & Tasks). `delegation:eager`
+is set, so an eager background worktree run is offered. After it merges and
+Railway deploys, T005 is the live prod re-verify (banner clears + sign-out
+completes end-to-end).
 
-After this, Phase 2 — in-app authoring + dynamic catalog — is the next
-design-of-record milestone.
+Deferred until after the fix:
+- (Optional) Google interactive sign-in click-through + key-unlock persistence;
+  confirm the deployed Google client_id `29801536638-…` matches the registered
+  callback client.
+- Then Phase 2 — in-app authoring + dynamic catalog — the next design-of-record
+  milestone.
