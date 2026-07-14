@@ -132,23 +132,36 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
         });
       } else if (message.type === 'catalog') {
         clientStore.update((s) => ({ ...s, catalog: message.songs, catalogues: message.catalogues }));
+      } else if (message.type === 'session-not-found') {
+        // The server — the authority on whether a session exists — says this
+        // session is gone (feedback F001). UNCONDITIONALLY terminal, regardless
+        // of whether this client's own store still holds a (non-null) session:
+        // a persisted stale session that reconnect-rejoins (the open handler
+        // above) storms the 2s rejoin loop forever, resetting the
+        // HTTP/2-coalesced connection and aborting in-flight fetches (the
+        // confirmed sign-out aborter). This replaces F002's `session === null`
+        // heuristic in the `error` handler, which could never terminate a
+        // non-null stale session. Reuses the host-removal terminal-socket shape
+        // (the wasRemoved branch above) — one terminal mechanism, not a second.
+        toastStore.push(`Session ${message.code} not found`);
+        suppressReconnect = true;
+        socket.close();
+        clearStoredSession();
+        clientStore.set({
+          view: 'landing',
+          session: null,
+          selfParticipantId: null,
+          catalog: [], catalogues: [],
+          wsClient: null,
+          playbackProgress: 0,
+          engineReady: false,
+          connectionStatus: 'connecting',
+        });
       } else if (message.type === 'error') {
-        // Errors (join-by-code failure, part-not-found, not-host attempts) are toasts, not blocking modals (ui.md States).
+        // Errors (part-not-found, not-host attempts) are toasts, not blocking
+        // modals (ui.md States). A dead-session join now arrives as the typed
+        // `session-not-found` above, so this handler is toast-only again.
         toastStore.push(message.message);
-        // A stale-session bootstrap failure (feedback F002): if this client
-        // never established a session (session still null), the error is a
-        // failed create/join against a session that no longer exists — not a
-        // mid-session action error like part/song-not-found, which can only
-        // fire once a session exists. Reconnecting every reconnectDelayMs
-        // against that dead session resets the HTTP/2-coalesced connection and
-        // aborts in-flight fetches (the confirmed sign-out aborter). Clear the
-        // stale persisted identity and make this socket terminal, reusing the
-        // host-removal terminal-socket shape (see the wasRemoved branch above).
-        if (get(clientStore).session === null) {
-          clearStoredSession();
-          suppressReconnect = true;
-          socket.close();
-        }
       }
     });
   }

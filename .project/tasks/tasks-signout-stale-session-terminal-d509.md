@@ -28,7 +28,7 @@ status: in-progress
 
 ## Phase 2: Client treats it as terminal (removes the heuristic)
 
-- [ ] T003 In `client/src/ws-client.ts`, handle the new message: add a
+- [x] T003 In `client/src/ws-client.ts`, handle the new message: add a
   `message.type === 'session-not-found'` branch in the `message` listener that is
   **unconditionally terminal** — `toastStore.push(...)`, `suppressReconnect = true`,
   `socket.close()`, `clearStoredSession()`, and reset the store to the Landing
