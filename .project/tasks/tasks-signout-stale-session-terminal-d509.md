@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Typed `session-not-found` message (shared + server)
 
-- [ ] T001 [artifacts: datamodel] Add a typed `{ type: 'session-not-found'; code: string }`
+- [x] T001 [artifacts: datamodel] Add a typed `{ type: 'session-not-found'; code: string }`
   variant to the `ServerMessage` union in `packages/shared/src/messages.ts`
   (currently `ServerMessage` ends at `{ type: 'error'; message: string }`).
   Test-first (Principle VII): add a compile-time assertion in the shared

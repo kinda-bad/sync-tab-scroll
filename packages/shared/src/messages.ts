@@ -20,4 +20,10 @@ export type ClientMessage =
 export type ServerMessage =
   | { type: 'session-state'; session: Session; selfParticipantId: string }
   | { type: 'catalog'; catalogues: Catalogue[]; songs: CatalogSong[] }
+  // Typed terminal signal for a join against a code with no live session
+  // (F001): the client treats this as unconditionally terminal (clear stored
+  // session, suppress reconnect, close), rather than inferring it from a
+  // stringly-typed `error` plus a `session === null` guess. Carries the
+  // requested `code` so the client can surface it in the toast.
+  | { type: 'session-not-found'; code: string }
   | { type: 'error'; message: string };
