@@ -262,6 +262,53 @@ test('a restored stale session that rejoins on reconnect goes terminal on sessio
   expect(connectionCount).toBe(2);
 });
 
+test('a genuine transient drop of a LIVE session reconnect-rejoins and is NOT made terminal by the session-not-found fix (T004)', async ({ mount, page }) => {
+  // The other side of the removed `session === null` heuristic: a live session
+  // whose socket merely dropped must still reconnect and re-send session-join
+  // (ws-client.ts:50-61) — the server still has it, answers the rejoin with a
+  // fresh session-state, and the client stays in the session. The fix must not
+  // make live-session reconnects terminal (no clear, no toast, no give-up).
+  const liveSession = {
+    type: 'session-state',
+    session: {
+      code: 'LIVE',
+      selectedSong: null,
+      availableParts: [],
+      participants: [{ id: 'p1', displayName: 'Ada', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 }],
+      hostId: 'p1',
+      playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
+      countInEnabled: false,
+      lobbyCursorTick: null,
+      spotlightMode: false,
+    },
+    selfParticipantId: 'p1',
+  };
+  let connectionCount = 0;
+  wss.on('connection', (socket) => {
+    connectionCount++;
+    // The server still holds the session across the drop: it answers the
+    // reconnect's rejoin (and the first connect) with a fresh session-state.
+    socket.on('message', (data) => {
+      if (JSON.parse(data.toString()).type === 'session-join') socket.send(JSON.stringify(liveSession));
+    });
+    socket.send(JSON.stringify(liveSession));
+  });
+
+  const component = await mount(WsClientHarness, { props: { url: `ws://localhost:${port}`, reconnectDelayMs: 50 } });
+  await expect(component.getByTestId('session-code')).toHaveText('LIVE');
+  await expect(component.getByTestId('connection-status')).toHaveText('connected');
+
+  // Drop the socket — the client must reconnect on its own (a second server
+  // connection) and recover to connected, still holding the session.
+  for (const client of wss.clients) client.terminate();
+  await expect.poll(() => connectionCount, { timeout: 5_000 }).toBeGreaterThanOrEqual(2);
+  await expect(component.getByTestId('connection-status')).toHaveText('connected', { timeout: 10_000 });
+
+  // Not terminal: session preserved, no give-up. No session-not-found toast.
+  await expect(component.getByTestId('session-code')).toHaveText('LIVE');
+  await expect(component.getByTestId('toasts')).not.toContainText('not found');
+});
+
 test('retries repeatedly against a server that is down at load time, connecting once it starts listening', async ({ mount }) => {
   const deadPort = port + 1;
   const component = await mount(WsClientHarness, {

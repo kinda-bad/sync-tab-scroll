@@ -45,7 +45,7 @@ status: in-progress
   current `main` (the storm continues) before the change. Depends on T001, T002.
   Addresses F001.
 
-- [ ] T004 Regression CT covering the two paths the removed `session === null`
+- [x] T004 Regression CT covering the two paths the removed `session === null`
   heuristic previously straddled, both still correct under the new
   `session-not-found` handling: (a) first-open bad join code (`session` null) —
   server replies `session-not-found`, client shows the toast and stays on / returns
