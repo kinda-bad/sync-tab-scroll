@@ -1,6 +1,7 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-14 (**PROD SIGN-OUT FIXED + VERIFIED LIVE.** The real cause was
+_Updated: 2026-07-14 (New feedback logged: lyrics-overlay timing + display
+issues, see Feedback section below. **PROD SIGN-OUT FIXED + VERIFIED LIVE.** The real cause was
 never the WS reconnect storm the prior four fixes chased — it was a one-line
 client binding bug: `AccountMenu` bound `onclick={onSignOut}`, passing the click
 `PointerEvent` into `signOut`'s defaulted `fetchFn` param, so the real `fetch`
@@ -66,11 +67,20 @@ kept `session-not-found` machinery reuses the host-removal terminal-socket shape
 **No defects** — `DEFECTS.md` last checked **2026-07-12** (Accounts Phase 1
 layer). Run `/ardd-defects` to refresh against the newer client fixes if desired.
 
+## Feedback
+
+1 open feedback file — `feedback-lyrics-overlay-timing-display-5456.md`
+(lyrics-overlay highlight timing ~2 syllables ahead; duplicate lobby/lyrics
+scrollbars + lobby never fully scrolling away; drain bar and count-in dots
+not clearing; first lyric line pre-highlighted; count-in-dots-as-inline-
+prefix redesign). Will be picked up by the next `/ardd-plan`.
+
 ## Feature Backlog
 
-14 implemented · **3 backlogged** · 0 planned · 0 tasked — see `.project/features/`.
-New backlog (host controls): `host-end-session-control`, `host-kick-freezes-session`,
+14 implemented · **2 backlogged** · 0 planned · 0 tasked — see `.project/features/`.
+New backlog (host controls): `host-end-session-control`,
 `host-restart-session-from-star`. Target one with `/ardd-plan <slug>`.
+(`host-kick-freezes-session` was removed — it belonged to a different project.)
 
 ## Plans & Tasks
 
@@ -123,9 +133,15 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 Sign-out is fixed, deployed, and verified — the core account loop works end to
 end in prod. Options from here:
-1. **Plan a backlog feature** — `/ardd-plan host-kick-freezes-session` (a bug in
-   existing behavior) is the most user-impactful of the three new host items.
+1. **Plan the new lyrics-overlay feedback** — `/ardd-plan` will pick up
+   `feedback-lyrics-overlay-timing-display-5456.md` (timing offset + several
+   display bugs) alongside the host-control backlog.
 2. **Optional:** `/ardd-defects` to re-verify artifacts against the newer client
    fixes; confirm the Google `29801536638` client's redirect URI.
+
+_Note: `host-kick-freezes-session` was removed (misplaced from another project).
+The remaining two host-control backlog items may also belong to that project —
+`host-restart-session-from-star` references "the game / turn 0", which has no
+counterpart in this model — pending owner confirmation._
 
 _Main: `9478c55`, 0 ahead / 0 behind `origin/main`._
