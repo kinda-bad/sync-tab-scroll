@@ -74,6 +74,9 @@ yet; this records the intended design ahead of building it.
 name: constitution
 status: stable
 last_updated: 2026-07-12
+next_step_prompt: true
+delegation: eager
+merge_policy: auto
 ---
 
 # sync-tab-scroll Constitution

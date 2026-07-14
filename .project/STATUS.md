@@ -1,6 +1,11 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-13 (**F002 + F003 SHIPPED to `main`** —
+_Updated: 2026-07-13 (**UI diagram regenerated + `main` pushed** — the F002+F003
+UI diagram was regenerated at commit `1020217` (`ui.md` `diagram_status: current`
+again), and `main` was pushed to `origin` through `d6795c3`. HEAD is now **1
+ahead / 0 behind** `origin/main` — only the diagram-regen commit `1020217`
+remains unpushed. Remaining work is the deploy/verify tail, not code. Prior
+context below.) (**F002 + F003 SHIPPED to `main`** —
 `plan-signout-ws-reconnect-storm-2026-07-13-dd78.md` (`approved`), tasks
 `tasks-signout-ws-reconnect-storm-c60d.md` (`completed`, 6/6, all test-first per
 Principle VII). Implemented in a delegated worktree (RED→GREEN per pair) and
@@ -38,8 +43,7 @@ verified no defects; deployed to prod (Postgres via Terraform, sealed OAuth vars
 pushed; only OAuth redirect-URI registration + final verify remain — see Deploy
 status below).)_
 
-> **ARDD update available:** installed `7c5dcd0`, latest release `v0.10.0` —
-> run `/ardd-update`.
+> **ARDD:** up to date on **v0.10.0** (`a7165c4`), updated 2026-07-13.
 
 ## Artifact Status
 
@@ -89,8 +93,8 @@ preserves the single account-store write (Principle I).
 
 - `datamodel.md` — current ✅
 - `infrastructure.md` — current ✅
-- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — T003/T006 edited the States
-  section (Stale session; Signing out vs Accounts unavailable) and stamped it stale.
+- `ui.md` — **current ✅** — regenerated at commit `1020217` after the T003/T006
+  States edits (Stale session; Signing out vs Accounts unavailable).
 
 ## Code-vs-Artifact Defects
 
@@ -180,18 +184,16 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-F002 + F003 are implemented and merged to `main` at `5857634` but **not yet
-pushed or deployed**. Remaining, in order:
-1. **`/ardd-diagram ui`** — regenerate the UI diagram (States edits marked
-   `ui.md` stale).
-2. **Push `main` → Railway deploy** — several local commits (this fix + the
-   earlier docs/plan/tasks/status commits) are unpushed; batch them into one
-   push so Railway rebuilds once, not several times.
-3. **Live prod sign-out re-verify** — as the real signed-in user on
+F002 + F003 are merged to `main` at `5857634` and **pushed to `origin`** through
+`d6795c3`; the UI diagram was regenerated (`1020217`, still unpushed). Remaining,
+in order:
+1. **Push `main`** — the one unpushed commit `1020217` (UI diagram regen); push
+   to trigger the Railway rebuild.
+2. **Live prod sign-out re-verify** — as the real signed-in user on
    https://sts.ty-pe.com, confirm SIGN OUT now completes end-to-end (F002 was
    the confirmed blocker that F001's verify-via-`/me` fix couldn't satisfy
    alone) and that an unreachable `/me` no longer blanks the account menu.
-4. **Finish browser OAuth validation** — the operator-only redirect-URI
+3. **Finish browser OAuth validation** — the operator-only redirect-URI
    registration checks (Deploy status below) are still open.
 
 After this, Phase 2 — in-app authoring + dynamic catalog — is the next
