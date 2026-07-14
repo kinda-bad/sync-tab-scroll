@@ -15,7 +15,7 @@ function makeCtx() {
 }
 
 describe('session-join', () => {
-  it('sends an error for a nonexistent session code', () => {
+  it('sends a typed session-not-found (carrying the code) and no error when the code has no live session (F001)', () => {
     const ctx = makeCtx();
     const socket = fakeSocket();
     const sent: unknown[] = [];
@@ -25,7 +25,11 @@ describe('session-join', () => {
 
     handleSessionJoin(ctx, socket, { type: 'session-join', code: 'NOPE', displayName: 'Bob' });
 
-    expect(sent).toEqual([{ type: 'error', message: 'Session NOPE not found' }]);
+    // Exactly one message: the typed terminal signal carrying the requested
+    // code — not a stringly-typed `error` the client has to guess about. The
+    // client treats this as unconditionally terminal (ws-client.ts).
+    expect(sent).toEqual([{ type: 'session-not-found', code: 'NOPE' }]);
+    expect(sent.some((m) => (m as { type: string }).type === 'error')).toBe(false);
   });
 
   it('finds the session regardless of the join code\'s case (entry box only visually uppercases input)', () => {

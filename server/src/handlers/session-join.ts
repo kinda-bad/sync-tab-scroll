@@ -8,7 +8,11 @@ import { seedHostMembershipUnlocks } from '../membership-unlock.js';
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
   const session = ctx.sessionStore.get(message.code);
   if (!session) {
-    ctx.connections.send(socket, { type: 'error', message: `Session ${message.code} not found` });
+    // Typed terminal signal (F001) rather than a stringly-typed `error`: the
+    // client can treat `session-not-found` as unconditionally terminal (clear
+    // the stale stored session + stop reconnecting) without inferring intent
+    // from an error string plus its own `session === null` guess.
+    ctx.connections.send(socket, { type: 'session-not-found', code: message.code });
     return;
   }
 

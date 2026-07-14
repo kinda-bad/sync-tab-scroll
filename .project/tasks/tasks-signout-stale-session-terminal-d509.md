@@ -17,7 +17,7 @@ status: in-progress
   and that `code` is required — failing to typecheck before the union is
   extended. Addresses F001.
 
-- [ ] T002 In `server/src/handlers/session-join.ts`, change the no-live-session
+- [x] T002 In `server/src/handlers/session-join.ts`, change the no-live-session
   branch (line ~11) to `ctx.connections.send(socket, { type: 'session-not-found', code: message.code })`
   instead of `{ type: 'error', message: \`Session ${message.code} not found\` }`.
   Test-first: a server handler test (mirror the existing `server/src/handlers/*`
