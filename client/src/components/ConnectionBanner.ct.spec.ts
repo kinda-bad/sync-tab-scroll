@@ -16,6 +16,15 @@ test('is visible while disconnected', async ({ mount }) => {
   await expect(component.getByTestId('connection-banner')).toBeVisible();
 });
 
+test('is hidden on Landing (no WsClient) even while the default status is connecting', async ({ mount }) => {
+  // Regression: `connectionStatus` defaults to 'connecting', and the banner
+  // renders unconditionally in App.svelte — so on Landing, where connect() has
+  // never run and there is no WsClient, the banner falsely claimed a lost
+  // connection. It must stay hidden until a WsClient actually exists.
+  const component = await mount(ConnectionBannerHarness, { props: { status: 'connecting', hasWsClient: false } });
+  await expect(component.getByTestId('connection-banner')).toHaveCount(0);
+});
+
 test('is pinned to the top of the viewport, above alphaTab cursors and the lyrics overlay', async ({ mount, page }) => {
   const component = await mount(ConnectionBannerHarness, { props: { status: 'disconnected' } });
   await expect(component.getByTestId('connection-banner')).toBeVisible();

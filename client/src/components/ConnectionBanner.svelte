@@ -2,7 +2,12 @@
   import { clientStore } from '../store';
 </script>
 
-{#if $clientStore.connectionStatus !== 'connected'}
+<!-- Gated on the shared WsClient: the banner reflects that one connection's
+     health, so it only appears once connect() has created a WsClient. On
+     Landing there is none yet and `connectionStatus` sits at its default
+     'connecting' — without this gate the banner falsely showed a lost
+     connection when nothing was even connecting. -->
+{#if $clientStore.wsClient && $clientStore.connectionStatus !== 'connected'}
   <div class="connection-banner" data-testid="connection-banner">
     Connection lost — trying to reconnect…
   </div>

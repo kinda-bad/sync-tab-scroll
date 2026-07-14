@@ -16,7 +16,11 @@
 
 {#if status === 'signed-in'}
   <span class="account-name" title={displayName ?? ''}>{displayName}</span>
-  <button type="button" class="account-action" onclick={onSignOut}>Sign out</button>
+  <!-- Wrapped, not bound bare: `onclick={onSignOut}` would hand the click
+       PointerEvent to signOut() as its first arg, shadowing its defaulted
+       `fetchFn` param — so the real fetch never fired and logout silently
+       no-op'd. Invoke with no args so `fetchFn` keeps its `fetch` default. -->
+  <button type="button" class="account-action" onclick={() => onSignOut()}>Sign out</button>
 {:else if status === 'signed-out'}
   {#if expanded}
     <button type="button" class="account-action" onclick={() => onSignIn('google')}>Google</button>
