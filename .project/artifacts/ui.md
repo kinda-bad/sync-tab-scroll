@@ -1,10 +1,10 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-13
+last_updated: 2026-07-14
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -289,6 +289,24 @@ regardless of whether playback has started:
     participant's own alphaTab instance immediately (`metronomeVolume`)
     whether visible or headless, with a hint making the scope plain
     ("Only you hear your metronome.").
+  - a personal "Mute parts" section, visible to **every** participant (not
+    host-gated): lists every part in `Session.availableParts` (instrument
+    name, same source the Participants list and Playback View's "Playing:
+    X" label already read) with a per-part mute toggle. Muting a part
+    calls alphaTab's own `api.changeTrackMute()` against that participant's
+    already-loaded full mix (Playback View, above) — nothing is added to or
+    removed from what's loaded, only which already-loaded tracks are
+    audible. **Personal and client-local only**, same reasoning as the
+    Metronome toggle immediately above: every participant's mix is fully
+    independent, so a mute choice can only ever affect that one
+    participant, never anyone else's — there is no session-level mute.
+    Persisted like the theme/metronome choices, but keyed per song *and*
+    track (a mute choice for "Bass" on one song must not silently carry
+    over to a different song's differently-indexed "Bass"). A participant
+    **may** mute their own currently-selected/rendered part — no
+    restriction; some practice workflows want to hear only the backing
+    while reading their own tab. Hint text makes the personal scope plain
+    ("Only you don't hear muted parts — everyone else still does.").
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle
@@ -387,6 +405,16 @@ identically regardless of which one they're on:
   device distinct from the persistent Bar's own readiness/progress
   indicator). Gaps of one measure or shorter get no special treatment —
   the sheet just continues to the next line as before.
+
+Every participant's alphaTab instance loads and plays the **full
+multi-track mix** by default — every instrument's MIDI notes, not just the
+part they've selected to render/follow (`Participant.selectedPart` scopes
+which track is rendered and drives the shared clock, not which tracks play
+audio; alphaTab's own `trackIndexes` load parameter governs rendering only,
+per its own API contract). This is true regardless of whether a
+participant has an instrument or the tab-less lyrics part selected. A
+"Mute parts" preference (below) is the only thing that silences individual
+tracks in that mix, and it is personal — see below.
 
 Both renderings share alphaTab's native metronome and count-in
 (`metronomeVolume`, `countInVolume` — both off by default; count-in is
