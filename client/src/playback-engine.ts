@@ -11,7 +11,7 @@ import { findLyricGaps, type LyricGap } from './lyrics-gap-timing';
 
 interface GapIndicatorHandle {
   gap: LyricGap;
-  container: HTMLElement;
+  lineEl: HTMLElement;
   dotEls: HTMLElement[];
   drainEl: HTMLElement;
 }
@@ -175,36 +175,44 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
       renderGapIndicators();
     }
 
-    // Inserts one gap-indicator element (4 .gap-dot children + 1 .gap-drain
-    // child) per qualifying gap, anchored via insertBefore against the
-    // *rendered* line list's own DOM nodes (lineEls) — insertBeforeIndex ===
-    // lineEls.length never occurs since this feature only covers a leading
-    // gap or a gap between two real lines (plan: a trailing gap after the
-    // last line is out of scope), so a reference node always exists.
-    // brand.md: the drain bar carries both theme-specific classes
+    // T002 (feedback F006): the 4 count-in dots render as an inline prefix
+    // on the upcoming line's own `.lyric-line` text (e.g. "···· Hello
+    // there") rather than as a separate element positioned above it —
+    // inserted as the line's leading children, ahead of its existing text
+    // node, so removing them later (updateGapIndicators) leaves the
+    // original text intact. The drain bar stays a separate element,
+    // positioned directly above the upcoming line via insertBefore against
+    // the *rendered* line list's own DOM nodes (lineEls) — insertBeforeIndex
+    // === lineEls.length never occurs since this feature only covers a
+    // leading gap or a gap between two real lines (plan: a trailing gap
+    // after the last line is out of scope), so a reference node always
+    // exists. brand.md: the drain bar carries both theme-specific classes
     // unconditionally (`.gap-drain-tape`/`.gap-drain-led`, T006) — CSS
     // decides which one actually renders per data-theme, same convention as
     // HazardBar's own `.hazard-stripes`/`.led-marquee` pair.
     function renderGapIndicators(): void {
-      for (const handle of gapIndicators) handle.container.remove();
+      for (const handle of gapIndicators) {
+        handle.dotEls.forEach((dot) => dot.remove());
+        handle.drainEl.remove();
+      }
       gapIndicators = gaps.map((gap) => {
-        const container = document.createElement('div');
-        container.className = 'gap-indicator';
+        const lineEl = lineEls[gap.insertBeforeIndex];
 
+        const dotFrag = document.createDocumentFragment();
         const dotEls = Array.from({ length: 4 }, () => {
           const dot = document.createElement('span');
           dot.className = 'gap-dot';
-          container.appendChild(dot);
+          dotFrag.appendChild(dot);
           return dot;
         });
+        lineEl.insertBefore(dotFrag, lineEl.firstChild);
 
         const drainEl = document.createElement('div');
         drainEl.className = 'gap-drain gap-drain-tape gap-drain-led';
         drainEl.style.setProperty('--gap-fill', '1');
-        container.appendChild(drainEl);
+        containers.fullLyricsEl.insertBefore(drainEl, lineEl);
 
-        containers.fullLyricsEl.insertBefore(container, lineEls[gap.insertBeforeIndex] ?? null);
-        return { gap, container, dotEls, drainEl };
+        return { gap, lineEl, dotEls, drainEl };
       });
     }
 
@@ -220,9 +228,10 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     // `gapIndicators` array (not just hidden) once `currentTimeMs` passes
     // `gap.endMs`, mirroring `renderGapIndicators`'s own removal shape.
     function updateGapIndicators(currentTimeMs: number): void {
-      gapIndicators = gapIndicators.filter(({ gap, container }) => {
+      gapIndicators = gapIndicators.filter(({ gap, dotEls, drainEl }) => {
         if (currentTimeMs > gap.endMs) {
-          container.remove();
+          dotEls.forEach((dot) => dot.remove());
+          drainEl.remove();
           return false;
         }
         return true;

@@ -56,37 +56,46 @@ async function mountAndWaitForScoreAndLrc(mount: any, page: import('@playwright/
   await page.waitForTimeout(300);
 }
 
-test('a qualifying leading gap inserts a gap-indicator with 4 dots + 1 drain bar before the first line', async ({ mount, page }) => {
+// T002 (tasks-7f0f-4f2d.md, feedback F006): the 4 count-in dots render as an
+// inline prefix on the upcoming `.lyric-line`'s own text — not as a separate
+// element positioned above the line — so the line reads e.g. "···· Hello
+// there". The drain bar remains a separate element positioned directly
+// above the upcoming line (ui.md), just no longer sharing a `.gap-indicator`
+// wrapper with the dots.
+test('a qualifying leading gap renders 4 dots inline as a prefix on the first line, plus a drain bar above it', async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
-  const indicators = page.locator('.gap-indicator');
-  await expect(indicators).toHaveCount(2); // leading gap + the inter-line gap
+  const firstLine = page.locator('.lyric-line').nth(0);
+  await expect(firstLine.locator('.gap-dot')).toHaveCount(4);
+  await expect(firstLine).toContainText('Hello there');
 
-  const leading = indicators.nth(0);
-  await expect(leading.locator('.gap-dot')).toHaveCount(4);
-  await expect(leading.locator('.gap-drain')).toHaveCount(1);
-
-  // Positioned before the first .lyric-line: the indicator is the first
-  // child of the container, "Hello there" the second.
+  // The drain bar sits directly before the line it belongs to, not wrapped
+  // together with the dots in a shared container.
+  await expect(page.locator('.gap-drain')).toHaveCount(2); // leading + inter-line
   const children = await page.locator('.full-lyrics-view > *').evaluateAll((els) => els.map((el) => el.className));
-  expect(children[0]).toContain('gap-indicator');
+  expect(children[0]).toContain('gap-drain');
   expect(children[1]).toContain('lyric-line');
 });
 
-test('a qualifying inter-line gap inserts a gap-indicator between the two lines it separates', async ({ mount, page }) => {
+test('a qualifying inter-line gap renders its dots inline on the second line, with its drain bar between the two lines', async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
+  const secondLine = page.locator('.lyric-line').nth(1);
+  await expect(secondLine.locator('.gap-dot')).toHaveCount(4);
+  await expect(secondLine).toContainText('General Kenobi');
+
   const children = await page.locator('.full-lyrics-view > *').evaluateAll((els) => els.map((el) => el.className));
-  // [gap-indicator (leading), "Hello there", gap-indicator (inter-line), "General Kenobi"]
+  // [gap-drain (leading), "Hello there" (with inline dots), gap-drain (inter-line), "General Kenobi" (with inline dots)]
   expect(children).toHaveLength(4);
-  expect(children[2]).toContain('gap-indicator');
+  expect(children[2]).toContain('gap-drain');
   expect(children[3]).toContain('lyric-line');
 });
 
-test('a short (<= 1 measure) gap inserts no gap-indicator element at all', async ({ mount, page }) => {
+test('a short (<= 1 measure) gap renders no dots and no drain bar at all', async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/short-gap.lrc');
 
-  await expect(page.locator('.gap-indicator')).toHaveCount(0);
+  await expect(page.locator('.gap-dot')).toHaveCount(0);
+  await expect(page.locator('.gap-drain')).toHaveCount(0);
   await expect(page.locator('.lyric-line')).toHaveCount(2);
 });
 
@@ -95,16 +104,13 @@ test('dots light up one at a time, in order, across the 4 beats immediately prec
 
   // Inter-line gap: [3000ms, 6000ms], 120bpm/4-4 local measure = 2000ms,
   // beat = 500ms. The 4 beat timestamps immediately preceding 6000 are
-  // 4000, 4500, 5000, 5500.
-  // Selected structurally (immediately follows the first .lyric-line) rather
-  // than by index — T001 removes the leading indicator once its own gap
-  // elapses (before 4000ms), which would shift a `.nth(1)` index.
-  const interLineIndicator = page.locator('.lyric-line + .gap-indicator');
-  const dots = interLineIndicator.locator('.gap-dot');
+  // 4000, 4500, 5000, 5500. The inter-line gap's dots are inline on the
+  // second line ("General Kenobi").
+  const dots = page.locator('.lyric-line').nth(1).locator('.gap-dot');
 
   await triggerPosition(page, 3999);
   await expect(dots).toHaveCount(4);
-  await expect(interLineIndicator.locator('.gap-dot.active')).toHaveCount(0);
+  await expect(page.locator('.lyric-line').nth(1).locator('.gap-dot.active')).toHaveCount(0);
 
   await triggerPosition(page, 4000);
   await expect(dots.nth(0)).toHaveClass(/active/);
@@ -124,9 +130,8 @@ test('dots light up one at a time, in order, across the 4 beats immediately prec
 test("the drain bar's fill decreases from 100% at gap start to 0% at gap end", async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
-  // Structural selector, same reasoning as the dots test above.
-  const interLineIndicator = page.locator('.lyric-line + .gap-indicator');
-  const drain = interLineIndicator.locator('.gap-drain');
+  // The inter-line drain bar immediately precedes the second line.
+  const drain = page.locator('.lyric-line + .gap-drain');
 
   function readFill() {
     return drain.evaluate((el) => Number(el.style.getPropertyValue('--gap-fill')));
@@ -142,20 +147,26 @@ test("the drain bar's fill decreases from 100% at gap start to 0% at gap end", a
   expect(await readFill()).toBeCloseTo(0, 2);
 });
 
-// T001 (tasks-7f0f-4f2d.md, feedback F003/F004): once a gap fully elapses
-// (currentTimeMs past gap.endMs), its indicator (.gap-drain + .gap-dot
-// children) must clear from the DOM instead of staying frozen forever.
-test('a gap-indicator is removed once its gap has fully elapsed', async ({ mount, page }) => {
+// T001 (feedback F003/F004): once a gap fully elapses (currentTimeMs past
+// gap.endMs), its dots and drain bar clear — the dots are removed from the
+// `.lyric-line` (leaving plain text behind) and the drain bar element is
+// removed entirely — instead of staying frozen forever.
+test('dots and drain bar clear once a gap has fully elapsed, leaving plain line text behind', async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
-  const indicators = page.locator('.gap-indicator');
-  await expect(indicators).toHaveCount(2);
+  const firstLine = page.locator('.lyric-line').nth(0);
+  await expect(firstLine.locator('.gap-dot')).toHaveCount(4);
+  await expect(page.locator('.gap-drain')).toHaveCount(2);
 
-  // Leading gap ends at 2500ms — past it, only the inter-line indicator remains.
+  // Leading gap ends at 2500ms — past it, its dots/drain clear.
   await triggerPosition(page, 2600);
-  await expect(indicators).toHaveCount(1);
+  await expect(firstLine.locator('.gap-dot')).toHaveCount(0);
+  await expect(firstLine).toHaveText('Hello there');
+  await expect(page.locator('.gap-drain')).toHaveCount(1);
 
   // Inter-line gap ends at 6000ms — past it, none remain.
   await triggerPosition(page, 6100);
-  await expect(indicators).toHaveCount(0);
+  await expect(page.locator('.gap-dot')).toHaveCount(0);
+  await expect(page.locator('.gap-drain')).toHaveCount(0);
+  await expect(page.locator('.lyric-line').nth(1)).toHaveText('General Kenobi');
 });

@@ -17,7 +17,7 @@ status: in-progress
   staying frozen in the DOM. Addresses feedback F003, F004.
 
 ## Phase 2: Count-in dots as inline lyric prefix (F006)
-- [ ] T002 [artifacts: ui] Write a failing CT test first asserting the
+- [x] T002 [artifacts: ui] Write a failing CT test first asserting the
   count-in dots render as an inline prefix on the upcoming `.lyric-line`
   text (e.g. "···· You will be") and clear/resolve into the plain line
   text at the right time. Then, in `client/src/playback-engine.ts`,
