@@ -49,6 +49,15 @@ async function mountAndWaitForScoreAndLrc(mount: any, page: import('@playwright/
   await page.waitForFunction(() => (window as unknown as { __getEngineState: () => { scoreLoaded: boolean } | undefined }).__getEngineState()?.scoreLoaded === true, {
     timeout: 20_000,
   });
+  // T003 (feedback F005): playback-engine.ts's playerPositionChanged
+  // handler now gates on `api.isReadyForPlayback` (ignoring alphaTab's own
+  // internal pre-ready position event) — wait for it explicitly rather than
+  // a fixed timeout, so a manually-triggered triggerPosition() in a test
+  // below isn't racily ignored under CPU contention (many CT workers).
+  await page.waitForFunction(
+    () => (window as unknown as { __getApi: () => { isReadyForPlayback: boolean } }).__getApi()?.isReadyForPlayback === true,
+    { timeout: 20_000 },
+  );
   // Gives both the async .lrc fetch and the gap-computation wiring (which
   // needs both scoreLoaded and the fetch to resolve, in either order) a
   // moment to settle, mirroring full-lyrics-view.ct.spec.ts's own fetch race

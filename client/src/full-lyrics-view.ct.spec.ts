@@ -47,6 +47,14 @@ async function mountAndWaitForScore(mount: any, page: import('@playwright/test')
     timeout: 20_000,
   });
   expect((await readEngineState(page))?.scoreLoaded).toBe(true);
+  // T003 (feedback F005): playback-engine.ts's playerPositionChanged
+  // handler gates on `api.isReadyForPlayback` — wait for it explicitly
+  // (not just a fixed timeout) so a manually-triggered triggerPosition()
+  // below isn't racily ignored under CPU contention (many CT workers).
+  await page.waitForFunction(
+    () => (window as unknown as { __getApi: () => { isReadyForPlayback: boolean } }).__getApi()?.isReadyForPlayback === true,
+    { timeout: 20_000 },
+  );
   // Give the async `fetch(song.lyricsLrc).then(...)` a moment to resolve
   // before driving position — mirrors the real race between lrc parsing
   // and the first tick in production.
@@ -74,12 +82,23 @@ test('renders every lyric line immediately on mount, before any playback positio
   await expect(lines.nth(3)).toHaveText('a bold one');
 });
 
-test('the first line is highlighted as active by default, before playback starts', async ({ mount, page }) => {
+// T003 (tasks-7f0f-4f2d.md, feedback F005): a prior version of this
+// behavior pre-highlighted the first line synchronously on load, before any
+// real playback position data confirmed its timestamp had actually been
+// reached — which read as wrong for songs with a leading instrumental gap.
+// No line is active until a genuine playerPositionChanged event clears one.
+test('no line is highlighted as active immediately after load, before any playback position event fires', async ({ mount, page }) => {
   await mountAndWaitForScore(mount, page);
 
-  const active = page.locator('.lyric-line.active');
-  await expect(active).toHaveCount(1);
-  await expect(active).toHaveText('Hello there');
+  await expect(page.locator('.lyric-line.active')).toHaveCount(0);
+});
+
+test('the first line becomes active once a playback position event confirms its timestamp has been reached', async ({ mount, page }) => {
+  await mountAndWaitForScore(mount, page);
+  await expect(page.locator('.lyric-line.active')).toHaveCount(0);
+
+  await triggerPosition(page, 0);
+  await expect(page.locator('.lyric-line.active')).toHaveText('Hello there');
 });
 
 test('the container resolves to lyrics.css\'s flex layout, not display:none', async ({ mount, page }) => {

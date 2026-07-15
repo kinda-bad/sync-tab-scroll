@@ -30,7 +30,7 @@ status: in-progress
   lifecycle change already existing. Addresses feedback F006.
 
 ## Phase 3: First-line/syllable pre-highlight fix (F005)
-- [ ] T003 [artifacts: ui] [parallel] Write a failing test first asserting
+- [x] T003 [artifacts: ui] [parallel] Write a failing test first asserting
   no lyric line or syllable is `.active` immediately after `.lrc`/song
   load, and only becomes active once playback position data confirms its
   timestamp has been reached. Then, in `client/src/playback-engine.ts`,

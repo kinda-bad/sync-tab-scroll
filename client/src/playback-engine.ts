@@ -263,12 +263,14 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
           containers.fullLyricsEl.appendChild(el);
           return el;
         });
-        // Populated (and the first line marked active as the "upcoming"
-        // one) the moment the .lrc fetch resolves — not gated on the first
-        // playerPositionChanged event, so the sheet is never blank during
-        // an instrumental intro (ui.md "Lyrics part selected", reworked
-        // 2026-07-06).
-        if (lineEls.length > 0) setActiveLine(0);
+        // T003 (feedback F005): no line is marked active synchronously on
+        // load — a prior "upcoming" pre-highlight of line 0 here read as
+        // wrong for songs with a leading instrumental gap, since it claimed
+        // a line was active before any real playback position confirmed
+        // its timestamp had been reached. The sheet is still populated
+        // immediately (never blank during an instrumental intro), just
+        // with no line highlighted until a genuine playerPositionChanged
+        // event below clears one.
         pendingAllLines = allLines;
         tryComputeGaps();
       });
@@ -280,11 +282,19 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
     api.playerPositionChanged.on((e) => {
       if (lineEls.length === 0) return;
-      // Defaults to the first line (not -1) so the sheet always has an
-      // active line, even before any line's own timestamp has passed —
-      // same "first line is the upcoming one" contract as the synchronous
-      // initial population above.
-      let index = 0;
+      // T003 (feedback F005): alphaTab fires an internal playerPositionChanged
+      // during setup, well before real playback, with currentTime near/at 0
+      // (same pattern as the isSeek internal-event guard elsewhere in this
+      // file) — that's not a "genuine" position update confirming a line's
+      // timestamp has been reached, so it's ignored here just like the seek
+      // listener already ignores its own internal pre-ready events.
+      if (!api.isReadyForPlayback) return;
+      // T003 (feedback F005): defaults to -1 (no active line) rather than
+      // the first line — a real playerPositionChanged event must actually
+      // confirm a line's timestamp has been reached before it's marked
+      // active. (A first line whose own timestamp is 0 still activates
+      // immediately once that genuine event arrives, e.g. `currentTime: 0`.)
+      let index = -1;
       for (let i = 0; i < lrcLines.length; i++) {
         if (lrcLines[i].timeMs <= e.currentTime) index = i;
         else break;
