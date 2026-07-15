@@ -7,7 +7,8 @@
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
-  import { setEngineMetronome } from '../playback-engine';
+  import { loadStoredTrackMute, persistTrackMute } from '../track-mute-preference';
+  import { setEngineMetronome, setEngineTrackMute } from '../playback-engine';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -27,6 +28,18 @@
   $: themeMode = theme.endsWith('dark') ? 'dark' : 'light';
 
   let metronome = loadStoredMetronome();
+
+  // Personal, this-device-only "mute parts" preference (ui.md Preferences
+  // tab, track-mute-preference.ts) — keyed per song+track, so recomputed
+  // whenever the loaded session (and thus its selectedSong/availableParts)
+  // changes, not on every unrelated clientStore tick (session's own
+  // reference only changes on a real session update, same as the rest of
+  // this component's session-derived state).
+  let trackMutes: Record<number, boolean> = {};
+  $: if (session?.selectedSong) {
+    const songId = session.selectedSong;
+    trackMutes = Object.fromEntries(session.availableParts.map((p) => [p.trackIndex, loadStoredTrackMute(songId, p.trackIndex)]));
+  }
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
@@ -73,6 +86,19 @@
     metronome = !metronome;
     persistMetronome(metronome);
     setEngineMetronome(metronome);
+  }
+
+  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // toggleMetronome's two-call shape exactly, but keyed per (songId,
+  // trackIndex) — a mute choice for one song's track must not carry over
+  // to a different song's differently-indexed track.
+  function toggleTrackMute(trackIndex: number) {
+    if (!session?.selectedSong) return;
+    const songId = session.selectedSong;
+    const muted = !trackMutes[trackIndex];
+    trackMutes = { ...trackMutes, [trackIndex]: muted };
+    persistTrackMute(songId, trackIndex, muted);
+    setEngineTrackMute(trackIndex, muted);
   }
 
   function toggleCountIn() {
@@ -189,6 +215,20 @@
       />
     </div>
     <p class="hint">Only you hear your metronome.</p>
+
+    {#if session && session.availableParts.length > 0}
+      <span class="section-label">Mute parts</span>
+      <div class="control-row">
+        {#each session.availableParts as part (part.trackIndex)}
+          <Button
+            variant={trackMutes[part.trackIndex] ? 'riot' : 'ghost'}
+            label={`${part.instrumentName}: ${trackMutes[part.trackIndex] ? 'Muted' : 'Unmuted'}`}
+            onclick={() => toggleTrackMute(part.trackIndex)}
+          />
+        {/each}
+      </div>
+      <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
+    {/if}
   {/if}
 </Modal>
 

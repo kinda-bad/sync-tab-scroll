@@ -189,6 +189,48 @@ test('Preferences tab: any participant sees the personal metronome toggle; click
   expect(sent).toEqual([]);
 });
 
+/**
+ * T004 (tasks-part-mute-toggle-f0d4.md, ui.md Preferences tab "Mute parts"):
+ * a per-part mute toggle for every entry in Session.availableParts, personal
+ * and client-local (like the Metronome toggle above it) — never a WS send.
+ */
+test('Preferences tab: a mute toggle renders per available part, reflecting stored mute state, and clicking flips its own visible state', async ({
+  mount,
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem('sync-tab-scroll:mute:creep:1', 'on');
+  });
+
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [
+      { trackIndex: 0, instrumentName: 'Lead Guitar' },
+      { trackIndex: 1, instrumentName: 'Bass' },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+
+  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
+  await expect(component.getByText('Bass: Muted')).toBeVisible();
+
+  await component.getByText('Lead Guitar: Unmuted').click();
+  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+
+  await component.getByText('Bass: Muted').click();
+  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+});
+
+test('Preferences tab: shows the personal-scope hint below Mute parts', async ({ mount }) => {
+  const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toBeVisible();
+});
+
 test('clicking Count-in sends count-in-set with the flipped value', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: baseSession({ countInEnabled: true }), selfParticipantId: 'host-1' },

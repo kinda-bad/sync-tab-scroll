@@ -50,7 +50,7 @@ status: in-progress
 
 ## Phase 3: Preferences UI
 
-- [ ] T004 [artifacts: ui] Write a failing CT test first (new spec or an
+- [x] T004 [artifacts: ui] Write a failing CT test first (new spec or an
   addition to `client/src/components/SettingsModal.ct.spec.ts`, following
   its existing mount/props conventions) asserting: the Preferences tab
   renders one mute toggle button per entry in a multi-part
