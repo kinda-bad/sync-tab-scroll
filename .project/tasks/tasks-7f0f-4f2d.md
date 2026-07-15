@@ -45,7 +45,7 @@ status: in-progress
   Addresses feedback F005.
 
 ## Phase 4: Syllable highlight timing offset (F001)
-- [ ] T004 [artifacts: ui] [parallel] Instrument
+- [x] T004 [artifacts: ui] [parallel] Instrument
   `api.playerPositionChanged`'s reported tick against actual audio
   playback time for a known song (TIRO or Creep) to locate where the
   ~2-syllable-ahead offset originates — compare the syllable list's

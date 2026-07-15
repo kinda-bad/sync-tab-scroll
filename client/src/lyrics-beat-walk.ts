@@ -42,7 +42,17 @@ export function walkLyricBeats(score: at.model.Score, lyricsTrackIndex: number, 
             // such runs (e.g. "o-" repeated across 4 consecutive beats).
             // Keeps the first beat's tick as the syllable's onset.
             if (previous && previous.text === text) continue;
-            syllables.push({ text, tickPosition: bar.masterBar.start + beat.playbackStart });
+            // T004 (feedback F001, "~2-syllable-ahead" offset): was
+            // `bar.masterBar.start + beat.playbackStart` — a manual
+            // reconstruction against the *display* timeline. alphaTab's own
+            // `beat.absolutePlaybackStart` already computes the correct
+            // absolute playback-timeline tick, accounting for grace-note
+            // timing shifts the display-timeline reconstruction ignores
+            // (per alphaTab's own doc comment on `playbackStart`: "This
+            // might differ from the actual playback time due to special
+            // grace types.") — using it directly fixes syllables
+            // activating ahead of the actual audio.
+            syllables.push({ text, tickPosition: beat.absolutePlaybackStart });
           }
         }
       }

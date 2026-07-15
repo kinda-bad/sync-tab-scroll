@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { groupIntoLines, walkLyricBeats } from './lyrics-beat-walk';
 
-function fakeBeat(lyrics: (string | undefined)[], playbackStart: number) {
-  return { lyrics, playbackStart };
+// T004 (tasks-7f0f-4f2d.md, feedback F001): `absolutePlaybackStart` is a
+// distinct alphaTab-computed value from `masterBar.start + playbackStart` —
+// per alphaTab's own doc comment on `Beat.playbackStart`/`displayStart`:
+// "This might differ from the actual playback time due to special grace
+// types." A beat preceded by grace notes plays later, in real time, than
+// its bar-relative `playbackStart` alone would suggest; `masterBar.start`
+// is a *display*-timeline bar offset, not a playback one. The fake beats
+// below default `absolutePlaybackStart` to `masterBar.start + playbackStart`
+// (the common case, no grace notes) unless a divergent value is passed
+// explicitly, so most tests don't need to care about the distinction.
+function fakeBeat(lyrics: (string | undefined)[], playbackStart: number, absolutePlaybackStart = playbackStart) {
+  return { lyrics, playbackStart, absolutePlaybackStart };
 }
 
 function fakeScore(tracks: { staves: { bars: { masterBar: { start: number }; voices: { beats: ReturnType<typeof fakeBeat>[] }[] }[] }[] }[]) {
@@ -10,7 +20,7 @@ function fakeScore(tracks: { staves: { bars: { masterBar: { start: number }; voi
 }
 
 describe('walkLyricBeats', () => {
-  it('emits one syllable per beat with tickPosition = masterBar.start + beat.playbackStart', () => {
+  it('emits one syllable per beat with tickPosition = beat.absolutePlaybackStart', () => {
     const score = fakeScore([
       {
         staves: [
@@ -18,7 +28,7 @@ describe('walkLyricBeats', () => {
             bars: [
               {
                 masterBar: { start: 1000 },
-                voices: [{ beats: [fakeBeat(['la'], 10), fakeBeat(['di'], 20)] }],
+                voices: [{ beats: [fakeBeat(['la'], 10, 1010), fakeBeat(['di'], 20, 1020)] }],
               },
             ],
           },
@@ -71,6 +81,51 @@ describe('walkLyricBeats', () => {
     ]);
 
     expect(walkLyricBeats(score, 0, 1)).toEqual([{ text: 'secondary', tickPosition: 0 }]);
+  });
+
+  // Regression test for feedback F001's "~2-syllable-ahead" symptom:
+  // previously `tickPosition` was computed as `masterBar.start +
+  // beat.playbackStart` — a *display*-timeline reconstruction that ignores
+  // grace-note timing shifts alphaTab itself already accounts for in
+  // `absolutePlaybackStart`. A beat preceded by grace notes plays later in
+  // real audio time than its bar-relative `playbackStart` alone implies,
+  // so the old formula under-counted the tick, activating each following
+  // syllable early relative to real playback — exactly the "ahead of the
+  // audio" symptom. Each of these 4 beats is preceded by grace notes
+  // consuming 2 ticks apiece, so `absolutePlaybackStart` runs increasingly
+  // further ahead of `masterBar.start + playbackStart` as the bar
+  // progresses (the previously-observed off-by-~2 drift, compounding).
+  it('uses beat.absolutePlaybackStart, not masterBar.start + playbackStart, when grace notes make them diverge', () => {
+    const score = fakeScore([
+      {
+        staves: [
+          {
+            bars: [
+              {
+                masterBar: { start: 1000 },
+                voices: [
+                  {
+                    beats: [
+                      fakeBeat(['one'], 0, 1002),
+                      fakeBeat(['two'], 10, 1014),
+                      fakeBeat(['three'], 20, 1026),
+                      fakeBeat(['four'], 30, 1038),
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(walkLyricBeats(score, 0, 0)).toEqual([
+      { text: 'one', tickPosition: 1002 },
+      { text: 'two', tickPosition: 1014 },
+      { text: 'three', tickPosition: 1026 },
+      { text: 'four', tickPosition: 1038 },
+    ]);
   });
 });
 
