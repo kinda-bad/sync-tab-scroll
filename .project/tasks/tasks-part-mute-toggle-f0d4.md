@@ -24,7 +24,7 @@ status: in-progress
 
 ## Phase 2: Engine wiring
 
-- [ ] T002 [artifacts: ui] Write a failing test first (extend
+- [x] T002 [artifacts: ui] Write a failing test first (extend
   `client/src/playback-engine.test.ts` if it exists, else the CT-spec
   convention used for `playback-engine.ct.spec.ts`) asserting a new
   `setEngineTrackMute(trackIndex: number, muted: boolean): void` exported

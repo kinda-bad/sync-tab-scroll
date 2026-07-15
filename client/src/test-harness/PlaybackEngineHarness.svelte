@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ensurePlaybackEngine, renderNowVisible, __getEngineStateForTesting } from '../playback-engine';
+  import { ensurePlaybackEngine, renderNowVisible, setEngineTrackMute, __getEngineStateForTesting } from '../playback-engine';
   import { clientStore } from '../store';
   import type { CatalogSong } from '@sync-tab-scroll/shared';
   import type { WsClient } from '../ws-client';
@@ -35,6 +35,9 @@
     // and separately lets the test flip visibility independent of any Svelte
     // reactive block (App.svelte's own tick()+rAF safety net isn't present here).
     (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible = renderNowVisible;
+    // Test-only hook for T002 (tasks-part-mute-toggle-f0d4.md): lets a CT
+    // test call the real setEngineTrackMute against this harness's engine.
+    (window as unknown as { __setEngineTrackMute: (trackIndex: number, muted: boolean) => void }).__setEngineTrackMute = setEngineTrackMute;
 
     const song: CatalogSong = {
       id: 'creep',

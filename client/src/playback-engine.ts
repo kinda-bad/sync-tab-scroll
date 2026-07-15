@@ -470,3 +470,23 @@ export function setEngineMetronome(enabled: boolean): void {
   if (!state) return;
   state.api.metronomeVolume = enabled ? 1 : 0;
 }
+
+/**
+ * Applies a personal "mute this part" preference (ui.md Preferences tab,
+ * track-mute-preference.ts) to the live engine's currently loaded score via
+ * alphaTab's own api.changeTrackMute() — every participant's instance
+ * already plays the full multi-track mix regardless of which part they're
+ * rendering, so this only silences a track locally, never touching what's
+ * loaded or session state. No-op (not a throw) both when no engine exists
+ * yet and when the score hasn't loaded — changeTrackMute needs real Track
+ * objects that only exist once scoreLoaded has fired and populated
+ * state.score (mirrors setEngineMetronome's `if (!state) return;` shape,
+ * with an added guard for state.score).
+ */
+export function setEngineTrackMute(trackIndex: number, muted: boolean): void {
+  if (!state) return;
+  if (!state.score) return;
+  const track = state.score.tracks[trackIndex];
+  if (!track) return;
+  state.api.changeTrackMute([track], muted);
+}
