@@ -59,7 +59,7 @@ status: in-progress
   feedback F001.
 
 ## Phase 5: Lobby/lyrics single scroll region (F002)
-- [ ] T005 [artifacts: ui] Write a failing CT test first asserting only
+- [x] T005 [artifacts: ui] Write a failing CT test first asserting only
   one scrollable container is present when the lyrics view is active,
   and that lobby content is not visible/interactable once scrolled past.
   Then, in `client/src/App.svelte` (~L128-142), unify `.app-content`

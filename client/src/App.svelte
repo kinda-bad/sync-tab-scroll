@@ -125,7 +125,7 @@
   }
 </script>
 
-<div class="app-content" class:with-bar={showBar}>
+<div class="app-content" class:with-bar={showBar} class:collapsed={hasPart && isLyricsPart}>
   {#if $clientStore.view === 'landing'}
     <Landing />
   {:else if $clientStore.view === 'lobby'}
@@ -185,6 +185,19 @@
 <ConnectionBanner />
 
 <style>
+  /*
+   * T005 (feedback F002): `.app-content` (Lobby/Playback) and
+   * `.full-lyrics-view` used to be independent top-level siblings, each
+   * capable of scrolling — two scrollbars, and stale Lobby/Playback
+   * content sitting above the lyrics sheet, unable to scroll away, since
+   * `.app-content` has no height/overflow constraint of its own and just
+   * sits in normal document flow. Once a lyrics-part participant reaches
+   * the Playback view, `.app-content` collapses out of the document flow
+   * entirely — `.full-lyrics-view` becomes the one scrollable region.
+   */
+  .app-content.collapsed {
+    display: none;
+  }
   .app-content.with-bar {
     /* The hazard strip now pins to the very top of the viewport
        (Bar.svelte's .hazard-wrap) instead of sitting above the nav bar —
