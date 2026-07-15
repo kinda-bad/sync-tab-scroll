@@ -1,6 +1,6 @@
 ---
 slug: part-mute-toggle
-status: tasked
+status: implemented
 logged: 2026-07-14
 plan: plan-part-mute-toggle-2026-07-14-6b68.md
 tasks: tasks-part-mute-toggle-f0d4.md

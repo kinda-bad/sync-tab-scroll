@@ -1,7 +1,7 @@
 ---
 plan: plan-part-mute-toggle-2026-07-14-6b68.md
 generated: 2026-07-14
-status: in-progress
+status: completed
 ---
 
 # Tasks
