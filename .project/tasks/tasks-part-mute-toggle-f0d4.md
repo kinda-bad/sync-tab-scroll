@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Persisted mute preference module
 
-- [ ] T001 [artifacts: ui] [parallel] Write a failing unit test first
+- [x] T001 [artifacts: ui] [parallel] Write a failing unit test first
   (mirroring `client/src/metronome-preference.test.ts`'s conventions if
   present, else the general vitest pattern used across `client/src/*.test.ts`)
   for a new `client/src/track-mute-preference.ts`: `loadStoredTrackMute(songId:
