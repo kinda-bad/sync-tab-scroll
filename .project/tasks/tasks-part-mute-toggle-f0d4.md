@@ -69,7 +69,7 @@ status: in-progress
   ("Only you don't hear muted parts — everyone else still does."),
   matching the existing Metronome hint's markup pattern (~L191). Depends
   on T001, T002, T003.
-- [ ] T005 [artifacts: ui] Write a failing CT test first asserting the
+- [x] T005 [artifacts: ui] Write a failing CT test first asserting the
   persisted-preference round-trip: after clicking a mute toggle in the
   mounted `SettingsModal`, `loadStoredTrackMute(songId, trackIndex)`
   reflects the new value (confirming T004's click handler actually calls

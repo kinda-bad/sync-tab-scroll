@@ -223,6 +223,26 @@ test('Preferences tab: a mute toggle renders per available part, reflecting stor
   await expect(component.getByText('Bass: Unmuted')).toBeVisible();
 });
 
+/**
+ * T005 (tasks-part-mute-toggle-f0d4.md): confirms T004's click handler
+ * actually calls persistTrackMute (not just local component state) —
+ * loadStoredTrackMute must reflect the new value after a toggle click.
+ */
+test('Preferences tab: clicking a mute toggle persists via track-mute-preference (round-trips through loadStoredTrackMute)', async ({ mount, page }) => {
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByText('Lead Guitar: Unmuted').click();
+  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
+  expect(stored).toBe('on');
+});
+
 test('Preferences tab: shows the personal-scope hint below Mute parts', async ({ mount }) => {
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
