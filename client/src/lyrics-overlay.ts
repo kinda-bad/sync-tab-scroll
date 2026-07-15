@@ -68,6 +68,15 @@ export function createLyricsOverlay(api: AlphaTabApi, lines: Syllable[][], conta
     track.style.transform = `translateX(${translateX}px)`;
   }
 
+  // T003 (feedback F005): the guard against a `tickPosition === 0` entry
+  // flipping active before a genuine playerPositionChanged event arrives is
+  // already structurally satisfied here — `activeIndex` starts at -1 and
+  // this function is never called synchronously at mount (only from a real
+  // `playerPositionChanged` event below), so a first syllable at tick 0
+  // only activates once such an event genuinely fires. The synchronous
+  // initial paint below highlights the placeholder directly (its own
+  // `at-highlight` toggle, independent of `activeIndex`), so it never leaks
+  // into real syllable-highlight state.
   function updateActiveSyllable(tickPosition: number): void {
     let index = -1;
     for (let i = 0; i < flat.length; i++) {
