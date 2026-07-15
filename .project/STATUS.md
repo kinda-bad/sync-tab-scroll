@@ -1,9 +1,10 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-14 (**part-mute-toggle SHIPPED.** `tasks-part-mute-toggle-
-f0d4.md` (`completed`, 6/6), implemented in a delegated worktree (RED→GREEN
-per task, all test-first per Principle VII) and fast-forward-merged into
-`main` at `919a4da`. Vetted via `/ardd-research` first
+_Updated: 2026-07-14 (**part-mute-toggle SHIPPED, pushed, deployed.**
+`tasks-part-mute-toggle-f0d4.md` (`completed`, 6/6), implemented in a
+delegated worktree (RED→GREEN per task, all test-first per Principle VII),
+fast-forward-merged into `main` at `919a4da`, and pushed — Railway rebuilt
+(`index-Crk4cCoz.js` now live). Vetted via `/ardd-research` first
 (`research-part-mute-toggle-full-mix-vetting-2026-07-14-6509.md`): every
 participant's alphaTab instance already played the **full multi-track mix**
 before this feature — alphaTab's `trackIndexes` load parameter scopes
@@ -14,15 +15,12 @@ load-architecture changes. New `client/src/track-mute-preference.ts`
 `api.changeTrackMute()` and applied automatically on `scoreLoaded` (mutes
 persist across reload/rejoin), and a new "Mute parts" section in
 `SettingsModal.svelte`'s Preferences tab. Self-mute confirmed allowed
-(T006), no restriction. One implementation note: alphaTab's
-`changeTrackMute()` doesn't mutate `Track.playbackInfo.isMute` readably, so
-T002/T003's tests spy on the call itself rather than reading mute state
-back off the Track model — a test-technique adjustment, not a design
-change. Client 87 unit + 113 CT green (one pre-existing flaky debounce test
-unrelated to this feature, confirmed not a regression). Feature register:
-`part-mute-toggle` → `implemented` (15 implemented total now).
-`ui.md`'s diagram is stale (Playback View + Preferences tab additions).
-**Not yet pushed — 10 local commits ahead of `origin/main`.** Prior context
+(T006), no restriction. Client 87 unit + 113 CT green. Feature register:
+`part-mute-toggle` → `implemented` (15 implemented total). `ui.md`'s diagram
+is stale (Playback View + Preferences tab additions) — the one open item
+this pass. `main` is 0 ahead / 0 behind `origin`. **Live prod behavioral
+check (does muting actually silence audio) still pending** — bundle
+confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
 > **ARDD:** up to date on **v0.10.0** (`a7165c4`), 2026-07-13.
@@ -73,7 +71,8 @@ violations there either.
 ## Code-vs-Artifact Defects
 
 **No defects** — `DEFECTS.md` last checked **2026-07-12** (Accounts Phase 1
-layer). Run `/ardd-defects` to refresh against the newer client fixes if desired.
+layer). Run `/ardd-defects` to refresh against the newer client fixes
+(lyrics-overlay, sign-out, part-mute-toggle) if desired.
 
 ## Feedback
 
@@ -82,26 +81,25 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes if desired
 ## Feature Backlog
 
 **15 implemented** · 0 backlogged · 0 planned · 0 tasked — see
-`.project/features/`. `part-mute-toggle` shipped this pass.
+`.project/features/`. Nothing queued.
 
 ## Plans & Tasks
 
 - **Per-participant part mute toggle** — `tasks-part-mute-toggle-f0d4.md`
-  (`completed`, 6/6). **Merged to `main` at `919a4da`** (fast-forward, 8
-  signed commits) via a delegated worktree, all test-first. Research:
-  `research-part-mute-toggle-full-mix-vetting-2026-07-14-6509.md`. New
-  `track-mute-preference.ts` (mirrors `metronome-preference.ts`), new
-  `setEngineTrackMute()` wired to alphaTab's `changeTrackMute()` and
-  applied on `scoreLoaded` (persists across reload), new "Mute parts"
-  section in `SettingsModal.svelte`'s Preferences tab. Self-mute allowed.
-  Zero server/datamodel changes. Client 87 unit + 113 CT green. Feature
-  register: `implemented`. **Not yet pushed/deployed.**
+  (`completed`, 6/6). **Merged to `main` at `919a4da`, pushed, deployed**
+  (`index-Crk4cCoz.js`). New `track-mute-preference.ts` (mirrors
+  `metronome-preference.ts`), new `setEngineTrackMute()` wired to
+  alphaTab's `changeTrackMute()` and applied on `scoreLoaded` (persists
+  across reload), new "Mute parts" section in `SettingsModal.svelte`'s
+  Preferences tab. Self-mute allowed. Zero server/datamodel changes.
+  Client 87 unit + 113 CT green. **Bundle confirmed live; functional
+  click-through (does muting actually silence a track) not yet verified.**
 - **Lyrics overlay timing + display fixes** — `tasks-7f0f-4f2d.md`
-  (`completed`, 5/5). **Merged to `main` at `ecca7ee`, pushed, deployed
-  (`index-RJXOf0Kp.js`), live-verified in a real session** (F006 inline
-  count-in dots, F003/F004 gap-indicator clearing, F005 no pre-highlight,
-  F002 single scroll region all confirmed visually; F001 timing offset
-  covered by the automated test suite). Client 82 unit + 105 CT green.
+  (`completed`, 5/5). **Merged to `main` at `ecca7ee`, pushed, deployed,
+  live-verified in a real session** (F006 inline count-in dots, F003/F004
+  gap-indicator clearing, F005 no pre-highlight, F002 single scroll region
+  all confirmed visually; F001 timing offset covered by the automated test
+  suite). Client 82 unit + 105 CT green.
 - **Sign-out event-binding + false-banner fix (REAL sign-out cause)** — shipped
   `9478c55`, deployed, **verified live** end-to-end by the user. `AccountMenu`
   `onclick={() => onSignOut()}`; `ConnectionBanner` gated on `wsClient`.
@@ -140,21 +138,17 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 - **Sealed vars — pushed** (`*_OAUTH_CLIENT_ID/SECRET`, `SESSION_COOKIE_SECRET`,
   `PUBLIC_BASE_URL`). Optional cleanup: the inert legacy `GOOGLE_CLIENT_ID` /
   `GITHUB_CLIENT_ID` Railway vars can be deleted.
-- **Lyrics-overlay fixes — deployed and live-verified** (`index-RJXOf0Kp.js`).
-- **Sign-out fix — deployed and live-verified** (`index-DQukAlQa.js`, superseded
-  by the lyrics-overlay build above).
-- **part-mute-toggle — not yet deployed.** `main` is 10 commits ahead of
-  `origin/main`; push to trigger the Railway rebuild.
+- **Lyrics-overlay + sign-out + part-mute-toggle — all deployed**
+  (`index-Crk4cCoz.js` is the current live bundle, superseding both prior
+  builds referenced above).
 
 ## Recommended next step
 
-1. **Push `main`** — 10 local commits (part-mute-toggle + its planning
-   docs) waiting to reach `origin` and redeploy.
-2. **Live prod check of part-mute-toggle** — after deploy, open the
-   Preferences tab in a real session, confirm "Mute parts" lists every
-   available part and actually silences the muted track's audio.
-3. **`/ardd-diagram ui`** — regenerate the UI diagram (stale since the
+1. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+   real session, confirm "Mute parts" lists every available part and
+   actually silences the muted track's audio.
+2. **`/ardd-diagram ui`** — regenerate the UI diagram (stale since the
    Playback View + Preferences tab edits).
-4. **Optional:** confirm the Google `29801536638` client's redirect URI is
+3. **Optional:** confirm the Google `29801536638` client's redirect URI is
    registered; `/ardd-defects` to re-verify artifacts against recent client
    fixes.
