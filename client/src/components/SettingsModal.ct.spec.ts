@@ -243,6 +243,39 @@ test('Preferences tab: clicking a mute toggle persists via track-mute-preference
   expect(stored).toBe('on');
 });
 
+/**
+ * T006 (tasks-part-mute-toggle-f0d4.md, ui.md "no restriction" decision):
+ * regression guard — a participant CAN mute the part they currently have
+ * selected/rendered (Participant.selectedPart matching the toggled part's
+ * trackIndex). Some practice workflows want to hear only the backing while
+ * reading their own tab; nothing in T001-T005's code path should block this.
+ */
+test('Preferences tab: a participant can mute their own currently-selected part (no restriction)', async ({ mount, page }) => {
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [
+      { trackIndex: 0, instrumentName: 'Lead Guitar' },
+      { trackIndex: 1, instrumentName: 'Bass' },
+    ],
+    participants: [
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+
+  // member-1's own selectedPart is trackIndex 0 ("Lead Guitar") — muting it
+  // must succeed exactly like muting any other part.
+  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
+  await component.getByText('Lead Guitar: Unmuted').click();
+  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
+  expect(stored).toBe('on');
+});
+
 test('Preferences tab: shows the personal-scope hint below Mute parts', async ({ mount }) => {
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });

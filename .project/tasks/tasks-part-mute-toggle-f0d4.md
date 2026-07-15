@@ -80,7 +80,7 @@ status: in-progress
 
 ## Phase 4: Self-mute confirmation
 
-- [ ] T006 [artifacts: ui] Write a test (unit or CT, whichever fits — a CT
+- [x] T006 [artifacts: ui] Write a test (unit or CT, whichever fits — a CT
   test extending T004's spec is simplest) confirming a participant CAN
   mute the part they currently have selected/rendered (`Participant.selectedPart`
   matching the toggled part's `trackIndex`) — i.e. assert there is no
