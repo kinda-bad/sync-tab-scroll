@@ -1,21 +1,21 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-14 (**Lyrics-overlay timing + display fixes SHIPPED.**
-`tasks-7f0f-4f2d.md` (`completed`, 5/5), implemented in a delegated worktree
-(RED→GREEN per task, all test-first per Principle VII) and fast-forward-merged
-into `main` at `ecca7ee`. Fixes: F001 the ~2-syllable-ahead highlight offset
-(root cause: manual tick reconstruction instead of alphaTab's own
-`beat.absolutePlaybackStart`, which accounts for grace-note timing); F002
-duplicate lobby/lyrics scrollbars (`.app-content` now collapses while a lyrics
-participant is in Playback, leaving one scroll region); F003/F004 the
-gap-indicator drain bar + count-in dots no longer freeze in the DOM after their
-gap elapses; F005 the first lyric line/syllable no longer pre-highlights before
-a real playback position arrives (gated on alphaTab's `isReadyForPlayback`);
-F006 count-in dots redesigned as an inline prefix on the upcoming lyric line
-instead of a separate above-line element. No artifact changes (implementation-
-only). Client 82 unit + 105 CT green, no regressions. **Not yet pushed —
-9 local commits ahead of `origin/main`** (this work + the sign-out fix's ADD
-reconciliation + host-feature cleanup from earlier today). Prior context below.)_
+_Updated: 2026-07-14 (**part-mute-toggle planned + tasked, ready to
+implement.** Vetted via `/ardd-research` first (`research-part-mute-toggle-
+full-mix-vetting-2026-07-14-6509.md`): every participant's alphaTab instance
+already plays the **full multi-track mix** today — alphaTab's `trackIndexes`
+load parameter scopes rendering only, not playback (confirmed against
+alphaTab's own type definitions after an initial wrong read; the user's live
+observation caught it). So the feature needs zero server/datamodel/load-
+architecture changes — it's a new client-local, per-song-and-track mute
+preference (`track-mute-preference.ts`, mirrors `metronome-preference.ts`)
+wired to alphaTab's own `api.changeTrackMute()`. `ui.md` updated (Playback
+View documents the full-mix-by-default fact; Preferences tab gains a "Mute
+parts" section, self-mute explicitly allowed) — **diagram now stale**.
+`tasks-part-mute-toggle-f0d4.md` (`ready`, 6 tasks/4 phases, all test-first
+per Principle VII). Feature `backlogged → planned → tasked`. **Not yet
+implemented.** `main` is 1 commit ahead of `origin` (this planning commit
+only — no code). Prior context below.)_
 
 > **ARDD:** up to date on **v0.10.0** (`a7165c4`), 2026-07-13.
 
@@ -48,17 +48,19 @@ None.
 
 ## Constitution Compliance
 
-No violations. The lyrics-overlay fixes are test-first (Principle VII, 5/5
-tasks RED→GREEN). Both sign-out/banner fixes are also test-first. The kept
-`session-not-found` machinery reuses the host-removal terminal-socket shape
-(no second teardown path — Principle II).
+No violations. `part-mute-toggle`'s design is squarely inside Principle V
+(uses alphaTab's own `changeTrackMute` API rather than a custom mixing
+mechanism) and its 6 tasks are all test-first (Principle VII). The
+lyrics-overlay and sign-out fixes (below) were also test-first, no
+violations there either.
 
 ## Diagrams
 
 - `datamodel.md` — current ✅
 - `infrastructure.md` — current ✅
-- `ui.md` — current ✅ (the lyrics-overlay fixes were implementation-only —
-  no `ui.md` text changed, so the diagram wasn't invalidated)
+- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the Playback
+  View full-mix clarification and the Preferences tab's "Mute parts"
+  subsection.
 
 ## Code-vs-Artifact Defects
 
@@ -67,31 +69,32 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes if desired
 
 ## Feedback
 
-0 open feedback files — `feedback-lyrics-overlay-timing-display-5456.md`
-is `planned` (consumed by `plan-7f0f-2026-07-14-67d9.md`, now shipped).
+0 open feedback files.
 
 ## Feature Backlog
 
-14 implemented · **1 backlogged** · 0 planned · 0 tasked — see `.project/features/`.
-`part-mute-toggle` — each participant can mute any part locally, changing
-which MIDI tracks play during their own playback. Target with `/ardd-plan
-part-mute-toggle`.
+14 implemented · 0 backlogged · 0 planned · **1 tasked** — see
+`.project/features/`. `part-mute-toggle` — tasked, ready to implement
+(`tasks-part-mute-toggle-f0d4.md`). Run `/ardd-implement` to execute.
 
 ## Plans & Tasks
 
+- **Per-participant part mute toggle** — `plan-part-mute-toggle-2026-07-14-6b68.md`
+  (`approved`), tasks `tasks-part-mute-toggle-f0d4.md` (`ready`, 0/6).
+  Research: `research-part-mute-toggle-full-mix-vetting-2026-07-14-6509.md`.
+  4 phases: persisted mute preference module, engine wiring
+  (`setEngineTrackMute` + apply-on-load), Preferences UI (`SettingsModal.svelte`
+  "Mute parts" section), self-mute regression guard. Zero server/datamodel
+  changes — pure client-local, mirrors the existing metronome-preference
+  pattern. **Not yet implemented.**
 - **Lyrics overlay timing + display fixes** — `tasks-7f0f-4f2d.md`
-  (`completed`, 5/5). **Merged to `main` at `ecca7ee`** (fast-forward, 8
-  signed commits) via a delegated worktree, all test-first. F001 (syllable
-  timing offset — `beat.absolutePlaybackStart`), F002 (single scroll region),
-  F003/F004 (gap-indicator DOM lifecycle), F005 (no pre-highlight before real
-  position), F006 (inline count-in-dots prefix). Client 82 unit + 105 CT
-  green. No register feature (feedback-driven fix). **Not yet pushed.**
-  (Note: the first delegation attempt failed — the plan/tasks files hadn't
-  been committed to `main` yet, so the worktree couldn't see them;
-  re-delegated after committing `e8c3a52`. Feedback on this ARDD gap was
-  drafted separately, not filed.)
+  (`completed`, 5/5). **Merged to `main` at `ecca7ee`, pushed, deployed
+  (`index-RJXOf0Kp.js`), live-verified in a real session** (F006 inline
+  count-in dots, F003/F004 gap-indicator clearing, F005 no pre-highlight,
+  F002 single scroll region all confirmed visually; F001 timing offset
+  covered by the automated test suite). Client 82 unit + 105 CT green.
 - **Sign-out event-binding + false-banner fix (REAL sign-out cause)** — shipped
-  `9478c55`, deployed (`index-DQukAlQa.js`), **verified live**. `AccountMenu`
+  `9478c55`, deployed, **verified live** end-to-end by the user. `AccountMenu`
   `onclick={() => onSignOut()}`; `ConnectionBanner` gated on `wsClient`.
   Client 81 unit + 102 CT green.
 - **Stale-session typed `session-not-found` (F001, d509)** —
@@ -128,17 +131,16 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 - **Sealed vars — pushed** (`*_OAUTH_CLIENT_ID/SECRET`, `SESSION_COOKIE_SECRET`,
   `PUBLIC_BASE_URL`). Optional cleanup: the inert legacy `GOOGLE_CLIENT_ID` /
   `GITHUB_CLIENT_ID` Railway vars can be deleted.
-- **Lyrics-overlay fixes — not yet deployed.** `main` is 9 commits ahead of
-  `origin/main`; push to trigger the Railway rebuild.
+- **Lyrics-overlay fixes — deployed and live-verified** (`index-RJXOf0Kp.js`).
+- **Sign-out fix — deployed and live-verified** (`index-DQukAlQa.js`, superseded
+  by the lyrics-overlay build above).
 
 ## Recommended next step
 
-1. **Push `main`** — 9 local commits (lyrics-overlay fixes + prior ADD
-   reconciliation/cleanup) waiting to reach `origin` and redeploy.
-2. **Live prod re-verify of the lyrics-overlay fixes** — after deploy, confirm
-   the syllable timing offset is gone and the single-scroll-region change
-   doesn't regress the Playback view's status label/loading banner (a known
-   minor trade-off the implementation flagged).
-3. **Optional:** `/ardd-defects` to re-verify artifacts against the newer
-   client fixes; confirm the Google `29801536638` client's redirect URI;
-   `/ardd-plan part-mute-toggle` when ready to design that feature.
+1. **`/ardd-implement`** — execute `tasks-part-mute-toggle-f0d4.md` (6 tasks,
+   ready).
+2. **`/ardd-diagram ui`** — regenerate the UI diagram (stale since the
+   Playback View + Preferences tab edits).
+3. **Optional:** confirm the Google `29801536638` client's redirect URI is
+   registered; `/ardd-defects` to re-verify artifacts against recent client
+   fixes.
