@@ -213,7 +213,21 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     // 0 (gap end) — same custom-property mechanism as HazardBar's
     // --hazard-fill, on this separate element (brand.md: not a second
     // HazardBar instance).
+    // T001 (feedback F003/F004): a gap's indicator (drain bar + dots) is
+    // frozen in place forever once its gap fully elapses unless removed
+    // here — the DOM node otherwise just sits there, fully drained/dotted,
+    // for the rest of the song. Removed from both the DOM and the tracked
+    // `gapIndicators` array (not just hidden) once `currentTimeMs` passes
+    // `gap.endMs`, mirroring `renderGapIndicators`'s own removal shape.
     function updateGapIndicators(currentTimeMs: number): void {
+      gapIndicators = gapIndicators.filter(({ gap, container }) => {
+        if (currentTimeMs > gap.endMs) {
+          container.remove();
+          return false;
+        }
+        return true;
+      });
+
       for (const { gap, dotEls, drainEl } of gapIndicators) {
         const totalMs = gap.endMs - gap.startMs;
         const fill = totalMs > 0 ? Math.max(0, Math.min(1, (gap.endMs - currentTimeMs) / totalMs)) : 0;

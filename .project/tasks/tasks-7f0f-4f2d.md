@@ -7,7 +7,7 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Gap-indicator lifecycle (F003, F004)
-- [ ] T001 [artifacts: ui] Write a failing test first (playback-engine unit
+- [x] T001 [artifacts: ui] Write a failing test first (playback-engine unit
   or CT test) asserting that the gap-indicator DOM node created by
   `renderGapIndicators()` in `client/src/playback-engine.ts` is
   removed/hidden once `updateGapIndicators(currentTimeMs)` observes

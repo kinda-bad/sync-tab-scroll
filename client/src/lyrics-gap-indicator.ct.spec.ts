@@ -96,7 +96,10 @@ test('dots light up one at a time, in order, across the 4 beats immediately prec
   // Inter-line gap: [3000ms, 6000ms], 120bpm/4-4 local measure = 2000ms,
   // beat = 500ms. The 4 beat timestamps immediately preceding 6000 are
   // 4000, 4500, 5000, 5500.
-  const interLineIndicator = page.locator('.gap-indicator').nth(1);
+  // Selected structurally (immediately follows the first .lyric-line) rather
+  // than by index — T001 removes the leading indicator once its own gap
+  // elapses (before 4000ms), which would shift a `.nth(1)` index.
+  const interLineIndicator = page.locator('.lyric-line + .gap-indicator');
   const dots = interLineIndicator.locator('.gap-dot');
 
   await triggerPosition(page, 3999);
@@ -121,7 +124,8 @@ test('dots light up one at a time, in order, across the 4 beats immediately prec
 test("the drain bar's fill decreases from 100% at gap start to 0% at gap end", async ({ mount, page }) => {
   await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
 
-  const interLineIndicator = page.locator('.gap-indicator').nth(1);
+  // Structural selector, same reasoning as the dots test above.
+  const interLineIndicator = page.locator('.lyric-line + .gap-indicator');
   const drain = interLineIndicator.locator('.gap-drain');
 
   function readFill() {
@@ -136,4 +140,22 @@ test("the drain bar's fill decreases from 100% at gap start to 0% at gap end", a
 
   await triggerPosition(page, 6000); // gap end
   expect(await readFill()).toBeCloseTo(0, 2);
+});
+
+// T001 (tasks-7f0f-4f2d.md, feedback F003/F004): once a gap fully elapses
+// (currentTimeMs past gap.endMs), its indicator (.gap-drain + .gap-dot
+// children) must clear from the DOM instead of staying frozen forever.
+test('a gap-indicator is removed once its gap has fully elapsed', async ({ mount, page }) => {
+  await mountAndWaitForScoreAndLrc(mount, page, '/qualifying.lrc');
+
+  const indicators = page.locator('.gap-indicator');
+  await expect(indicators).toHaveCount(2);
+
+  // Leading gap ends at 2500ms — past it, only the inter-line indicator remains.
+  await triggerPosition(page, 2600);
+  await expect(indicators).toHaveCount(1);
+
+  // Inter-line gap ends at 6000ms — past it, none remain.
+  await triggerPosition(page, 6100);
+  await expect(indicators).toHaveCount(0);
 });
