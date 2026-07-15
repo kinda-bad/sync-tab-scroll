@@ -56,6 +56,23 @@
 
     ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);
 
+    // Test-only: spies on the real api.changeTrackMute (alphaTab's own
+    // method — it only mutates internal synth channel state, not readable
+    // back off the Track model) by wrapping it right after engine creation,
+    // before scoreLoaded can fire, so both a direct setEngineTrackMute()
+    // call and T003's automatic apply-persisted-mutes-at-scoreLoaded loop
+    // are observable in tests.
+    const engineApi = __getEngineStateForTesting()?.api;
+    if (engineApi) {
+      const calls: unknown[] = [];
+      (window as unknown as { __changeTrackMuteCalls: unknown[] }).__changeTrackMuteCalls = calls;
+      const original = engineApi.changeTrackMute.bind(engineApi);
+      engineApi.changeTrackMute = (tracks: unknown[], mute: boolean) => {
+        calls.push({ trackIndexes: (tracks as { index: number }[]).map((t) => t.index), mute });
+        original(tracks, mute);
+      };
+    }
+
     // Test-only: mirrors App.svelte's reactive re-invocation of
     // ensurePlaybackEngine when a participant's selectedPart changes —
     // lets a CT test simulate a part switch without a real session/store.

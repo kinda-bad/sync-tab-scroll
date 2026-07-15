@@ -3,6 +3,7 @@ import type * as at from '@coderline/alphatab';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { loadStoredMetronome } from './metronome-preference';
+import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
@@ -119,6 +120,19 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     state!.scoreLoaded = true;
     state!.score = score;
     if (!isLyricsPart) state!.renderedWhileVisible = containers.tabContainer.clientWidth > 0;
+
+    // Personal "mute this part" preference (ui.md Preferences tab,
+    // track-mute-preference.ts), applied at load time so a participant's
+    // previously-muted parts stay muted across a reload/rejoin — mirrors
+    // how metronomeVolume is applied at engine creation, but deferred until
+    // here since changeTrackMute needs real Track objects that don't exist
+    // before scoreLoaded fires.
+    for (const track of score.tracks) {
+      if (loadStoredTrackMute(song.id, track.index)) {
+        state!.api.changeTrackMute([track], true);
+      }
+    }
+
     markEngineReadyIfComplete();
   });
 

@@ -37,7 +37,7 @@ status: in-progress
   `state.score` being unset, since `changeTrackMute` needs real `Track`
   objects that only exist once `scoreLoaded` has fired. Depends on T001
   (imports its types only).
-- [ ] T003 [artifacts: ui] Write a failing test first asserting that once
+- [x] T003 [artifacts: ui] Write a failing test first asserting that once
   `ensurePlaybackEngine`'s `api.scoreLoaded.on((score) => {...})` handler
   fires (where `state!.score = score` is already set,
   `client/src/playback-engine.ts`), every track in the loaded score whose

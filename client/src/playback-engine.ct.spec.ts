@@ -400,13 +400,6 @@ test('clientStore.engineReady flips true only once the tab has actually rendered
 });
 
 /**
- * Regression test for the rapid-click cursor-thrash bug
- * (feedback-lobby-cursor-race-4262, tasks-lobby-cursor-race-c9f8 T002/T003):
- * a burst of rapid host seeks must collapse into a single
- * `playback-control` `seek` broadcast (the *last* tick), not one broadcast
- * per click.
- */
-/**
  * T002 (tasks-part-mute-toggle-f0d4.md): setEngineTrackMute calls alphaTab's
  * own api.changeTrackMute([track], muted) against the currently loaded
  * engine's score track matching trackIndex. No-op (no throw) both when no
@@ -417,21 +410,6 @@ test('clientStore.engineReady flips true only once the tab has actually rendered
 test('setEngineTrackMute calls api.changeTrackMute with the matching loaded track', async ({ mount, page }) => {
   const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/two-track.gp', trackIndex: 0 } });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
-
-  // Spies on the real api.changeTrackMute (alphaTab's own method, which only
-  // mutates internal synth channel state — not readable back off the Track
-  // model) by wrapping it and recording call args, rather than asserting on
-  // opaque internal synth state.
-  await page.evaluate(() => {
-    const api = (window as unknown as { __getApi: () => { changeTrackMute: (tracks: unknown[], mute: boolean) => void } }).__getApi();
-    const calls: unknown[] = [];
-    (window as unknown as { __changeTrackMuteCalls: unknown[] }).__changeTrackMuteCalls = calls;
-    const original = api.changeTrackMute.bind(api);
-    api.changeTrackMute = (tracks: unknown[], mute: boolean) => {
-      calls.push({ trackIndexes: (tracks as { index: number }[]).map((t) => t.index), mute });
-      original(tracks, mute);
-    };
-  });
 
   await page.evaluate(() => (window as unknown as { __setEngineTrackMute: (t: number, m: boolean) => void }).__setEngineTrackMute(1, true));
 
@@ -454,6 +432,39 @@ test('setEngineTrackMute does not throw when the score has not loaded yet', asyn
   expect(threw).toBe(false);
 
   await expect(component.getByTestId('tab-container')).toBeAttached();
+});
+
+/**
+ * T003 (tasks-part-mute-toggle-f0d4.md): a participant's previously-muted
+ * parts must stay muted across a reload/rejoin — every track whose
+ * loadStoredTrackMute(song.id, track.index) returns true gets
+ * changeTrackMute([track], true) applied automatically once scoreLoaded
+ * fires, not just within the same live engine instance (T002 covers that
+ * live-toggle path; this covers persistence surviving a fresh engine).
+ * PlaybackEngineHarness's fixed song.id is 'creep' (see the harness file).
+ */
+test('applies persisted mute preferences to every matching track once scoreLoaded fires', async ({ mount, page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('sync-tab-scroll:mute:creep:1', 'on');
+  });
+
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/two-track.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  const calls = await page.evaluate(
+    () => (window as unknown as { __changeTrackMuteCalls: { trackIndexes: number[]; mute: boolean }[] }).__changeTrackMuteCalls,
+  );
+  expect(calls).toEqual([{ trackIndexes: [1], mute: true }]);
+});
+
+test('applies no mute calls when no mute preference is stored for the song', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/two-track.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  const calls = await page.evaluate(
+    () => (window as unknown as { __changeTrackMuteCalls: { trackIndexes: number[]; mute: boolean }[] }).__changeTrackMuteCalls,
+  );
+  expect(calls).toEqual([]);
 });
 
 test('debounces rapid host seeks into a single broadcast carrying the last tick', async ({ mount, page }) => {
