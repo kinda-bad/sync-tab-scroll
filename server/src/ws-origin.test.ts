@@ -16,6 +16,7 @@ function testConfig(): ServerConfig {
     catalogRoot: './__no_such_catalog__',
     hostReassignGraceMs: 1000,
     requireSongConsent: false,
+    songUploadEnabled: true,
     clientRoot: './__no_such_client__',
     account: {
       databaseUrl: undefined,

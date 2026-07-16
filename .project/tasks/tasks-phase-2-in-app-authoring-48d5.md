@@ -91,13 +91,13 @@ status: in-progress
   spec covering all four states. Depends on T008-T010, T012.
 
 ## Phase 5: Consent gating
-- [ ] T014 [artifacts: infrastructure, datamodel] Runtime consent-gating env
+- [x] T014 [artifacts: infrastructure, datamodel] Runtime consent-gating env
   var (mirroring `REQUIRE_SONG_CONSENT`'s existing pattern) — when set on
   the public deployment with no real ToS text configured, the upload
   route (T008) returns unavailable and the "Add song" UI action (T013)
   renders absent, not disabled. Test-first: the route and the UI both
   respect the flag.
-- [ ] T015 [artifacts: datamodel] The consent fields captured in T013 write a
+- [x] T015 [artifacts: datamodel] The consent fields captured in T013 write a
   Consent Record using the exact shape the CLI's `record-consent` already
   writes (datamodel.md) — one format, verified by a shared write function
   both paths call, not two independent implementations. Depends on T013.

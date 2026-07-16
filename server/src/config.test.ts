@@ -6,6 +6,7 @@ const ENV_KEYS = [
   'CATALOG_ROOT',
   'HOST_REASSIGN_GRACE_MS',
   'REQUIRE_SONG_CONSENT',
+  'SONG_UPLOAD_ENABLED',
   'CLIENT_ROOT',
   'DATABASE_URL',
   'SESSION_COOKIE_SECRET',
@@ -51,6 +52,7 @@ describe('loadConfig', () => {
       catalogRoot: '/tmp/my-catalog',
       hostReassignGraceMs: 5000,
       requireSongConsent: false,
+      songUploadEnabled: true,
       clientRoot: '/tmp/my-client-dist',
       account: DEFAULT_ACCOUNT,
     });
@@ -62,6 +64,7 @@ describe('loadConfig', () => {
       catalogRoot: './catalog',
       hostReassignGraceMs: 120_000,
       requireSongConsent: false,
+      songUploadEnabled: true,
       clientRoot: '../client/dist',
       account: DEFAULT_ACCOUNT,
     });
@@ -98,5 +101,15 @@ describe('loadConfig', () => {
 
   it('defaults requireSongConsent to false when REQUIRE_SONG_CONSENT is unset', () => {
     expect(loadConfig().requireSongConsent).toBe(false);
+  });
+
+  it('defaults songUploadEnabled to true when SONG_UPLOAD_ENABLED is unset (T014 — self-hosted works unconfigured)', () => {
+    expect(loadConfig().songUploadEnabled).toBe(true);
+  });
+
+  it('sets songUploadEnabled to false when SONG_UPLOAD_ENABLED=false (T014 — public deployment gate before real ToS text)', () => {
+    process.env.SONG_UPLOAD_ENABLED = 'false';
+
+    expect(loadConfig().songUploadEnabled).toBe(false);
   });
 });

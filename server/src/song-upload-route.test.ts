@@ -13,7 +13,8 @@ import { loadCatalog } from './catalog-loader.js';
 import { createSongUploadRequestHandler, type SongUploadRouteOptions } from './song-upload-route.js';
 
 const extractLyricsMock = vi.hoisted(() => vi.fn());
-vi.mock('@sync-tab-scroll/pipeline', () => ({ extractLyrics: extractLyricsMock }));
+const recordConsentMock = vi.hoisted(() => vi.fn());
+vi.mock('@sync-tab-scroll/pipeline', () => ({ extractLyrics: extractLyricsMock, recordConsent: recordConsentMock }));
 
 function startServer(overrides: Partial<SongUploadRouteOptions> & { store: AccountStore; catalogRoot: string }) {
   const handler = createSongUploadRequestHandler(overrides);
@@ -94,7 +95,7 @@ describe('song upload route — size limit + staging (T009)', () => {
   it('rejects an oversized upload with 413 before it is fully buffered/written anywhere, and the live catalog directory stays untouched', async () => {
     srv = startServer({ store: ownerStore(), catalogRoot, maxUploadBytes: 10 });
 
-    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B`, {
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=S`, {
       method: 'POST',
       headers: { Cookie: 'sts_session=s' },
       body: Buffer.alloc(1000, 1), // far over the 10-byte cap
@@ -111,7 +112,7 @@ describe('song upload route — size limit + staging (T009)', () => {
     });
     srv = startServer({ store: ownerStore(), catalogRoot, maxUploadBytes: 10_000 });
 
-    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B`, {
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=S`, {
       method: 'POST',
       headers: { Cookie: 'sts_session=s' },
       body: Buffer.alloc(100, 1),
@@ -121,13 +122,40 @@ describe('song upload route — size limit + staging (T009)', () => {
     expect(res.status).toBe(400); // the mock's throw surfaces as a parse failure
   });
 
-  it('requires artist and title query params before touching the request body', async () => {
+  it('requires artist, title, and submitterName query params before touching the request body', async () => {
     srv = startServer({ store: ownerStore(), catalogRoot });
 
     const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs`, { method: 'POST', headers: { Cookie: 'sts_session=s' }, body: 'x' });
 
     expect(res.status).toBe(400);
     expect(extractLyricsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('song upload route — availability gate (T014)', () => {
+  let catalogRoot: string;
+  let srv: ReturnType<typeof startServer>;
+
+  beforeEach(() => {
+    catalogRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'song-upload-catalog-'));
+  });
+
+  afterEach(async () => {
+    await srv?.close();
+    fs.rmSync(catalogRoot, { recursive: true, force: true });
+  });
+
+  it('defaults to enabled when songUploadEnabled is omitted', async () => {
+    srv = startServer({ store: new NullAccountStore(), catalogRoot });
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs`, { method: 'POST' });
+    // 401 (auth gate), not 503 — proves the route ran past the availability check.
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 503 before any auth check when songUploadEnabled is false', async () => {
+    srv = startServer({ store: new NullAccountStore(), catalogRoot, songUploadEnabled: false });
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs`, { method: 'POST' });
+    expect(res.status).toBe(503);
   });
 });
 
@@ -138,6 +166,7 @@ describe('song upload route — pipeline execution + timeout (T010)', () => {
   beforeEach(() => {
     catalogRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'song-upload-catalog-'));
     extractLyricsMock.mockReset();
+    recordConsentMock.mockReset();
   });
 
   afterEach(async () => {
@@ -151,7 +180,7 @@ describe('song upload route — pipeline execution + timeout (T010)', () => {
     });
     srv = startServer({ store: ownerStore(), catalogRoot });
 
-    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B`, {
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=S`, {
       method: 'POST',
       headers: { Cookie: 'sts_session=s' },
       body: 'this is not a zip file',
@@ -176,7 +205,7 @@ describe('song upload route — pipeline execution + timeout (T010)', () => {
 
     srv = startServer({ store: ownerStore(), catalogRoot, ctx });
 
-    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B`, {
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=S`, {
       method: 'POST',
       headers: { Cookie: 'sts_session=s' },
       body: Buffer.from('fake-gp-bytes'),
@@ -186,13 +215,16 @@ describe('song upload route — pipeline execution + timeout (T010)', () => {
     expect(fs.existsSync(path.join(catalogRoot, 'a-b', 'meta.json'))).toBe(true);
     expect(broadcasts.some((m) => (m as { type: string }).type === 'catalog')).toBe(true);
     expect(ctx.catalog.songs.map((s) => s.id)).toContain('a-b');
+    // T015: writes a Consent Record using the same shared writer the CLI's
+    // record-consent uses — into the LIVE directory, after the move.
+    expect(recordConsentMock).toHaveBeenCalledWith(catalogRoot, 'a-b', 'S');
   });
 
   it('times out a hung pipeline stage rather than hanging the response, and nothing reaches the live catalog', async () => {
     extractLyricsMock.mockImplementation(() => new Promise(() => {})); // never resolves
     srv = startServer({ store: ownerStore(), catalogRoot, parseTimeoutMs: 30 });
 
-    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B`, {
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=S`, {
       method: 'POST',
       headers: { Cookie: 'sts_session=s' },
       body: Buffer.from('fake-gp-bytes'),

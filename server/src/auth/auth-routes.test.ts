@@ -77,7 +77,30 @@ describe('auth routes — DB-optional inertness (T008)', () => {
   it('/me reports accounts unavailable + anonymous with no DB', async () => {
     const res = await fetch(`${srv.base}/me`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ accountsEnabled: false, user: null, ownedCatalogueIds: [] });
+    expect(await res.json()).toEqual({ accountsEnabled: false, user: null, ownedCatalogueIds: [], songUploadEnabled: true });
+  });
+});
+
+describe('/me — songUploadEnabled (T014)', () => {
+  it('reports songUploadEnabled: false when the server is configured with it off', async () => {
+    const handler = createAuthRequestHandler({
+      store: new NullAccountStore(),
+      config: { sessionCookieSecret: 'test-secret', publicBaseUrl: PUBLIC_BASE_URL },
+      providers: registry(mockProvider()),
+      songUploadEnabled: false,
+    });
+    const server = http.createServer((req, res) => {
+      if (handler(req, res)) return;
+      res.writeHead(404).end();
+    });
+    server.listen(0);
+    const { port } = server.address() as AddressInfo;
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/me`);
+      expect((await res.json()).songUploadEnabled).toBe(false);
+    } finally {
+      await new Promise<void>((r) => server.close(() => r()));
+    }
   });
 });
 

@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { extractLyrics } from '@sync-tab-scroll/pipeline';
+import { extractLyrics, recordConsent } from '@sync-tab-scroll/pipeline';
 import type { AccountStore } from './accounts/store.js';
 import { resolveUserIdFromCookie } from './auth/session.js';
 import { rescanAndBroadcastCatalog } from './authoring-rescan.js';
@@ -25,6 +25,8 @@ export interface SongUploadRouteOptions {
   requireSongConsent?: boolean;
   maxUploadBytes?: number;
   parseTimeoutMs?: number;
+  /** T014: gates this route's availability (default true — see config.ts's `songUploadEnabled`). `false` makes every request 503, before the auth/ownership checks even run. */
+  songUploadEnabled?: boolean;
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {
@@ -150,9 +152,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<{ ok: true; va
  * nothing reaches the live catalog directory or triggers a re-broadcast.
  */
 export function createSongUploadRequestHandler(opts: SongUploadRouteOptions): (req: IncomingMessage, res: ServerResponse) => boolean {
-  const { store, catalogRoot, ctx, requireSongConsent = false, maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES, parseTimeoutMs = DEFAULT_PARSE_TIMEOUT_MS } = opts;
+  const {
+    store,
+    catalogRoot,
+    ctx,
+    requireSongConsent = false,
+    maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES,
+    parseTimeoutMs = DEFAULT_PARSE_TIMEOUT_MS,
+    songUploadEnabled = true,
+  } = opts;
 
   async function handle(catalogueId: string, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
+    // T014: checked FIRST, before auth/ownership — a disabled route (public
+    // deployment, pre-real-ToS) responds unavailable uniformly, revealing
+    // nothing about auth state to an unauthenticated prober either.
+    if (!songUploadEnabled) {
+      json(res, 503, { error: 'song upload is not available' });
+      req.resume();
+      return;
+    }
+
     const userId = await resolveUserIdFromCookie(store, req.headers.cookie);
     if (!userId) {
       json(res, 401, { error: 'sign in required' });
@@ -169,8 +188,12 @@ export function createSongUploadRequestHandler(opts: SongUploadRouteOptions): (r
 
     const artist = url.searchParams.get('artist')?.trim();
     const title = url.searchParams.get('title')?.trim();
-    if (!artist || !title) {
-      json(res, 400, { error: 'artist and title query params are required' });
+    // T015: the same submitter identifier the CLI's `record-consent` prompts
+    // for — required here too, since an in-app upload has no operator to run
+    // that CLI step afterward (datamodel.md Consent Record).
+    const submitterName = url.searchParams.get('submitterName')?.trim();
+    if (!artist || !title || !submitterName) {
+      json(res, 400, { error: 'artist, title, and submitterName query params are required' });
       req.resume();
       return;
     }
@@ -206,6 +229,12 @@ export function createSongUploadRequestHandler(opts: SongUploadRouteOptions): (r
       const destDir = path.join(catalogRoot, songSlug);
       fs.rmSync(destDir, { recursive: true, force: true }); // re-upload of the same song overwrites cleanly
       fs.renameSync(path.join(stagingCatalogRoot, songSlug), destDir);
+
+      // T015: same shape/writer the CLI's `record-consent` uses (datamodel.md
+      // Consent Record) — one format, two entry points, not a second
+      // implementation. Written into the LIVE directory, after the move, so a
+      // discarded/staged-only upload never gets a consent record either.
+      recordConsent(catalogRoot, songSlug, submitterName);
 
       if (ctx) rescanAndBroadcastCatalog(ctx, catalogRoot, requireSongConsent);
 

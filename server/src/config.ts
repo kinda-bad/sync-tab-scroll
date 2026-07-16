@@ -28,6 +28,19 @@ export interface ServerConfig {
   hostReassignGraceMs: number;
   /** Gate catalog loading on a per-song consent record (datamodel.md Consent Record). Off by default — a local/personal catalog needs no consent; only a public deployment should set this. */
   requireSongConsent: boolean;
+  /**
+   * Gates the in-app song-upload route's availability (T014; infrastructure.md
+   * "Consent gating (build vs. ship)") — the mechanism itself is always built,
+   * this only controls whether the public deployment may accept traffic on it
+   * before real ToS text replaces the Consent Record's `dev-placeholder`
+   * (datamodel.md Production Annotations). Default `true` (enabled) so a
+   * self-hosted/local deployment with the var unset works immediately, mirroring
+   * `REQUIRE_SONG_CONSENT`'s existing self-hosted-vs-public-deployment split
+   * (Song Consent Gate) but inverted: this flag defaults ON, and it's the public
+   * deployment's Terraform config that must explicitly set it to `false` until
+   * real ToS text is supplied.
+   */
+  songUploadEnabled: boolean;
   /** Built client SPA root served as a static fallback (infrastructure.md "Deployment (Railway + Terraform)"). Unused in local dev, where the client runs its own Vite dev server instead — a missing/nonexistent path here just means every request 404s through client-static.ts, harmlessly. */
   clientRoot: string;
   /** Optional OAuth account layer (infrastructure.md User Accounts). */
@@ -40,6 +53,7 @@ export function loadConfig(): ServerConfig {
     catalogRoot: process.env.CATALOG_ROOT ?? './catalog',
     hostReassignGraceMs: Number(process.env.HOST_REASSIGN_GRACE_MS ?? 120_000),
     requireSongConsent: process.env.REQUIRE_SONG_CONSENT === 'true',
+    songUploadEnabled: process.env.SONG_UPLOAD_ENABLED !== 'false',
     clientRoot: process.env.CLIENT_ROOT ?? '../client/dist',
     account: {
       // Empty string is treated as unset (accounts disabled) — the factory's

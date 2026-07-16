@@ -47,6 +47,7 @@ export function createServer(config: ServerConfig): http.Server {
     store: accountStore,
     config: config.account,
     providers: createProviderRegistry(config.account),
+    songUploadEnabled: config.songUploadEnabled,
   });
   // In-app authoring's upload trust surface (T008/T009/T010; infrastructure.md
   // "Upload trust surface") — mounted after auth (it resolves the session
@@ -56,6 +57,7 @@ export function createServer(config: ServerConfig): http.Server {
     catalogRoot: config.catalogRoot,
     ctx,
     requireSongConsent: config.requireSongConsent,
+    songUploadEnabled: config.songUploadEnabled,
   });
   // T012/T016/T017 — create-catalogue + invite generate/redeem. Mounted
   // alongside the upload trust surface, same auth seam and position in the chain.

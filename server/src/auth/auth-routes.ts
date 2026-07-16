@@ -18,6 +18,8 @@ export interface AuthRouterOptions {
   store: AccountStore;
   config: Pick<AccountConfig, 'sessionCookieSecret' | 'publicBaseUrl'>;
   providers: OAuthProviderRegistry;
+  /** T014: surfaced on `/me` so the client can render "Add song" absent (not disabled) when the server has the route gated off. Defaults to `true`, matching `config.ts`'s `songUploadEnabled` default. */
+  songUploadEnabled?: boolean;
 }
 
 /** Signed OAuth transaction carried in `sts_auth_tx` between `/login` and `/callback`. */
@@ -55,7 +57,7 @@ function redirect(res: ServerResponse, location: string, cookies: string[] = [])
  * self-disables with zero effect on the anonymous path (design §2).
  */
 export function createAuthRequestHandler(opts: AuthRouterOptions): (req: IncomingMessage, res: ServerResponse) => boolean {
-  const { store, config, providers } = opts;
+  const { store, config, providers, songUploadEnabled = true } = opts;
   const secure = config.publicBaseUrl.startsWith('https://');
   const sessionCookieOpts = { httpOnly: true, secure: true, sameSite: 'Lax' as const, path: '/' };
 
@@ -75,7 +77,7 @@ export function createAuthRequestHandler(opts: AuthRouterOptions): (req: Incomin
         console.error('[auth] /me ownership lookup failed:', err instanceof Error ? err.message : err);
       }
     }
-    json(res, 200, { accountsEnabled: store.enabled, user: resolved?.user ?? null, ownedCatalogueIds });
+    json(res, 200, { accountsEnabled: store.enabled, user: resolved?.user ?? null, ownedCatalogueIds, songUploadEnabled });
   }
 
   async function handleLogin(provider: OAuthProviderName, res: ServerResponse): Promise<void> {

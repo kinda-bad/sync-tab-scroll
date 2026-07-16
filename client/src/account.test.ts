@@ -5,26 +5,26 @@ import { toastStore } from './toast-store.js';
 
 describe('accountStateFromMe (T016)', () => {
   it('maps accountsEnabled=false to unavailable (affordances absent)', () => {
-    expect(accountStateFromMe({ accountsEnabled: false, user: null, ownedCatalogueIds: [] })).toEqual({
+    expect(accountStateFromMe({ accountsEnabled: false, user: null, ownedCatalogueIds: [], songUploadEnabled: true })).toEqual({
       status: 'unavailable',
       displayName: null,
-      ownedCatalogueIds: [],
+      ownedCatalogueIds: [], songUploadEnabled: true,
     });
   });
 
   it('maps enabled + no user to signed-out', () => {
-    expect(accountStateFromMe({ accountsEnabled: true, user: null, ownedCatalogueIds: [] })).toEqual({
+    expect(accountStateFromMe({ accountsEnabled: true, user: null, ownedCatalogueIds: [], songUploadEnabled: true })).toEqual({
       status: 'signed-out',
       displayName: null,
-      ownedCatalogueIds: [],
+      ownedCatalogueIds: [], songUploadEnabled: true,
     });
   });
 
   it('maps enabled + user to signed-in with the display name', () => {
-    expect(accountStateFromMe({ accountsEnabled: true, user: { displayName: 'Ada' }, ownedCatalogueIds: [] })).toEqual({
+    expect(accountStateFromMe({ accountsEnabled: true, user: { displayName: 'Ada' }, ownedCatalogueIds: [], songUploadEnabled: true })).toEqual({
       status: 'signed-in',
       displayName: 'Ada',
-      ownedCatalogueIds: [],
+      ownedCatalogueIds: [], songUploadEnabled: true,
     });
   });
 
@@ -32,8 +32,8 @@ describe('accountStateFromMe (T016)', () => {
   // into AccountState for a signed-in owner.
   it('maps a signed-in owner\'s ownedCatalogueIds through unchanged', () => {
     expect(
-      accountStateFromMe({ accountsEnabled: true, user: { displayName: 'Ada' }, ownedCatalogueIds: ['my-band', 'other-band'] }),
-    ).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: ['my-band', 'other-band'] });
+      accountStateFromMe({ accountsEnabled: true, user: { displayName: 'Ada' }, ownedCatalogueIds: ['my-band', 'other-band'], songUploadEnabled: true }),
+    ).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: ['my-band', 'other-band'], songUploadEnabled: true });
   });
 });
 
@@ -43,7 +43,7 @@ describe('loadAccount (T016)', () => {
 
   it('updates the store from a successful /me', async () => {
     await loadAccount(okFetch({ accountsEnabled: true, user: { displayName: 'Bo' } }));
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Bo', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Bo', ownedCatalogueIds: [], songUploadEnabled: true });
   });
 
   it('resolves to unavailable on a network error (affordances stay absent)', async () => {
@@ -91,7 +91,7 @@ describe('signOut (T001) — verify via /me', () => {
     originalWindow = (globalThis as unknown as { window?: unknown }).window;
     (globalThis as unknown as { window: unknown }).window = { location: { reload } };
     // Seed a signed-in state before each case.
-    accountStore.set({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    accountStore.set({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
   });
 
   afterEach(() => {
@@ -103,7 +103,7 @@ describe('signOut (T001) — verify via /me', () => {
 
     await signOut(routedFetch({ logout: 'throw', me: { accountsEnabled: true, user: null } }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null, ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null, ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before);
     expect(reload).not.toHaveBeenCalled();
   });
@@ -113,7 +113,7 @@ describe('signOut (T001) — verify via /me', () => {
 
     await signOut(routedFetch({ logout: 'ok', me: { accountsEnabled: true, user: null } }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null, ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-out', displayName: null, ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before);
     expect(reload).not.toHaveBeenCalled();
   });
@@ -123,7 +123,7 @@ describe('signOut (T001) — verify via /me', () => {
 
     await signOut(routedFetch({ logout: 'ok', me: { accountsEnabled: true, user: { displayName: 'Ada' } } }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before + 1);
     expect(reload).not.toHaveBeenCalled();
   });
@@ -133,7 +133,7 @@ describe('signOut (T001) — verify via /me', () => {
 
     await signOut(routedFetch({ logout: 'throw', me: { accountsEnabled: true, user: { displayName: 'Ada' } } }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before + 1);
     expect(reload).not.toHaveBeenCalled();
   });
@@ -146,7 +146,7 @@ describe('signOut (T001) — verify via /me', () => {
 
     await signOut(routedFetch({ logout: 'throw', me: 'throw' }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before + 1);
     expect(reload).not.toHaveBeenCalled();
   });
@@ -168,7 +168,7 @@ describe('signOut (T004) — an unreachable /me keeps the menu signed-in (F003)'
     }) as unknown as typeof fetch;
 
   beforeEach(() => {
-    accountStore.set({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    accountStore.set({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
   });
 
   it('(a-throw) logout ok but /me throws → store stays signed-in, retryable toast', async () => {
@@ -176,7 +176,7 @@ describe('signOut (T004) — an unreachable /me keeps the menu signed-in (F003)'
 
     await signOut(routedFetch({ logout: 'ok', me: 'throw' }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before + 1);
   });
 
@@ -185,7 +185,7 @@ describe('signOut (T004) — an unreachable /me keeps the menu signed-in (F003)'
 
     await signOut(routedFetch({ logout: 'ok', me: 'notok' }));
 
-    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [] });
+    expect(get(accountStore)).toEqual({ status: 'signed-in', displayName: 'Ada', ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(toastStore).length).toBe(before + 1);
   });
 });
@@ -196,14 +196,14 @@ describe('loadAccount (T004) — boot behavior unchanged on a failed /me', () =>
       throw new Error('offline');
     }) as unknown as typeof fetch;
     const state = await loadAccount(throwing);
-    expect(state).toEqual({ status: 'unavailable', displayName: null, ownedCatalogueIds: [] });
+    expect(state).toEqual({ status: 'unavailable', displayName: null, ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(accountStore).status).toBe('unavailable');
   });
 
   it('(b-notok) a non-ok /me still resolves the store to unavailable', async () => {
     const notOk = (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch;
     const state = await loadAccount(notOk);
-    expect(state).toEqual({ status: 'unavailable', displayName: null, ownedCatalogueIds: [] });
+    expect(state).toEqual({ status: 'unavailable', displayName: null, ownedCatalogueIds: [], songUploadEnabled: true });
     expect(get(accountStore).status).toBe('unavailable');
   });
 });
