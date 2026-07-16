@@ -1,5 +1,20 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-16 (**phase-2-in-app-authoring PLANNED → TASKED.** Used
+the existing draft plan `plan-phase-2-in-app-authoring-2026-07-14-8537.md`
+(already matched the amended artifacts — approved via `--from`, not
+re-drafted) and generated its tasks file,
+`tasks-phase-2-in-app-authoring-48d5.md` (`ready`, 18 tasks across 6
+phases: ownership data model, dynamic catalog + per-user visibility,
+upload trust surface, authoring UI, consent gating, ownership/invites).
+Feature register: `phase-2-in-app-authoring` → `tasked`. Committed/pushed
+`53b3733`. **Note:** Phase 6 (T016–T018) implements invite-by-link +
+co-owner grants — this now overlaps the standalone backlog entry
+`catalogue-co-owner-invite-flow` filed a day earlier in the artifacts
+sweep below; that entry should probably be retired or merged once Phase 6
+lands, rather than planned separately. Not yet implemented — this run
+only planned and tasked it. Prior context below.)_
+
 _Updated: 2026-07-15 (**ArDD updated to beta `bdd553e`; constitution bumped
 to v1.6.0 (Phase 2 in-app authoring sanctioned); artifacts-sweep backlog
 pass added 3 entries.** Committed/pushed `6e3ea49`: constitution.md/
@@ -106,11 +121,12 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feature Backlog
 
-**4 backlogged** · 0 planned · 0 tasked · **15 implemented** — see
-`.project/features/`. Backlogged: `phase-2-in-app-authoring`,
-`catalogue-co-owner-invite-flow`, `host-mandated-bars-per-row-layout`,
-`latency-compensated-position-extrapolation`. Target one with
-`/ardd-plan <slug>`.
+**3 backlogged** · 0 planned · **1 tasked** · **15 implemented** — see
+`.project/features/`. Tasked: `phase-2-in-app-authoring`
+(`tasks-phase-2-in-app-authoring-48d5.md`, ready, 0/18). Backlogged:
+`catalogue-co-owner-invite-flow` (**likely superseded by
+phase-2-in-app-authoring's Phase 6** — see note above), `host-mandated-
+bars-per-row-layout`, `latency-compensated-position-extrapolation`.
 
 ## Plans & Tasks
 
@@ -173,13 +189,16 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-plan phase-2-in-app-authoring`** — the amendments are in;
-   design/plan the in-app authoring feature itself.
-2. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
+1. **`/ardd-implement`** — execute `tasks-phase-2-in-app-authoring-48d5.md`
+   (18 tasks, ready).
+2. **Decide `catalogue-co-owner-invite-flow`'s fate** — retire it (its
+   scope is now Phase 6 of the tasked plan) or leave it as a marker until
+   Phase 6 actually lands, then retire.
+3. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
    `/ardd-diagram infrastructure`, `/ardd-diagram ui`.
-3. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+4. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
-4. **Optional:** confirm the Google `29801536638` client's redirect URI is
+5. **Optional:** confirm the Google `29801536638` client's redirect URI is
    registered; `/ardd-defects` to re-verify artifacts against recent client
    fixes; `/ardd-update` to move off the beta channel gap.
