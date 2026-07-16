@@ -1,10 +1,10 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-07-12
+last_updated: 2026-07-14
 diagram_type: erDiagram
 render_section: Datamodel
-diagram_status: current
+diagram_status: stale
 ---
 
 # Data Model
@@ -45,6 +45,17 @@ once it creates or joins a session, independent of `Session` itself
 (infrastructure.md). The host selects a song by `CatalogSong.id`, which
 populates `Session.selectedSong` and `Session.availableParts`.
 
+**As of Phase 2 (in-app authoring), the server-global catalog is mutable at
+runtime**, not just at startup: an authenticated owner's in-app catalogue
+create/song-add action writes to the filesystem (Railway volume, same
+on-disk format the pipeline writes) and triggers a re-scan, updating the
+in-memory catalog and re-broadcasting `catalog` to every affected session
+— the same re-broadcast shape `catalogue-unlock` already uses when a
+session's visible set grows (infrastructure.md). `Catalogue`/`CatalogSong`
+still have no durable Postgres rows of their own — the filesystem stays
+the single format; only *ownership* of a catalogue (`CatalogueOwnership`,
+below) is a durable row.
+
 Every song belongs to exactly one `Catalogue` (`CatalogSong.catalogueId`,
 below). A catalogue is either public (its songs are always included in
 what a client receives) or private, gated behind an activation key a
@@ -81,7 +92,7 @@ no key — so existing local/personal deployments need no migration.
 | Field | Type | Notes |
 |-------|------|-------|
 | id | string | |
-| userId | string \| null | Optional reference to a `User.id` (account layer, below). Null for an **anonymous** participant — the default; anonymous and logged-in participants coexist in one session. Set when a participant joins with a valid `AuthSession` cookie. Its only Phase-1 job is to seed host-only catalogue auto-unlock from the host's `CatalogueMembership` set (see `unlockedCatalogueIds`); it is *not* broadcast to peers in Phase 1 — see infrastructure.md for where it lives on the wire |
+| userId | string \| null | Optional reference to a `User.id` (account layer, below). Null for an **anonymous** participant — the default; anonymous and logged-in participants coexist in one session. Set when a participant joins with a valid `AuthSession` cookie. Seeds host-only catalogue auto-unlock from the host's `CatalogueMembership` set (see `unlockedCatalogueIds`). **As of Phase 2 (in-app authoring), also broadcast to peers** in `session-state` — peer-visible identity is what makes an ownership/invite UI (e.g. "invite this participant as a co-owner") meaningful; Phase 1 kept it connection-registry-only since nothing needed it broadcast yet |
 | displayName | string | |
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
@@ -195,6 +206,18 @@ doesn't otherwise exist, and file-size/validation/staging concerns with
 no current evidence of need. Revisit if operators report the CLI step is
 actually a submission bottleneck in practice.
 
+**Reversed for the Consent Record specifically, by Phase 2 (in-app
+authoring, constitution v1.6.0):** an authenticated catalogue owner's
+in-app song-add flow (infrastructure.md's In-App Authoring section) *does*
+write a Consent Record — via the same shape this CLI writes, not a second
+format — since the size-limit/validation/staging concerns this resolution
+originally cited are exactly what Phase 2's Upload Trust Surface
+(infrastructure.md) now owns, and owner-authentication (via
+`CatalogueOwnership`) supplies the identity/session handling this
+resolution said didn't otherwise exist. This CLI path is **not removed** —
+it remains how a fresh/self-hosted deployment seeds its initial catalog
+without any account layer configured at all.
+
 ## Catalogue Activation Key (Public Deployment Only)
 
 Not a field on `Catalogue` and never sent to any client in any form —
@@ -261,9 +284,28 @@ host-only membership-derived slice of `Session.unlockedCatalogueIds` (above).
 | id | string (uuid) | |
 | userId | string | References `User.id` (same store — a real FK here) |
 | catalogueId | string | The catalogue's **stable id** as a plain string — **no cross-store FK** (see above). Uses the stable id, not a display slug, so a future user-created catalogue reusing a slug can't collide into an existing grant (§13 S8) |
-| grantedVia | 'owner' \| 'key' \| 'invite' | How access was granted. `'key'` = redeemed the activation key (Phase 1); `'owner'` = created/owns the catalogue and `'invite'` = directly invited by an owner (both Phase 2 / authoring) |
+| grantedVia | 'owner' \| 'key' \| 'invite' | How access was granted. `'key'` = redeemed the activation key; `'owner'` = created/owns the catalogue; `'invite'` = directly invited by an owner. `'owner'`/`'invite'` are live as of Phase 2 (in-app authoring) — a `CatalogueOwnership` row (below) is what actually grants `'owner'`, and an invite flow writes `'invite'` |
 | keyEpoch | number \| null | For `grantedVia:'key'` only: the Activation Key `epoch` this grant redeemed. Access requires `keyEpoch` to equal the catalogue's current `epoch`; a key rotation bumps the epoch and strands old key-grants (§13 S5). Null for `'owner'`/`'invite'` (not key-derived) |
 | grantedAt | number | Wall-clock time access was granted |
+
+### CatalogueOwnership (Phase 2 — in-app authoring)
+
+The durable form of "this user owns/can edit this catalogue" — kept as its
+own row/table rather than a field on `Catalogue`, because `Catalogue` is
+**not a durable entity**: it's derived at startup (and, as of Phase 2, at
+every authoring write) from a filesystem scan (`catalog-loader.ts`,
+infrastructure.md). An ownership row is what lets an in-app "create
+catalogue" or "add song" action authorize itself, and is also what a
+`CatalogueMembership(grantedVia:'owner')` row derives from — creating an
+ownership grants the matching membership so an owner is never locked out
+of their own catalogue's content.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | string (uuid) | |
+| catalogueId | string | The catalogue's stable id — same no-cross-store-FK rule as `CatalogueMembership.catalogueId` above (a plain string, inert if it resolves to nothing on disk) |
+| ownerId | string | References `User.id` (same store — a real FK here) |
+| createdAt | number | Wall-clock time ownership was established. For the pre-existing filesystem catalogues that predate accounts (e.g. `kinda-bad`), this is set by a one-time operator CLI (`set-catalogue-owner <slug> <user-email>` or similar) — there is no in-app path to claim ownership of a catalogue nobody created in-app |
 
 ### AuthSession
 
@@ -295,6 +337,10 @@ patterns:
   unique to keep one grant per user-catalogue pair.
 - `AuthSession` — primary lookup by `id` (cookie → session on every
   authenticated request); index on `userId` for logout-everywhere/revocation.
+- `CatalogueOwnership` (Phase 2) — index on `ownerId` (an owner's own
+  catalogue list, and the per-user-visibility check — infrastructure.md —
+  needs "does this user own catalogue X" cheaply on every `catalog`
+  message build).
 
 ## Production Annotations
 

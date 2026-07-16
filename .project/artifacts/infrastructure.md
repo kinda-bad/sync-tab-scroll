@@ -1,10 +1,10 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-13
+last_updated: 2026-07-14
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -644,6 +644,83 @@ operations **fail soft** (treated as logged-out / no persisted membership;
 unlock still works for the live session, the best-effort membership write is
 skipped) — the anonymous path and every live session stay fully functional and
 the server never crashes on a DB error (§13 S7).
+
+## In-App Authoring (Phase 2 — Optional, Owner-Only)
+
+Builds on User Accounts (above): a signed-in `User` who owns a catalogue
+(`CatalogueOwnership`, datamodel.md) can create/edit catalogues and add
+songs from the web UI. Design of record:
+`.project/design-user-accounts-2026-07-12.reviewed.md` §7/§8/§9/§12,
+narrowed by owner decisions in
+`.project/plans/research-phase-2-in-app-authoring-scoping-2026-07-14-6879.md`
+(2026-07-14). **Additive to the existing CLI, not a replacement**: the
+operator-run `create-catalogue`/pipeline-extraction/`record-consent`
+flow (pipeline.md) remains how a fresh or self-hosted deployment seeds
+its initial catalog; this section is a second entry point for an
+already-running server's authenticated owners.
+
+**Storage: Railway volume, same on-disk format the pipeline already
+writes** (owner decision) — an authoring write lands in the same
+`catalog/<catalogue-slug>/<song-slug>/` layout `pipeline.md`'s Inputs &
+Outputs On Disk already documents, so `catalog-static.ts` (which already
+serves that volume) needs no change. There is exactly one on-disk format
+for song content, whether it arrived via CLI or web upload.
+
+**Mutation model.** `HandlerContext.catalog` (Song Catalog Delivery,
+above) — built once at `createServer()` today — becomes mutable at
+runtime: an authoring write triggers `loadCatalog()` to re-scan (or a
+narrower incremental update, an implementation detail for the plan, not
+a design commitment here) and the server re-broadcasts `catalog` to every
+session whose visible set changed, reusing the same broadcast shape
+`catalogue-unlock` already uses when a session's unlocked set grows. This
+is the first place the in-memory catalog is a **store**, not a
+build-once snapshot (constitution Principle I still applies — one
+authoritative in-memory catalog store server-side, not per-request
+re-derivation).
+
+**Per-user visibility.** An owner must see their own not-yet-published
+catalogue when *they* join a session, even before anyone unlocks it —
+the first time `visibleCatalog()`'s output differs by *recipient*, not
+just by session. `visibleCatalog(catalog, session, userId)` gains a third
+parameter: in addition to the existing `unlockedCatalogueIds` check, a
+catalogue is also visible to a session if the joining/requesting
+participant's `userId` has a `CatalogueOwnership` row for it — checked via
+the index on `CatalogueOwnership.ownerId` (datamodel.md).
+
+**Upload trust surface.** The server now parses attacker-supplied content
+at request time — a `.gp` file is a zip container carrying XML the
+pipeline reads raw (`score.gpif`), and pipeline extraction also makes
+network calls to `lrclib.net` (pipeline.md), which as of this feature can
+be triggered by an untrusted upload rather than only an operator's own
+CLI invocation. Required, not optional, before this ships to the public
+deployment: a request body size limit, a parse timeout (the pipeline's
+extraction stage must not be allowed to hang the request indefinitely),
+and staging — a rejected/malformed upload never reaches the live catalog
+directory or triggers a `catalog` re-broadcast. Owner-authentication (the
+`CatalogueOwnership` check above) is the first gate; these are the
+second, defending against a legitimate owner's account being used to
+submit a malformed or oversized file, deliberately or not.
+
+**Consent gating (build vs. ship).** The authoring mechanism itself is not
+gated on real consent/ToS text existing (owner decision) — self-hosted/
+local deployments can use it immediately. The **public Railway
+deployment** must not accept uploads until real text replaces the
+`dev-placeholder` `tosVersion` (datamodel.md's Production Annotations) —
+enforced as a runtime feature flag (e.g. an env var gating the upload
+route's availability, mirroring `REQUIRE_SONG_CONSENT`'s existing
+self-hosted-vs-public-deployment pattern in Song Consent Gate, below),
+not a code-absence. In-app consent capture (ui.md) writes the same
+Consent Record shape (datamodel.md) the CLI's `record-consent` writes
+today — one record format, two entry points, same as catalog storage
+above.
+
+**Server-side pipeline execution.** Running the extraction pipeline
+server-side (rather than only as an operator's local CLI invocation) was
+already validated as feasible during the original design spike —
+`@coderline/alphatab` already runs in Node (this is how the pipeline's
+existing CLI extraction works today; nothing new needed there). What's
+new is running it inside an HTTP request handler, subject to the timeout/
+staging requirements above rather than a CLI's unlimited runtime.
 
 ## Production Posture
 

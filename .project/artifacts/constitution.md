@@ -1,6 +1,25 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.5.0 → 1.6.0
+Amended: Project Scope & Intent — sanctions Phase 2 in-app authoring
+(catalogue/song creation from the web UI), reversing two prior decisions:
+pipeline.md's "operator-driven, offline… no upload mechanism or web form"
+resolution, and the implicit CLI-only framing of catalog/catalogue creation
+throughout pipeline.md. The web upload path is additive alongside the
+existing CLI (which remains how a fresh/self-hosted deployment seeds its
+initial catalog), gated by owner authentication, size limits, parse
+sandboxing of attacker-supplied `.gp`/zip/XML content, and staging before a
+file enters the live catalog. The public Railway deployment must not accept
+uploads until real consent/ToS text replaces the `dev-placeholder`
+(datamodel.md Production Annotations) — a runtime gate, not an absent
+feature; self-hosted/local deployments are not blocked on that text. No
+Core Principle removed or redefined (MINOR). Driver:
+`.project/design-user-accounts-2026-07-12.reviewed.md` (§7 Phase 2, §8
+ripple inventory, §9/§12 owner decisions) plus
+`.project/plans/research-phase-2-in-app-authoring-scoping-2026-07-14-6879.md`
+(storage tier and consent-sequencing owner decisions, 2026-07-14).
+
 Version change: 1.4.0 → 1.5.0
 Amended: Project Scope & Intent — deployment scale/audience posture.
 Reversed the "no auth / no durable datastore" scope decision now that the app
@@ -73,7 +92,7 @@ yet; this records the intended design ahead of building it.
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-12
+last_updated: 2026-07-14
 next_step_prompt: true
 delegation: eager
 merge_policy: auto
@@ -113,6 +132,26 @@ store" statement is therefore **narrowed to session state**, not deleted.
 Rate limiting is still not required by this constitution — a separate,
 still-open hardening concern. Code should not make adding these later a
 rewrite, per the standing intent.
+
+**Phase 2 — in-app authoring** (design of record: the same
+`design-user-accounts-2026-07-12.reviewed.md`, §7/§8/§9/§12) additionally
+sanctions a signed-in catalogue owner creating/editing catalogues and
+adding songs from the web UI — reversing pipeline.md's prior "no upload
+mechanism or web form" resolution for this one path. The existing
+operator-run CLI (`create-catalogue`, the pipeline's extraction stages,
+`record-consent`) is **not replaced** — it remains how a fresh or
+self-hosted deployment seeds its initial catalog; the web path is an
+additional entry point for an already-running server's authenticated
+owners. Storage is a Railway volume, in the same on-disk format the
+pipeline already writes (owner decision, 2026-07-14) — there is no second
+storage format to keep in sync. Uploads are gated by owner authentication,
+size limits, and parse sandboxing/timeouts, since the server now parses
+attacker-supplied `.gp` (a zip container) at request time. The public
+Railway deployment must not actually accept uploads until real consent/ToS
+text replaces the `dev-placeholder` `tosVersion` (datamodel.md's Production
+Annotations already names this gap) — building the mechanism is not gated
+on that text, only the public deployment's live acceptance of it is
+(owner decision, 2026-07-14).
 
 ## Core Principles
 
@@ -293,4 +332,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.5.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-12
+**Version**: 1.6.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-14

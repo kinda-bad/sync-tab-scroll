@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 ---
 
 # Lyrics Extraction Pipeline
@@ -188,6 +188,14 @@ mechanism where the existing shape already covers it). A small CLI,
 Run once per catalogue, before `extract-lyrics`/`record-consent` are ever
 pointed at its subdirectory — creating the catalogue directory is a
 prerequisite for populating it with songs, not the other way around.
+
+**Additive entry point as of Phase 2 (in-app authoring, constitution
+v1.6.0):** an authenticated owner can also create a catalogue and add songs
+from the web UI (infrastructure.md's In-App Authoring section), writing the
+same on-disk shape this CLI writes — one format, two entry points. This
+CLI is **not replaced or deprecated**: it remains the only path for a
+fresh or self-hosted deployment with no account layer configured, and
+stays the simpler choice for an operator seeding a catalog in bulk.
 
 ## Dependencies
 

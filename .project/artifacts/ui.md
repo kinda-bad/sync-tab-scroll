@@ -69,8 +69,7 @@ refresh-rejoin path — so there is no special mid-session login handling.
 - Entering an activation key **while signed in** persists the unlock to the
   host's account for future sessions (a subtle "remembered" affirmation),
   versus the signed-out case where it unlocks only the current session.
-- In-app authoring (creating catalogues, adding songs) is a later phase and is
-  not part of this section yet.
+- **In-app authoring (Phase 2)** — see the dedicated section below.
 
 **States** (the account menu behaves identically wherever it renders — Landing
 and Bar):
@@ -103,6 +102,58 @@ and Bar):
   reserved for a server that reports accounts are off (`/me` with
   `accountsEnabled: false`) — never a transient `/me` fetch failure, which
   leaves whatever account state was already resolved untouched.
+
+## In-App Authoring (Phase 2 — Optional, Owner-Only)
+
+Reachable only for a signed-in `User` who owns at least one catalogue
+(`CatalogueOwnership`, datamodel.md) — absent entirely for a signed-out or
+non-owner participant, same "absent, not disabled" pattern the account menu
+itself uses. A new "My catalogues" entry in the account menu (Landing and
+Bar, alongside Sign out) opens the authoring surface as its own modal, not a
+tab inside the existing Song & Part or Settings modals — authoring is a
+distinct activity from picking a song to play, not a mode of either.
+
+- **Catalogue list** — every catalogue the signed-in user owns, with a
+  "Create catalogue" action (name + public/private + key, mirroring the
+  CLI's `create-catalogue` arguments) and, per catalogue, an "Add song"
+  action and a song list.
+- **Add song** — a file picker for a `.gp` file plus the same consent
+  fields the CLI's `record-consent` step captures (submitter identifier,
+  ToS acceptance) — one form, not two separate steps, since both are
+  required before a song can be added. Submitting shows real progress
+  (uploading → pipeline running → done/error) rather than a single opaque
+  spinner, since server-side pipeline extraction (infrastructure.md) can
+  take a few seconds and a bare spinner gives no signal if it's stuck vs.
+  slow. An error (parse failure, oversized file, pipeline extraction
+  failure) surfaces inline in the form, not as a toast — the user needs to
+  see it next to the file they picked to retry meaningfully, unlike the
+  terse toast pattern used for session-level errors elsewhere (States,
+  below) which have no comparable "try again with this specific input"
+  context.
+- **Consent/ToS capture** — the in-app equivalent of the CLI's
+  `record-consent`, writing the same Consent Record shape
+  (infrastructure.md). On the public Railway deployment, if the runtime
+  consent-gating flag (infrastructure.md) is off (no real ToS text yet),
+  the "Add song" action itself is **absent** — same pattern as every other
+  server-capability gate in this app (Accounts unavailable, above) — not
+  shown disabled with an explanatory tooltip. Self-hosted deployments with
+  the flag unset entirely (no gate configured) see the action normally.
+- **Ownership/invites** — a "Co-owners" section per catalogue listing
+  current owners and an invite-by-link control (the design's recommended
+  transport — no email-sending infrastructure exists or should exist for
+  this). Generating an invite link is owner-only; visiting one, for a
+  signed-in user, grants `CatalogueMembership(grantedVia:'invite')` and
+  `CatalogueOwnership` in one action — there is no separate "accept"
+  step distinct from following the link while signed in, mirroring the
+  existing pattern of host actions in this app being immediate and terse
+  (Lobby View's "Make host" control, below, is the precedent).
+- **Unpublished catalogue visibility** — an owner sees their own
+  not-yet-shared-with-anyone catalogue in the Lobby's song picker the
+  moment they join a session, even though no one has unlocked it by key —
+  the per-user visibility infrastructure.md's `visibleCatalog()` extension
+  provides. It renders identically to any other visible private
+  catalogue in the picker; there is no separate "draft" visual treatment,
+  since an owner-visible catalogue is fully playable, not a preview.
 
 ## Lobby View
 
