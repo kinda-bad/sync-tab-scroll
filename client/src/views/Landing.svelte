@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { connect } from '../ws-client';
   import { loadStoredSession } from '../session-persistence';
-  import { accountStore, signIn, signOut } from '../account';
+  import { accountStore, signIn, signOut, authoringModalOpen } from '../account';
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
   import AccountMenu from '../components/AccountMenu.svelte';
@@ -55,6 +55,8 @@
               displayName={$accountStore.displayName}
               onSignIn={signIn}
               onSignOut={signOut}
+              ownedCatalogueIds={$accountStore.ownedCatalogueIds}
+              onOpenAuthoring={() => authoringModalOpen.set(true)}
             />
           </div>
         </div>

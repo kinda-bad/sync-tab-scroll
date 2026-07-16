@@ -43,6 +43,15 @@ function createAccountStore() {
 export const accountStore = createAccountStore();
 
 /**
+ * Whether the in-app authoring modal (T011-T018, ui.md In-App Authoring) is
+ * open. Shared between the Landing and Bar `AccountMenu` instances (only one
+ * `AuthoringModal` is ever mounted, in `App.svelte`) so either entry point
+ * can open the same modal instance — Principle I, one reactive store, not a
+ * side-channel prop threaded through two independent trees.
+ */
+export const authoringModalOpen = writable(false);
+
+/**
  * Reads `/me` (the source of truth for account state) and maps it to an
  * {@link AccountState}. Unlike {@link loadAccount}, this does NOT swallow
  * failures: a non-ok response or a network/abort error **throws**, so callers

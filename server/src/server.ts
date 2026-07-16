@@ -57,11 +57,21 @@ export function createServer(config: ServerConfig): http.Server {
     ctx,
     requireSongConsent: config.requireSongConsent,
   });
+  // T012/T016/T017 — create-catalogue + invite generate/redeem. Mounted
+  // alongside the upload trust surface, same auth seam and position in the chain.
+  const catalogueAuthoringHandler = createCatalogueAuthoringRequestHandler({
+    store: accountStore,
+    catalogRoot: config.catalogRoot,
+    ctx,
+    requireSongConsent: config.requireSongConsent,
+    sessionCookieSecret: config.account.sessionCookieSecret,
+  });
   const catalogHandler = createCatalogRequestHandler(config.catalogRoot);
   const clientStaticHandler = createClientStaticRequestHandler(config.clientRoot);
   const httpServer = http.createServer((req, res) => {
     if (authHandler(req, res)) return;
     if (songUploadHandler(req, res)) return;
+    if (catalogueAuthoringHandler(req, res)) return;
     if (catalogHandler(req, res)) return;
     if (clientStaticHandler(req, res)) return;
     res.writeHead(404).end();

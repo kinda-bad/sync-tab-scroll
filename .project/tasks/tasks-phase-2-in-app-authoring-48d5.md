@@ -71,13 +71,13 @@ status: in-progress
   directory. Depends on T009.
 
 ## Phase 4: In-app authoring UI
-- [ ] T011 [artifacts: ui] "My catalogues" entry in `AccountMenu` (Landing and
+- [x] T011 [artifacts: ui] "My catalogues" entry in `AccountMenu` (Landing and
   Bar), visible only when `/me` (or an equivalent endpoint) reports the
   signed-in user owns at least one catalogue — absent otherwise, same
   pattern as every other capability-gated affordance in this app. Opens a
   new standalone modal (not a tab inside `SettingsModal`/song-part modal).
   Test-first CT spec mirroring `AccountMenu.ct.spec.ts`'s conventions.
-- [ ] T012 [artifacts: ui] Catalogue list + "Create catalogue" form (name,
+- [x] T012 [artifacts: ui] Catalogue list + "Create catalogue" form (name,
   public/private, key when private) inside the new modal, calling a new
   `POST /catalogues` route (mirrors the CLI's `create-catalogue`
   arguments — server-side implementation reuses the same directory/

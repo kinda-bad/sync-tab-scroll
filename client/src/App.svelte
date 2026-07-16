@@ -13,7 +13,8 @@
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
   import AccountMenu from './components/AccountMenu.svelte';
-  import { accountStore, signIn, signOut } from './account';
+  import AuthoringModal from './components/AuthoringModal.svelte';
+  import { accountStore, signIn, signOut, authoringModalOpen, loadAccount } from './account';
   import { leaveSession } from './leave-session';
 
   let tabContainer: HTMLDivElement;
@@ -173,13 +174,29 @@
       {/if}
       <!-- Persistent account menu (ui.md Account & Sign-In). Absent when
            accounts are unavailable (no DB) — AccountMenu renders nothing. -->
-      <AccountMenu status={$accountStore.status} displayName={$accountStore.displayName} onSignIn={signIn} onSignOut={signOut} />
+      <AccountMenu
+        status={$accountStore.status}
+        displayName={$accountStore.displayName}
+        onSignIn={signIn}
+        onSignOut={signOut}
+        ownedCatalogueIds={$accountStore.ownedCatalogueIds}
+        onOpenAuthoring={() => authoringModalOpen.set(true)}
+      />
     {/snippet}
   </Bar>
 {/if}
 
 <SongPartModal open={songPartModalOpen} dismissible={true} onClose={closeSongPartModal} />
 <SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
+<!-- In-app authoring (T011-T018, ui.md In-App Authoring) — a single instance
+     shared by both AccountMenu entry points (Landing and Bar) via
+     authoringModalOpen (Principle I). -->
+<AuthoringModal
+  open={$authoringModalOpen}
+  onClose={() => authoringModalOpen.set(false)}
+  ownedCatalogueIds={$accountStore.ownedCatalogueIds}
+  onCatalogueCreated={() => void loadAccount()}
+/>
 
 <Toasts />
 <ConnectionBanner />
