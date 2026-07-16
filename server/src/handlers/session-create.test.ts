@@ -33,4 +33,27 @@ describe('session-create', () => {
     expect(sent[0]).toMatchObject({ type: 'session-state', selfParticipantId: conn!.participantId });
     expect(sent[1]).toEqual({ type: 'catalog', catalogues: [], songs: [] });
   });
+
+  it('T007: a signed-in creator\'s host Participant carries their userId on the wire', () => {
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } };
+    const socket = fakeSocket();
+    ctx.connections.stampUserId(socket, 'user-1');
+
+    handleSessionCreate(ctx, socket, { type: 'session-create', displayName: 'Alice' });
+
+    const conn = ctx.connections.get(socket)!;
+    const session = ctx.sessionStore.get(conn.sessionCode)!;
+    expect(session.participants[0].userId).toBe('user-1');
+  });
+
+  it('T007: an anonymous creator\'s host Participant carries a null userId on the wire', () => {
+    const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } };
+    const socket = fakeSocket();
+
+    handleSessionCreate(ctx, socket, { type: 'session-create', displayName: 'Alice' });
+
+    const conn = ctx.connections.get(socket)!;
+    const session = ctx.sessionStore.get(conn.sessionCode)!;
+    expect(session.participants[0].userId).toBeNull();
+  });
 });

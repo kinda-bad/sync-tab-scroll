@@ -8,8 +8,8 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     selectedSong: null,
     availableParts: [],
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     ],
     hostId: 'host-1',
     playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
@@ -258,8 +258,8 @@ test('Preferences tab: a participant can mute their own currently-selected part 
       { trackIndex: 1, instrumentName: 'Bass' },
     ],
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
@@ -366,8 +366,8 @@ test('a row shows the participant\'s selected instrument part in the sublabel', 
   const session = baseSession({
     availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
@@ -378,8 +378,8 @@ test('a row shows the participant\'s selected instrument part in the sublabel', 
 test('a row shows "Lyrics" for a participant on the tab-less lyrics part', async ({ mount }) => {
   const session = baseSession({
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 'lyrics', readiness: 'ready', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 'lyrics', readiness: 'ready', joinedAt: 1 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
@@ -391,8 +391,8 @@ test('the host row combines "HOST" and the selected part as "HOST · <part>"', a
   const session = baseSession({
     availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
@@ -403,8 +403,8 @@ test('the host row combines "HOST" and the selected part as "HOST · <part>"', a
 test('a row with no selected part shows no part text', async ({ mount }) => {
   const session = baseSession({
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
@@ -417,9 +417,9 @@ test('a non-host, non-requesting viewer sees a plain pending label on the reques
   const session = baseSession({
     pendingHostRequest: 'member-1',
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
-      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
+      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 , userId: null},
     ],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-2' } });

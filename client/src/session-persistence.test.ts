@@ -53,7 +53,7 @@ describe('startSessionPersistence', () => {
         code: 'WXYZ',
         selectedSong: null,
         availableParts: [],
-        participants: [{ id: 'p1', displayName: 'Alice', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 }],
+        participants: [{ id: 'p1', displayName: 'Alice', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null}],
         hostId: 'p1',
         playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
         countInEnabled: false,

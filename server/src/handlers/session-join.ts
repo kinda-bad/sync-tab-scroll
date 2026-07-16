@@ -4,6 +4,7 @@ import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
 import { seedHostMembershipUnlocks } from '../membership-unlock.js';
+import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
   const session = ctx.sessionStore.get(message.code);
@@ -23,6 +24,10 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   // disconnected participant.
   const existing = message.participantId ? session.participants.find((p) => p.id === message.participantId) : undefined;
 
+  // Peek (not consume) — `attach` below still does the real, consuming read
+  // that seeds ConnectionInfo.userId (T007: peer-visible identity on the wire).
+  const userId = ctx.connections.peekPendingUserId(socket);
+
   let participantId: string;
   if (existing) {
     participantId = existing.id;
@@ -32,6 +37,9 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
     // refresh (fresh page load) — their part choice is kept, but readiness
     // must re-derive from scratch rather than stay stale at 'ready'.
     existing.readiness = 'no-part';
+    // Refresh the wire-visible userId too — a reconnect may now be signed in
+    // (or signed out) compared to the original join.
+    existing.userId = userId;
 
     // The host reconnecting within the grace period cancels any pending
     // succession (infrastructure.md Host Succession) — note this checks
@@ -50,6 +58,7 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
       selectedPart: null,
       readiness: 'no-part',
       joinedAt: Date.now(),
+      userId,
     });
   }
 
@@ -62,4 +71,9 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   // session host (e.g. the host reconnecting/reclaiming their seat) — a normal
   // member join is a no-op inside the helper. Best-effort/async (§13 S7).
   void seedHostMembershipUnlocks(ctx, session.code, socket);
+
+  // Per-user ownership visibility (T006): any signed-in owner (host or member,
+  // unlike the host-only unlock above) sees their own not-yet-unlocked-by-
+  // anyone catalogue. Best-effort/async, follow-up send to this socket only.
+  void sendOwnerVisibleCatalog(ctx, socket, session, ctx.connections.get(socket)?.userId ?? null);
 }

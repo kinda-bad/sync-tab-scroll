@@ -8,8 +8,8 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     selectedSong: null,
     availableParts: [],
     participants: [
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     ],
     hostId: 'host-1',
     playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },

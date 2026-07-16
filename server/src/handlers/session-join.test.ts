@@ -70,7 +70,7 @@ describe('session-join', () => {
       connectionStatus: 'disconnected',
       selectedPart: 2,
       readiness: 'ready',
-      joinedAt: 0,
+      joinedAt: 0, userId: null,
     });
     const socket = fakeSocket();
     ctx.connections.broadcast = () => {};
@@ -89,7 +89,7 @@ describe('session-join', () => {
   it('an auth cookie alone never reclaims a seat — reclaim stays keyed on participantId (T011)', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     ctx.connections.broadcast = () => {};
 
     // A socket carrying a resolved userId (as the WS upgrade would stamp) but no
@@ -108,12 +108,39 @@ describe('session-join', () => {
     // The connection still carries the authenticated userId (connection-level
     // identity), it just didn't grant the host seat.
     expect(ctx.connections.get(socket)?.userId).toBe('user-abc');
+    // T007: as of Phase 2, the Participant itself carries userId too — a
+    // wire-broadcast field, not just connection-registry-only (peer-visible
+    // identity for the ownership/invite UI).
+    expect(minted.userId).toBe('user-abc');
+  });
+
+  it('T007: a newly-joined anonymous participant carries a null userId on the wire', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    ctx.connections.broadcast = () => {};
+
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: 'Anon' });
+
+    expect(session.participants[0].userId).toBeNull();
+  });
+
+  it('T007: a reconnecting participant\'s wire userId refreshes to the new connection\'s identity', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0, userId: null });
+    ctx.connections.broadcast = () => {};
+
+    const socket = fakeSocket();
+    ctx.connections.stampUserId(socket, 'user-reconnect');
+    handleSessionJoin(ctx, socket, { type: 'session-join', code: session.code, displayName: 'Host', participantId: 'host-1' });
+
+    expect(session.participants[0].userId).toBe('user-reconnect');
   });
 
   it('cancels a pending host-reassignment timer when the reconnecting participant is the host', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     ctx.connections.broadcast = () => {};
 
     let fired = false;

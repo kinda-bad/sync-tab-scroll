@@ -106,6 +106,14 @@ export interface Participant {
   readiness: ReadinessStatus;
   /** Wall-clock time this participant first joined — determines tenure for host succession (the longest-tenured connected participant is promoted if the host stays disconnected past the grace period). Preserved across a reconnect, not reset. */
   joinedAt: number;
+  /**
+   * The authenticated account `userId`, or `null` for an anonymous participant
+   * (datamodel.md Participant). As of Phase 2 (in-app authoring) this is
+   * broadcast to peers in `session-state` — peer-visible identity is what makes
+   * an ownership/invite UI meaningful; Phase 1 kept it connection-registry-only
+   * since nothing needed it broadcast yet.
+   */
+  userId: string | null;
 }
 
 export interface CatalogPart {

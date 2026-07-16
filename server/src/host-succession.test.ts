@@ -18,7 +18,7 @@ describe('promoteNextHost', () => {
   it('is a no-op if the current host is still connected', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     let broadcastCalled = false;
     ctx.connections.broadcast = () => {
       broadcastCalled = true;
@@ -33,7 +33,7 @@ describe('promoteNextHost', () => {
   it('is a no-op if there are no other connected participants', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     let broadcastCalled = false;
     ctx.connections.broadcast = () => {
       broadcastCalled = true;
@@ -49,9 +49,9 @@ describe('promoteNextHost', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'newer', displayName: 'Newer', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 100 },
-      { id: 'oldest', displayName: 'Oldest', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 10 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'newer', displayName: 'Newer', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 100 , userId: null},
+      { id: 'oldest', displayName: 'Oldest', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 10 , userId: null},
     );
     const broadcasts: unknown[] = [];
     ctx.connections.broadcast = (_code, buildMessage) => broadcasts.push(buildMessage('oldest'));

@@ -24,16 +24,16 @@ status: in-progress
   visibility check (Phase 2). Depends on T001.
 
 ## Phase 2: Dynamic catalog + per-user visibility
-- [ ] T004 [artifacts: infrastructure] Make `HandlerContext.catalog` mutable:
+- [x] T004 [artifacts: infrastructure] Make `HandlerContext.catalog` mutable:
   extract the re-scan call (`loadCatalog()`) into a function callable
   post-startup, not just at `createServer()`. No behavior change yet —
   this task only makes the re-scan re-invokable.
-- [ ] T005 [artifacts: infrastructure] On a successful authoring write
+- [x] T005 [artifacts: infrastructure] On a successful authoring write
   (Phase 3 will call this), re-scan and re-broadcast `catalog` to every
   session whose visible set changed — reuse the exact broadcast shape
   `catalogue-unlock` already uses when a session's unlocked set grows.
   Depends on T004.
-- [ ] T006 [artifacts: infrastructure, datamodel] `visibleCatalog(catalog,
+- [x] T006 [artifacts: infrastructure, datamodel] `visibleCatalog(catalog,
   session, userId?)` gains the third parameter: a catalogue is also
   visible if `userId` owns it (T003's lookup), in addition to the
   existing `unlockedCatalogueIds` check. Update every call site
@@ -42,7 +42,7 @@ status: in-progress
   Test-first: an owner joining a fresh session sees their own
   not-yet-unlocked-by-anyone catalogue in the delivered `catalog`
   message. Depends on T003.
-- [ ] T007 [artifacts: datamodel] `Participant.userId` becomes a broadcast
+- [x] T007 [artifacts: datamodel] `Participant.userId` becomes a broadcast
   wire field in `session-state` (currently connection-registry-only per
   Phase 1). Update the shared `Participant` type and the `session-state`
   message builder. Test-first: a `session-state` broadcast includes a

@@ -55,7 +55,7 @@ describe('SessionStore grace-period timers', () => {
   it('markPossiblyEmpty schedules destruction only when no participants are connected', () => {
     const store = new SessionStore();
     const session = store.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
     store.markPossiblyEmpty(session.code);
     vi.advanceTimersByTime(30_000);
@@ -66,7 +66,7 @@ describe('SessionStore grace-period timers', () => {
   it('markPossiblyEmpty does not schedule destruction when a participant is connected', () => {
     const store = new SessionStore();
     const session = store.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
     store.markPossiblyEmpty(session.code);
     vi.advanceTimersByTime(30_000);
@@ -77,7 +77,7 @@ describe('SessionStore grace-period timers', () => {
   it('markActive cancels a pending destruction timer', () => {
     const store = new SessionStore();
     const session = store.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
     store.markPossiblyEmpty(session.code);
     store.markActive(session.code);

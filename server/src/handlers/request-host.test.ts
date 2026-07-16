@@ -19,8 +19,8 @@ describe('request-host', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     );
     const memberSocket = fakeSocket();
     ctx.connections.attach(memberSocket, { sessionCode: session.code, participantId: 'member-1' });
@@ -36,7 +36,7 @@ describe('request-host', () => {
   it('rejects a sender who is already host', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const hostSocket = fakeSocket();
     ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
     const sent: unknown[] = [];
@@ -52,9 +52,9 @@ describe('request-host', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
-      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
+      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 , userId: null},
     );
     session.pendingHostRequest = 'member-1';
     const member2Socket = fakeSocket();
@@ -72,8 +72,8 @@ describe('request-host', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     );
     session.pendingHostRequest = 'member-1';
     const memberSocket = fakeSocket();

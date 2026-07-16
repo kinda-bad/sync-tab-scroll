@@ -13,7 +13,7 @@ describe('handleDisconnect', () => {
   it('marks the participant disconnected and broadcasts session-state', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const broadcasts: unknown[] = [];
     ctx.connections.broadcast = (_code, buildMessage) => broadcasts.push(buildMessage('host-1'));
 
@@ -27,8 +27,8 @@ describe('handleDisconnect', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
     );
     session.pendingHostRequest = 'member-1';
     const broadcasts: unknown[] = [];
@@ -44,9 +44,9 @@ describe('handleDisconnect', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push(
-      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 },
-      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 },
-      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 },
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
+      { id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 2 , userId: null},
     );
     session.pendingHostRequest = 'member-1';
     ctx.connections.broadcast = () => {};

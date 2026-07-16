@@ -34,6 +34,17 @@ export class ConnectionRegistry {
     this.pendingUserId.set(socket, userId);
   }
 
+  /**
+   * Reads the stamped-at-upgrade userId WITHOUT consuming it (unlike `attach`)
+   * — for a handler that needs to know the joining/creating socket's userId
+   * before constructing the `Participant` row it will pass to `attach`
+   * (Phase 2 in-app authoring; `Participant.userId` wire field, T007). Returns
+   * `null` if nothing was stamped (anonymous, or already attached/detached).
+   */
+  peekPendingUserId(socket: WebSocket): string | null {
+    return this.pendingUserId.get(socket) ?? null;
+  }
+
   attach(socket: WebSocket, info: AttachInfo): void {
     const userId = this.pendingUserId.get(socket) ?? null;
     this.pendingUserId.delete(socket);

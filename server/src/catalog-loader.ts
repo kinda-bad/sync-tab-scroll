@@ -197,6 +197,18 @@ export function loadCatalog(catalogRoot: string, requireSongConsent = false): Lo
 }
 
 /**
+ * Re-scans `catalogRoot` and reassigns `ctx.catalog` in place (Phase 2 in-app
+ * authoring; infrastructure.md "Mutation model"). `HandlerContext.catalog` is
+ * built once at `createServer()` at boot; this is what makes it mutable at
+ * runtime — called after a successful authoring write (T005) so the in-memory
+ * catalog is a **store**, not a build-once snapshot. No behavior change beyond
+ * that: this task only makes the re-scan re-invokable post-startup.
+ */
+export function rescanCatalog(ctx: { catalog: LoadedCatalog }, catalogRoot: string, requireSongConsent = false): void {
+  ctx.catalog = loadCatalog(catalogRoot, requireSongConsent);
+}
+
+/**
  * Filters the server-global catalogue set down to what a single session may
  * actually receive (infrastructure.md Song Catalog Delivery). A **locked,
  * not-yet-unlocked** private catalogue is withheld **entirely** — not only its
@@ -205,10 +217,25 @@ export function loadCatalog(catalogRoot: string, requireSongConsent = false): Lo
  * carries only a key, never an id). A public catalogue, and a private catalogue
  * this session has already unlocked, are included; the raw `salt`/`hash` are
  * always stripped, never reaching a client.
+ *
+ * `ownedCatalogueIds` (Phase 2 in-app authoring; infrastructure.md "Per-user
+ * visibility") is the third parameter datamodel.md/infrastructure.md describe
+ * as `visibleCatalog(catalog, session, userId)`: a catalogue the requesting
+ * participant owns (`CatalogueOwnership`, looked up via the `ownerId` index) is
+ * visible to *them* even before anyone has unlocked it. `visibleCatalog` itself
+ * stays a pure, synchronous filter — callers resolve `userId`'s owned catalogue
+ * ids via `ctx.accountStore.getOwnershipsByOwner(userId)` first (async, same
+ * pre-resolve-then-filter shape `membershipDerivedUnlocks` already uses for
+ * `unlockedCatalogueIds`) and pass the resulting array in here.
  */
-export function visibleCatalog(catalog: LoadedCatalog, session: Pick<Session, 'unlockedCatalogueIds'>): { catalogues: Catalogue[]; songs: CatalogSong[] } {
+export function visibleCatalog(
+  catalog: LoadedCatalog,
+  session: Pick<Session, 'unlockedCatalogueIds'>,
+  ownedCatalogueIds: string[] = [],
+): { catalogues: Catalogue[]; songs: CatalogSong[] } {
   const unlocked = new Set(session.unlockedCatalogueIds);
-  const isVisible = (c: LoadedCatalogue): boolean => c.public || unlocked.has(c.id);
+  const owned = new Set(ownedCatalogueIds);
+  const isVisible = (c: LoadedCatalogue): boolean => c.public || unlocked.has(c.id) || owned.has(c.id);
 
   const catalogues: Catalogue[] = catalog.catalogues
     .filter(isVisible)

@@ -14,7 +14,7 @@ describe('part-select', () => {
   it('sets the requesting participant selectedPart and broadcasts session-state', () => {
     const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } };
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const socket = fakeSocket();
     ctx.connections.attach(socket, { sessionCode: session.code, participantId: 'host-1' });
 

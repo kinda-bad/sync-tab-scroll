@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import type { CatalogSong } from '@sync-tab-scroll/shared';
-import { loadCatalog, visibleCatalog } from './catalog-loader.js';
+import { loadCatalog, rescanCatalog, visibleCatalog } from './catalog-loader.js';
 import type { LoadedCatalog } from './catalog-loader.js';
 
 let catalogRoot: string;
@@ -285,5 +285,47 @@ describe('visibleCatalog', () => {
       expect(c).not.toHaveProperty('salt');
       expect(c).not.toHaveProperty('hash');
     }
+  });
+
+  it('T006: includes a private catalogue the requester owns, even though no one has unlocked it', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: [] }, ['premium-pack']);
+
+    expect(result.catalogues.map((c) => c.id).sort()).toEqual(['default', 'premium-pack']);
+    expect(result.songs.map((s) => s.id).sort()).toEqual(['bonus', 'creep']);
+  });
+
+  it('T006: an ownedCatalogueIds entry for an unknown/unloaded catalogue is inert (no crash, no leak)', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: [] }, ['ghost-catalogue']);
+
+    expect(result.catalogues.map((c) => c.id)).toEqual(['default']);
+  });
+
+  it('T006: defaults ownedCatalogueIds to none when omitted (existing call sites unaffected)', () => {
+    const result = visibleCatalog(mixedCatalog, { unlockedCatalogueIds: [] });
+
+    expect(result.catalogues.map((c) => c.id)).toEqual(['default']);
+  });
+});
+
+describe('rescanCatalog (T004)', () => {
+  it('reassigns ctx.catalog in place to a fresh re-scan reflecting an on-disk change', () => {
+    writeSong('creep');
+    const ctx = { catalog: loadCatalog(catalogRoot) };
+    expect(ctx.catalog.songs.map((s) => s.id)).toEqual(['creep']);
+
+    writeSong('bonus');
+    rescanCatalog(ctx, catalogRoot);
+
+    expect(ctx.catalog.songs.map((s) => s.id).sort()).toEqual(['bonus', 'creep']);
+  });
+
+  it('threads requireSongConsent through to the re-scan', () => {
+    writeSong('creep');
+    const ctx = { catalog: loadCatalog(catalogRoot) };
+
+    rescanCatalog(ctx, catalogRoot, true);
+
+    // No consent record written ⇒ requireSongConsent drops it from the re-scan.
+    expect(ctx.catalog.songs).toEqual([]);
   });
 });

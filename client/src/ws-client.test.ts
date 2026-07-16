@@ -71,8 +71,8 @@ function baseSession(participants: Session['participants']): Session {
   };
 }
 
-const hostParticipant = { id: 'host-1', displayName: 'Host', role: 'host' as const, connectionStatus: 'connected' as const, selectedPart: null, readiness: 'no-part' as const, joinedAt: 0 };
-const selfParticipant = { id: 'p1', displayName: 'Member', role: 'member' as const, connectionStatus: 'connected' as const, selectedPart: null, readiness: 'no-part' as const, joinedAt: 1 };
+const hostParticipant = { id: 'host-1', displayName: 'Host', role: 'host' as const, connectionStatus: 'connected' as const, selectedPart: null, readiness: 'no-part' as const, joinedAt: 0 , userId: null};
+const selfParticipant = { id: 'p1', displayName: 'Member', role: 'member' as const, connectionStatus: 'connected' as const, selectedPart: null, readiness: 'no-part' as const, joinedAt: 1 , userId: null};
 
 beforeEach(() => {
   (globalThis as unknown as { localStorage: ReturnType<typeof fakeLocalStorage> }).localStorage = fakeLocalStorage();

@@ -56,7 +56,7 @@ describe('seedHostMembershipUnlocks — host-only auto-unlock (T014)', () => {
   it('a signed-in host with a current-epoch membership auto-unlocks on join', async () => {
     const { ctx, broadcasts } = ctxWith([membership('kinda-bad', 2)]);
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const socket = attachHost(ctx, session.code, 'user-1');
 
     await seedHostMembershipUnlocks(ctx, session.code, socket);
@@ -68,7 +68,7 @@ describe('seedHostMembershipUnlocks — host-only auto-unlock (T014)', () => {
   it('a stale-epoch membership does NOT auto-unlock', async () => {
     const { ctx, broadcasts } = ctxWith([membership('kinda-bad', 1)]);
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const socket = attachHost(ctx, session.code, 'user-1');
 
     await seedHostMembershipUnlocks(ctx, session.code, socket);
@@ -80,7 +80,7 @@ describe('seedHostMembershipUnlocks — host-only auto-unlock (T014)', () => {
   it('a NON-host authenticated participant does NOT cause unlock (host-only, §12.1)', async () => {
     const { ctx, broadcasts } = ctxWith([membership('kinda-bad', 2)]);
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     // The signed-in participant is a member, not the host.
     const memberSocket = attachHost(ctx, session.code, 'user-2', 'member-1');
 
@@ -93,7 +93,7 @@ describe('seedHostMembershipUnlocks — host-only auto-unlock (T014)', () => {
   it('an anonymous host unlocks nothing', async () => {
     const { ctx } = ctxWith([membership('kinda-bad', 2)]);
     const session = ctx.sessionStore.create('host-1');
-    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 });
+    session.participants.push({ id: 'host-1', displayName: 'H', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
     const socket = attachHost(ctx, session.code, null);
 
     await seedHostMembershipUnlocks(ctx, session.code, socket);
@@ -107,7 +107,7 @@ describe('rederiveHostMembershipUnlocks — re-lock on host change (T015, S4)', 
     // New host (participant B) is a member of nothing.
     const { ctx, broadcasts } = ctxWith([]);
     const session = ctx.sessionStore.create('B'); // hostId is already B (post-succession)
-    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null});
 
     // The session currently has 'kinda-bad' unlocked by the departed host's
     // membership, and 'default'... use another catalogue: 'other'. Represent a
@@ -130,7 +130,7 @@ describe('rederiveHostMembershipUnlocks — re-lock on host change (T015, S4)', 
   it('succession to a member keeps that catalogue unlocked', async () => {
     const { ctx } = ctxWith([membership('kinda-bad', 2)]); // new host IS a member
     const session = ctx.sessionStore.create('B');
-    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null});
     session.unlockedCatalogueIds = ['kinda-bad'];
     attachHost(ctx, session.code, 'user-B', 'B');
 
@@ -142,7 +142,7 @@ describe('rederiveHostMembershipUnlocks — re-lock on host change (T015, S4)', 
   it('with no DB (anonymous new host) only the key-typed slice remains — a no-op on a key-only session', async () => {
     const { ctx, broadcasts } = ctxWith([]);
     const session = ctx.sessionStore.create('B');
-    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 });
+    session.participants.push({ id: 'B', displayName: 'B', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null});
     ctx.sessionStore.recordKeyUnlock(session.code, 'kinda-bad');
     session.unlockedCatalogueIds = ['kinda-bad']; // was key-typed this session
     attachHost(ctx, session.code, null, 'B'); // anonymous host

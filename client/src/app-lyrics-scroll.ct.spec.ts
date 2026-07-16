@@ -44,7 +44,7 @@ test('only one scrollable container is present, and app-content is collapsed, on
     selectedSong: 'creep',
     availableParts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
     participants: [
-      { id: 'p1', displayName: 'Alice', role: 'host', connectionStatus: 'connected', selectedPart: 'lyrics', readiness: 'ready', joinedAt: 0 },
+      { id: 'p1', displayName: 'Alice', role: 'host', connectionStatus: 'connected', selectedPart: 'lyrics', readiness: 'ready', joinedAt: 0 , userId: null},
     ],
     hostId: 'p1',
     playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
