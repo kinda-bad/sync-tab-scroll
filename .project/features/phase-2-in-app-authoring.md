@@ -1,6 +1,6 @@
 ---
 slug: phase-2-in-app-authoring
-status: tasked
+status: implemented
 logged: 2026-07-14
 plan: plan-phase-2-in-app-authoring-2026-07-14-8537.md
 tasks: tasks-phase-2-in-app-authoring-48d5.md
