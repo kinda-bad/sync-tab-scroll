@@ -1,5 +1,26 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-15 (**ArDD updated to beta `bdd553e`; constitution bumped
+to v1.6.0 (Phase 2 in-app authoring sanctioned); artifacts-sweep backlog
+pass added 3 entries.** Committed/pushed `6e3ea49`: constitution.md/
+datamodel.md/infrastructure.md/pipeline.md/ui.md amended for Phase 2
+in-app authoring (owner-created catalogues/songs from the web UI,
+additive to the CLI), plus the two plans that drove it
+(`plan-phase-2-in-app-authoring-2026-07-14-8537.md`,
+`research-backlog-defrag-slate-analysis-2026-07-15-627c.md`). A
+`/ardd-backlog --from-artifacts`-style sweep of all 6 stable artifacts
+found 3 documented-but-untracked capabilities, all approved and filed:
+`catalogue-co-owner-invite-flow` (ui.md's Ownership/invites section +
+datamodel's `grantedVia:'invite'` enum value — schema/migration exist,
+no invite generation/redemption code), `host-mandated-bars-per-row-layout`
+(infrastructure.md's Tab Rendering section, named explicitly as deferred),
+and `latency-compensated-position-extrapolation` (infrastructure.md's
+Session & Real-Time Sync section, named explicitly as a deferred
+refinement). Feature register now 4 backlogged / 15 implemented. All
+three artifact diagrams (`datamodel`, `infrastructure`, `ui`) are stale —
+the Phase 2 amendments touched entities/mechanics/UI in all three and none
+have been regenerated since. Prior context below.)_
+
 _Updated: 2026-07-14 (**part-mute-toggle SHIPPED, pushed, deployed.**
 `tasks-part-mute-toggle-f0d4.md` (`completed`, 6/6), implemented in a
 delegated worktree (RED→GREEN per task, all test-first per Principle VII),
@@ -23,13 +44,14 @@ check (does muting actually silence audio) still pending** — bundle
 confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
-> **ARDD:** up to date on **v0.10.0** (`a7165c4`), 2026-07-13.
+> **ARDD update available:** installed `bdd553e` (beta channel), source at
+> `v0.10.1-beta.4` — run `/ardd-update`.
 
 ## Artifact Status
 
 | Artifact | Status | Open questions |
 |---|---|---|
-| constitution.md | stable ✅ (v1.5.0) | 0 |
+| constitution.md | stable ✅ (v1.6.0) | 0 |
 | datamodel.md | stable ✅ | 0 |
 | pipeline.md | stable ✅ | 0 |
 | infrastructure.md | stable ✅ | 0 |
@@ -62,11 +84,15 @@ violations there either.
 
 ## Diagrams
 
-- `datamodel.md` — current ✅
-- `infrastructure.md` — current ✅
+- `datamodel.md` — **stale ⚠️** (run `/ardd-diagram datamodel`) — gained
+  Phase 2's `CatalogueOwnership` entity and the mutable-catalog note.
+- `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`)
+  — gained the In-App Authoring section (upload trust surface, mutation
+  model, per-user visibility).
 - `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the Playback
-  View full-mix clarification and the Preferences tab's "Mute parts"
-  subsection.
+  View full-mix clarification, the Preferences tab's "Mute parts"
+  subsection, and Phase 2's In-App Authoring modal/Ownership-invites
+  section.
 
 ## Code-vs-Artifact Defects
 
@@ -80,8 +106,11 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feature Backlog
 
-**15 implemented** · 0 backlogged · 0 planned · 0 tasked — see
-`.project/features/`. Nothing queued.
+**4 backlogged** · 0 planned · 0 tasked · **15 implemented** — see
+`.project/features/`. Backlogged: `phase-2-in-app-authoring`,
+`catalogue-co-owner-invite-flow`, `host-mandated-bars-per-row-layout`,
+`latency-compensated-position-extrapolation`. Target one with
+`/ardd-plan <slug>`.
 
 ## Plans & Tasks
 
@@ -144,11 +173,13 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+1. **`/ardd-plan phase-2-in-app-authoring`** — the amendments are in;
+   design/plan the in-app authoring feature itself.
+2. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
+   `/ardd-diagram infrastructure`, `/ardd-diagram ui`.
+3. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
-2. **`/ardd-diagram ui`** — regenerate the UI diagram (stale since the
-   Playback View + Preferences tab edits).
-3. **Optional:** confirm the Google `29801536638` client's redirect URI is
+4. **Optional:** confirm the Google `29801536638` client's redirect URI is
    registered; `/ardd-defects` to re-verify artifacts against recent client
-   fixes.
+   fixes; `/ardd-update` to move off the beta channel gap.
