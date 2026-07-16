@@ -13,6 +13,7 @@ import type { HandlerContext } from './handlers/context.js';
 import { createAccountStore } from './accounts/factory.js';
 import { createProviderRegistry } from './auth/providers.js';
 import { createAuthRequestHandler } from './auth/auth-routes.js';
+import { createSongUploadRequestHandler } from './song-upload-route.js';
 import { isOriginAllowed } from './auth/origin.js';
 import { resolveUserIdFromCookie } from './auth/session.js';
 
@@ -46,10 +47,20 @@ export function createServer(config: ServerConfig): http.Server {
     config: config.account,
     providers: createProviderRegistry(config.account),
   });
+  // In-app authoring's upload trust surface (T008/T009/T010; infrastructure.md
+  // "Upload trust surface") — mounted after auth (it resolves the session
+  // cookie itself via the same seam) and before the catalog/static/404 chain.
+  const songUploadHandler = createSongUploadRequestHandler({
+    store: accountStore,
+    catalogRoot: config.catalogRoot,
+    ctx,
+    requireSongConsent: config.requireSongConsent,
+  });
   const catalogHandler = createCatalogRequestHandler(config.catalogRoot);
   const clientStaticHandler = createClientStaticRequestHandler(config.clientRoot);
   const httpServer = http.createServer((req, res) => {
     if (authHandler(req, res)) return;
+    if (songUploadHandler(req, res)) return;
     if (catalogHandler(req, res)) return;
     if (clientStaticHandler(req, res)) return;
     res.writeHead(404).end();

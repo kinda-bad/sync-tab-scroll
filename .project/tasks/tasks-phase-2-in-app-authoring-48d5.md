@@ -49,16 +49,16 @@ status: in-progress
   logged-in participant's `userId`; an anonymous participant's is `null`.
 
 ## Phase 3: Upload trust surface + server-side pipeline
-- [ ] T008 [artifacts: infrastructure] New authenticated HTTP route (e.g.
+- [x] T008 [artifacts: infrastructure] New authenticated HTTP route (e.g.
   `POST /catalogues/:slug/songs`), gated on T003's ownership check —
   reject with 403 for a non-owner. No file handling yet, just the route +
   auth gate, test-first.
-- [ ] T009 [artifacts: infrastructure] Request body size limit + upload
+- [x] T009 [artifacts: infrastructure] Request body size limit + upload
   staging: the incoming `.gp` file is written to a temp location, never
   the live catalog directory directly, until validated. Test-first:
   an oversized upload is rejected before being fully buffered/written
   anywhere. Depends on T008.
-- [ ] T010 [artifacts: infrastructure] Server-side pipeline execution against
+- [x] T010 [artifacts: infrastructure] Server-side pipeline execution against
   the staged file, with an enforced parse timeout (the pipeline's
   extraction stage must not hang the request indefinitely) — reusing the
   existing extraction pipeline code (pipeline.md), not a second

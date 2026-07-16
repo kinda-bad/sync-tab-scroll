@@ -12,6 +12,7 @@
     "check": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@sync-tab-scroll/pipeline": "workspace:*",
     "@sync-tab-scroll/shared": "workspace:*",
     "pg": "^8.13.0",
     "ws": "^8.18.0"

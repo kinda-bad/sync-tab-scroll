@@ -96,6 +96,9 @@ importers:
 
   server:
     dependencies:
+      '@sync-tab-scroll/pipeline':
+        specifier: workspace:*
+        version: link:../packages/pipeline
       '@sync-tab-scroll/shared':
         specifier: workspace:*
         version: link:../packages/shared
