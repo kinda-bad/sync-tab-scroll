@@ -1,5 +1,5 @@
 ---
-status: draft
+status: approved
 branch: phase-2-in-app-authoring
 created: 2026-07-14
 features: [phase-2-in-app-authoring]
