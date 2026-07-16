@@ -6,3 +6,6 @@
 export { extractLyrics } from './extract-lyrics.js';
 export { publishSong, slugify } from './catalog.js';
 export type { CatalogMeta, CatalogPartMeta } from './catalog.js';
+export { createCatalogue, rotateCatalogueKey } from './create-catalogue.js';
+export type { CatalogueVisibility } from './create-catalogue.js';
+export { recordConsent } from './record-consent.js';

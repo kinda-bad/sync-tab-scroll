@@ -8,14 +8,22 @@
   // disabled/errored.
   export let status: AccountStatus;
   export let displayName: string | null = null;
+  export let ownedCatalogueIds: string[] = [];
   export let onSignIn: (provider: 'google' | 'github') => void = () => {};
   export let onSignOut: () => void = () => {};
+  // T011: opens the in-app authoring modal — absent/no-op'd entirely unless
+  // signed-in AND owning at least one catalogue (ui.md In-App Authoring,
+  // same "absent, not disabled" pattern as every other capability gate here).
+  export let onOpenAuthoring: () => void = () => {};
 
   let expanded = false;
 </script>
 
 {#if status === 'signed-in'}
   <span class="account-name" title={displayName ?? ''}>{displayName}</span>
+  {#if ownedCatalogueIds.length > 0}
+    <button type="button" class="account-action" onclick={() => onOpenAuthoring()}>My catalogues</button>
+  {/if}
   <!-- Wrapped, not bound bare: `onclick={onSignOut}` would hand the click
        PointerEvent to signOut() as its first arg, shadowing its defaulted
        `fetchFn` param — so the real fetch never fired and logout silently

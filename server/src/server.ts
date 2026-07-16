@@ -14,6 +14,7 @@ import { createAccountStore } from './accounts/factory.js';
 import { createProviderRegistry } from './auth/providers.js';
 import { createAuthRequestHandler } from './auth/auth-routes.js';
 import { createSongUploadRequestHandler } from './song-upload-route.js';
+import { createCatalogueAuthoringRequestHandler } from './catalogue-authoring-routes.js';
 import { isOriginAllowed } from './auth/origin.js';
 import { resolveUserIdFromCookie } from './auth/session.js';
 

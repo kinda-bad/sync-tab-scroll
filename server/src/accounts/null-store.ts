@@ -65,6 +65,10 @@ export class NullAccountStore implements AccountStore {
     return false;
   }
 
+  async getOwnershipsByCatalogue(_catalogueId: string): Promise<CatalogueOwnership[]> {
+    return [];
+  }
+
   async close(): Promise<void> {
     // no-op
   }

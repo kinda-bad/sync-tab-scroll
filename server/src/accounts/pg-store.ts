@@ -221,6 +221,13 @@ export class PgAccountStore implements AccountStore {
     });
   }
 
+  async getOwnershipsByCatalogue(catalogueId: string): Promise<CatalogueOwnership[]> {
+    return this.guard('getOwnershipsByCatalogue', [], async () => {
+      const { rows } = await this.pool.query<OwnershipRow>('SELECT * FROM catalogue_ownership WHERE catalogue_id = $1', [catalogueId]);
+      return rows.map(toOwnership);
+    });
+  }
+
   async close(): Promise<void> {
     await this.pool.end();
   }

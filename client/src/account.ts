@@ -15,23 +15,27 @@ export type AccountStatus = 'unknown' | 'unavailable' | 'signed-out' | 'signed-i
 export interface AccountState {
   status: AccountStatus;
   displayName: string | null;
+  /** T011: the signed-in user's owned catalogue ids (gates "My catalogues"). Always [] when not signed-in. */
+  ownedCatalogueIds: string[];
 }
 
 /** Shape of the `/me` response (server auth-routes.ts). */
 export interface MeResponse {
   accountsEnabled: boolean;
   user: { displayName: string } | null;
+  ownedCatalogueIds?: string[];
 }
 
 /** Pure mapping from a `/me` body to client account state. */
 export function accountStateFromMe(body: MeResponse): AccountState {
-  if (!body.accountsEnabled) return { status: 'unavailable', displayName: null };
-  if (!body.user) return { status: 'signed-out', displayName: null };
-  return { status: 'signed-in', displayName: body.user.displayName };
+  const ownedCatalogueIds = body.ownedCatalogueIds ?? [];
+  if (!body.accountsEnabled) return { status: 'unavailable', displayName: null, ownedCatalogueIds: [] };
+  if (!body.user) return { status: 'signed-out', displayName: null, ownedCatalogueIds: [] };
+  return { status: 'signed-in', displayName: body.user.displayName, ownedCatalogueIds };
 }
 
 function createAccountStore() {
-  const { subscribe, set } = writable<AccountState>({ status: 'unknown', displayName: null });
+  const { subscribe, set } = writable<AccountState>({ status: 'unknown', displayName: null, ownedCatalogueIds: [] });
   return { subscribe, set };
 }
 
@@ -65,7 +69,7 @@ export async function loadAccount(fetchFn: typeof fetch = fetch): Promise<Accoun
   try {
     state = await fetchMe(fetchFn);
   } catch {
-    state = { status: 'unavailable', displayName: null };
+    state = { status: 'unavailable', displayName: null, ownedCatalogueIds: [] };
   }
   accountStore.set(state);
   return state;

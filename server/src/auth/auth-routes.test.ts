@@ -77,7 +77,40 @@ describe('auth routes — DB-optional inertness (T008)', () => {
   it('/me reports accounts unavailable + anonymous with no DB', async () => {
     const res = await fetch(`${srv.base}/me`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ accountsEnabled: false, user: null });
+    expect(await res.json()).toEqual({ accountsEnabled: false, user: null, ownedCatalogueIds: [] });
+  });
+});
+
+describe('/me — ownedCatalogueIds (T011)', () => {
+  it('reports the signed-in user\'s owned catalogue ids', async () => {
+    const store = new NullAccountStore();
+    store.getAuthSession = async () => ({ id: 's', userId: 'user-1', createdAt: 0, expiresAt: Date.now() + 100_000, revokedAt: null });
+    store.getUser = async () => ({ id: 'user-1', oauthProvider: 'google', oauthSubject: 'sub', displayName: 'Ada', email: null, createdAt: 0 });
+    store.getOwnershipsByOwner = async () => [
+      { id: 'o1', catalogueId: 'my-band', ownerId: 'user-1', createdAt: 0 },
+      { id: 'o2', catalogueId: 'other-band', ownerId: 'user-1', createdAt: 0 },
+    ];
+
+    const srv = startServer(store, registry(mockProvider()));
+    try {
+      const res = await fetch(`${srv.base}/me`, { headers: { cookie: 'sts_session=s' } });
+      const body = await res.json();
+      expect(body.ownedCatalogueIds).toEqual(['my-band', 'other-band']);
+    } finally {
+      await srv.close();
+    }
+  });
+
+  it('reports an empty array when signed out (no store call needed to resolve ownership)', async () => {
+    const store = new NullAccountStore();
+    const srv = startServer(store, registry(mockProvider()));
+    try {
+      const res = await fetch(`${srv.base}/me`);
+      const body = await res.json();
+      expect(body.ownedCatalogueIds).toEqual([]);
+    } finally {
+      await srv.close();
+    }
   });
 });
 
@@ -126,6 +159,8 @@ describe.skipIf(!containerRuntimeAvailable())('auth routes — full OAuth flow a
       expect(body.accountsEnabled).toBe(true);
       expect(body.user.displayName).toBe('Ada');
       expect(body.user.oauthProvider).toBe('google');
+      // T011: /me reports the signed-in user's owned catalogues (empty here — none created yet).
+      expect(body.ownedCatalogueIds).toEqual([]);
 
       // 4. logout revokes; /me is anonymous afterward (revoked session rejected)
       const logout = await fetch(`${srv.base}/auth/logout`, {

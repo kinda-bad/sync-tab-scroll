@@ -62,7 +62,20 @@ export function createAuthRequestHandler(opts: AuthRouterOptions): (req: Incomin
   async function handleMe(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const sessionId = parseCookies(req.headers.cookie)[SESSION_COOKIE];
     const resolved = await resolveAuth(store, sessionId);
-    json(res, 200, { accountsEnabled: store.enabled, user: resolved?.user ?? null });
+    // T011: gates the "My catalogues" affordance — a signed-in owner's catalogue
+    // ids, so the client can show/hide it without a second round-trip. Empty for
+    // signed-out/unavailable (§13 S7 fail-soft — an ownership-lookup error never
+    // blanks the whole /me response, just yields no owned catalogues).
+    let ownedCatalogueIds: string[] = [];
+    if (resolved) {
+      try {
+        const ownerships = await store.getOwnershipsByOwner(resolved.user.id);
+        ownedCatalogueIds = ownerships.map((o) => o.catalogueId);
+      } catch (err) {
+        console.error('[auth] /me ownership lookup failed:', err instanceof Error ? err.message : err);
+      }
+    }
+    json(res, 200, { accountsEnabled: store.enabled, user: resolved?.user ?? null, ownedCatalogueIds });
   }
 
   async function handleLogin(provider: OAuthProviderName, res: ServerResponse): Promise<void> {

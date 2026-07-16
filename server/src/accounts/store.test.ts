@@ -28,6 +28,7 @@ describe('NullAccountStore — the DB-optional guarantee (T003)', () => {
     expect(await store.getMembershipsByUser('any')).toEqual([]);
     expect(await store.getOwnershipsByOwner('any')).toEqual([]);
     expect(await store.isOwner('c', 'any')).toBe(false);
+    expect(await store.getOwnershipsByCatalogue('any')).toEqual([]);
   });
 
   it('writes are inert no-ops (return null / resolve) and never throw', async () => {

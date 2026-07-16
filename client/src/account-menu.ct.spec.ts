@@ -45,3 +45,38 @@ test('signed-out "Sign in" expands to provider choices', async ({ mount }) => {
   await expect(menu.getByText('Google')).toBeVisible();
   await expect(menu.getByText('GitHub')).toBeVisible();
 });
+
+// T011: "My catalogues" entry — visible only for a signed-in owner (ui.md
+// In-App Authoring), absent otherwise, same "absent, not disabled" pattern.
+test('signed-in owner (ownedCatalogueIds non-empty) shows "My catalogues"', async ({ mount }) => {
+  const menu = await mount(AccountMenu, {
+    props: { status: 'signed-in', displayName: 'Ada Lovelace', ownedCatalogueIds: ['my-band'] },
+  });
+  await expect(menu.getByText('My catalogues')).toBeVisible();
+});
+
+test('signed-in non-owner (ownedCatalogueIds empty) has no "My catalogues" entry', async ({ mount }) => {
+  const menu = await mount(AccountMenu, {
+    props: { status: 'signed-in', displayName: 'Ada Lovelace', ownedCatalogueIds: [] },
+  });
+  await expect(menu.getByText('My catalogues')).toHaveCount(0);
+});
+
+test('signed-out never shows "My catalogues" even if ownedCatalogueIds were somehow set', async ({ mount }) => {
+  const menu = await mount(AccountMenu, { props: { status: 'signed-out', ownedCatalogueIds: ['my-band'] } });
+  await expect(menu.getByText('My catalogues')).toHaveCount(0);
+});
+
+test('clicking "My catalogues" calls onOpenAuthoring', async ({ mount }) => {
+  const calls: unknown[] = [];
+  const menu = await mount(AccountMenu, {
+    props: {
+      status: 'signed-in',
+      displayName: 'Ada Lovelace',
+      ownedCatalogueIds: ['my-band'],
+      onOpenAuthoring: () => calls.push(1),
+    },
+  });
+  await menu.getByText('My catalogues').click();
+  expect(calls.length).toBe(1);
+});

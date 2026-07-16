@@ -117,4 +117,17 @@ describe.skipIf(!containerRuntimeAvailable())('PgAccountStore (T006)', () => {
       expect(count.rows[0].n).toBe(1);
     });
   }, 120_000);
+
+  it('getOwnershipsByCatalogue returns every co-owner of a catalogue (T018 roster)', async () => {
+    await withStore(async (store) => {
+      const a = await store.upsertUser({ oauthProvider: 'google', oauthSubject: 'a', displayName: 'A', email: null });
+      const b = await store.upsertUser({ oauthProvider: 'google', oauthSubject: 'b', displayName: 'B', email: null });
+      await store.createOwnership({ catalogueId: 'shared-cat', ownerId: a!.id });
+      await store.createOwnership({ catalogueId: 'shared-cat', ownerId: b!.id });
+      await store.createOwnership({ catalogueId: 'other-cat', ownerId: a!.id });
+
+      const owners = await store.getOwnershipsByCatalogue('shared-cat');
+      expect(owners.map((o) => o.ownerId).sort()).toEqual([a!.id, b!.id].sort());
+    });
+  }, 120_000);
 });

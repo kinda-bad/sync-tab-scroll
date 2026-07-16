@@ -92,6 +92,8 @@ export interface AccountStore {
   getOwnershipsByOwner(ownerId: string): Promise<CatalogueOwnership[]>;
   /** Does `ownerId` own `catalogueId`? False when absent/unavailable (fail-soft — never grants on error). */
   isOwner(catalogueId: string, ownerId: string): Promise<boolean>;
+  /** Fetch every owner of a catalogue — the "Co-owners" section's roster (T018); empty when absent/unavailable. */
+  getOwnershipsByCatalogue(catalogueId: string): Promise<CatalogueOwnership[]>;
 
   /** Release any underlying resources (connection pool). No-op for the null store. */
   close(): Promise<void>;
