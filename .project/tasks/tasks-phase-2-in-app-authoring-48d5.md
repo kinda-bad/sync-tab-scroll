@@ -1,7 +1,7 @@
 ---
 plan: plan-phase-2-in-app-authoring-2026-07-14-8537.md
 generated: 2026-07-16
-status: ready
+status: in-progress
 ---
 
 # Tasks
