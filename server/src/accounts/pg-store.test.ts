@@ -94,4 +94,27 @@ describe.skipIf(!containerRuntimeAvailable())('PgAccountStore (T006)', () => {
       expect(count.rows[0].n).toBe(1);
     });
   }, 120_000);
+
+  it('creates ownerships, queries by owner, checks isOwner, and creates idempotently (T002)', async () => {
+    await withStore(async (store, pool) => {
+      const owner = await store.upsertUser({ oauthProvider: 'google', oauthSubject: 'o1', displayName: 'Owner', email: null });
+      const other = await store.upsertUser({ oauthProvider: 'google', oauthSubject: 'o2', displayName: 'Other', email: null });
+
+      const ownership = await store.createOwnership({ catalogueId: 'kinda-bad', ownerId: owner!.id });
+      expect(ownership).not.toBeNull();
+      expect(ownership!.catalogueId).toBe('kinda-bad');
+
+      expect(await store.isOwner('kinda-bad', owner!.id)).toBe(true);
+      expect(await store.isOwner('kinda-bad', other!.id)).toBe(false);
+      expect(await store.isOwner('some-other-catalogue', owner!.id)).toBe(false);
+
+      const byOwner = await store.getOwnershipsByOwner(owner!.id);
+      expect(byOwner.map((x) => x.catalogueId)).toContain('kinda-bad');
+
+      // Re-creating the same (catalogueId, ownerId) is idempotent — no dup row.
+      await store.createOwnership({ catalogueId: 'kinda-bad', ownerId: owner!.id });
+      const count = await pool.query('SELECT count(*)::int AS n FROM catalogue_ownership');
+      expect(count.rows[0].n).toBe(1);
+    });
+  }, 120_000);
 });

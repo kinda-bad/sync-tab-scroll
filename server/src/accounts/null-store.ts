@@ -1,5 +1,5 @@
-import type { AuthSession, CatalogueMembership, OAuthProvider, User } from '@sync-tab-scroll/shared';
-import type { AccountStore, CreateAuthSessionInput, UpsertMembershipInput, UpsertUserInput } from './store.js';
+import type { AuthSession, CatalogueMembership, CatalogueOwnership, OAuthProvider, User } from '@sync-tab-scroll/shared';
+import type { AccountStore, CreateAuthSessionInput, CreateOwnershipInput, UpsertMembershipInput, UpsertUserInput } from './store.js';
 
 /**
  * The absent/no-database implementation of {@link AccountStore}, selected when
@@ -51,6 +51,18 @@ export class NullAccountStore implements AccountStore {
 
   async getMembershipsByUser(_userId: string): Promise<CatalogueMembership[]> {
     return [];
+  }
+
+  async createOwnership(_input: CreateOwnershipInput): Promise<CatalogueOwnership | null> {
+    return null;
+  }
+
+  async getOwnershipsByOwner(_ownerId: string): Promise<CatalogueOwnership[]> {
+    return [];
+  }
+
+  async isOwner(_catalogueId: string, _ownerId: string): Promise<boolean> {
+    return false;
   }
 
   async close(): Promise<void> {

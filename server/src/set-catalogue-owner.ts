@@ -3,12 +3,15 @@ import type { AccountStore } from './accounts/store.js';
 import { createAccountStore } from './accounts/factory.js';
 
 /**
- * Ownership-bootstrap (design §12.2; plan Open Question 1 — resolved as a
- * `CatalogueMembership(grantedVia:'owner')` row, no separate `CatalogueOwnership`
- * table in Phase 1). Grants the named account an owner membership for an
- * existing filesystem catalogue (e.g. `kinda-bad`), so the operator's account
- * auto-unlocks it on join with no key entry at all — owner grants are not
- * epoch-gated (membership-unlock.ts).
+ * Ownership-bootstrap (design §12.2; datamodel.md CatalogueOwnership, Phase 2
+ * in-app authoring). Grants the named account a durable `CatalogueOwnership`
+ * row for an existing filesystem catalogue (e.g. `kinda-bad`) — there is no
+ * in-app path to claim ownership of a catalogue nobody created in-app, so this
+ * one-time operator CLI is the only way to backfill ownership of a
+ * pre-existing catalogue. Creating the ownership also grants the matching
+ * `CatalogueMembership(grantedVia:'owner')` row, so the owner is never locked
+ * out of their own catalogue's content and auto-unlocks it on join with no key
+ * entry at all — owner grants are not epoch-gated (membership-unlock.ts).
  *
  * The account must already exist (the person has signed in at least once); the
  * identifier is either an `email` or a `provider:subject` (e.g. `github:4242`).
@@ -22,6 +25,11 @@ export async function setCatalogueOwner(store: AccountStore, catalogueId: string
 
   if (!user) {
     throw new Error(`No account found for "${identifier}". The person must sign in at least once first (email or provider:subject).`);
+  }
+
+  const ownership = await store.createOwnership({ catalogueId, ownerId: user.id });
+  if (!ownership) {
+    throw new Error('Failed to write the ownership row (account store unavailable).');
   }
 
   const membership = await store.upsertMembership({ userId: user.id, catalogueId, grantedVia: 'owner', keyEpoch: null });

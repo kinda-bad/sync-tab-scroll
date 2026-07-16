@@ -7,7 +7,7 @@ import { setCatalogueOwner } from './set-catalogue-owner.js';
 
 const KINDA_BAD: LoadedCatalogue = { id: 'kinda-bad', name: 'Kinda Bad', public: false, salt: 's', hash: 'h', epoch: 2 };
 
-describe.skipIf(!containerRuntimeAvailable())('set-catalogue-owner CLI (T018)', () => {
+describe.skipIf(!containerRuntimeAvailable())('set-catalogue-owner CLI (T002)', () => {
   const withStore = (fn: (store: PgAccountStore) => Promise<void>) =>
     withTestDatabase(async (pool) => {
       await fn(new PgAccountStore(pool));
@@ -23,6 +23,9 @@ describe.skipIf(!containerRuntimeAvailable())('set-catalogue-owner CLI (T018)', 
       expect(membership.catalogueId).toBe('kinda-bad');
       expect(membership.userId).toBe(user!.id);
 
+      // Writes a durable CatalogueOwnership row too, not just the membership.
+      expect(await store.isOwner('kinda-bad', user!.id)).toBe(true);
+
       // The owner membership auto-unlocks kinda-bad regardless of key epoch
       // (owner grants are not epoch-gated) — the payoff: no key entry.
       const memberships = await store.getMembershipsByUser(user!.id);
@@ -36,6 +39,7 @@ describe.skipIf(!containerRuntimeAvailable())('set-catalogue-owner CLI (T018)', 
       const membership = await setCatalogueOwner(store, 'kinda-bad', 'github:4242');
       expect(membership.userId).toBe(user!.id);
       expect(membership.grantedVia).toBe('owner');
+      expect(await store.isOwner('kinda-bad', user!.id)).toBe(true);
     });
   }, 120_000);
 

@@ -7,18 +7,18 @@ status: in-progress
 # Tasks
 
 ## Phase 1: Ownership data model + bootstrap
-- [ ] T001 [artifacts: datamodel] `CatalogueOwnership` table migration
+- [x] T001 [artifacts: datamodel] `CatalogueOwnership` table migration
   (Postgres, same migration mechanism Accounts Phase 1 used —
   `server/src/accounts/migrations/`): `id`, `catalogueId`, `ownerId` FK to
   `User`, `createdAt`. Index on `ownerId` (datamodel.md's Indexes note).
   Test-first per constitution Principle VII, matching this repo's existing
   DB-layer test strategy (containerized Postgres, podman preferred —
   design doc §12.3).
-- [ ] T002 [artifacts: datamodel] `set-catalogue-owner <slug> <user-email>`
+- [x] T002 [artifacts: datamodel] `set-catalogue-owner <slug> <user-email>`
   operator CLI, writing a `CatalogueOwnership` row (and the matching
   `CatalogueMembership(grantedVia:'owner')`, so an owner is never locked
   out of their own catalogue's content — datamodel.md). Depends on T001.
-- [ ] T003 [artifacts: infrastructure] A `HandlerContext`-level lookup —
+- [x] T003 [artifacts: infrastructure] A `HandlerContext`-level lookup —
   "does this `userId` own this `catalogueId`" — backing both the
   authorization check for authoring actions (Phase 4) and the per-user
   visibility check (Phase 2). Depends on T001.

@@ -1,4 +1,4 @@
-import type { AuthSession, CatalogueMembership, OAuthProvider, User } from '@sync-tab-scroll/shared';
+import type { AuthSession, CatalogueMembership, CatalogueOwnership, OAuthProvider, User } from '@sync-tab-scroll/shared';
 
 /**
  * Input for upserting a `User` by its unique `(oauthProvider, oauthSubject)`
@@ -27,6 +27,15 @@ export interface UpsertMembershipInput {
   catalogueId: string;
   grantedVia: CatalogueMembership['grantedVia'];
   keyEpoch: number | null;
+}
+
+/**
+ * Input for creating a `CatalogueOwnership` row (datamodel.md CatalogueOwnership,
+ * Phase 2 in-app authoring).
+ */
+export interface CreateOwnershipInput {
+  catalogueId: string;
+  ownerId: string;
 }
 
 /**
@@ -71,6 +80,18 @@ export interface AccountStore {
   upsertMembership(input: UpsertMembershipInput): Promise<CatalogueMembership | null>;
   /** Fetch a user's memberships to seed/re-derive `Session.unlockedCatalogueIds`; empty when absent/unavailable. */
   getMembershipsByUser(userId: string): Promise<CatalogueMembership[]>;
+
+  /**
+   * Create a `CatalogueOwnership` row (idempotent per `(catalogueId, ownerId)`;
+   * null when unavailable). Callers are also responsible for granting the
+   * matching `CatalogueMembership(grantedVia:'owner')` — the two are separate
+   * writes at call sites, not fused inside the store (datamodel.md).
+   */
+  createOwnership(input: CreateOwnershipInput): Promise<CatalogueOwnership | null>;
+  /** Fetch a user's owned catalogues (their "My catalogues" list); empty when absent/unavailable. */
+  getOwnershipsByOwner(ownerId: string): Promise<CatalogueOwnership[]>;
+  /** Does `ownerId` own `catalogueId`? False when absent/unavailable (fail-soft — never grants on error). */
+  isOwner(catalogueId: string, ownerId: string): Promise<boolean>;
 
   /** Release any underlying resources (connection pool). No-op for the null store. */
   close(): Promise<void>;

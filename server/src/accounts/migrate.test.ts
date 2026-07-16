@@ -52,3 +52,29 @@ describe('account-layer migrations (T004)', () => {
     expect(sql).toMatch(/user_id\s+text\s+not null\s+references\s+app_user/);
   });
 });
+
+describe('catalogue_ownership migration (T001)', () => {
+  const sql = loadMigrations()
+    .map((m) => m.sql)
+    .join('\n')
+    .toLowerCase();
+
+  it('defines the catalogue_ownership table', () => {
+    expect(sql).toMatch(/create table[^;]*catalogue_ownership/);
+  });
+
+  it('catalogue_id is a plain string with NO cross-store FK (same rule as catalogue_membership)', () => {
+    const ownershipBlock = sql.slice(sql.indexOf('create table if not exists catalogue_ownership'));
+    const createStatement = ownershipBlock.split(';')[0];
+    expect(createStatement).toMatch(/catalogue_id\s+text/);
+    expect(createStatement).not.toMatch(/catalogue_id[^,\n]*references/);
+  });
+
+  it('owner_id IS a real FK into app_user', () => {
+    expect(sql).toMatch(/owner_id\s+text\s+not null\s+references\s+app_user/);
+  });
+
+  it('is indexed on owner_id', () => {
+    expect(sql).toMatch(/create index[^;]*catalogue_ownership[^;]*\(\s*owner_id\s*\)/);
+  });
+});

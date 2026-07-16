@@ -50,6 +50,23 @@ export interface CatalogueMembership {
 }
 
 /**
+ * The durable form of "this user owns/can edit this catalogue" (datamodel.md
+ * CatalogueOwnership, Phase 2 in-app authoring). Kept as its own row rather than
+ * a field on `Catalogue`, since `Catalogue` is filesystem-derived, not durable.
+ * Creating an ownership row also grants the matching
+ * `CatalogueMembership(grantedVia:'owner')` row.
+ */
+export interface CatalogueOwnership {
+  id: string;
+  /** The catalogue's stable id — plain string, no cross-store FK (§13 S8). */
+  catalogueId: string;
+  /** References `User.id` (same store — a real FK). */
+  ownerId: string;
+  /** Wall-clock time ownership was established. */
+  createdAt: number;
+}
+
+/**
  * Revocable server-side session (§13 S2) — the opaque `id` is the only value
  * carried in the HTTP-only cookie. Named `AuthSession` to avoid collision with
  * the in-memory realtime `Session` entity, which is unrelated.

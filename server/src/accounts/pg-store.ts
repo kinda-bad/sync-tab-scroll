@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 import type { Pool } from 'pg';
-import type { AuthSession, CatalogueMembership, OAuthProvider, User } from '@sync-tab-scroll/shared';
-import type { AccountStore, CreateAuthSessionInput, UpsertMembershipInput, UpsertUserInput } from './store.js';
+import type { AuthSession, CatalogueMembership, CatalogueOwnership, OAuthProvider, User } from '@sync-tab-scroll/shared';
+import type { AccountStore, CreateAuthSessionInput, CreateOwnershipInput, UpsertMembershipInput, UpsertUserInput } from './store.js';
 import { runMigrations } from './migrate.js';
 
 // pg returns bigint (int8) columns as strings to avoid precision loss; the
@@ -62,6 +62,21 @@ function toMembership(r: MembershipRow): CatalogueMembership {
     grantedVia: r.granted_via as CatalogueMembership['grantedVia'],
     keyEpoch: r.key_epoch,
     grantedAt: num(r.granted_at),
+  };
+}
+
+interface OwnershipRow {
+  id: string;
+  catalogue_id: string;
+  owner_id: string;
+  created_at: string;
+}
+function toOwnership(r: OwnershipRow): CatalogueOwnership {
+  return {
+    id: r.id,
+    catalogueId: r.catalogue_id,
+    ownerId: r.owner_id,
+    createdAt: num(r.created_at),
   };
 }
 
@@ -173,6 +188,36 @@ export class PgAccountStore implements AccountStore {
     return this.guard('getMembershipsByUser', [], async () => {
       const { rows } = await this.pool.query<MembershipRow>('SELECT * FROM catalogue_membership WHERE user_id = $1', [userId]);
       return rows.map(toMembership);
+    });
+  }
+
+  async createOwnership(input: CreateOwnershipInput): Promise<CatalogueOwnership | null> {
+    return this.guard('createOwnership', null, async () => {
+      const { rows } = await this.pool.query<OwnershipRow>(
+        `INSERT INTO catalogue_ownership (id, catalogue_id, owner_id, created_at)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (catalogue_id, owner_id) DO UPDATE SET catalogue_id = EXCLUDED.catalogue_id
+         RETURNING *`,
+        [crypto.randomUUID(), input.catalogueId, input.ownerId, Date.now()],
+      );
+      return rows[0] ? toOwnership(rows[0]) : null;
+    });
+  }
+
+  async getOwnershipsByOwner(ownerId: string): Promise<CatalogueOwnership[]> {
+    return this.guard('getOwnershipsByOwner', [], async () => {
+      const { rows } = await this.pool.query<OwnershipRow>('SELECT * FROM catalogue_ownership WHERE owner_id = $1', [ownerId]);
+      return rows.map(toOwnership);
+    });
+  }
+
+  async isOwner(catalogueId: string, ownerId: string): Promise<boolean> {
+    return this.guard('isOwner', false, async () => {
+      const { rows } = await this.pool.query(
+        'SELECT 1 FROM catalogue_ownership WHERE catalogue_id = $1 AND owner_id = $2 LIMIT 1',
+        [catalogueId, ownerId],
+      );
+      return rows.length > 0;
     });
   }
 
