@@ -1,6 +1,39 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-16 (**phase-2-in-app-authoring PLANNED → TASKED.** Used
+_Updated: 2026-07-16 (**phase-2-in-app-authoring IMPLEMENTED — merged, pushed.**
+All 18 tasks in `tasks-phase-2-in-app-authoring-48d5.md` complete (`completed`),
+implemented in a delegated worktree (`phase-2-in-app-authoring-impl`,
+test-first throughout — 13 new/changed server tests + 6 new CT tests, 225
+server + 88 client + 10 CT tests green, typecheck clean across all 4
+workspace packages), fast-forward-merged into `main` at `fd26a4d`, worktree
+reaped, and pushed. Delivered: `CatalogueOwnership` Postgres table +
+`set-catalogue-owner` CLI; mutable/dynamic in-memory catalog with
+per-user visibility (an owner sees their own unpublished catalogue);
+`Participant.userId` on the wire; an authenticated upload trust surface
+(`POST /catalogues/:id/songs` — 401/403 auth gate, size-limited staged
+upload, parse-timeout-bounded pipeline execution, nothing reaches the
+live catalog until validated); a runtime `SONG_UPLOAD_ENABLED` flag
+(default on) gating the route and surfaced on `/me` so the client renders
+"Add song" absent, not disabled, when off; upload now writes a Consent
+Record via the same `recordConsent()` the CLI's `record-consent` uses;
+a new `AuthoringModal.svelte` (My catalogues, Create catalogue,
+XHR-driven Add-song form distinguishing uploading/processing via the
+upload's own progress/load events, Co-owners roster + Generate-invite-link);
+`POST /catalogues` (create), `POST /catalogues/:id/invite` (generate),
+`POST /invites/redeem` (redeem — grants ownership + membership in one
+action), `GET /catalogues/:id/owners` (roster). Feature register:
+`phase-2-in-app-authoring` → `implemented` (16 implemented total).
+**Note (unresolved):** the standalone backlog entry
+`catalogue-co-owner-invite-flow` (filed 2026-07-15) is now redundant —
+its scope shipped as this plan's Phase 6 (T016–T018) — but `/ardd-status`
+can't retire it itself (register writes aren't its job, and
+`feature-flip` refuses a non-adjacent `backlogged→retired` jump). Retire
+it by hand (or via `/ardd-refine`) when convenient. **Not yet done:**
+the three stale diagrams (datamodel/infrastructure/ui — Phase 2 touched
+all three) still need `/ardd-diagram`; `DEFECTS.md` (last checked
+2026-07-12) predates this whole feature. Prior context below.)_
+
+_Updated: 2026-07-16-earlier (**phase-2-in-app-authoring PLANNED → TASKED.** Used
 the existing draft plan `plan-phase-2-in-app-authoring-2026-07-14-8537.md`
 (already matched the amended artifacts — approved via `--from`, not
 re-drafted) and generated its tasks file,
@@ -121,12 +154,11 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · **1 tasked** · **15 implemented** — see
-`.project/features/`. Tasked: `phase-2-in-app-authoring`
-(`tasks-phase-2-in-app-authoring-48d5.md`, ready, 0/18). Backlogged:
-`catalogue-co-owner-invite-flow` (**likely superseded by
-phase-2-in-app-authoring's Phase 6** — see note above), `host-mandated-
-bars-per-row-layout`, `latency-compensated-position-extrapolation`.
+**3 backlogged** · 0 planned · 0 tasked · **16 implemented** — see
+`.project/features/`. Backlogged: `catalogue-co-owner-invite-flow`
+(**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
+retire by hand**), `host-mandated-bars-per-row-layout`,
+`latency-compensated-position-extrapolation`.
 
 ## Plans & Tasks
 
@@ -189,16 +221,19 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** — execute `tasks-phase-2-in-app-authoring-48d5.md`
-   (18 tasks, ready).
-2. **Decide `catalogue-co-owner-invite-flow`'s fate** — retire it (its
-   scope is now Phase 6 of the tasked plan) or leave it as a marker until
-   Phase 6 actually lands, then retire.
-3. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
-   `/ardd-diagram infrastructure`, `/ardd-diagram ui`.
-4. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+1. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
+   `/ardd-diagram infrastructure`, `/ardd-diagram ui` (all touched by
+   Phase 2 in-app authoring).
+2. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
+   as phase-2-in-app-authoring's Phase 6.
+3. **Live check of Phase 2 in-app authoring** — no manual/live verification
+   has happened yet, only the automated suite. Create a catalogue, add a
+   song (real `.gp` file, real pipeline extraction), generate + redeem an
+   invite link, confirm co-owner visibility, in a real running session.
+4. **`/ardd-defects`** — refresh against everything since 2026-07-12
+   (part-mute-toggle, phase-2-in-app-authoring).
+5. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
-5. **Optional:** confirm the Google `29801536638` client's redirect URI is
-   registered; `/ardd-defects` to re-verify artifacts against recent client
-   fixes; `/ardd-update` to move off the beta channel gap.
+6. **Optional:** confirm the Google `29801536638` client's redirect URI is
+   registered; `/ardd-update` to move off the beta channel gap.
