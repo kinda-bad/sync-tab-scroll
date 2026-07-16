@@ -196,6 +196,7 @@
   onClose={() => authoringModalOpen.set(false)}
   ownedCatalogueIds={$accountStore.ownedCatalogueIds}
   onCatalogueCreated={() => void loadAccount()}
+  songUploadEnabled={$accountStore.songUploadEnabled}
 />
 
 <Toasts />

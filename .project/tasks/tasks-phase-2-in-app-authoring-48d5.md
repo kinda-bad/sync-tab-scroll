@@ -83,7 +83,7 @@ status: in-progress
   arguments — server-side implementation reuses the same directory/
   `catalogue.json` writing logic the CLI's script already has, factored
   into a shared function rather than duplicated). Depends on T001-T003.
-- [ ] T013 [artifacts: ui] "Add song" form (file picker + consent fields:
+- [x] T013 [artifacts: ui] "Add song" form (file picker + consent fields:
   submitter identifier, ToS acceptance) posting to T008-T010's route,
   with real progress states (uploading → pipeline running → done/error)
   and inline (not toast) error display on failure — per ui.md's stated
@@ -103,15 +103,15 @@ status: in-progress
   both paths call, not two independent implementations. Depends on T013.
 
 ## Phase 6: Ownership/invites
-- [ ] T016 [artifacts: datamodel] Invite-by-link generation: an owner-only
+- [x] T016 [artifacts: datamodel] Invite-by-link generation: an owner-only
   action producing a signed, single-use (or time-limited — decide at
   implementation time, not a design commitment here) link token. Depends
   on T001.
-- [ ] T017 [artifacts: datamodel] Redeeming an invite link while signed in
+- [x] T017 [artifacts: datamodel] Redeeming an invite link while signed in
   grants `CatalogueMembership(grantedVia:'invite')` **and**
   `CatalogueOwnership` in one action (ui.md — no separate "accept" step).
   Test-first. Depends on T016.
-- [ ] T018 [artifacts: ui] "Co-owners" section per catalogue in the authoring
+- [x] T018 [artifacts: ui] "Co-owners" section per catalogue in the authoring
   modal: current owners list + "Generate invite link" control (owner-only).
   Test-first CT spec. Depends on T007 (peer-visible `userId` for
   displaying co-owner identity), T016, T017.

@@ -11,6 +11,7 @@ import type { HandlerContext } from './handlers/context.js';
 const CREATE_ROUTE = '/catalogues';
 const INVITE_GENERATE_ROUTE = /^\/catalogues\/([^/]+)\/invite$/;
 const INVITE_REDEEM_ROUTE = '/invites/redeem';
+const OWNERS_ROUTE = /^\/catalogues\/([^/]+)\/owners$/;
 
 /** Invite links expire after 7 days (owner decision at implementation time — datamodel.md T016, "decide at implementation time, not a design commitment"). */
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -48,9 +49,10 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
  * Mounts the in-app authoring routes that aren't the upload trust surface
  * (song-upload-route.ts already owns `POST /catalogues/:id/songs`):
  * `POST /catalogues` (T012 — create catalogue), `POST /catalogues/:id/invite`
- * (T016 — owner-only invite-link generation), and `POST /invites/redeem`
+ * (T016 — owner-only invite-link generation), `POST /invites/redeem`
  * (T017 — redeeming grants CatalogueOwnership + CatalogueMembership(via:
- * 'invite') in one action, ui.md — no separate "accept" step).
+ * 'invite') in one action, ui.md — no separate "accept" step), and
+ * `GET /catalogues/:id/owners` (T018 — the co-owners roster, owner-only).
  */
 export function createCatalogueAuthoringRequestHandler(opts: CatalogueAuthoringRouteOptions): (req: IncomingMessage, res: ServerResponse) => boolean {
   const { store, catalogRoot, ctx, requireSongConsent = false, sessionCookieSecret } = opts;
@@ -175,6 +177,30 @@ export function createCatalogueAuthoringRequestHandler(opts: CatalogueAuthoringR
     json(res, 200, { ok: true, catalogueId: payload.catalogueId });
   }
 
+  async function handleListOwners(catalogueId: string, req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const userId = await resolveUserIdFromCookie(store, req.headers.cookie);
+    if (!userId) {
+      json(res, 401, { error: 'sign in required' });
+      return;
+    }
+    const isOwner = await store.isOwner(catalogueId, userId);
+    if (!isOwner) {
+      json(res, 403, { error: 'not an owner of this catalogue' });
+      return;
+    }
+
+    // T018's roster: every co-owner's id + display name, resolved from the
+    // account store (getOwnershipsByCatalogue only returns bare rows).
+    const ownerships = await store.getOwnershipsByCatalogue(catalogueId);
+    const owners = await Promise.all(
+      ownerships.map(async (o) => {
+        const user = await store.getUser(o.ownerId);
+        return { userId: o.ownerId, displayName: user?.displayName ?? o.ownerId };
+      }),
+    );
+    json(res, 200, { owners });
+  }
+
   function fail(res: ServerResponse, err: unknown): void {
     console.error('[catalogue-authoring] route error:', err instanceof Error ? err.message : err);
     if (!res.headersSent) res.writeHead(500).end();
@@ -196,6 +222,13 @@ export function createCatalogueAuthoringRequestHandler(opts: CatalogueAuthoringR
       const m = pathname.match(INVITE_GENERATE_ROUTE);
       if (m) {
         handleGenerateInvite(decodeURIComponent(m[1]), req, res).catch((err) => fail(res, err));
+        return true;
+      }
+    }
+    if (req.method === 'GET') {
+      const m = pathname.match(OWNERS_ROUTE);
+      if (m) {
+        handleListOwners(decodeURIComponent(m[1]), req, res).catch((err) => fail(res, err));
         return true;
       }
     }

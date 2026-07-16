@@ -186,3 +186,51 @@ describe('Invite by link (T016/T017)', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('GET /catalogues/:id/owners — co-owners roster (T018)', () => {
+  let catalogRoot: string;
+  let srv: ReturnType<typeof startServer>;
+
+  beforeEach(() => {
+    catalogRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sts-authoring-'));
+  });
+  afterEach(async () => {
+    await srv?.close();
+    fs.rmSync(catalogRoot, { recursive: true, force: true });
+  });
+
+  it('requires sign-in (401)', async () => {
+    srv = startServer({ store: new NullAccountStore(), catalogRoot });
+    const res = await fetch(`${srv.base}/catalogues/my-band/owners`);
+    expect(res.status).toBe(401);
+  });
+
+  it('is owner-only (403 for a non-owner)', async () => {
+    const store = signedInStore();
+    store.isOwner = vi.fn(async () => false);
+    srv = startServer({ store, catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues/my-band/owners`, { headers: { Cookie: 'sts_session=s' } });
+    expect(res.status).toBe(403);
+  });
+
+  it('resolves each ownership row to a userId + displayName', async () => {
+    const store = signedInStore('owner-1');
+    store.isOwner = vi.fn(async () => true);
+    store.getOwnershipsByCatalogue = vi.fn(async () => [
+      { id: 'o1', catalogueId: 'my-band', ownerId: 'owner-1', createdAt: 0 },
+      { id: 'o2', catalogueId: 'my-band', ownerId: 'owner-2', createdAt: 0 },
+    ]);
+    store.getUser = vi.fn(async (id: string) => ({ id, oauthProvider: 'google' as const, oauthSubject: 'sub', displayName: id === 'owner-1' ? 'Ada' : 'Bo', email: null, createdAt: 0 }));
+    srv = startServer({ store, catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues/my-band/owners`, { headers: { Cookie: 'sts_session=s' } });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      owners: [
+        { userId: 'owner-1', displayName: 'Ada' },
+        { userId: 'owner-2', displayName: 'Bo' },
+      ],
+    });
+  });
+});
