@@ -1,5 +1,22 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-later (**tasks-lyrics-pre-singing-e09e T008 verified
+live, file COMPLETED.** The one remaining open task across both lyrics-
+ticker tasks files. Same live-browser methodology as the note below:
+second Vite instance on port 6002 (Chrome refuses port 6000), real
+session, `Kinda Bad` catalogue unlocked, Radiohead "Creep", "Lead Guitar"
+instrument part. Confirmed pre-play: the "…" placeholder carries
+`at-highlight` and is centered (~7.5px diff, not left-aligned, no snap
+since playback hadn't started). After clicking Start: the transform read
+via `getComputedStyle` showed no discontinuous jump — the placeholder's
+centered transform carried straight through to the first real syllable
+("an-") activating already centered (~1.8px diff), with the placeholder
+then `display: none` (one-way, matching T006's guard). Committed
+`33bf4a3`, signed. **Both `tasks-lyrics-ticker-75dd.md` and
+`tasks-lyrics-pre-singing-e09e.md` are now `completed`** — the
+2026-07-04 live-verification failure chain (original ticker → pre-singing
+placeholder fix) is fully closed out. Prior context below.)_
+
 _Updated: 2026-07-17 (**tasks-lyrics-ticker-75dd T004 re-verified live, file
 COMPLETED.** This tasks file had sat at a non-standard `reopened` status
 since 2026-07-04, when the user's live-browser check failed T004 (ticker
@@ -198,8 +215,8 @@ retire by hand**), `host-mandated-bars-per-row-layout`,
   separately in `tasks-lyrics-pre-singing-e09e.md` T004; this file just
   confirms the carry-over behavior is correct.
 - **Lyrics pre-singing placeholder** — `tasks-lyrics-pre-singing-e09e.md`
-  (`in-progress`, 8/9). Only T008 (live-browser check of the pre-singing
-  "…" placeholder centering/transition) remains open.
+  (`completed`, 9/9). T008 (live-browser check of the pre-singing "…"
+  placeholder centering/transition) verified passing 2026-07-17.
 - **Per-participant part mute toggle** — `tasks-part-mute-toggle-f0d4.md`
   (`completed`, 6/6). **Merged to `main` at `919a4da`, pushed, deployed**
   (`index-Crk4cCoz.js`). New `track-mute-preference.ts` (mirrors
@@ -259,9 +276,6 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-0. **Finish `tasks-lyrics-pre-singing-e09e.md`** — only T008 (live-browser
-   check of the pre-singing "…" placeholder) remains; run
-   `/ardd-implement` and pick that file.
 1. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
    `/ardd-diagram infrastructure`, `/ardd-diagram ui` (all touched by
    Phase 2 in-app authoring).
