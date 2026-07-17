@@ -6,6 +6,10 @@ function drive(page: Page, tick: number) {
   return page.evaluate((t) => (window as unknown as { __drive: (tick: number) => void }).__drive(t), tick);
 }
 
+function setVisible(page: Page, visible: boolean) {
+  return page.evaluate((v) => (window as unknown as { __setVisible: (visible: boolean) => void }).__setVisible(v), visible);
+}
+
 test('highlights the correct syllable as tick position advances', async ({ mount, page }) => {
   await mount(LyricsOverlayHarness);
 
@@ -87,4 +91,23 @@ test('shows a centered, highlighted placeholder before any syllable activates', 
   const activeCenter = activeBox!.x + activeBox!.width / 2;
   const overlayCenter = overlayBox!.x + overlayBox!.width / 2;
   expect(Math.abs(activeCenter - overlayCenter)).toBeLessThanOrEqual(2);
+});
+
+/**
+ * T004 (tasks-bottom-bar-icons-47a6): toggling the overlay off must hide
+ * the whole visible strip band (background + text), not just the syllable
+ * text — assert on the overlay element's own computed display/bounding
+ * box, not a child span's text content.
+ */
+test('hides the whole strip band, not just the syllable text, when toggled off', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+  await drive(page, 150); // activate a real syllable so there's visible text
+
+  await setVisible(page, false);
+
+  const display = await page.locator('.lyrics-overlay').evaluate((el) => getComputedStyle(el).display);
+  expect(display).toBe('none');
+
+  const box = await page.locator('.lyrics-overlay').boundingBox();
+  expect(box).toBeNull();
 });

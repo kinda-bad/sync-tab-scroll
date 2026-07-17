@@ -1,13 +1,33 @@
 <script lang="ts">
+  import type { ComponentType } from 'svelte';
+
   export let variant: 'ghost' | 'riot' | 'hazard' = 'ghost';
   export let label: string;
   export let disabled = false;
   export let type: 'button' | 'submit' = 'button';
   export let onclick: (() => void) | undefined = undefined;
+  // Icon-only bar controls (tasks-bottom-bar-icons-47a6.md T001): `icon` is
+  // a Svelte component (e.g. a lucide-svelte icon) rendered in place of the
+  // visible `{label}` text when `iconOnly` is true. The label is never
+  // lost — it moves to `aria-label`/`title` so the control stays
+  // screen-reader- and hover-tooltip-accessible despite showing no text.
+  export let icon: ComponentType | undefined = undefined;
+  export let iconOnly = false;
 </script>
 
-<button class="btn btn-{variant}" {type} {disabled} {onclick}>
-  {label}
+<button
+  class="btn btn-{variant}"
+  {type}
+  {disabled}
+  {onclick}
+  aria-label={iconOnly ? label : undefined}
+  title={iconOnly ? label : undefined}
+>
+  {#if iconOnly && icon}
+    <svelte:component this={icon} size={18} aria-hidden="true" />
+  {:else}
+    {label}
+  {/if}
 </button>
 
 <style>
@@ -31,6 +51,10 @@
 
   .btn:hover:not(:disabled) {
     border-color: var(--ink);
+  }
+
+  .btn :global(svg) {
+    display: block;
   }
 
   .btn:focus-visible {

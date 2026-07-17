@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.0",
-    "@sync-tab-scroll/shared": "workspace:*"
+    "@sync-tab-scroll/shared": "workspace:*",
+    "lucide-svelte": "^1.0.1"
   },
   "devDependencies": {
     "@playwright/experimental-ct-svelte": "^1.58.2",

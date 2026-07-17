@@ -31,9 +31,10 @@
       },
     } as unknown as AlphaTabApi;
 
-    createLyricsOverlay(fakeApi, lines, container);
+    const overlay = createLyricsOverlay(fakeApi, lines, container);
 
     (window as unknown as { __drive: (tick: number) => void }).__drive = (tick: number) => handler?.({ currentTick: tick });
+    (window as unknown as { __setVisible: (visible: boolean) => void }).__setVisible = (visible: boolean) => overlay.setVisible(visible);
   });
 </script>
 
