@@ -1,5 +1,59 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-night-4 (**tasks-1619-1185 COMPLETED, merged.** All 20
+tasks across `plan-1619-2026-07-17-39c6.md`'s 5 phases. Delegation needed
+two attempts — the first worktree came up branched from a stale base with
+`.claude/skills/ardd-scripts/` entirely missing despite `.worktreeinclude`
+being correctly configured; it stopped cleanly per its own instructions
+(no work attempted) and was auto-reaped since it made no changes. The
+retry succeeded. **Delivered:**
+- **Phase 1** — unified the pipeline's and client's independently-drifted
+  GP-lyric-syllable walks into `packages/shared/src/lyrics-walk.ts`
+  (new workspace package dependency on `@coderline/alphatab`). Fixed a
+  real bug: dedup is now tie-aware
+  (`beat.notes.some(n => n.isTieDestination)`) instead of same-text-only,
+  so genuinely-repeated syllables ("yeah, yeah, yeah") no longer wrongly
+  collapse; pipeline also picked up the client's correct
+  `absolutePlaybackStart` tick source it never had.
+- **Phase 2** — replaced word-count-proportional `.lrc` line-boundary
+  guessing (`distributeByWordCount`) with real timestamp-based alignment
+  (`parseLrclibLinesWithTimestamps`, `buildMsToTick`,
+  `alignLinesByTimestamp`) — fixes the confirmed drift bug from
+  `feedback-lyrics-timing-tiro-c741.md` F002. T013 manual verification
+  done at the code level (no network/browser access in the worktree):
+  confirmed the "You will be the death of me" syllable's true GP tick
+  converts to 23.898s, matching the feedback's independently-derived
+  ~23.9s finding.
+- **Phase 3 (F001 ticker-offset research)** — alphaTab's public API
+  doesn't expose `AudioContext`/`outputLatency`; only reachable via an
+  unsupported internal cast. Empirical device comparison (Bluetooth vs.
+  wired) wasn't possible in the worktree. **No fix implemented** — T015
+  correctly stayed gated-off per the plan; findings filed as follow-up
+  feedback `feedback-audio-output-latency-t014-dfa8.md` (now the sole
+  open feedback file) for a future pass with real device access.
+- **Phase 4** — "Mute parts" moved out of Preferences into its own 4th
+  "Tracks" tab, one row per part (`SettingsModal.svelte`).
+- **Phase 5 (playback-start stutter)** — found a clean *public* mechanism
+  this time (`api.player.output.activate()`, unlike Phase 3's dead end):
+  implemented `warmUpAudioOutput()` in `client/src/readiness.ts`, wired
+  into `playback-engine.ts` at part-load time. Could not empirically
+  confirm it eliminates the reported stutter (no live audio testing in
+  the worktree) — documented as an open caveat in `infrastructure.md`.
+
+Merged clean (`8603fa9`) after two hiccups on the coordinator side: the
+default git signing key failed mid-merge-commit (1Password locked —
+retried with the project's dedicated Claude signing key) and the merged
+`pnpm-lock.yaml`/`packages/shared/package.json` changes needed a fresh
+`pnpm install` before the pre-commit typecheck hook would pass (new
+`@coderline/alphatab`/`vitest` deps in `packages/shared` weren't yet in
+`node_modules`). Post-merge, re-verified in the primary checkout (not
+just trusting the subagent's own worktree report): `pnpm -r test` — 228
+server + 91 client + 18 pipeline unit tests, all green; 53 client CT
+tests (SettingsModal, lyrics-overlay, playback-engine) all green.
+Worktree reaped. **`infrastructure.md` and `ui.md` diagrams are stale
+again** (Phase 1/5 and Phase 4 artifact edits) — `datamodel.md` still
+current. Prior context below.)_
+
 _Updated: 2026-07-17-night-3 (**tasks-bottom-bar-icons-47a6 COMPLETED and
 merged.** Delegated worktree run executed all 5 tasks test-first: T001
 added `lucide-svelte` + `Button.svelte`'s `icon`/`iconOnly` props; T002/T003
@@ -311,11 +365,13 @@ violations there either.
 
 ## Diagrams
 
-- `datamodel.md` — **current ✅** (regenerated 2026-07-17, uncommitted —
-  see the dated note above).
-- `infrastructure.md` — **current ✅** (regenerated 2026-07-17,
-  uncommitted).
-- `ui.md` — **current ✅** (regenerated 2026-07-17, uncommitted).
+- `datamodel.md` — **current ✅** (regenerated + committed 2026-07-17).
+- `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`)
+  — gained the shared `lyrics-walk` module note and the audio-warm-up
+  caveat from `plan-1619`.
+- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the Tracks tab
+  (Phase 4) and the relocated lyrics-toggle/icon-based bar controls
+  (bottom-bar-icons plan).
 
 ## Code-vs-Artifact Defects
 
@@ -325,19 +381,18 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**1 open feedback file** — `feedback-bottom-bar-icons-3a15.md` (6 items,
-filed in a concurrent session from live inspection of the bottom bar: 1
-bug — toggling lyrics off hides only the words, not the background strip
-— plus 5 UX items around bottom-bar icons/labels and an icon library).
-Ready for a future `/ardd-plan` run.
+**1 open feedback file** — `feedback-audio-output-latency-t014-dfa8.md`
+(filed by `plan-1619`'s T014 research task: the ticker-offset
+latency-compensation hypothesis remains unconfirmed — alphaTab exposes no
+public `AudioContext`/`outputLatency` API, and empirical cross-device
+testing wasn't possible in a worktree environment. Needs real
+multi-device browser access before a fix is attempted).
 
-**3 planned files**, all bound to `plan-1619-2026-07-17-39c6.md`
-(`status: approved`, tasks `tasks-1619-1185.md` `ready`, 20 tasks/5
-phases): `feedback-lyrics-timing-tiro-c741.md` (F002 `.lrc`-drift fix +
-F003 shared-walk fix accepted; F001 ticker-offset accepted as
-research-only, pending confirmation of an audio-output-latency
-hypothesis), `feedback-mute-parts-own-tab-cf6d.md` (accepted), and
-`feedback-playback-start-stutter-2052.md` (accepted, research-then-fix).
+Every other feedback file is `planned` or superseded by a completed plan
+— `feedback-bottom-bar-icons-3a15.md`, `feedback-lyrics-timing-tiro-c741.md`,
+`feedback-mute-parts-own-tab-cf6d.md`, and
+`feedback-playback-start-stutter-2052.md` all landed via `plan-1619` or
+`plan-bottom-bar-icons`, both now `completed`/merged.
 
 ## Feature Backlog
 
@@ -352,13 +407,21 @@ retire by hand**), `host-mandated-bars-per-row-layout`,
 
 - **Lyrics-timing fixes, mute-parts tab, playback-stutter investigation** —
   `plan-1619-2026-07-17-39c6.md` (`approved`), `tasks-1619-1185.md`
-  (`ready`, 0/20). Phase 1: shared `packages/shared/src/lyrics-walk.ts`
-  syllable walk (tie-aware dedup) unifying pipeline + client. Phase 2:
-  timestamp-based `.lrc` line-boundary placement, replacing word-count
-  proportion. Phase 3: F001 ticker-offset research (gated implementation).
-  Phase 4: Mute-parts control → its own Settings tab, one row per part.
-  Phase 5: playback-start stutter research (gated implementation). Not
-  yet started.
+  (`completed`, 20/20). Merged `8603fa9`. Shared `packages/shared/src/
+  lyrics-walk.ts` syllable walk (tie-aware dedup) now unifies pipeline +
+  client; timestamp-based `.lrc` line-boundary placement replaces
+  word-count proportion; Mute-parts control moved to its own Settings
+  tab, one row per part; audio-warm-up (`api.player.output.activate()`)
+  wired in for the playback-start stutter. F001 ticker-latency research
+  inconclusive (no public API, no multi-device access) — follow-up filed
+  as `feedback-audio-output-latency-t014-dfa8.md`. `pnpm -r test` +
+  53 client CT tests all green post-merge.
+- **Bottom bar icons + lyrics-toggle relocation** —
+  `plan-bottom-bar-icons-2026-07-17-fdd5.md` (`approved`),
+  `tasks-bottom-bar-icons-47a6.md` (`completed`, 5/5). Merged (concurrent
+  session). "Toggle lyrics" moved into the persistent bar; play/pause/
+  stop/settings/leave-session controls became icon-based
+  (`lucide-svelte`); fixed the lyrics-off background-strip bug.
 - **Lyrics ticker (centering fix)** — `tasks-lyrics-ticker-75dd.md`
   (`completed`, 9/9). T004's 2026-07-04 live-verification failure is now
   re-verified passing (see the dated note above) — the actual fix landed
@@ -426,22 +489,29 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** — pick up `tasks-1619-1185.md` (`ready`, 0/20):
-   the shared syllable-walk module, `.lrc` timestamp-based line-boundary
-   fix, mute-parts tab reorg, and the two research-then-fix investigations
-   (ticker latency, playback stutter).
-2. **`/ardd-plan` on `feedback-bottom-bar-icons-3a15.md`** (1 open feedback
-   file, 6 items) whenever convenient — untouched by plan-1619.
-3. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
+1. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
+   `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
+   bottom-bar-icons plan).
+2. **Live check of `plan-1619`'s deliverables** — none of it has been
+   exercised in a real browser yet, only unit/CT tests: confirm the
+   Tracks tab renders correctly, `.lrc` timing actually looks right on
+   "Time Is Running Out" in a live session, and whether the new
+   `warmUpAudioOutput()` call actually reduces the reported playback-start
+   stutter in practice.
+3. **`feedback-audio-output-latency-t014-dfa8.md`** — needs real
+   multi-device browser access (a Bluetooth output vs. wired/built-in) to
+   confirm or rule out the latency hypothesis before any fix is planned.
+4. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
    as phase-2-in-app-authoring's Phase 6.
-4. **Live check of Phase 2 in-app authoring** — no manual/live verification
+5. **Live check of Phase 2 in-app authoring** — no manual/live verification
    has happened yet, only the automated suite. Create a catalogue, add a
    song (real `.gp` file, real pipeline extraction), generate + redeem an
    invite link, confirm co-owner visibility, in a real running session.
-5. **`/ardd-defects`** — refresh against everything since 2026-07-12
-   (part-mute-toggle, phase-2-in-app-authoring).
-6. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+6. **`/ardd-defects`** — refresh against everything since 2026-07-12
+   (part-mute-toggle, phase-2-in-app-authoring, plan-1619,
+   bottom-bar-icons).
+7. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
-7. **Optional:** confirm the Google `29801536638` client's redirect URI is
+8. **Optional:** confirm the Google `29801536638` client's redirect URI is
    registered; `/ardd-update` to move off the beta channel gap.
