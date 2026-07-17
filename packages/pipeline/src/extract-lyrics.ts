@@ -1,7 +1,7 @@
 import * as path from 'node:path';
-import { loadScore, findLyricsSource, extractSyllables, buildTickToMs } from './gp-parser.js';
-import { readRawLyricsLines, countSyllables } from './line-breaks.js';
-import { searchLrclib, parseLrclibLines } from './lrclib.js';
+import { loadScore, findLyricsSource, extractSyllables, buildTickToMs, buildMsToTick } from './gp-parser.js';
+import { readRawLyricsLines, countSyllables, alignLinesByTimestamp } from './line-breaks.js';
+import { searchLrclib, parseLrclibLinesWithTimestamps } from './lrclib.js';
 import { buildLrc, passthroughLrc } from './lrc-writer.js';
 import { publishSong, slugify, type CatalogMeta, type CatalogPartMeta } from './catalog.js';
 
@@ -10,16 +10,6 @@ function parseSongFilename(gpFilePath: string): { artist: string; title: string 
   const match = base.match(/^(.+?)-(.+)-\d{2}-\d{2}-\d{4}\.gp$/i);
   if (!match) throw new Error(`Cannot parse artist/title from filename: ${base}`);
   return { artist: match[1], title: match[2] };
-}
-
-/** Distributes a flat syllable count across lrclib-derived lines proportionally to each line's word count — a best-effort fallback when GP marks no line breaks of its own. */
-function distributeByWordCount(totalSyllables: number, lrclibLines: string[]): number[] {
-  const wordCounts = lrclibLines.map((l) => l.split(/\s+/).filter(Boolean).length);
-  const totalWords = wordCounts.reduce((a, b) => a + b, 0) || 1;
-  const counts = wordCounts.map((w) => Math.round((w / totalWords) * totalSyllables));
-  const diff = totalSyllables - counts.reduce((a, b) => a + b, 0);
-  if (counts.length > 0) counts[counts.length - 1] += diff;
-  return counts;
 }
 
 export async function extractLyrics(gpFilePath: string, catalogRoot: string): Promise<void> {
@@ -58,8 +48,9 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
     } else {
       const lrclibResult = await searchLrclib(title, artist);
       if (lrclibResult?.syncedLyrics) {
-        lines = parseLrclibLines(lrclibResult.syncedLyrics);
-        lyricLineBreaks = distributeByWordCount(syllables.length, lines);
+        const timedLines = parseLrclibLinesWithTimestamps(lrclibResult.syncedLyrics);
+        lines = timedLines.map((l) => l.text);
+        lyricLineBreaks = alignLinesByTimestamp(syllables, timedLines, buildMsToTick(score));
       } else {
         lines = rawLines ?? [syllables.map((s) => s.text).join(' ')];
         lyricLineBreaks = [syllables.length];

@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 ---
 
 # Lyrics Extraction Pipeline
@@ -76,14 +76,25 @@ infrastructure.md.
      path is genuinely needed, not just theoretical.
    - If the GP file's lyrics lack line-break placement (syllables present,
      but no marked line boundaries, per the raw-XML check above), lrclib.net
-     is queried and its **own line text** is used directly as the `.lrc`
-     line breaks (`extractLyrics`'s `parseLrclibLines(lrclibResult.
-     syncedLyrics)`) — lrclib's own timestamps are still discarded, though:
-     each line's syllable count is estimated from lrclib's line text
-     proportionally by word count (`distributeByWordCount`), and that
-     count is what determines the actual start/end timestamps written into
-     the `.lrc`, both taken from GP's own per-syllable timing (`buildLrc`)
-     — never from lrclib's timestamps. `lyricLineBreaks` records the
+     is queried and its own **timestamps** are used to place line
+     boundaries in the GP syllable stream (`extractLyrics`'s
+     `parseLrclibLinesWithTimestamps(lrclibResult.syncedLyrics)` +
+     `alignLinesByTimestamp`): each lrclib line's `[mm:ss.xx]` timestamp is
+     converted to a tick (`buildMsToTick`, the inverse of `buildTickToMs`'s
+     tempo-segment walk) and matched to the closest GP syllable-stream tick
+     — the gap between consecutive matched indices becomes that line's
+     syllable count. This replaced an earlier word-count-proportional
+     estimate (`distributeByWordCount`) that assumed lrclib's line text and
+     GP's own syllable text agreed word-for-word; they don't always (one
+     real song's lrclib line read "And you will be the death of me" vs. GP's
+     own "You will be the death of me" — an extra leading word
+     word-count-proportional placement had no way to account for, and which
+     measurably drifted line timing). Tick-proximity matching is immune to
+     this kind of textual disagreement since it never compares text at all.
+     The actual start/end timestamps written into the `.lrc` are still
+     always taken from GP's own per-syllable timing (`buildLrc`), never
+     from lrclib's timestamps directly — only the *line-boundary counts*
+     come from this timestamp-alignment step. `lyricLineBreaks` records the
      resulting per-line syllable counts (whichever source decided the line
      breaks) so the client can regroup the same way at render time.
 2. **Lyrics fallback (lrclib.net)** — only runs when the GP file has no

@@ -61,11 +61,13 @@ interface TempoSegment {
 }
 
 /**
- * Builds a tick -> milliseconds converter from the score's own tempo map,
- * generated via alphaTab's MidiFileGenerator (the same mechanism alphaTab
- * uses internally for playback) rather than assuming a constant tempo.
+ * Builds the score's tempo-segment map via alphaTab's MidiFileGenerator (the
+ * same mechanism alphaTab uses internally for playback) rather than assuming
+ * a constant tempo. Shared internal helper for both `buildTickToMs` and
+ * `buildMsToTick` (constitution Principle II) — one MIDI tempo-map walk, not
+ * two duplicated ones.
  */
-export function buildTickToMs(score: at.model.Score): (tick: number) => number {
+function buildTempoSegments(score: at.model.Score): TempoSegment[] {
   const midiFile = new at.midi.MidiFile();
   const handler = new at.midi.AlphaSynthMidiFileHandler(midiFile);
   new at.midi.MidiFileGenerator(score, new at.Settings(), handler).generate();
@@ -90,6 +92,15 @@ export function buildTickToMs(score: at.model.Score): (tick: number) => number {
   }
   segments.push({ startTick: prevTick, startMs: prevMs, msPerTick: 60000 / (bpm * division) });
 
+  return segments;
+}
+
+/**
+ * Builds a tick -> milliseconds converter from the score's own tempo map.
+ */
+export function buildTickToMs(score: at.model.Score): (tick: number) => number {
+  const segments = buildTempoSegments(score);
+
   return (tick: number): number => {
     let segment = segments[0];
     for (const candidate of segments) {
@@ -97,5 +108,28 @@ export function buildTickToMs(score: at.model.Score): (tick: number) => number {
       segment = candidate;
     }
     return segment.startMs + (tick - segment.startTick) * segment.msPerTick;
+  };
+}
+
+/**
+ * Builds a milliseconds -> tick converter — the inverse of `buildTickToMs`,
+ * over the same tempo-segment map (pipeline.md line-boundary placement:
+ * `alignLinesByTimestamp` converts lrclib's per-line `mm:ss.xx` timestamps
+ * to ticks via this function).
+ */
+export function buildMsToTick(score: at.model.Score): (ms: number) => number {
+  const segments = buildTempoSegments(score);
+  const segmentsWithEndMs = segments.map((segment, i) => ({
+    ...segment,
+    endMs: i + 1 < segments.length ? segments[i + 1].startMs : Infinity,
+  }));
+
+  return (ms: number): number => {
+    let segment = segmentsWithEndMs[0];
+    for (const candidate of segmentsWithEndMs) {
+      if (candidate.startMs > ms) break;
+      segment = candidate;
+    }
+    return segment.startTick + (ms - segment.startMs) / segment.msPerTick;
   };
 }
