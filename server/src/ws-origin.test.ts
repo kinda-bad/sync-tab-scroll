@@ -56,7 +56,7 @@ describe('WS upgrade Origin allowlist (T010)', () => {
   }
 
   it('allows an allowed origin (localhost dev) to upgrade', async () => {
-    expect(await connect('http://localhost:6000')).toBe('open');
+    expect(await connect('http://localhost:6100')).toBe('open');
   });
 
   it('rejects a foreign origin before the connection opens', async () => {

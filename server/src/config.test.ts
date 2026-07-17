@@ -20,7 +20,7 @@ const ENV_KEYS = [
 const DEFAULT_ACCOUNT = {
   databaseUrl: undefined,
   sessionCookieSecret: '',
-  publicBaseUrl: 'http://localhost:6000',
+  publicBaseUrl: 'http://localhost:6100',
   google: { clientId: '', clientSecret: '' },
   github: { clientId: '', clientSecret: '' },
 };

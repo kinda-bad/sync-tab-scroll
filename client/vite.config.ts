@@ -42,7 +42,7 @@ function alphaTabWorkerAssets(): Plugin {
   };
 }
 //
-// Ports: dev servers (a real person's own session) run on 6000/6080; e2e
+// Ports: dev servers (a real person's own session) run on 6100/6080; e2e
 // spins up its own instances on 6001/6081 (playwright.config.ts's
 // webServer array) so the two never collide/reuse each other's server —
 // VITE_BACKEND_PORT lets this same config point the /catalog proxy at
@@ -68,7 +68,11 @@ export default defineConfig({
     exclude: ['@coderline/alphatab']
   },
   server: {
-    port: 6000,
+    // 6100, not 6000: Chrome (and other Chromium browsers) refuses to
+    // navigate to port 6000 at all — it's on their hardcoded "unsafe
+    // ports" list (historically associated with X11), a browser
+    // restriction with no override. 6100 isn't on that list.
+    port: 6100,
     strictPort: true,
     // Bind on all interfaces, not just localhost, so the dev server is
     // reachable from another device on the LAN (e.g. a phone) via this

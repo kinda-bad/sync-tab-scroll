@@ -15,7 +15,7 @@ describe('isOriginAllowed (T010)', () => {
   });
 
   it('allows localhost / 127.0.0.1 origins on any port or scheme (dev, e2e, preview)', () => {
-    expect(isOriginAllowed('http://localhost:6000', PUBLIC)).toBe(true);
+    expect(isOriginAllowed('http://localhost:6100', PUBLIC)).toBe(true);
     expect(isOriginAllowed('http://localhost:6001', PUBLIC)).toBe(true);
     expect(isOriginAllowed('http://127.0.0.1:6080', PUBLIC)).toBe(true);
   });
