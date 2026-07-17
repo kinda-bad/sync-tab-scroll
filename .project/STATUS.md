@@ -1,5 +1,31 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-night-3 (**tasks-bottom-bar-icons-47a6 COMPLETED and
+merged.** Delegated worktree run executed all 5 tasks test-first: T001
+added `lucide-svelte` + `Button.svelte`'s `icon`/`iconOnly` props; T002/T003
+(combined, same file) swapped Settings/Start/Pause-Resume/Stop/Leave-session
+to icon-only buttons (`Cog`, `Play`/`Pause`/`Square`, `LogOut`) and moved
+"Toggle lyrics" from `Playback.svelte` into the bar as an `AudioLines`
+icon button; T004 fixed the lyrics-off bug — root cause was **not** the
+overlay's own `display:none` (already worked) but `App.svelte`'s
+`.engine-containers.visible` reserved `padding-bottom` staying applied
+regardless of toggle state (`showOverlay` lived only in
+`playback-engine.ts`'s module closure) — fixed via a new
+`clientStore.lyricsOverlayVisible` mirror and a `.lyrics-overlay-hidden`
+class; T005 updated `ui.md` (now `diagram_status: stale` — a later
+`/ardd-diagram ui` run should refresh it). All 134 Playwright CT tests +
+88 vitest unit tests + `pnpm check` passed. Worktree commits were
+unsigned (no 1Password in that session) — re-signed via
+`git rebase -x` with the on-disk Claude signing key before merging
+(hit and worked around a `commit.gpgsign` default forcing 1Password
+signing during rebase `pick` steps — fixed by passing
+`-c commit.gpgsign=false` on the outer `git rebase` invocation). Merged
+clean (fast-forward, `4a4774a`) per `merge_policy: auto`, worktree reaped.
+Feedback file's item count is unchanged at 0 open. **A second, unrelated
+worktree remains in flight**: `tasks-1619-1185.md` (lyrics-timing/
+mute-parts/playback-stutter), 18/20, not part of this run — see In Flight
+below. Prior context below.)_
+
 _Updated: 2026-07-17-night-2 (**plan-bottom-bar-icons approved and TASKED —
 5 tasks across 4 phases, `ready`.** Consumes `feedback-bottom-bar-icons-3a15.md`
 (the file left `open` by the concurrent plan-1619 run noted below) in full:
