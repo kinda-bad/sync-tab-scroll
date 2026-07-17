@@ -1,10 +1,10 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -226,6 +226,18 @@ connection already triggers: readiness/host-succession handling,
 infrastructure.md), just triggered deliberately by the client instead of
 a dropped socket.
 
+**Bar controls are icon-based** (`lucide-svelte`, adopted per constitution
+Principle V rather than hand-rolled inline SVGs), reclaiming horizontal
+space in the persistent bar: the settings control renders as a cog icon,
+"Leave session" as an exit-door icon (`LogOut`), and the host's
+transport controls (Playback View, below) as tape-recorder-style symbols
+(play/pause/square). Every icon-only control still carries its full text
+as an accessible name — `Button.svelte`'s `iconOnly` mode sets
+`aria-label`/`title` from the same `label` a text button would show, so
+screen readers and hover tooltips read the original wording even though
+no text is visibly rendered. "Song & part" stays a text control (not
+raised as an icon candidate).
+
 A second, separate modal — opened via a settings-cog control in the
 persistent nav bar — holds everything that used to render inline in the
 Lobby body. Unlike the song/part modal, it's a plain freely-openable/
@@ -399,7 +411,15 @@ identically regardless of which one they're on:
   computed overlay, so it can't drift out of position relative to the
   notation the way a precomputed layout-derived cursor could. An optional
   lyrics overlay can be toggled on as a single-line horizontal ticker
-  fixed to the bottom of the viewport: syllable text and tick position
+  fixed to the bottom of the viewport, via an icon-only "Toggle lyrics"
+  control (an `AudioLines` icon) that lives in the **persistent bar's**
+  controls, not standalone in this view's own body — reachable the same
+  way Settings/transport/Leave-session are, gated on `!isLyricsPart`
+  exactly as before (absent entirely for a participant on the tab-less
+  Lyrics part, since there is no in-tab strip for them to toggle).
+  Toggling the strip off hides it **entirely** — both the syllable text
+  and the strip's own background band/reserved layout space — not just
+  the words, leaving nothing behind. Syllable text and tick position
   are read live off `CatalogSong.lyricsTrackIndex`'s beats (not the
   currently-viewed instrument track's own beats, which is usually a
   different track entirely), flattened into one continuous stream. The
@@ -472,9 +492,10 @@ Both renderings share alphaTab's native metronome and count-in
 toggled via `Session.countInEnabled`, the metronome via the personal
 client-local preference above), so the audio is identical
 whether or not the participant's alphaTab instance has a visible staff.
-Host controls start/pause/resume/seek; a count-in countdown can precede
-playback start. The host's view exposes seek (click-to-position) when
-paused; participants' views don't.
+Host controls start/pause/resume/seek via the persistent bar's icon-only
+tape-recorder-style transport controls (play/pause/square — see above); a
+count-in countdown can precede playback start. The host's view exposes
+seek (click-to-position) when paused; participants' views don't.
 
 The settings-cog control (Lobby View, above) remains in the persistent
 nav bar here too, so the Preferences tab's theme toggle stays reachable
