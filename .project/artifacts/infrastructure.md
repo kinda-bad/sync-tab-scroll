@@ -432,6 +432,35 @@ full color reasoning and values, and documents a feature request filed
 with alphaTab requesting finer-grained resource colors or semantic
 classes, which would let this be revisited if it lands upstream.
 
+### Audio Engine Warm-Up
+
+`client/src/readiness.ts#warmUpAudioOutput(api)` pre-warms the Web Audio
+`AudioContext` alphaTab's player owns as soon as `api.player` exists
+(`client/src/playback-engine.ts`, right after the api is created at
+part-selection time, and again on `api.playerReady` since `api.player`
+isn't guaranteed to exist synchronously right after construction) —
+well before the "Start" button's own `play()` call would otherwise
+trigger the first context creation/resume. It calls alphaTab's public,
+documented `ISynthOutput.activate()` (reachable via the equally public
+`AlphaTabApi.player.output`) — idempotent, safe to call more than once,
+and unlike F001/T014's investigation into output-latency compensation
+(which found no stable public route to the underlying `AudioContext`),
+this one is a fully supported part of alphaTab's public API surface, not
+an internal cast.
+
+This targets a classic Web Audio first-buffer glitch as the working
+hypothesis for the reported playback-start stutter: an `AudioContext`
+created/resumed for the first time exactly when playback is expected to
+start can glitch on its first few callbacks while the graph spins up.
+**Caveat**: this pass could not empirically confirm the pre-warm
+eliminates the reported stutter — that requires live audio A/B testing
+(warm vs. cold start) this environment can't perform (no interactive
+browser with real audio output). The mechanism itself is clean, safe, and
+already verified not to regress existing playback behavior (client's
+unit and CT playback suites, including tests exercising real synthesized
+playback, all pass with it in place) — but its actual effect on the
+reported stutter should be confirmed live in a future pass.
+
 ### Font & Worker Setup
 
 Three more implementation-verified deviations from what the render-settings
