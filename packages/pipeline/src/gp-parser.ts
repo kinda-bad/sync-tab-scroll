@@ -1,17 +1,10 @@
 import * as fs from 'node:fs';
 import * as at from '@coderline/alphatab';
+import { walkSyllables, type Syllable } from '@sync-tab-scroll/shared';
 
-export interface LyricsSource {
-  /** Index of the track whose beats carry the lyrics. */
-  trackIndex: number;
-  /** Which index into a beat's Beat.lyrics array holds the real content. */
-  lineIndex: number;
-}
+export type LyricsSource = { trackIndex: number; lineIndex: number };
 
-export interface Syllable {
-  text: string;
-  tickPosition: number;
-}
+export type { Syllable };
 
 export function loadScore(gpFilePath: string): at.model.Score {
   const bytes = fs.readFileSync(gpFilePath);
@@ -50,31 +43,15 @@ export function findLyricsSource(score: at.model.Score): LyricsSource | null {
  * stream for the given line index — filtered to beats where that index is a
  * non-empty string (rests and non-lyric beats never populate Beat.lyrics).
  *
- * Known upstream caveat (alphaTab GitHub issue #2727, open as of v1.8.1):
- * tied/continuation beats aren't skipped consistently by alphaTab's own
- * lyric renderer on some inputs. Validated this session: not reachable for
- * modern GP7/8 exports with pre-dispatched per-beat lyrics (which set
- * alphaTab's internal _skipApplyLyrics flag) — only a legacy GP3-5 concern.
+ * Thin call-through to the shared walk (`packages/shared/src/
+ * lyrics-walk.ts#walkSyllables`) — also used by the client's
+ * `walkLyricBeats`, so the two implementations can't drift apart again
+ * (constitution Principle II). See that module's doc comment for the tick
+ * source (`beat.absolutePlaybackStart`) and tie-aware dedup rationale, and
+ * the alphaTab GH #2727 caveat.
  */
 export function extractSyllables(score: at.model.Score, source: LyricsSource): Syllable[] {
-  const track = score.tracks[source.trackIndex];
-  const syllables: Syllable[] = [];
-  for (const staff of track.staves) {
-    for (const bar of staff.bars) {
-      for (const voice of bar.voices) {
-        for (const beat of voice.beats) {
-          const text = beat.lyrics?.[source.lineIndex];
-          if (text && text.length > 0) {
-            syllables.push({
-              text,
-              tickPosition: bar.masterBar.start + beat.playbackStart,
-            });
-          }
-        }
-      }
-    }
-  }
-  return syllables;
+  return walkSyllables(score, source);
 }
 
 interface TempoSegment {

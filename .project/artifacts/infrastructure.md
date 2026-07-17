@@ -1,10 +1,10 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -521,6 +521,20 @@ works regardless of which instrument track the viewing participant
 actually has rendered — the lyrics-bearing track need not be the one
 on screen, or even a selectable `CatalogPart` at all.
 
+The walk itself lives in exactly one place, `packages/shared/src/
+lyrics-walk.ts#walkSyllables(score, source)`, used identically by the
+client (`client/src/lyrics-beat-walk.ts`, live overlay) and the pipeline
+(`packages/pipeline/src/gp-parser.ts#extractSyllables`, offline `.lrc`
+generation) — the two previously drifted into independent
+reimplementations (constitution Principle II), which is what this section
+now documents corrected. Tick source is `beat.absolutePlaybackStart`
+(alphaTab's playback-timeline tick, correctly accounting for grace-note
+timing shifts — not a `bar.masterBar.start + beat.playbackStart`
+display-timeline reconstruction). Dedup is **tie-aware**: a beat collapses
+into the previous syllable only when its lyric text matches the previous
+syllable's text **and** at least one of its notes is a tie continuation
+(`beat.notes.some(n => n.isTieDestination)`) — never on text match alone.
+
 `Beat.lyrics` is **not** a flat per-beat syllable array — it's indexed by
 lyric line/channel number (GP allows multiple simultaneous lyric channels,
 e.g. main vocal vs. a harmony line spanning the whole song), so a beat's
@@ -547,6 +561,14 @@ per-beat lyrics in their XML, which sets alphaTab's internal
 The bug is only live for legacy binary GP3-5 files or synthetic inputs —
 worth a defensive note in the walk's implementation, not a primary design
 concern.
+
+A **separate, now-fixed** caveat found during the shared-module
+consolidation (2026-07-17): the client's original walk deduped
+consecutive same-text beats on text match alone, with no tie check. That
+wrongly collapsed genuinely-repeated distinct syllables (e.g. "yeah,
+yeah, yeah" sung as three separate notes on a modern GP7/8 file) down to
+one. The tie-aware dedup above is the fix — same-text-alone is no longer
+sufficient to collapse a beat.
 
 ## Continuous Integration
 

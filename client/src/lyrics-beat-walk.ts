@@ -1,9 +1,7 @@
 import type * as at from '@coderline/alphatab';
+import { walkSyllables, type Syllable } from '@sync-tab-scroll/shared';
 
-export interface Syllable {
-  text: string;
-  tickPosition: number;
-}
+export type { Syllable };
 
 /**
  * Live beat-walk (infrastructure.md In-Tab Lyrics Overlay): walks the
@@ -17,48 +15,14 @@ export interface Syllable {
  * multiple simultaneous lyric channels) — `lyricsLineIndex` (datamodel.md,
  * almost always `0`) tells us which channel to read.
  *
- * Known upstream caveat (alphaTab GitHub issue #2727, open as of v1.8.1):
- * tied/continuation beats aren't skipped consistently by alphaTab's own
- * lyric renderer on some inputs. Validated empirically this project: not
- * reachable for modern GP7/8 exports with pre-dispatched per-beat lyrics
- * (which set alphaTab's internal `_skipApplyLyrics` flag) — only a legacy
- * GP3-5 concern.
+ * Thin call-through to the shared walk (`packages/shared/src/
+ * lyrics-walk.ts#walkSyllables`) — also used by the pipeline's
+ * `extractSyllables`, so the two implementations can't drift apart again
+ * (constitution Principle II). See that module's doc comment for the tick
+ * source and tie-aware dedup rationale, and the alphaTab GH #2727 caveat.
  */
 export function walkLyricBeats(score: at.model.Score, lyricsTrackIndex: number, lyricsLineIndex: number): Syllable[] {
-  const track = score.tracks[lyricsTrackIndex];
-  const syllables: Syllable[] = [];
-  for (const staff of track.staves) {
-    for (const bar of staff.bars) {
-      for (const voice of bar.voices) {
-        for (const beat of voice.beats) {
-          const text = beat.lyrics?.[lyricsLineIndex];
-          if (text && text.length > 0) {
-            const previous = syllables[syllables.length - 1];
-            // Collapse consecutive beats sharing the same lyric text — a
-            // sustained/melisma syllable dispatched by alphaTab onto
-            // multiple beats, not multiple distinct syllables. Verified
-            // empirically against Creep.gp: 246 populated beats vs. 231
-            // syllables in the raw line text, exactly accounted for by 14
-            // such runs (e.g. "o-" repeated across 4 consecutive beats).
-            // Keeps the first beat's tick as the syllable's onset.
-            if (previous && previous.text === text) continue;
-            // T004 (feedback F001, "~2-syllable-ahead" offset): was
-            // `bar.masterBar.start + beat.playbackStart` — a manual
-            // reconstruction against the *display* timeline. alphaTab's own
-            // `beat.absolutePlaybackStart` already computes the correct
-            // absolute playback-timeline tick, accounting for grace-note
-            // timing shifts the display-timeline reconstruction ignores
-            // (per alphaTab's own doc comment on `playbackStart`: "This
-            // might differ from the actual playback time due to special
-            // grace types.") — using it directly fixes syllables
-            // activating ahead of the actual audio.
-            syllables.push({ text, tickPosition: beat.absolutePlaybackStart });
-          }
-        }
-      }
-    }
-  }
-  return syllables;
+  return walkSyllables(score, { trackIndex: lyricsTrackIndex, lineIndex: lyricsLineIndex });
 }
 
 /** Regroups the flat syllable stream into lines using lyricLineBreaks (syllable-count-per-line, datamodel.md) — matches .lrc's line boundaries. */
