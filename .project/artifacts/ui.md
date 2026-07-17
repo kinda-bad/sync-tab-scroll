@@ -1,10 +1,10 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -229,12 +229,14 @@ a dropped socket.
 A second, separate modal — opened via a settings-cog control in the
 persistent nav bar — holds everything that used to render inline in the
 Lobby body. Unlike the song/part modal, it's a plain freely-openable/
-dismissible modal with no forced-open gating, and it has three tabs,
+dismissible modal with no forced-open gating, and it has four tabs,
 split by who a control affects: **Participants** (who's here + host
 transfer), **Session** (host-broadcast controls everyone is affected
-by), and **Preferences** (personal, this-device-only settings). The tab
-strip renders as an equal-width segmented row at the section-label type
-size, so all three tabs fit on one line down to 360px-wide screens. The
+by), **Preferences** (personal, this-device-only settings), and
+**Tracks** (personal per-part mute controls, moved out of Preferences —
+below). The tab strip renders as an equal-width segmented row at the
+section-label type size, so all four tabs fit on one line down to
+360px-wide screens. The
 cog itself is reachable from both the Lobby view (alongside "Song &
 part") and the Playback view (see Playback View, below) — the settings
 modal, and its theme toggle in particular, needs to be reachable
@@ -340,24 +342,27 @@ regardless of whether playback has started:
     participant's own alphaTab instance immediately (`metronomeVolume`)
     whether visible or headless, with a hint making the scope plain
     ("Only you hear your metronome.").
-  - a personal "Mute parts" section, visible to **every** participant (not
-    host-gated): lists every part in `Session.availableParts` (instrument
-    name, same source the Participants list and Playback View's "Playing:
-    X" label already read) with a per-part mute toggle. Muting a part
-    calls alphaTab's own `api.changeTrackMute()` against that participant's
-    already-loaded full mix (Playback View, above) — nothing is added to or
-    removed from what's loaded, only which already-loaded tracks are
-    audible. **Personal and client-local only**, same reasoning as the
-    Metronome toggle immediately above: every participant's mix is fully
-    independent, so a mute choice can only ever affect that one
-    participant, never anyone else's — there is no session-level mute.
-    Persisted like the theme/metronome choices, but keyed per song *and*
-    track (a mute choice for "Bass" on one song must not silently carry
-    over to a different song's differently-indexed "Bass"). A participant
-    **may** mute their own currently-selected/rendered part — no
-    restriction; some practice workflows want to hear only the backing
-    while reading their own tab. Hint text makes the personal scope plain
-    ("Only you don't hear muted parts — everyone else still does.").
+- **Tracks**: a dedicated 4th tab for personal per-part mute controls,
+  visible to **every** participant (not host-gated) — moved out of
+  Preferences into its own tab so each part gets its own row rather than
+  sharing one flex-wrapped row of buttons. One `<div class="control-row">`
+  per part, listing every part in `Session.availableParts` (instrument
+  name, same source the Participants list and Playback View's "Playing:
+  X" label already read) with its own mute toggle. Muting a part calls
+  alphaTab's own `api.changeTrackMute()` against that participant's
+  already-loaded full mix (Playback View, above) — nothing is added to or
+  removed from what's loaded, only which already-loaded tracks are
+  audible. **Personal and client-local only**, same reasoning as the
+  Metronome toggle in Preferences: every participant's mix is fully
+  independent, so a mute choice can only ever affect that one
+  participant, never anyone else's — there is no session-level mute.
+  Persisted like the theme/metronome choices, but keyed per song *and*
+  track (a mute choice for "Bass" on one song must not silently carry
+  over to a different song's differently-indexed "Bass"). A participant
+  **may** mute their own currently-selected/rendered part — no
+  restriction; some practice workflows want to hear only the backing
+  while reading their own tab. Hint text makes the personal scope plain
+  ("Only you don't hear muted parts — everyone else still does.").
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle

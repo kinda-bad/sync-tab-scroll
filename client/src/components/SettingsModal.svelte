@@ -13,10 +13,11 @@
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
-  // Three semantic tabs (ui.md): Participants (who's here + host transfer),
+  // Four semantic tabs (ui.md): Participants (who's here + host transfer),
   // Session (host-broadcast controls everyone is affected by), Preferences
-  // (personal, this-device-only settings).
-  let activeTab: 'participants' | 'session' | 'preferences' = 'participants';
+  // (personal, this-device-only settings), Tracks (personal per-part mute
+  // controls, moved out of Preferences into its own tab, one row per part).
+  let activeTab: 'participants' | 'session' | 'preferences' | 'tracks' = 'participants';
   let lobbyCursorInput = 0;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
 
@@ -127,6 +128,7 @@
     <Button variant={activeTab === 'participants' ? 'riot' : 'ghost'} label="Participants" onclick={() => (activeTab = 'participants')} />
     <Button variant={activeTab === 'session' ? 'riot' : 'ghost'} label="Session" onclick={() => (activeTab = 'session')} />
     <Button variant={activeTab === 'preferences' ? 'riot' : 'ghost'} label="Preferences" onclick={() => (activeTab = 'preferences')} />
+    <Button variant={activeTab === 'tracks' ? 'riot' : 'ghost'} label="Tracks" onclick={() => (activeTab = 'tracks')} />
   </div>
 
   {#if activeTab === 'participants'}
@@ -199,7 +201,7 @@
     {:else}
       <p class="hint">Connecting…</p>
     {/if}
-  {:else}
+  {:else if activeTab === 'preferences'}
     <span class="section-label">Theme</span>
     <div class="control-row">
       <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
@@ -215,18 +217,18 @@
       />
     </div>
     <p class="hint">Only you hear your metronome.</p>
-
+  {:else}
     {#if session && session.availableParts.length > 0}
-      <span class="section-label">Mute parts</span>
-      <div class="control-row">
-        {#each session.availableParts as part (part.trackIndex)}
+      <span class="section-label">Tracks</span>
+      {#each session.availableParts as part (part.trackIndex)}
+        <div class="control-row">
           <Button
             variant={trackMutes[part.trackIndex] ? 'riot' : 'ghost'}
             label={`${part.instrumentName}: ${trackMutes[part.trackIndex] ? 'Muted' : 'Unmuted'}`}
             onclick={() => toggleTrackMute(part.trackIndex)}
           />
-        {/each}
-      </div>
+        </div>
+      {/each}
       <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
     {/if}
   {/if}
@@ -240,7 +242,7 @@
   }
 
   /* Equal-width cells so the strip reads as one segmented control; the
-     section-label type size keeps all three labels on one line down to
+     section-label type size keeps all four labels on one line down to
      360px-wide screens. */
   .tab-strip > :global(.btn) {
     flex: 1;

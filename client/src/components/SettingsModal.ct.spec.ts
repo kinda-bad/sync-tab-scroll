@@ -23,18 +23,20 @@ function baseSession(overrides: Partial<Session> = {}): Session {
 }
 
 // ---------------------------------------------------------------------------
-// Tab structure (plan-worktree-ui-improvements T007/T008): three semantic
+// Tab structure (plan-1619-2026-07-17-39c6.md T016-T018): four semantic
 // tabs — Participants (list + host transfer), Session (host-broadcast
 // controls: lobby cursor, Spotlight, playback audio), Preferences (personal,
-// this-device settings: theme).
+// this-device settings: theme), and Tracks (personal per-part mute
+// controls, moved out of Preferences into its own tab — one row per part).
 // ---------------------------------------------------------------------------
 
-test('the modal has Participants, Session, and Preferences tabs, defaulting to Participants', async ({ mount }) => {
+test('the modal has Participants, Session, Preferences, and Tracks tabs, defaulting to Participants', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
   await expect(component.getByRole('button', { name: 'Participants' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Session' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Preferences' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Tracks' })).toBeVisible();
 
   // Participants content renders by default; Session content does not.
   await expect(component.getByText('Member')).toBeVisible();
@@ -189,12 +191,15 @@ test('Preferences tab: any participant sees the personal metronome toggle; click
   expect(sent).toEqual([]);
 });
 
+// --- Tracks tab: personal per-part mute controls (T016-T018, own 4th tab) --
+
 /**
- * T004 (tasks-part-mute-toggle-f0d4.md, ui.md Preferences tab "Mute parts"):
- * a per-part mute toggle for every entry in Session.availableParts, personal
- * and client-local (like the Metronome toggle above it) — never a WS send.
+ * T004 (tasks-part-mute-toggle-f0d4.md), moved to its own Tracks tab by
+ * T016-T018 (plan-1619-2026-07-17-39c6.md, ui.md Tracks tab): a per-part
+ * mute toggle for every entry in Session.availableParts, personal and
+ * client-local (like the Metronome toggle in Preferences) — never a WS send.
  */
-test('Preferences tab: a mute toggle renders per available part, reflecting stored mute state, and clicking flips its own visible state', async ({
+test('Tracks tab: a mute toggle renders per available part, reflecting stored mute state, and clicking flips its own visible state', async ({
   mount,
   page,
 }) => {
@@ -211,7 +216,7 @@ test('Preferences tab: a mute toggle renders per available part, reflecting stor
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Tracks' }).click();
 
   await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
   await expect(component.getByText('Bass: Muted')).toBeVisible();
@@ -224,18 +229,18 @@ test('Preferences tab: a mute toggle renders per available part, reflecting stor
 });
 
 /**
- * T005 (tasks-part-mute-toggle-f0d4.md): confirms T004's click handler
+ * T005 (tasks-part-mute-toggle-f0d4.md): confirms the click handler
  * actually calls persistTrackMute (not just local component state) —
  * loadStoredTrackMute must reflect the new value after a toggle click.
  */
-test('Preferences tab: clicking a mute toggle persists via track-mute-preference (round-trips through loadStoredTrackMute)', async ({ mount, page }) => {
+test('Tracks tab: clicking a mute toggle persists via track-mute-preference (round-trips through loadStoredTrackMute)', async ({ mount, page }) => {
   const session = baseSession({
     selectedSong: 'creep',
     availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Tracks' }).click();
   await component.getByText('Lead Guitar: Unmuted').click();
   await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
 
@@ -248,9 +253,9 @@ test('Preferences tab: clicking a mute toggle persists via track-mute-preference
  * regression guard — a participant CAN mute the part they currently have
  * selected/rendered (Participant.selectedPart matching the toggled part's
  * trackIndex). Some practice workflows want to hear only the backing while
- * reading their own tab; nothing in T001-T005's code path should block this.
+ * reading their own tab; nothing in this code path should block this.
  */
-test('Preferences tab: a participant can mute their own currently-selected part (no restriction)', async ({ mount, page }) => {
+test('Tracks tab: a participant can mute their own currently-selected part (no restriction)', async ({ mount, page }) => {
   const session = baseSession({
     selectedSong: 'creep',
     availableParts: [
@@ -264,7 +269,7 @@ test('Preferences tab: a participant can mute their own currently-selected part 
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Tracks' }).click();
 
   // member-1's own selectedPart is trackIndex 0 ("Lead Guitar") — muting it
   // must succeed exactly like muting any other part.
@@ -276,12 +281,45 @@ test('Preferences tab: a participant can mute their own currently-selected part 
   expect(stored).toBe('on');
 });
 
-test('Preferences tab: shows the personal-scope hint below Mute parts', async ({ mount }) => {
+test('Tracks tab: shows the personal-scope hint below the per-part mute rows', async ({ mount }) => {
+  const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Tracks' }).click();
+  await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toBeVisible();
+});
+
+/**
+ * T017/T018 (plan-1619-2026-07-17-39c6.md): each part renders in its own
+ * row, not a shared wrapped row of buttons — the feedback's explicit "1
+ * line per part" ask.
+ */
+test('Tracks tab: each part renders in its own row', async ({ mount, page }) => {
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [
+      { trackIndex: 0, instrumentName: 'Lead Guitar' },
+      { trackIndex: 1, instrumentName: 'Bass' },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Tracks' }).click();
+
+  const rowCount = await page.evaluate(() => document.querySelectorAll('.control-row').length);
+  // One .control-row per part -- not one shared row wrapping every part's
+  // button together.
+  expect(rowCount).toBe(2);
+});
+
+test('Preferences tab: no longer renders any mute-parts controls (moved to the Tracks tab)', async ({ mount }) => {
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
   await component.getByRole('button', { name: 'Preferences' }).click();
-  await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toBeVisible();
+
+  await expect(component.getByText(/Lead Guitar:/)).toHaveCount(0);
+  await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toHaveCount(0);
 });
 
 test('clicking Count-in sends count-in-set with the flipped value', async ({ mount, page }) => {
@@ -479,7 +517,7 @@ test.describe('phone width', () => {
   test('no tab of the modal needs horizontal scrolling at 390px', async ({ mount, page }) => {
     const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
 
-    for (const tab of ['Participants', 'Session', 'Preferences']) {
+    for (const tab of ['Participants', 'Session', 'Preferences', 'Tracks']) {
       await component.getByRole('button', { name: tab }).click();
       const scrollers = await page.evaluate(() => {
         const out: string[] = [];
