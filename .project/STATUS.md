@@ -1,5 +1,22 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-night (**New feedback filed:
+`feedback-bottom-bar-icons-3a15.md` (6 items, all `[artifacts: ui]`,
+1 bug + 5 UX) from live inspection of the bottom bar.** Bug: toggling
+lyrics off currently hides only the lyric words, not the background
+strip behind them. UX: move 'toggle lyrics' into the bottom bar; swap
+play/pause and stop text labels for tape-recorder-style icons; swap
+settings' text for a cog icon; swap leave-session's text for an
+exit-door icon; adopt an icon library (e.g. lucide) to support all of
+the above. Open feedback count is now 1 (all 32 other feedback files
+are `planned`). Everything else below is prior context — unchanged
+this run: diagrams all `diagram_status: current`, no defects since
+2026-07-12, feature register 4 backlogged / 16 implemented, no
+in-flight worktrees, ArDD update available (installed
+`bdd553e`, latest release `v0.10.1-beta.11`, beta channel) — run
+`/ardd-update` if desired. Recommended next step: `/ardd-plan` to pick
+up the new feedback file. Prior context below.)_
+
 _Updated: 2026-07-17-evening (**Two new open bugs filed
 (`feedback-lyrics-timing-tiro-c741.md`); diagram regen + local-dev-port
 fix done but UNCOMMITTED.** From live local-instance testing (user session,
