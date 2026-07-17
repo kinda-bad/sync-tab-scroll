@@ -46,6 +46,7 @@ describe('leaveSession', () => {
       wsClient: fakeWsClient,
       playbackProgress: 0.5,
       engineReady: true,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
 
@@ -64,6 +65,7 @@ describe('leaveSession', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
   });
@@ -77,6 +79,7 @@ describe('leaveSession', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
     expect(() => leaveSession()).not.toThrow();

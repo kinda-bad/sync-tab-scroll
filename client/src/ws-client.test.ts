@@ -133,6 +133,7 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
 
@@ -164,6 +165,7 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
 
@@ -183,6 +185,7 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
 

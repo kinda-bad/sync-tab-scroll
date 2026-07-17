@@ -22,6 +22,7 @@ beforeEach(() => {
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
+    lyricsOverlayVisible: true,
     connectionStatus: 'connected',
   });
 });
@@ -67,6 +68,7 @@ describe('startSessionPersistence', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+      lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
 

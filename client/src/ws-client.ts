@@ -112,6 +112,7 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
             playbackProgress: 0,
             engineReady: false,
             connectionStatus: 'connecting',
+            lyricsOverlayVisible: true,
           });
           return;
         }
@@ -156,6 +157,7 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
           playbackProgress: 0,
           engineReady: false,
           connectionStatus: 'connecting',
+          lyricsOverlayVisible: true,
         });
       } else if (message.type === 'error') {
         // Errors (part-not-found, not-host attempts) are toasts, not blocking

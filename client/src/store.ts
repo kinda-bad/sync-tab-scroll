@@ -32,6 +32,16 @@ export interface ClientState {
   engineReady: boolean;
   /** Real WS connection state (ws-client.ts) — drives `ConnectionBanner.svelte`. Defaults to `'connecting'`, since a `WsClient` doesn't exist until `connect()` runs, but the very first connection attempt is already underway by the time anything could read this. */
   connectionStatus: ConnectionStatus;
+  /**
+   * Mirrors playback-engine.ts's module-closure `showOverlay` state
+   * (tasks-bottom-bar-icons-47a6.md T004) — the in-tab lyrics overlay's
+   * own visibility is otherwise invisible outside that closure, so
+   * App.svelte had no reactive signal to collapse the strip's reserved
+   * `padding-bottom` once the overlay itself was toggled off, leaving a
+   * persistent background band behind. Defaults `true` to match the
+   * overlay's own initial `showOverlay: true`.
+   */
+  lyricsOverlayVisible: boolean;
 }
 
 function createClientStore() {
@@ -44,6 +54,7 @@ function createClientStore() {
     playbackProgress: 0,
     engineReady: false,
     connectionStatus: 'connecting',
+    lyricsOverlayVisible: true,
   });
   return { subscribe, set, update };
 }

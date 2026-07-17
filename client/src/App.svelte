@@ -153,7 +153,7 @@
   {/if}
 </div>
 
-<div class="engine-containers" class:visible={hasPart && !isLyricsPart}>
+<div class="engine-containers" class:visible={hasPart && !isLyricsPart} class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}>
   <div bind:this={tabContainer} class="tab-container"></div>
   <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
 </div>
@@ -265,14 +265,21 @@
   }
   .engine-containers.visible {
     /* Reserves scroll room so the tab's last rows can clear the fixed
-       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). Applied
-       whenever an instrument part is visible at all, not only while the
-       lyrics overlay is actively toggled on — toggleOverlay()'s show/hide
-       state isn't exposed outside playback-engine.ts's module closure, so
-       this is an accepted minor inefficiency (unused padding when lyrics
-       are toggled off) rather than new reactive plumbing to reclaim it
-       precisely. */
+       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). */
     padding-bottom: calc(var(--lyrics-strip-height) * 2);
+  }
+  /*
+   * T004 (tasks-bottom-bar-icons-47a6.md, feedback F001): toggling the
+   * overlay off used to leave this reserved padding-bottom applied even
+   * though `lyrics-overlay.ts`'s setVisible() had already set the overlay
+   * element itself to `display: none` — on `.tab-container`'s solid
+   * canvas-bg, that leftover reserved region read as a persisting
+   * background band. `clientStore.lyricsOverlayVisible` (mirrored from
+   * playback-engine.ts's module-closure `showOverlay` state by
+   * toggleOverlay()) now lets this collapse reactively instead.
+   */
+  .engine-containers.visible.lyrics-overlay-hidden {
+    padding-bottom: 0;
   }
   .engine-containers {
     /* Positioning context for .lyrics-overlay-container, so the overlay

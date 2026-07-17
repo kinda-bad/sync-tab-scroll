@@ -103,6 +103,10 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   installCountInCursorGuard(api);
 
   state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
+  // A fresh engine always starts with the overlay shown (matches
+  // `showOverlay: true` above) — resets any stale `false` left over from a
+  // previous song/session (T004).
+  clientStore.update((s) => (s.lyricsOverlayVisible ? s : { ...s, lyricsOverlayVisible: true }));
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
@@ -466,6 +470,11 @@ export function toggleOverlay(): void {
   if (!state) return;
   state.showOverlay = !state.showOverlay;
   state.overlay?.setVisible(state.showOverlay);
+  // Mirrors into clientStore (tasks-bottom-bar-icons-47a6.md T004) so
+  // App.svelte can reactively collapse the strip's reserved
+  // `padding-bottom` — this module-closure flag isn't otherwise visible
+  // outside playback-engine.ts.
+  clientStore.update((s) => ({ ...s, lyricsOverlayVisible: state!.showOverlay }));
 }
 
 /** Test-only accessor — not used by app code. Exposes the module's private engine state (specifically its alphaTab `api`) so component tests can assert on real drift-correction/Spotlight-mode/seek behavior without duplicating the wiring. */

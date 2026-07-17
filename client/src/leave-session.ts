@@ -21,5 +21,6 @@ export function leaveSession(): void {
     playbackProgress: 0,
     engineReady: false,
     connectionStatus: 'connecting',
+    lyricsOverlayVisible: true,
   });
 }

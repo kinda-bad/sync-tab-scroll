@@ -119,3 +119,35 @@ test('playback (lyrics part): Toggle lyrics is absent entirely', async ({ mount,
 
   await expect(page.getByRole('button', { name: 'Toggle lyrics' })).toHaveCount(0);
 });
+
+/**
+ * T004 (tasks-bottom-bar-icons-47a6.md, feedback-bottom-bar-icons-3a15
+ * F001): toggling lyrics off must hide the *entire* visible strip band, not
+ * just the syllable text. Root cause found live (via a repro CT spec):
+ * `.lyrics-overlay.ts`'s `setVisible()` already correctly sets
+ * `display: none` on the overlay element itself (verified separately in
+ * lyrics-overlay.ct.spec.ts), but `App.svelte`'s
+ * `.engine-containers.visible { padding-bottom: calc(var(--lyrics-strip-height) * 2) }`
+ * rule — reserved scroll room so the tab's last rows clear the strip
+ * (plan-lyrics-ticker-2026-07-03.md) — stayed applied regardless of the
+ * toggle, because `showOverlay` lived only in playback-engine.ts's module
+ * closure with no reactive signal into App.svelte. On `--canvas-bg`
+ * (`.tab-container`'s background), that reserved region reads as a
+ * persisting solid band even once the overlay itself is `display: none`.
+ */
+test('toggling lyrics off collapses the reserved strip padding, not just the overlay element', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'playback', instrumentSession('playback'));
+
+  await page.waitForSelector('.lyrics-overlay');
+  await page.waitForTimeout(300);
+
+  const before = await page.evaluate(() => getComputedStyle(document.querySelector('.engine-containers')!).paddingBottom);
+  expect(before).not.toBe('0px');
+
+  await page.getByRole('button', { name: 'Toggle lyrics' }).click();
+  await page.waitForTimeout(300);
+
+  const after = await page.evaluate(() => getComputedStyle(document.querySelector('.engine-containers')!).paddingBottom);
+  expect(after).toBe('0px');
+});
