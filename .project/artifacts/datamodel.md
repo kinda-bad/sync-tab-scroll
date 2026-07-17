@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-14
 diagram_type: erDiagram
 render_section: Datamodel
-diagram_status: stale
+diagram_status: current
 ---
 
 # Data Model
