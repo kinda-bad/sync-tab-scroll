@@ -1,5 +1,45 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-evening (**Two new open bugs filed
+(`feedback-lyrics-timing-tiro-c741.md`); diagram regen + local-dev-port
+fix done but UNCOMMITTED.** From live local-instance testing (user session,
+not an `/ardd-implement` run):
+- **F001** — the in-tab lyrics ticker on "Time Is Running Out" highlights a
+  syllable ~2 syllables (960 ticks) ahead of actual playback ("be"
+  highlighted when "You" should be, first "You will be the death of me").
+  Same symptom class the `lyrics-ticker` plan's T004 already fixed once
+  (switching to `beat.absolutePlaybackStart`) — either a residual case or a
+  file-specific quirk (an unlabeled, un-lyriced beat sits immediately
+  before the "You" beat). Static `.gp` parse ruled out repeats, ties,
+  grace notes, and mid-song tempo automation as causes; needs live-audio
+  comparison to actually pin the fix.
+- **F002** — the full lyric sheet (Lyrics-part view, `.lrc`-driven)
+  progressively drifts further ahead of audio as the song plays
+  ("about a line ahead" later on) — a *growing* drift, mechanically
+  distinct from F001. Root-cause hypothesis with code evidence:
+  `lrc-writer.ts`'s `buildLrc()` slices the GP-derived syllable stream into
+  per-line windows purely by `lyricLineBreaks[i]` counts, while a line's
+  *displayed text* can come from lrclib.net instead (confirmed for this
+  song: GP lyrics read "You will be the death of me", `.lrc` shows "And
+  you will be..."). If an early line's assigned count doesn't match the
+  true GP count, the slice desyncs and the error compounds each
+  subsequent line. Total counts balance overall (333=333), so it isn't a
+  gross miscount if real — a subtler `line-breaks.ts` boundary-placement
+  bug. Needs live-audio verification before `/ardd-plan` picks it up.
+
+**Separately, uncommitted in the working tree** (from the same local-testing
+session, not yet committed pending the user's active use of the instance):
+diagram regeneration for all three stale artifacts (`datamodel.md`,
+`infrastructure.md`, `ui.md` → `diagram_status: current`, `README.md`'s
+Datamodel/Infrastructure/UI sections rewritten) and a local-dev port fix
+(client Vite dev port `6000` → `6100` — Chrome refuses to navigate to 6000
+at all, it's on Chromium's hardcoded unsafe-ports list — touching
+`client/vite.config.ts`, `server/src/config.ts`'s `publicBaseUrl` default,
+`server/.env.example`, and the three tests that pinned the old port
+literal). Both changes are verified working (tests pass, local instance
+confirmed reachable at `:6100`) but not yet committed — commit once the
+user is done testing. Prior context below.)_
+
 _Updated: 2026-07-17-later (**tasks-lyrics-pre-singing-e09e T008 verified
 live, file COMPLETED.** The one remaining open task across both lyrics-
 ticker tasks files. Same live-browser methodology as the note below:
@@ -179,15 +219,11 @@ violations there either.
 
 ## Diagrams
 
-- `datamodel.md` — **stale ⚠️** (run `/ardd-diagram datamodel`) — gained
-  Phase 2's `CatalogueOwnership` entity and the mutable-catalog note.
-- `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`)
-  — gained the In-App Authoring section (upload trust surface, mutation
-  model, per-user visibility).
-- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the Playback
-  View full-mix clarification, the Preferences tab's "Mute parts"
-  subsection, and Phase 2's In-App Authoring modal/Ownership-invites
-  section.
+- `datamodel.md` — **current ✅** (regenerated 2026-07-17, uncommitted —
+  see the dated note above).
+- `infrastructure.md` — **current ✅** (regenerated 2026-07-17,
+  uncommitted).
+- `ui.md` — **current ✅** (regenerated 2026-07-17, uncommitted).
 
 ## Code-vs-Artifact Defects
 
@@ -197,15 +233,51 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-0 open feedback files.
+3 open feedback files. `feedback-lyrics-timing-tiro-c741.md` was
+re-investigated by a Fable research agent (2026-07-17) with live
+instrumented playback (real audio tapped via `AnalyserNode`) — findings
+rewritten in place, IDs kept stable:
+  - **F002 root cause confirmed**: this song's GP lyrics have no author
+    line breaks, so the pipeline's lrclib-fallback path built
+    `lyricLineBreaks` via word-count-proportional rounding
+    (`distributeByWordCount`) instead of real per-line syllable counts —
+    wrong from the first line boundary, compounding into the reported
+    "line ahead" drift. Fix direction: align the GP syllable stream to
+    lrclib line text (normalized word matching or timestamp proximity),
+    not proportional distribution.
+  - **F001 could not be reproduced as a code bug** — ticker/engine/audible
+    audio all agree to within ~25-40ms on the dev machine; the prior
+    T004 fix is a no-op for this file (not a residual of that bug).
+    Leading hypothesis: uncompensated `AudioContext.outputLatency` (a
+    Bluetooth device's 300-500ms latency ≈ the reported 2-syllable lead).
+    **Needs one fact from the user: what audio output device were you on,
+    and does the offset shrink/vanish on built-in speakers?**
+  - **F003 (new, found during this pass)**: the client's same-text
+    melisma-dedup heuristic in `lyrics-beat-walk.ts` (validated on Creep)
+    is unsound — on this song it wrongly collapses 23 genuinely distinct
+    repeated "yeah,"/"ooh," syllables, desyncing the client stream (310)
+    from `lyricLineBreaks` (333). Also, `gp-parser.ts` and the client walk
+    use divergent tick-extraction logic — should share one implementation.
+  - `/ardd-plan` was **not** run against this file (the agent had no
+    `AskUserQuestion` tool for the approval checkpoint) — still needs a
+    human/interactive pass to turn F002/F003 into tasks (F001 blocked on
+    the device question above).
+
+`feedback-mute-parts-own-tab-cf6d.md` (F001: move the "Mute parts" control
+out of the Preferences tab into its own dedicated Settings tab, one row
+per part) and `feedback-playback-start-stutter-2052.md` (F001: playback is
+often glitchy/stuttering right at start — needs investigation into
+alphaTab audio-engine warm-up/pre-buffering) are both untouched, ready for
+`/ardd-plan`.
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · 0 tasked · **16 implemented** — see
+**4 backlogged** · 0 planned · 0 tasked · **16 implemented** — see
 `.project/features/`. Backlogged: `catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
-`latency-compensated-position-extrapolation`.
+`latency-compensated-position-extrapolation`, `solo-mute-button-per-part`
+(new, filed 2026-07-17 — per-part "mute all but this" button).
 
 ## Plans & Tasks
 
@@ -276,9 +348,15 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
-   `/ardd-diagram infrastructure`, `/ardd-diagram ui` (all touched by
-   Phase 2 in-app authoring).
+0. **Commit the uncommitted work** (diagram regen + local-dev-port fix,
+   above) once the user is done testing locally — both are verified
+   working, just held back mid-session.
+1. **Live-audio-verify `feedback-lyrics-timing-tiro-c741.md`'s F001/F002**
+   (in-tab ticker offset + full-lyric-sheet drift on "Time Is Running
+   Out") — the static `.gp` parse this run did narrows the likely cause
+   but can't itself confirm the fix; needs an actual playback session with
+   audio to pin exact ticks/timestamps. Then `/ardd-plan` to turn it into
+   tasks. ~~Diagrams regenerated this run~~ — done, see above.
 2. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
    as phase-2-in-app-authoring's Phase 6.
 3. **Live check of Phase 2 in-app authoring** — no manual/live verification
