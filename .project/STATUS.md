@@ -1,5 +1,35 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17 (**tasks-lyrics-ticker-75dd T004 re-verified live, file
+COMPLETED.** This tasks file had sat at a non-standard `reopened` status
+since 2026-07-04, when the user's live-browser check failed T004 (ticker
+left-aligned, snapped to center on first syllable). That failure was
+diagnosed and actually fixed later, in a separate plan/tasks file
+(`tasks-lyrics-pre-singing-e09e.md`, `in-progress` 8/9 — its T004 rewrote
+`centerActiveSyllable()` to use `getBoundingClientRect()` + a live
+`getComputedStyle(track).transform` readback instead of the original
+`offsetLeft`/`clientWidth` formula). This run re-drove T004 live: started
+both dev servers (a second Vite instance on port 6002 was needed — Chrome
+refuses port 6000 as an unsafe port), created a real session via
+`claude-in-chrome`, unlocked the `Kinda Bad` catalogue (activation key
+pulled from 1Password on request), loaded Radiohead "Creep"
+(`lyricsTrackIndex: 0`), and viewed the "Lead Guitar" instrument part (a
+different track than the lyrics track, per the task's own wording).
+Instrumented `getBoundingClientRect`/`getComputedStyle` directly during
+live playback: no line wrapping (`white-space: nowrap` + `overflow:
+hidden` confirmed), the active syllable's bounding-box center tracked the
+overlay's center to sub-pixel precision across 8 consecutive syllables,
+and a `resize` dispatched mid-playback (1200px → 700px) re-centered
+correctly. T004 marked `[x]`, file frontmatter flipped `reopened →
+completed` by hand (the state-machine script doesn't recognize the
+free-text `reopened` status as a valid `from` state). Committed `006c5c5`,
+signed. **tasks-lyrics-pre-singing-e09e.md's own T008 (the equivalent
+live check for its pre-singing-placeholder behavior) remains open** — this
+run only re-verified the ticker-centering fix's *carry-over* correctness
+via the same code path, not lyrics-pre-singing's placeholder/UX additions
+specifically; a human (or a future pass with the Chrome tools) should
+still drive that file's T008 separately. Prior context below.)_
+
 _Updated: 2026-07-16 (**phase-2-in-app-authoring IMPLEMENTED — merged, pushed.**
 All 18 tasks in `tasks-phase-2-in-app-authoring-48d5.md` complete (`completed`),
 implemented in a delegated worktree (`phase-2-in-app-authoring-impl`,
@@ -93,7 +123,7 @@ confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
 > **ARDD update available:** installed `bdd553e` (beta channel), source at
-> `v0.10.1-beta.4` — run `/ardd-update`.
+> `v0.10.1-beta.11` — run `/ardd-update`.
 
 ## Artifact Status
 
@@ -162,6 +192,14 @@ retire by hand**), `host-mandated-bars-per-row-layout`,
 
 ## Plans & Tasks
 
+- **Lyrics ticker (centering fix)** — `tasks-lyrics-ticker-75dd.md`
+  (`completed`, 9/9). T004's 2026-07-04 live-verification failure is now
+  re-verified passing (see the dated note above) — the actual fix landed
+  separately in `tasks-lyrics-pre-singing-e09e.md` T004; this file just
+  confirms the carry-over behavior is correct.
+- **Lyrics pre-singing placeholder** — `tasks-lyrics-pre-singing-e09e.md`
+  (`in-progress`, 8/9). Only T008 (live-browser check of the pre-singing
+  "…" placeholder centering/transition) remains open.
 - **Per-participant part mute toggle** — `tasks-part-mute-toggle-f0d4.md`
   (`completed`, 6/6). **Merged to `main` at `919a4da`, pushed, deployed**
   (`index-Crk4cCoz.js`). New `track-mute-preference.ts` (mirrors
@@ -221,6 +259,9 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
+0. **Finish `tasks-lyrics-pre-singing-e09e.md`** — only T008 (live-browser
+   check of the pre-singing "…" placeholder) remains; run
+   `/ardd-implement` and pick that file.
 1. Regenerate the three stale diagrams: `/ardd-diagram datamodel`,
    `/ardd-diagram infrastructure`, `/ardd-diagram ui` (all touched by
    Phase 2 in-app authoring).
