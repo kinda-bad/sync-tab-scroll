@@ -1,5 +1,35 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-later-night (**plan-1619 approved and TASKED — 20
+tasks across 5 phases, `ready`.** Covers 3 of the (then-)4 open feedback
+files: `feedback-lyrics-timing-tiro-c741.md` (F002+F003 accepted with
+concrete fixes; F001 accepted as **research-only** per explicit user
+choice — user confirmed Bluetooth output when they noticed the ticker
+offset, untested against speakers), `feedback-mute-parts-own-tab-cf6d.md`
+(accepted), and `feedback-playback-start-stutter-2052.md` (accepted,
+research-then-fix-if-feasible). All three now `status: planned`,
+`plan: plan-1619-2026-07-17-39c6.md`. Key design decision: **unify the
+pipeline's and client's independently-drifted GP-lyric-syllable walks**
+into one shared `packages/shared/src/lyrics-walk.ts` (Phase 1) — pipeline
+still used the pre-T004 tick formula and had no dedup at all, while the
+client's same-text-only dedup turned out to be unsound (wrongly collapses
+genuinely-repeated distinct syllables like "yeah, yeah, yeah"; the correct
+discriminator is note-tie continuation, `beat.notes.some(n =>
+n.isTieDestination)`). F002's actual fix (Phase 2): lrclib's per-line
+timestamps are currently parsed then **discarded**
+(`lrclib.ts#parseLrclibLines`) in favor of word-count-proportional line-
+break guessing (`distributeByWordCount`, confirmed wrong: 41/44 lines
+mis-assigned on the reported song) — replacing it with actual
+timestamp-to-tick boundary placement, immune to the GP/lrclib textual
+mismatches that broke word-count matching. F001 (Phase 3) and the
+playback-stutter item (Phase 5) are explicitly scoped as
+research-task-first, implementation-gated-on-outcome — neither commits to
+a fix without confirmed root cause. `feedback-bottom-bar-icons-3a15.md`
+(filed in a concurrent session, see the dated note below) was **not**
+in scope for this plan — it stays `open` for a later `/ardd-plan` run.
+Committed `4ec0d3c` (plan+tasks+feedback) and `cecab99` (the concurrent
+session's STATUS.md entry, committed alongside). Prior context below.)_
+
 _Updated: 2026-07-17-night (**New feedback filed:
 `feedback-bottom-bar-icons-3a15.md` (6 items, all `[artifacts: ui]`,
 1 bug + 5 UX) from live inspection of the bottom bar.** Bug: toggling
@@ -250,42 +280,19 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-3 open feedback files. `feedback-lyrics-timing-tiro-c741.md` was
-re-investigated by a Fable research agent (2026-07-17) with live
-instrumented playback (real audio tapped via `AnalyserNode`) — findings
-rewritten in place, IDs kept stable:
-  - **F002 root cause confirmed**: this song's GP lyrics have no author
-    line breaks, so the pipeline's lrclib-fallback path built
-    `lyricLineBreaks` via word-count-proportional rounding
-    (`distributeByWordCount`) instead of real per-line syllable counts —
-    wrong from the first line boundary, compounding into the reported
-    "line ahead" drift. Fix direction: align the GP syllable stream to
-    lrclib line text (normalized word matching or timestamp proximity),
-    not proportional distribution.
-  - **F001 could not be reproduced as a code bug** — ticker/engine/audible
-    audio all agree to within ~25-40ms on the dev machine; the prior
-    T004 fix is a no-op for this file (not a residual of that bug).
-    Leading hypothesis: uncompensated `AudioContext.outputLatency` (a
-    Bluetooth device's 300-500ms latency ≈ the reported 2-syllable lead).
-    **Needs one fact from the user: what audio output device were you on,
-    and does the offset shrink/vanish on built-in speakers?**
-  - **F003 (new, found during this pass)**: the client's same-text
-    melisma-dedup heuristic in `lyrics-beat-walk.ts` (validated on Creep)
-    is unsound — on this song it wrongly collapses 23 genuinely distinct
-    repeated "yeah,"/"ooh," syllables, desyncing the client stream (310)
-    from `lyricLineBreaks` (333). Also, `gp-parser.ts` and the client walk
-    use divergent tick-extraction logic — should share one implementation.
-  - `/ardd-plan` was **not** run against this file (the agent had no
-    `AskUserQuestion` tool for the approval checkpoint) — still needs a
-    human/interactive pass to turn F002/F003 into tasks (F001 blocked on
-    the device question above).
+**1 open feedback file** — `feedback-bottom-bar-icons-3a15.md` (6 items,
+filed in a concurrent session from live inspection of the bottom bar: 1
+bug — toggling lyrics off hides only the words, not the background strip
+— plus 5 UX items around bottom-bar icons/labels and an icon library).
+Ready for a future `/ardd-plan` run.
 
-`feedback-mute-parts-own-tab-cf6d.md` (F001: move the "Mute parts" control
-out of the Preferences tab into its own dedicated Settings tab, one row
-per part) and `feedback-playback-start-stutter-2052.md` (F001: playback is
-often glitchy/stuttering right at start — needs investigation into
-alphaTab audio-engine warm-up/pre-buffering) are both untouched, ready for
-`/ardd-plan`.
+**3 planned files**, all bound to `plan-1619-2026-07-17-39c6.md`
+(`status: approved`, tasks `tasks-1619-1185.md` `ready`, 20 tasks/5
+phases): `feedback-lyrics-timing-tiro-c741.md` (F002 `.lrc`-drift fix +
+F003 shared-walk fix accepted; F001 ticker-offset accepted as
+research-only, pending confirmation of an audio-output-latency
+hypothesis), `feedback-mute-parts-own-tab-cf6d.md` (accepted), and
+`feedback-playback-start-stutter-2052.md` (accepted, research-then-fix).
 
 ## Feature Backlog
 
@@ -298,6 +305,15 @@ retire by hand**), `host-mandated-bars-per-row-layout`,
 
 ## Plans & Tasks
 
+- **Lyrics-timing fixes, mute-parts tab, playback-stutter investigation** —
+  `plan-1619-2026-07-17-39c6.md` (`approved`), `tasks-1619-1185.md`
+  (`ready`, 0/20). Phase 1: shared `packages/shared/src/lyrics-walk.ts`
+  syllable walk (tie-aware dedup) unifying pipeline + client. Phase 2:
+  timestamp-based `.lrc` line-boundary placement, replacing word-count
+  proportion. Phase 3: F001 ticker-offset research (gated implementation).
+  Phase 4: Mute-parts control → its own Settings tab, one row per part.
+  Phase 5: playback-start stutter research (gated implementation). Not
+  yet started.
 - **Lyrics ticker (centering fix)** — `tasks-lyrics-ticker-75dd.md`
   (`completed`, 9/9). T004's 2026-07-04 live-verification failure is now
   re-verified passing (see the dated note above) — the actual fix landed
@@ -365,25 +381,22 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-0. **Commit the uncommitted work** (diagram regen + local-dev-port fix,
-   above) once the user is done testing locally — both are verified
-   working, just held back mid-session.
-1. **Live-audio-verify `feedback-lyrics-timing-tiro-c741.md`'s F001/F002**
-   (in-tab ticker offset + full-lyric-sheet drift on "Time Is Running
-   Out") — the static `.gp` parse this run did narrows the likely cause
-   but can't itself confirm the fix; needs an actual playback session with
-   audio to pin exact ticks/timestamps. Then `/ardd-plan` to turn it into
-   tasks. ~~Diagrams regenerated this run~~ — done, see above.
-2. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
+1. **`/ardd-implement`** — pick up `tasks-1619-1185.md` (`ready`, 0/20):
+   the shared syllable-walk module, `.lrc` timestamp-based line-boundary
+   fix, mute-parts tab reorg, and the two research-then-fix investigations
+   (ticker latency, playback stutter).
+2. **`/ardd-plan` on `feedback-bottom-bar-icons-3a15.md`** (1 open feedback
+   file, 6 items) whenever convenient — untouched by plan-1619.
+3. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
    as phase-2-in-app-authoring's Phase 6.
-3. **Live check of Phase 2 in-app authoring** — no manual/live verification
+4. **Live check of Phase 2 in-app authoring** — no manual/live verification
    has happened yet, only the automated suite. Create a catalogue, add a
    song (real `.gp` file, real pipeline extraction), generate + redeem an
    invite link, confirm co-owner visibility, in a real running session.
-4. **`/ardd-defects`** — refresh against everything since 2026-07-12
+5. **`/ardd-defects`** — refresh against everything since 2026-07-12
    (part-mute-toggle, phase-2-in-app-authoring).
-5. **Live prod check of part-mute-toggle** — open the Preferences tab in a
+6. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
-6. **Optional:** confirm the Google `29801536638` client's redirect URI is
+7. **Optional:** confirm the Google `29801536638` client's redirect URI is
    registered; `/ardd-update` to move off the beta channel gap.
