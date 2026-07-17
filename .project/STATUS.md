@@ -1,5 +1,24 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-night-2 (**plan-bottom-bar-icons approved and TASKED —
+5 tasks across 4 phases, `ready`.** Consumes `feedback-bottom-bar-icons-3a15.md`
+(the file left `open` by the concurrent plan-1619 run noted below) in full:
+F001 (lyrics-off bug — background strip stays visible; likely cascade
+conflict between the duplicate unscoped `.lyrics-overlay` rule in
+`lyrics.css` and the real strip styling in `styles/motifs.css`, to be
+root-caused live per this project's established CSS-bug pattern), F002
+(move "Toggle lyrics" from `Playback.svelte` into the persistent bar),
+F003–F005 (bar's Settings/play-pause-stop/leave-session controls become
+icon-only, tape-recorder-styled for transport), F006 (adopt `lucide-svelte`
+as the icon library, extending `Button.svelte` with an `iconOnly` prop +
+`aria-label` for accessibility). All 5 tasks carry Playwright CT test
+requirements except T005 (docs-only `ui.md` sync, exempted per constitution
+Principle VII). Feedback file now `status: planned`, `plan:
+plan-bottom-bar-icons-2026-07-17-fdd5.md`. No feature-register slugs bound
+(feedback-only plan). Open feedback count is now 0 — every feedback file
+in `.project/feedback/` is `planned`. Not yet committed to git. Prior
+context below.)_
+
 _Updated: 2026-07-17-later-night (**plan-1619 approved and TASKED — 20
 tasks across 5 phases, `ready`.** Covers 3 of the (then-)4 open feedback
 files: `feedback-lyrics-timing-tiro-c741.md` (F002+F003 accepted with
