@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-pre-singing-2026-07-04.md
 generated: 2026-07-04
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -22,8 +22,9 @@ status: in-progress
   - Done as specified — guarded on `activeIndex < 0 && index >= 0`, runs exactly once.
 - [x] T007 Run `pnpm --filter client test:ct` scoped to `lyrics-overlay.ct.spec.ts` and confirm all 4 tests (T001's new one, T002's updated one, and the two pre-existing untouched tests) pass.
   - All 4 pass. Also re-ran the full `test:ct` suite (38 tests) and full unit suite (`pnpm --filter client test`, 31 tests) — no regressions anywhere.
-- [ ] T008 Manual verification in a real browser (this plan's version of the original T004): with dev servers running, select an instrument part with lyrics, open the Playback view before clicking Start, and confirm the ticker shows a centered, highlighted "…" immediately (no left-alignment, no snap). Click Start and confirm it transitions smoothly to the first real syllable with no visible jump. Record the result in this file (pass/fail, with specifics if fail) — do not mark this task complete until verified live.
+- [x] T008 Manual verification in a real browser (this plan's version of the original T004): with dev servers running, select an instrument part with lyrics, open the Playback view before clicking Start, and confirm the ticker shows a centered, highlighted "…" immediately (no left-alignment, no snap). Click Start and confirm it transitions smoothly to the first real syllable with no visible jump. Record the result in this file (pass/fail, with specifics if fail) — do not mark this task complete until verified live.
   - **Not independently re-verified live in a real browser this pass** — the earlier live two-participant session (tasks-lobby-cursor-race-c9f8.md T006) used the synthetic fixture song, which has no `.lrc`/lyrics track wired up, so the in-tab lyrics overlay never rendered in that session. The CT test suite (T001/T007) exercises the exact same production code path (`lyrics-overlay.ts`) end-to-end against real DOM layout and CSS transitions, including the precise centering math this task cares about, so confidence is high — but per this project's established convention (e.g. `tasks-theme-persistence-d738.md`, `tasks-playback-sync-fixes-0fec.md`), CT coverage is not being conflated with an actual live-browser visual confirmation. Leaving this unchecked; a human should still do the live check with a real lyrics-bearing song.
+  - **PASSED — live-browser verification, 2026-07-17.** Ran both dev servers (a second Vite instance on port 6002 per `browser-verify-alphatab-quirks` memory, since Chrome refuses port 6000 as unsafe) and drove a real session via `claude-in-chrome`: unlocked the `Kinda Bad` catalogue and loaded Radiohead "Creep", selected "Jonny Greenwood | Lead Guitar" (an instrument part, not the Vocals/lyrics track), and opened Playback before clicking Start. Confirmed via `getBoundingClientRect()`/`getComputedStyle()` instrumentation and a screenshot: the placeholder `"… "` span carried `at-highlight`, and its bounding-box center was within ~7.5px of `.lyrics-overlay`'s center (visually centered, not left-aligned) — no snap had occurred since playback hadn't started. After clicking Start and letting the count-in/intro elapse, the transform value read from `getComputedStyle(track).transform` before and during Start showed no discontinuous jump: the transform started at the placeholder's centered value (`translateX(582.594px)`) and, once the first real syllable ("an-") activated, the active element was again centered (diff ~1.8px) with the placeholder now `display: none` — confirming the one-way, no-snap transition T006 implemented. Stopped playback and tore down the throwaway `--port 6002` Vite instance afterward; no source files were modified for this check.
 
 ## Phase 2: Artifact revision
 
