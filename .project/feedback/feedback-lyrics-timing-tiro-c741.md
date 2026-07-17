@@ -1,7 +1,7 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-17
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-1619-2026-07-17-39c6.md
 ---
 
 # Feedback
@@ -18,7 +18,7 @@ the ticker's highlighted syllable.
 
 ## Bugs
 
-- [ ] F001 In-tab lyrics ticker (instrument-part Playback View) reported
+- [x] F001 In-tab lyrics ticker (instrument-part Playback View) reported
   ~2 syllables ahead of the audible playback ("be" highlighted when "You"
   is sung, on the first "You will be the death of me"). Live instrumented
   measurement could NOT reproduce any code-level offset on the dev
@@ -57,7 +57,7 @@ the ticker's highlighted syllable.
   held 1920-tick note at 46080 carries "be"), so this is a perceptual
   confusion risk, not a timing bug. [artifacts: ui]
 
-- [ ] F002 The full lyric sheet (Lyrics-part Playback View, driven by
+- [x] F002 The full lyric sheet (Lyrics-part Playback View, driven by
   `CatalogSong.lyricsLrc`) progressively drifts ahead of the audio — a
   cumulative/growing drift. **Root cause confirmed empirically** (no live
   audio needed; the .lrc timestamps are provably wrong on their own):
@@ -83,7 +83,7 @@ the ticker's highlighted syllable.
   either gives per-line counts grounded in the real stream instead of a
   ratio. [artifacts: pipeline, datamodel]
 
-- [ ] F003 (found during this investigation) Pipeline and client walk the
+- [x] F003 (found during this investigation) Pipeline and client walk the
   same GP data with divergent logic, and one side is wrong for this song:
   `packages/pipeline/src/gp-parser.ts#extractSyllables` (i) still uses the
   pre-T004 `bar.masterBar.start + beat.playbackStart` tick source (a no-op

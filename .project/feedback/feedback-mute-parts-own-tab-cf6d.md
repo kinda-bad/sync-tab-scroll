@@ -1,14 +1,14 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-17
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-1619-2026-07-17-39c6.md
 ---
 
 # Feedback
 
 ## UX
 
-- [ ] F001 The per-part "Mute parts" control currently lives inside the
+- [x] F001 The per-part "Mute parts" control currently lives inside the
   Settings modal's Preferences tab, alongside unrelated personal settings
   (Theme, Metronome) — `ui.md`'s Lobby View section documents it there. It
   should get its own dedicated Settings tab instead (a 4th tab alongside

@@ -1,14 +1,14 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-17
-plan: null        # set to the consuming plan's filename once planned
+plan: plan-1619-2026-07-17-39c6.md
 ---
 
 # Feedback
 
 ## Bugs
 
-- [ ] F001 Playback is often glitchy/stuttering right when it first starts
+- [x] F001 Playback is often glitchy/stuttering right when it first starts
   (audio and/or cursor). Suspected cause: alphaTab's audio engine (the
   Sonivox SoundFont, `settings.player.soundFont`/`enablePlayer`,
   infrastructure.md's Tab Rendering section) and/or the browser's Web
