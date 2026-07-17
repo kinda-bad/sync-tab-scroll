@@ -1,7 +1,7 @@
 ---
 plan: plan-bottom-bar-icons-2026-07-17-fdd5.md
 generated: 2026-07-17
-status: ready
+status: in-progress
 ---
 
 # Tasks
