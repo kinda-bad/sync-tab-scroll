@@ -92,10 +92,17 @@ importers:
         version: 2.1.9(@types/node@20.19.43)
 
   packages/shared:
+    dependencies:
+      '@coderline/alphatab':
+        specifier: ^1.8.0
+        version: 1.8.3
     devDependencies:
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@20.19.43)
 
   server:
     dependencies:

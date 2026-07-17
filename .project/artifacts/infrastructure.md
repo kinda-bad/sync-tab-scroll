@@ -1,10 +1,10 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -432,6 +432,35 @@ full color reasoning and values, and documents a feature request filed
 with alphaTab requesting finer-grained resource colors or semantic
 classes, which would let this be revisited if it lands upstream.
 
+### Audio Engine Warm-Up
+
+`client/src/readiness.ts#warmUpAudioOutput(api)` pre-warms the Web Audio
+`AudioContext` alphaTab's player owns as soon as `api.player` exists
+(`client/src/playback-engine.ts`, right after the api is created at
+part-selection time, and again on `api.playerReady` since `api.player`
+isn't guaranteed to exist synchronously right after construction) —
+well before the "Start" button's own `play()` call would otherwise
+trigger the first context creation/resume. It calls alphaTab's public,
+documented `ISynthOutput.activate()` (reachable via the equally public
+`AlphaTabApi.player.output`) — idempotent, safe to call more than once,
+and unlike F001/T014's investigation into output-latency compensation
+(which found no stable public route to the underlying `AudioContext`),
+this one is a fully supported part of alphaTab's public API surface, not
+an internal cast.
+
+This targets a classic Web Audio first-buffer glitch as the working
+hypothesis for the reported playback-start stutter: an `AudioContext`
+created/resumed for the first time exactly when playback is expected to
+start can glitch on its first few callbacks while the graph spins up.
+**Caveat**: this pass could not empirically confirm the pre-warm
+eliminates the reported stutter — that requires live audio A/B testing
+(warm vs. cold start) this environment can't perform (no interactive
+browser with real audio output). The mechanism itself is clean, safe, and
+already verified not to regress existing playback behavior (client's
+unit and CT playback suites, including tests exercising real synthesized
+playback, all pass with it in place) — but its actual effect on the
+reported stutter should be confirmed live in a future pass.
+
 ### Font & Worker Setup
 
 Three more implementation-verified deviations from what the render-settings
@@ -521,6 +550,20 @@ works regardless of which instrument track the viewing participant
 actually has rendered — the lyrics-bearing track need not be the one
 on screen, or even a selectable `CatalogPart` at all.
 
+The walk itself lives in exactly one place, `packages/shared/src/
+lyrics-walk.ts#walkSyllables(score, source)`, used identically by the
+client (`client/src/lyrics-beat-walk.ts`, live overlay) and the pipeline
+(`packages/pipeline/src/gp-parser.ts#extractSyllables`, offline `.lrc`
+generation) — the two previously drifted into independent
+reimplementations (constitution Principle II), which is what this section
+now documents corrected. Tick source is `beat.absolutePlaybackStart`
+(alphaTab's playback-timeline tick, correctly accounting for grace-note
+timing shifts — not a `bar.masterBar.start + beat.playbackStart`
+display-timeline reconstruction). Dedup is **tie-aware**: a beat collapses
+into the previous syllable only when its lyric text matches the previous
+syllable's text **and** at least one of its notes is a tie continuation
+(`beat.notes.some(n => n.isTieDestination)`) — never on text match alone.
+
 `Beat.lyrics` is **not** a flat per-beat syllable array — it's indexed by
 lyric line/channel number (GP allows multiple simultaneous lyric channels,
 e.g. main vocal vs. a harmony line spanning the whole song), so a beat's
@@ -547,6 +590,14 @@ per-beat lyrics in their XML, which sets alphaTab's internal
 The bug is only live for legacy binary GP3-5 files or synthetic inputs —
 worth a defensive note in the walk's implementation, not a primary design
 concern.
+
+A **separate, now-fixed** caveat found during the shared-module
+consolidation (2026-07-17): the client's original walk deduped
+consecutive same-text beats on text match alone, with no tie check. That
+wrongly collapsed genuinely-repeated distinct syllables (e.g. "yeah,
+yeah, yeah" sung as three separate notes on a modern GP7/8 file) down to
+one. The tie-aware dedup above is the fix — same-text-alone is no longer
+sufficient to collapse a beat.
 
 ## Continuous Integration
 

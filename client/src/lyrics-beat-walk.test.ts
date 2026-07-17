@@ -11,8 +11,13 @@ import { groupIntoLines, walkLyricBeats } from './lyrics-beat-walk';
 // below default `absolutePlaybackStart` to `masterBar.start + playbackStart`
 // (the common case, no grace notes) unless a divergent value is passed
 // explicitly, so most tests don't need to care about the distinction.
-function fakeBeat(lyrics: (string | undefined)[], playbackStart: number, absolutePlaybackStart = playbackStart) {
-  return { lyrics, playbackStart, absolutePlaybackStart };
+function fakeBeat(
+  lyrics: (string | undefined)[],
+  playbackStart: number,
+  absolutePlaybackStart = playbackStart,
+  notes: { isTieDestination: boolean }[] = [],
+) {
+  return { lyrics, playbackStart, absolutePlaybackStart, notes };
 }
 
 function fakeScore(tracks: { staves: { bars: { masterBar: { start: number }; voices: { beats: ReturnType<typeof fakeBeat>[] }[] }[] }[] }[]) {
@@ -42,7 +47,13 @@ describe('walkLyricBeats', () => {
     ]);
   });
 
-  it('collapses consecutive beats sharing identical lyric text into one syllable, keeping the first tick', () => {
+  // Tie-aware dedup (T004, shared walk consolidation): same-text alone is
+  // no longer sufficient to collapse a beat — the second/third+ beat must
+  // also be a tie continuation (`beat.notes.some(n => n.isTieDestination)`),
+  // matching a genuine sustained/melisma syllable. Same-text-only collapse
+  // was the old (buggy) behavior — it wrongly collapsed genuinely-repeated
+  // distinct syllables (see the next test).
+  it('collapses consecutive beats sharing identical lyric text AND a tie relationship into one syllable, keeping the first tick', () => {
     const score = fakeScore([
       {
         staves: [
@@ -50,7 +61,16 @@ describe('walkLyricBeats', () => {
             bars: [
               {
                 masterBar: { start: 0 },
-                voices: [{ beats: [fakeBeat(['o-'], 0), fakeBeat(['o-'], 5), fakeBeat(['o-'], 10), fakeBeat(['ver'], 15)] }],
+                voices: [
+                  {
+                    beats: [
+                      fakeBeat(['o-'], 0, 0, [{ isTieDestination: false }]),
+                      fakeBeat(['o-'], 5, 5, [{ isTieDestination: true }]),
+                      fakeBeat(['o-'], 10, 10, [{ isTieDestination: true }]),
+                      fakeBeat(['ver'], 15, 15, [{ isTieDestination: false }]),
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -61,6 +81,40 @@ describe('walkLyricBeats', () => {
     expect(walkLyricBeats(score, 0, 0)).toEqual([
       { text: 'o-', tickPosition: 0 },
       { text: 'ver', tickPosition: 15 },
+    ]);
+  });
+
+  // T004/F003: same-text beats with NO tie relationship must remain
+  // distinct syllables — e.g. "yeah, yeah, yeah" sung as three separate
+  // notes. The old same-text-only dedup wrongly collapsed this case.
+  it('keeps consecutive beats sharing identical lyric text as distinct syllables when there is no tie relationship', () => {
+    const score = fakeScore([
+      {
+        staves: [
+          {
+            bars: [
+              {
+                masterBar: { start: 0 },
+                voices: [
+                  {
+                    beats: [
+                      fakeBeat(['yeah'], 0, 0, [{ isTieDestination: false }]),
+                      fakeBeat(['yeah'], 5, 5, [{ isTieDestination: false }]),
+                      fakeBeat(['yeah'], 10, 10, [{ isTieDestination: false }]),
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(walkLyricBeats(score, 0, 0)).toEqual([
+      { text: 'yeah', tickPosition: 0 },
+      { text: 'yeah', tickPosition: 5 },
+      { text: 'yeah', tickPosition: 10 },
     ]);
   });
 

@@ -28,3 +28,32 @@ export function parseLrclibLines(syncedLyrics: string): string[] {
     .map((l) => l.replace(/^\[\d{2}:\d{2}\.\d{2,3}\]/, '').trim())
     .filter((l) => l.length > 0);
 }
+
+export interface TimedLrclibLine {
+  text: string;
+  /** The line's lrclib `[mm:ss.xx]` timestamp, converted to milliseconds. */
+  tickMs: number;
+}
+
+/**
+ * Like `parseLrclibLines`, but keeps each line's own `[mm:ss.xx]` timestamp
+ * (converted to milliseconds) instead of discarding it — feeds
+ * `alignLinesByTimestamp`'s tick-proximity line-boundary placement
+ * (pipeline.md), rather than word-count-proportional estimation.
+ */
+export function parseLrclibLinesWithTimestamps(syncedLyrics: string): TimedLrclibLine[] {
+  const lines: TimedLrclibLine[] = [];
+  for (const raw of syncedLyrics.split('\n')) {
+    const match = raw.match(/^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/);
+    if (!match) continue;
+    const text = match[4].trim();
+    if (text.length === 0) continue;
+    const minutes = Number(match[1]);
+    const seconds = Number(match[2]);
+    const fraction = match[3].padEnd(3, '0');
+    const millis = Number(fraction);
+    const tickMs = minutes * 60000 + seconds * 1000 + millis;
+    lines.push({ text, tickMs });
+  }
+  return lines;
+}

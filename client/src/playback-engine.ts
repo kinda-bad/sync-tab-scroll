@@ -16,7 +16,7 @@ interface GapIndicatorHandle {
   dotEls: HTMLElement[];
   drainEl: HTMLElement;
 }
-import { waitUntilReady } from './readiness';
+import { waitUntilReady, warmUpAudioOutput } from './readiness';
 import { correctDrift, applyPlaybackSettings, installCountInCursorGuard } from './playback-sync';
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
@@ -107,6 +107,17 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // `showOverlay: true` above) — resets any stale `false` left over from a
   // previous song/session (T004).
   clientStore.update((s) => (s.lyricsOverlayVisible ? s : { ...s, lyricsOverlayVisible: true }));
+
+  // T019/T020 (infrastructure.md Tab Rendering): pre-warm the AudioContext
+  // as soon as the api exists, well before the "Start" button's own
+  // play()-triggered activation — avoids the audio engine's first callback
+  // (context creation/resume) happening for the first time exactly when
+  // playback is expected to start. `api.player` isn't guaranteed to exist
+  // synchronously right after construction (alphaTab initializes it
+  // asynchronously), so also warm up on `playerReady` — `activate()` is
+  // idempotent, calling it twice is harmless.
+  warmUpAudioOutput(api);
+  api.playerReady.on(() => warmUpAudioOutput(api));
 
   waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
 
