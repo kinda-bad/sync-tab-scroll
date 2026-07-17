@@ -1,14 +1,7 @@
 <script lang="ts">
-  import { toggleOverlay as engineToggleOverlay } from '../playback-engine';
   import { clientStore } from '../store';
-  import Button from '../components/Button.svelte';
 
-  // Derived from clientStore (constitution Principle I) rather than reading
-  // playback-engine's module-singleton state reactively — a bare function
-  // call (getEngine()) inside a $: block isn't actually reactive in Svelte,
-  // since nothing tells it to re-run when the singleton changes. The
-  // singleton itself still exists for imperative one-off calls below
-  // (toggleOverlay), which don't need reactivity.
+  // Derived from clientStore (constitution Principle I).
   $: participant = $clientStore.session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: isLyricsPart = participant?.selectedPart === 'lyrics';
   // No indication anywhere in the Playback view of which part is actually
@@ -18,16 +11,11 @@
   $: currentPartLabel = isLyricsPart
     ? 'Lyrics'
     : $clientStore.session?.availableParts.find((p) => p.trackIndex === participant?.selectedPart)?.instrumentName;
-
-  function toggleOverlay() {
-    engineToggleOverlay();
-  }
 </script>
 
+<!-- "Toggle lyrics" moved into the persistent bar's controls() snippet
+     (App.svelte) — tasks-bottom-bar-icons-47a6.md T003, feedback F002. -->
 <section class="playback-controls">
-  {#if !isLyricsPart}
-    <Button variant="ghost" label="Toggle lyrics" onclick={toggleOverlay} />
-  {/if}
   {#if currentPartLabel}
     <span class="current-part" data-testid="current-part">Playing: {currentPartLabel}</span>
   {/if}

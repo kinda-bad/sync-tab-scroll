@@ -16,6 +16,16 @@
   import AuthoringModal from './components/AuthoringModal.svelte';
   import { accountStore, signIn, signOut, authoringModalOpen, loadAccount } from './account';
   import { leaveSession } from './leave-session';
+  import { toggleOverlay as engineToggleOverlay } from './playback-engine';
+  // Bar control icons (tasks-bottom-bar-icons-47a6.md T002/T003,
+  // feedback-bottom-bar-icons-3a15 F003-F006) — lucide-svelte, adopted per
+  // Principle V rather than hand-rolled inline SVGs.
+  import Cog from 'lucide-svelte/icons/cog';
+  import Play from 'lucide-svelte/icons/play';
+  import Pause from 'lucide-svelte/icons/pause';
+  import Square from 'lucide-svelte/icons/square';
+  import LogOut from 'lucide-svelte/icons/log-out';
+  import AudioLines from 'lucide-svelte/icons/audio-lines';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -124,6 +134,13 @@
     clientStore.update((s) => ({ ...s, playbackProgress: 0 }));
     $clientStore.wsClient?.send({ type: 'playback-control', action: 'stop' });
   }
+
+  // Moved from Playback.svelte into the bar (tasks-bottom-bar-icons-47a6.md
+  // T003, feedback F002) — same imperative call as before, just triggered
+  // from this scope now, which already has isLyricsPart derived above.
+  function toggleLyricsOverlay() {
+    engineToggleOverlay();
+  }
 </script>
 
 <div class="app-content" class:with-bar={showBar} class:collapsed={hasPart && isLyricsPart}>
@@ -155,18 +172,21 @@
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
       {/if}
+      {#if $clientStore.view === 'playback' && !isLyricsPart}
+        <Button variant="ghost" label="Toggle lyrics" iconOnly icon={AudioLines} onclick={toggleLyricsOverlay} />
+      {/if}
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
-        <Button variant="ghost" label="Settings" onclick={toggleSettingsModal} />
+        <Button variant="ghost" label="Settings" iconOnly icon={Cog} onclick={toggleSettingsModal} />
       {/if}
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
-          <Button variant="riot" label="Start" disabled={!session.selectedSong} onclick={startPlayback} />
+          <Button variant="riot" label="Start" iconOnly icon={Play} disabled={!session.selectedSong} onclick={startPlayback} />
         {:else}
-          <Button variant="ghost" label={isRunning ? 'Pause' : 'Resume'} onclick={togglePause} />
-          <Button variant="ghost" label="Stop" onclick={stopPlayback} />
+          <Button variant="ghost" label={isRunning ? 'Pause' : 'Resume'} iconOnly icon={isRunning ? Pause : Play} onclick={togglePause} />
+          <Button variant="ghost" label="Stop" iconOnly icon={Square} onclick={stopPlayback} />
         {/if}
       {/if}
-      <Button variant="ghost" label="Leave session" onclick={leaveSession} />
+      <Button variant="ghost" label="Leave session" iconOnly icon={LogOut} onclick={leaveSession} />
     {/snippet}
     {#snippet status()}
       {#if participant}
