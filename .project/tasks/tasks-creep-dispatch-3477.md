@@ -26,7 +26,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   (track 0 = lyrics track, `Content/score.gpif` in the zip). Write the
   findings (the rule, or "importer artifact, not a rule") as a note in
   this tasks file.
-- [ ] T002 Research (no production code): determine complete dispatch
+- [x] T002 Research (no production code): determine complete dispatch
   semantics empirically by fitting rule sets against Creep end-to-end.
   Scripted (scratchpad, not committed): load the Creep score + raw line
   (`readRawLyricsLine`), chunk via `at.model.Lyrics.finish(false)`, and
@@ -182,7 +182,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Implement
 
-- [ ] T003 [artifacts: constitution, infrastructure] Test-first
+- [x] T003 [artifacts: constitution, infrastructure] Test-first
   (Principle VII, red state): extend
   `packages/shared/src/lyrics-dispatch.test.ts` with (a) synthetic
   cases for each rule adopted in T002 — at minimum the
