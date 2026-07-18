@@ -96,7 +96,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   field is absent (legacy/personal catalog songs). The server/catalog
   loader must pass `lyricsRawLine` through to the client with the other
   lyrics pointer fields.
-- [ ] T009 [artifacts: infrastructure] Revise infrastructure.md's In-Tab
+- [x] T009 [artifacts: infrastructure] Revise infrastructure.md's In-Tab
   Lyrics Overlay section (feedback F001): the syllable stream now comes
   from the shared GP-semantics dispatcher fed by the published raw
   line, with `beat.lyrics`/`walkSyllables` as the legacy fallback;

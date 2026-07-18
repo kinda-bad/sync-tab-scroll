@@ -552,16 +552,36 @@ this artifact — this section only covers what happens to the published
 
 The overlay (ui.md) is derived live from the same parsed `.gp` file, not
 from a pipeline-published tick map (constitution Principle V; datamodel.md
-Normalization Rules): the client reads `CatalogSong.lyricsTrackIndex` to
-find the track whose beats carry lyrics, walks that track's beats in
-order, and regroups the resulting flat syllable stream into lines using
+Normalization Rules). **Since feedback F001
+(`feedback-lyrics-dispatch-root-cause-f0f6.md`), the syllable stream's
+primary source is the shared GP-semantics dispatcher** fed by the
+pipeline-published raw track-level lyric line: when
+`CatalogSong.lyricsRawLine` is present, the client chunks it with
+alphaTab's own chunker (`at.model.Lyrics` — `text` + `finish(false)`,
+never reimplemented), projects the lyrics track's beats to `{
+tickPosition, isRest, isTieDestination }`, and places the chunks with
+`packages/shared/src/lyrics-dispatch.ts#dispatchLyrics`
+(`client/src/lyrics-beat-walk.ts#walkLyricBeatsFromRawLine`; the pipeline
+uses the identical path for `.lrc` — `extractSyllablesFromRawLine`). The
+reason is an alphaTab divergence from Guitar Pro's own dispatch: alphaTab's
+`applyLyrics` does not skip tie-destination beats and burns empty chunks
+only on playable beats, where GP skips ties for non-empty chunks and
+burns an empty chunk on the very next beat of any kind — so trusting
+`beat.lyrics` placed syllables measurably wrong (TIRO ground truths:
+"be" at bar 14 beat 1, "this?" at bar 69 beat 1, bar 102 beat 1 holding
+"ground" from bar 101). When `lyricsRawLine` is absent (legacy/personal
+catalog songs), the client falls back to the legacy per-beat walk over
+`beat.lyrics`: it reads `CatalogSong.lyricsTrackIndex` to
+find the track whose beats carry lyrics and walks that track's beats in
+order (`walkSyllables`, below). Either way the flat syllable stream is
+regrouped into lines using
 `CatalogSong.lyricLineBreaks` (syllable-count-per-line) so line boundaries
 match `.lrc`. Because tick position is score-global, not per-track, this
 works regardless of which instrument track the viewing participant
 actually has rendered — the lyrics-bearing track need not be the one
 on screen, or even a selectable `CatalogPart` at all.
 
-The walk itself lives in exactly one place, `packages/shared/src/
+The legacy fallback walk itself lives in exactly one place, `packages/shared/src/
 lyrics-walk.ts#walkSyllables(score, source)`, used identically by the
 client (`client/src/lyrics-beat-walk.ts`, live overlay) and the pipeline
 (`packages/pipeline/src/gp-parser.ts#extractSyllables`, offline `.lrc`
