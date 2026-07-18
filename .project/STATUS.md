@@ -1,5 +1,24 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-17-night-5 (**ArDD updated to v0.10.1 (beta channel),
+commit `a802dbc`.** `/ardd-update --beta` switched the tracked source
+from the recorded dev-mode checkout to the tooling-owned checkout
+(`~/.ardd/source`), resolved to tagged release `v0.10.1` (a stable
+release that supersedes the earlier `v0.10.1-beta.11` prerelease this
+project had been behind). Reinstalled cleanly — all 8 migrations already
+applied, no pending ones. Workflow fields (`next_step_prompt: true`,
+`delegation: eager`, `merge_policy: auto`) were already set, nothing to
+backfill. Suggestion surfaced (not yet applied): `git config
+merge.ours.driver true` in this clone for automatic report-file conflict
+resolution on future merges. `/ardd-status`'s update-availability check
+now reports `up-to-date`. `.project/ardd-version.md` modified,
+uncommitted. Everything else unchanged from the prior entry: 1 open
+feedback file (`feedback-audio-output-latency-t014-dfa8.md`, filed by the
+concurrent tasks-1619 run — needs live device access to pursue), no
+in-flight worktrees, `infrastructure.md`/`ui.md` diagrams still stale
+(datamodel.md current), no defects since 2026-07-12. Prior context
+below.)_
+
 _Updated: 2026-07-17-night-4 (**tasks-1619-1185 COMPLETED, merged.** All 20
 tasks across `plan-1619-2026-07-17-39c6.md`'s 5 phases. Delegation needed
 two attempts — the first worktree came up branched from a stale base with
