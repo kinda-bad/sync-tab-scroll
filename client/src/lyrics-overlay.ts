@@ -139,6 +139,23 @@ export function createLyricsOverlay(
   // initial paint below highlights the placeholder directly (its own
   // `at-highlight` toggle, independent of `activeIndex`), so it never leaks
   // into real syllable-highlight state.
+  // Investigated for the "TIRO" measure 8->9 tie-boundary early-highlight
+  // report (plan-99e6-2026-07-18-6d2b.md T001/T002,
+  // feedback-lyrics-ticker-tiro-measure8-9310.md F001): this comparison
+  // (last `flat[i]` with `tickPosition <= tickPosition`) is structurally
+  // correct — no off-by-one, no stale `activeIndex` caching, no lookahead.
+  // Confirmed two ways: (1) a synthetic tie-across-barline fixture in
+  // `packages/shared/src/lyrics-walk.test.ts` already produces the
+  // expected, non-early `tickPosition` for the post-tie syllable; (2)
+  // replaying this exact scan against `walkSyllables`' real output for the
+  // catalog's actual "TIRO" (Muse, Time Is Running Out) file across the
+  // measure 8/9 tick range (26880-31200) returns the correct syllable at
+  // every tick — the highlight only ever flips to "You're" at its own
+  // tick 29760, never earlier. Neither this function nor `walkSyllables`
+  // reproduces the reported early jump against current code/data, so the
+  // root cause (if still present) is not a bug in this comparison or in
+  // the shared walk's tie/dedup logic — see T003's task note for where
+  // the investigation was left off.
   function updateActiveSyllable(tickPosition: number): void {
     let index = -1;
     for (let i = 0; i < flat.length; i++) {

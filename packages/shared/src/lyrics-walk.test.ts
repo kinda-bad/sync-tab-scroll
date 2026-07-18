@@ -48,4 +48,15 @@ describe('walkSyllables', () => {
       { text: 'yeah', tickPosition: 10 },
     ]);
   });
+
+  it('gives the next syllable its own tickPosition when a tie-destination breath beat with no lyric text precedes it across a barline (TIRO measure 8/9 repro)', () => {
+    const score = fakeScore([
+      // Measure 8's last note: tie destination, breath, no lyric text of its own.
+      fakeBeat([undefined], 100, [{ isTieDestination: true }]),
+      // Measure 9's first note: carries the next lyric, not a tie destination.
+      fakeBeat(["You're"], 120, [{ isTieDestination: false }]),
+    ]);
+
+    expect(walkSyllables(score, { trackIndex: 0, lineIndex: 0 })).toEqual([{ text: "You're", tickPosition: 120 }]);
+  });
 });
