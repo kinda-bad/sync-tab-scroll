@@ -1,5 +1,46 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night (**All 3 fanned-out worktrees merged; new feature
+backlogged; one test regression found, not yet fixed.**
+
+**Merges**: `settings-personal-prefs-bundle` (`91f7199`, 3 features →
+implemented), `hover-long-press-tooltip-for-i` (`2e6729e`, → implemented),
+`latency-compensated-position-extrapolation` (`760b60b`, → implemented,
+auto-merged a shared edit to `lyrics-gap-timing.ts` cleanly). All three
+worktrees reaped. Post-merge: `tsc --noEmit` clean, all 104 vitest unit
+tests pass. Feature backlog now 3 backlogged / 21 implemented (was
+2 backlogged / 5 tasked / 16 implemented).
+
+**Known regression, NOT yet fixed**: the full Playwright suite (167
+passed / 6 failed) surfaced `SettingsModal.ct.spec.ts`'s phone-width test
+("no tab of the modal needs horizontal scrolling at 390px") failing on
+the **Participants** tab specifically — `div.modal-body` overflows
+horizontally by ~129px, violating `ui.md`'s Small Screens invariant ("no
+horizontal scrolling, anywhere"). Root cause not yet found: tabs render
+via `{#if}/{:else if}` (properly unmounted, not `display:none`-hidden),
+so it isn't an inactive-tab-still-in-flow leak; the overflow appears
+already on the *first* (default) tab, before any Preferences/Tracks-only
+new markup is even shown, which rules out the obvious suspects (Solo
+button, font-size/measure-markers controls). Needs a real debugging
+session (Playwright trace/live browser), not a guess-and-patch. The other
+5 e2e failures (`host-controls.spec.ts`, `single-participant.spec.ts`,
+`small-screen.spec.ts` ×3) were not investigated this session — unclear
+whether they're related, pre-existing/flaky, or need the e2e webServer
+running independently; check those alongside the CT regression.
+
+**New feature backlogged**: `count-in-metronome-beat-widget` — a single
+shared visual widget in the persistent Bar for count-in (counts down 4→1,
+every participant, gated on `Session.countInEnabled`) and metronome
+(counts up 1→4 + measure number, personal, gated on each participant's
+own Metronome preference). Fill color alternates primary→secondary /
+secondary→primary each beat. Timing driven by real beat boundaries via
+`api.tickPosition` + `tempo-lookup.ts`'s `localTempoAtTick` (this
+session's newly-extracted module) — not a naive timer. Colors/exact
+shape left to implementation judgment. Designed via conversation before
+backlogging, not backlogged from a one-line ask.
+
+Prior context below.)_
+
 _Updated: 2026-07-18-later-5 (**Fanned out the slate's Parallel-set bucket —
 2 of 3 planned+tasked, 1 skipped by user choice.**
 `latency-compensated-position-extrapolation`: plan-latency-compensated-
