@@ -41,7 +41,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `{ text: chunk, tickPosition: beat.tickPosition }`. Pure function, no
   alphaTab import (platform-free like `walkSyllables`). Export from
   `packages/shared/src/index.ts`. Make T001's tests pass.
-- [ ] T003 Delete the five session probe scripts
+- [x] T003 Delete the five session probe scripts
   `packages/pipeline/src/tiro-probe.ts` through `tiro-probe7.ts`
   (whichever of tiro-probe.mjs/probe2..7 exist) once T001/T002 are green
   — their ground-truth checks now live in the test suite (constitution
