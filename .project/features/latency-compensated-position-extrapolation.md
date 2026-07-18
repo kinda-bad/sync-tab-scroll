@@ -1,7 +1,9 @@
 ---
 slug: latency-compensated-position-extrapolation
-status: backlogged
+status: tasked
 logged: 2026-07-15
+plan: plan-latency-compensated-position-extrapolation-2026-07-18-81b7.md
+tasks: tasks-latency-compensated-position-extrapolation-415b.md
 ---
 
 Compensate a participant's rendered playback position for host-to-server-to-client propagation latency by projecting tickPosition forward from serverTimestamp, instead of only periodically correcting drift against the raw last-reported value.

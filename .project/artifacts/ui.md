@@ -228,15 +228,21 @@ a dropped socket.
 
 **Bar controls are icon-based** (`lucide-svelte`, adopted per constitution
 Principle V rather than hand-rolled inline SVGs), reclaiming horizontal
-space in the persistent bar: the settings control renders as a cog icon,
-"Leave session" as an exit-door icon (`LogOut`), and the host's
-transport controls (Playback View, below) as tape-recorder-style symbols
-(play/pause/square). Every icon-only control still carries its full text
-as an accessible name — `Button.svelte`'s `iconOnly` mode sets
-`aria-label`/`title` from the same `label` a text button would show, so
-screen readers and hover tooltips read the original wording even though
-no text is visibly rendered. "Song & part" stays a text control (not
-raised as an icon candidate).
+space in the persistent bar: "Song & part" renders as a `ListMusic` icon,
+the settings control as a cog icon, the in-tab lyrics toggle as a
+`MicVocal` icon (Playback View, below — also reachable from the Lobby,
+not just Playback, once a part is picked), "Leave session" as an
+exit-door icon (`LogOut`), and the host's transport controls (Playback
+View, below) as tape-recorder-style symbols (play/pause/square). Every
+icon-only control still carries its full text as an accessible name —
+`Button.svelte`'s `iconOnly` mode sets `aria-label`/`title` from the same
+`label` a text button would show, so screen readers read the original
+wording even though no text is visibly rendered. The native `title`
+attribute alone is an unreliable *visible* hover cue (inconsistent timing
+across browsers, and does nothing on touch screens); a dedicated `Tooltip`
+component supplements it — shown on mouse hover (desktop) and on
+long-press (touch), dismissing on pointer-leave or release/tap-elsewhere —
+applied uniformly to every icon-only bar control listed above.
 
 A second, separate modal — opened via a settings-cog control in the
 persistent nav bar — holds everything that used to render inline in the

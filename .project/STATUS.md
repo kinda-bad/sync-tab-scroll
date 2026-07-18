@@ -1,5 +1,36 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-later-5 (**Fanned out the slate's Parallel-set bucket —
+2 of 3 planned+tasked, 1 skipped by user choice.**
+`latency-compensated-position-extrapolation`: plan-latency-compensated-
+position-extrapolation-2026-07-18-81b7.md, 3 tasks (extract a shared
+`localTempoAtTick()` from `lyrics-gap-timing.ts` into new
+`tempo-lookup.ts`, then wire it into `playback-sync.ts`'s `correctDrift()`
+to project `PlaybackState.tickPosition` forward by elapsed time since
+`serverTimestamp` before the drift comparison — confirmed distinct from
+this session's separately-filed TIRO lyrics-ticker-desync feedback, a
+different mechanism entirely). `hover-long-press-tooltip-for-i`:
+plan-hover-long-press-tooltip-for-i-2026-07-18-c2e5.md, 2 tasks (new
+`Tooltip.svelte` + pointer-event wiring in `Button.svelte`'s `iconOnly`
+mode — hover via `pointerenter`/`pointerleave`, long-press via a
+~500ms `pointerdown` timer). `host-mandated-bars-per-row-layout` was
+**skipped** at the user's choice — its register entry poses a real
+unresolved host-vs-participant-vs-both design fork; still `backlogged`,
+untouched. Also caught and fixed **two stale `ui.md` claims** encountered
+while updating it for the tooltip feature: "Song & part stays a text
+control" (it became an icon-only `ListMusic` button earlier this session
+but that code fix was never synced to `ui.md`) and the missing mention of
+the lyrics-toggle's Lobby-reachable `MicVocal` icon. Both `infrastructure.md`
+and `ui.md` re-stamped `last_updated: 2026-07-18`, `diagram_status: stale`.
+Feature backlog is now 2 backlogged / 5 tasked / 16 implemented (was 4/3/16
+before this run's host-mandated skip and two new tasked features — net:
++1 tasked, -2 backlogged from the skip decision leaving that one alone).
+Plan/tasks/artifact changes from this run not yet committed. **In flight:**
+the earlier-delegated `tasks-settings-personal-prefs-bundle-ed57.md`
+worktree now reports 5/5 checkboxes done, still `in-progress` — likely
+finishing its completion/test-suite verification steps; not yet reported
+back to this coordinator. Prior context below.)_
+
 _Updated: 2026-07-18-later-4 (**plan-settings-personal-prefs-bundle approved
 and TASKED — 5 tasks across 3 phases, `ready`.** Bundles the three features
 `/ardd-plan --slate` grouped together (all edit `SettingsModal.svelte`):

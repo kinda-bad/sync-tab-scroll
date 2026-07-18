@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-17
+last_updated: 2026-07-18
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: stale
@@ -66,13 +66,24 @@ participant's headless alphaTab instance (ui.md) both consume
 `PlaybackState` the same way and both expose the same `tickPosition`/
 `timePosition` properties to correct against.
 
-`serverTimestamp`-based extrapolation on the receiving end — compensating
-for host→server→client propagation latency by projecting `tickPosition`
-forward from `serverTimestamp` rather than using it as-is — is a deferred
-future refinement, not part of the current mechanism. Accepted as a
-manageable, minor imprecision for now, consistent with the existing
-50-tick drift tolerance and this app's small-scale self-hosted trust
-model.
+**Latency-compensated extrapolation.** Before the drift comparison above,
+a receiving (non-host) client projects `playbackState.tickPosition`
+forward by the elapsed wall-clock time since it was authoritative
+(`Date.now() - playbackState.serverTimestamp`), compensating for
+host→server→client propagation latency rather than comparing against the
+raw last-reported value as-is. The elapsed ms is converted to ticks using
+the **local tempo at that tick position**, derived from the participant's
+own already-loaded score — the same tempo-lookup technique
+`lyrics-gap-timing.ts` already uses (walking `score.masterBars`'
+`tempoAutomations` from the nearest preceding bar), deliberately not
+`PlaybackState.bpm`, which stays display-only and isn't used for
+tick-to-time math (datamodel.md). The host is unaffected — it never
+drift-corrects against `playbackState` at all (the existing `isHost`
+guard above). This replaces the raw-value comparison as a refinement of
+the same periodic-correction mechanism, not a new one: the 50-tick drift
+threshold and "correct only if drift exceeds it" behavior are unchanged,
+just measured against a latency-compensated projection instead of the
+stale broadcast value directly.
 
 Realtime session state is server-memory-only: a grace-period timer destroys
 empty sessions, and a server restart drops active ones. **No durable backing
