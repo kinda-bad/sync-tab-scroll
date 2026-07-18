@@ -195,7 +195,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   verdict, whatever end-of-stream expectation is correct). Confirm the
   new tests fail against the current dispatcher (use `it.fails`
   markers on the red commit per the pre-commit-hook convention).
-- [ ] T004 [artifacts: infrastructure] Amend
+- [x] T004 [artifacts: infrastructure] Amend
   `packages/shared/src/lyrics-dispatch.ts` (and, only if T002's rule
   needs beat data beyond `{tickPosition, isRest, isTieDestination}`,
   extend the `DispatchBeat` projection and its two producers —
@@ -207,7 +207,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Regenerate, verify, close out
 
-- [ ] T005 Re-run the pipeline for the four GP7/8 lyric songs
+- [x] T005 Re-run the pipeline for the four GP7/8 lyric songs
   (time-is-running-out, last-nite, teenagers, creep) so `meta.json` +
   `.lrc` regenerate from the amended dispatcher. Spot-check Creep's
   `.lrc`: a line containing "You float" starts at the time of tick
