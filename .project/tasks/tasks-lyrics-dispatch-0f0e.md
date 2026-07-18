@@ -102,7 +102,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   line, with `beat.lyrics`/`walkSyllables` as the legacy fallback;
   note the alphaTab `applyLyrics` divergence as the reason. Stamp
   `last_updated`; no code in this task.
-- [ ] T010 Live verification in the running app (client + server, real
+- [x] T010 Live verification in the running app (client + server, real
   browser): load TIRO, click the first note of bar 14 (expect "be"),
   bar 69 (expect "this?"), and bar 102 (expect held "-ground", with
   "you" only later in the bar). Also sanity-play a verse to confirm the
@@ -140,3 +140,16 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   only on playable beats), with the TIRO-derived minimal repro. If
   maintainer appetite exists, note our shared dispatcher as a candidate
   patch. Record the issue URL in the task note. No repo code.
+
+## Task notes
+
+- T010 (live verification, 2026-07-18): ran server (port 6081, temp public
+  catalog with the regenerated TIRO song dir — TIRO's real catalogue is
+  key-locked) + vite client (6174) in a real Chrome session. Selected TIRO,
+  part "M. Bellamy (Vocals)". Overlay ticker built 333 syllables from the
+  published `lyricsRawLine` via the GP-semantics dispatcher. Seeking the
+  live engine to bar 14 beat 1 (tick 49920) highlighted "be", bar 69 beat 1
+  (tick 261120) highlighted "this?", bar 102 beat 1 (tick 387840)
+  highlighted held "ground" (dispatched in bar 101 — no syllable of its own
+  at 102/1). Sanity-played verse 1: ticker advanced through
+  "drown-ing … I wan-na break this spe-ll" in time with the singing.
