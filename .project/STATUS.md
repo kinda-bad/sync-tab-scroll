@@ -1,5 +1,35 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night-7 (**Lyrics-dispatch plan approved + tasked.**
+`plan-lyrics-dispatch-2026-07-18-8090.md` (`approved`) consumes
+`feedback-lyrics-dispatch-root-cause-f0f6.md` (now `planned`, F001+F002
+both incorporated) and **supersedes `plan-99e6-2026-07-18-6d2b.md`** (the
+tie-boundary plan blocked at T003 — its mystery is resolved upstream).
+Tasks file `tasks-lyrics-dispatch-0f0e.md` is `ready`: 13 tasks across 5
+phases — shared GP-semantics dispatcher (test-first from the 3 TIRO ground
+truths), pipeline `lyricsRawLine` publish + corrected `.lrc` + catalog
+regen, client overlay switch-over with legacy fallback, `correctDrift`
+pause-fix reshape (F002), and close-out (abandon tasks-99e6, optional
+upstream alphaTab issue). Next: `/ardd-implement`._
+
+_Updated: 2026-07-18-night-6 (**Lyrics ticker desync ROOT-CAUSED — new open
+feedback `feedback-lyrics-dispatch-root-cause-f0f6.md` awaiting
+`/ardd-plan`.** Live static repro (no playback, host, local: clicking a
+note highlights the wrong lyric — 3 user ground truths on "TIRO" at bars
+14/69/102) traced to alphaTab's `Track.applyLyrics` dispatch diverging
+from Guitar Pro semantics for track-level lyric lines: it doesn't skip
+tie-destination beats for real syllables, and it burns empty chunks
+(multi-space beat-skips) only on playable beats instead of any beat. A
+prototype chunk-driven dispatcher reproduces all three ground truths
+exactly (probe scripts `packages/pipeline/src/tiro-probe*.ts`, to be
+removed on implementation). Affects **all** lyric-bearing catalog songs
+(4 GP7/8 + the GP5 Supermassive; Lazy Eye lyric-less). This resolves the
+`tasks-99e6-e76f.md` T003 blocker's mystery — the bug is upstream of both
+of that plan's candidate sites, at score-load time. F002 in the same
+feedback file records a separate latent `correctDrift` paused-extrapolation
+bug with an uncommitted working-tree fix (tests pass, but the guard shape
+needs a seek-while-paused decision before commit)._
+
 _Updated: 2026-07-18-night-5 (**`tasks-99e6-e76f.md` (lyrics-ticker
 tie-boundary fix) run and merged, 2/5 — blocked on T003.** T001/T002
 ruled out both of the plan's declared candidate root causes (the shared
@@ -655,7 +685,10 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**0 open feedback files.** `feedback-audio-output-latency-t014-dfa8.md`
+**0 open feedback files.** `feedback-lyrics-dispatch-root-cause-f0f6.md`
+flipped to `planned` (both items incorporated), bound to
+`plan-lyrics-dispatch-2026-07-18-8090.md`. Previously:
+`feedback-audio-output-latency-t014-dfa8.md`
 and `feedback-lyrics-ticker-tiro-measure8-9310.md` were the last two open
 files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 (see Plans & Tasks). All other feedback files are `planned` or `split`
@@ -675,8 +708,21 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Lyrics dispatch root fix + correctDrift pause fix** —
+  `plan-lyrics-dispatch-2026-07-18-8090.md` (`approved`),
+  `tasks-lyrics-dispatch-0f0e.md` (**`ready`**, 13 tasks / 5 phases).
+  Shared GP-semantics dispatcher (`packages/shared/src/lyrics-dispatch.ts`,
+  test-first from 3 verified TIRO ground truths), pipeline `lyricsRawLine`
+  publish + corrected `.lrc` + regen for the 4 GP7/8 lyric songs, client
+  overlay switch-over (legacy `walkSyllables` fallback), `correctDrift`
+  pause-fix reshape (raw comparison while paused, keeps seek-while-paused
+  propagation), close-out of tasks-99e6 + optional upstream alphaTab
+  issue. Supersedes plan-99e6 below. Working tree carries the uncommitted
+  F002 draft fix in `client/src/playback-sync.ts`(+test) that T011
+  reshapes. Next: `/ardd-implement`.
 - **Lyrics ticker tie-boundary fix + audio-latency feedback close-out** —
-  `plan-99e6-2026-07-18-6d2b.md` (`approved`), `tasks-99e6-e76f.md`
+  `plan-99e6-2026-07-18-6d2b.md` (**`superseded`** by
+  plan-lyrics-dispatch above), `tasks-99e6-e76f.md`
   (**`in-progress`, 2/5**). Merged to `main` (delegated worktree,
   `merge_policy: auto`). **T001** (regression test for a tie-across-barline
   scenario in `packages/shared/src/lyrics-walk.ts#walkSyllables`) passes
@@ -789,12 +835,10 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **Resolve the `tasks-99e6-e76f.md` blocker** — T003 (the actual fix)
-   couldn't reproduce the reported "TIRO" early-highlight against current
-   code/data. Either get a fresh live repro to confirm it still happens as
-   described, or scope a follow-up `/ardd-plan` at
-   `client/src/playback-sync.ts`'s `latency-compensated-position-
-   extrapolation` path instead, per the blocker note in the tasks file.
+1. **`/ardd-implement`** to execute `tasks-lyrics-dispatch-0f0e.md`
+   (`ready`, 13 tasks) — the lyric-dispatch root fix, catalog regen,
+   client switch-over, and the `correctDrift` pause-fix reshape (T011
+   builds on the uncommitted working-tree draft).
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
