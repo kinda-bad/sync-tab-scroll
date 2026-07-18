@@ -7,8 +7,9 @@ import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
+import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
-import { findLyricGaps, type LyricGap } from './lyrics-gap-timing';
+import { findLyricGaps, computeMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
 
 interface GapIndicatorHandle {
   gap: LyricGap;
@@ -158,7 +159,8 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     api.scoreLoaded.on((score) => {
       const syllables = walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
       const lines = groupIntoLines(syllables, lyricLineBreaks);
-      state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer);
+      const measures = computeMeasureBoundaries(score);
+      state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && song.lyricsLrc) {
@@ -517,6 +519,16 @@ export function setEngineMetronome(enabled: boolean): void {
  * state.score (mirrors setEngineMetronome's `if (!state) return;` shape,
  * with an added guard for state.score).
  */
+/** Applies the personal lyrics-ticker font-size preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
+export function setEngineLyricsTickerFontSize(size: LyricsTickerFontSize): void {
+  state?.overlay?.setFontSize(size);
+}
+
+/** Applies the personal "Measure markers" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
+export function setEngineMeasureMarkersVisible(visible: boolean): void {
+  state?.overlay?.setMeasureMarkersVisible(visible);
+}
+
 export function setEngineTrackMute(trackIndex: number, muted: boolean): void {
   if (!state) return;
   if (!state.score) return;

@@ -191,6 +191,42 @@ test('Preferences tab: any participant sees the personal metronome toggle; click
   expect(sent).toEqual([]);
 });
 
+// --- Preferences tab: lyrics ticker font size + measure markers (T002/T004) ---
+
+test('Preferences tab: the lyrics ticker font size control renders all four options and selecting one persists it', async ({
+  mount,
+  page,
+}) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByRole('button', { name: 'Small' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Medium' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Large' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Huge' })).toBeVisible();
+
+  await component.getByRole('button', { name: 'Huge' }).click();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-ticker-font-size'));
+  expect(stored).toBe('huge');
+});
+
+test('Preferences tab: the "Measure markers" toggle defaults off, persists, and sends nothing', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByText('Measure markers: Off')).toBeVisible();
+
+  await component.getByText('Measure markers: Off').click();
+  await expect(component.getByText('Measure markers: On')).toBeVisible();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-measure-markers'));
+  expect(stored).toBe('on');
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toEqual([]);
+});
+
 // --- Tracks tab: personal per-part mute controls (T016-T018, own 4th tab) --
 
 /**
@@ -310,6 +346,47 @@ test('Tracks tab: each part renders in its own row', async ({ mount, page }) => 
   // One .control-row per part -- not one shared row wrapping every part's
   // button together.
   expect(rowCount).toBe(2);
+});
+
+/**
+ * T005 (tasks-settings-personal-prefs-bundle-ed57): a "Solo" button per
+ * part row — clicking it mutes every other part while leaving the soloed
+ * one unmuted, via the same track-mute-preference.ts persistence as the
+ * ordinary mute toggles (no separate "solo" concept).
+ */
+test('Tracks tab: clicking "Solo" on a part mutes every other part, leaves it unmuted, and persists via track-mute-preference', async ({
+  mount,
+  page,
+}) => {
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [
+      { trackIndex: 0, instrumentName: 'Lead Guitar' },
+      { trackIndex: 1, instrumentName: 'Bass' },
+      { trackIndex: 2, instrumentName: 'Drums' },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Tracks' }).click();
+
+  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
+  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+  await expect(component.getByText('Drums: Unmuted')).toBeVisible();
+
+  const bassRow = component.locator('.control-row', { hasText: 'Bass:' });
+  await bassRow.getByRole('button', { name: 'Solo' }).click();
+
+  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+  await expect(component.getByText('Drums: Muted')).toBeVisible();
+
+  const storedLead = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
+  const storedBass = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:1'));
+  const storedDrums = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:2'));
+  expect(storedLead).toBe('on');
+  expect(storedBass).toBe('off');
+  expect(storedDrums).toBe('on');
 });
 
 test('Preferences tab: no longer renders any mute-parts controls (moved to the Tracks tab)', async ({ mount }) => {
