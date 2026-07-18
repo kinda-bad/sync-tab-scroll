@@ -739,7 +739,23 @@ since shipped (`implemented`).
 
 - **Creep-class dispatch semantics follow-up** —
   `plan-creep-dispatch-2026-07-18-8a7c.md` (`approved`),
-  `tasks-creep-dispatch-3477.md` (**`ready`**, 8 tasks / 3 phases).
+  `tasks-creep-dispatch-3477.md` (**`completed`**, 8/8, merged `7a41ee5`).
+  Final dispatch semantics (empirically fitted, 16k rule-set search
+  against 13 user anchors): non-empty chunks skip rests + tie
+  destinations + grace beats + shift-slide-out beats; whitespace `+`
+  holds consume one singable beat emitting nothing; empty chunks consume
+  any beat. Live-verified: Creep bar 18 "In a beautiful world", "You"
+  flips at exactly tick 59040 (bar 16), final "here" on the last vocal
+  note (bar 89) — no dry-out; TIRO bar 14 "be" regression green. Suites:
+  shared 19, pipeline 25, client 108, server 230. The one-bar-early
+  bridge residual (She's/ru-/She @60-62) was then fixed by a
+  **data patch to the Creep `.gp` source** (lyric-line rebalance, no
+  note surgery) — recorded in `docs/catalog-patches.md` (committed;
+  catalog/ is gitignored, so that doc is the reapply record if the file
+  is ever restored) — after which ALL 13 anchors verify (She's@61,
+  ru-@62, She@63 confirmed on the shipped code path post-regen).
+  Upstream alphaTab issue draft updated (per-beat `_skipApplyLyrics`
+  bypass + full 4-rule divergence), still unfiled pending user OK.
   Diagnosis-led: Phase 1 finds the missing beat-skip rule (alphaTab's
   unexplained no-chunk skip at Creep bar 16 tick 60480 is the lead) and
   decides `+`-hold semantics empirically; Phase 2 amends the shared
@@ -876,11 +892,13 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** to execute `tasks-creep-dispatch-3477.md`
-   (`ready`, 8 tasks) — complete the dispatch semantics for Creep-class
-   files. The upstream alphaTab issue stays a draft until this lands
-   (its stated semantics would otherwise be incomplete); filing awaits
-   user OK afterward. Then plan the song-switch stale-score feedback.
+1. **Ear-check Last Nite + Teenagers** (regenerated under the final rule
+   set; guide in tasks-creep-dispatch-3477.md's T006 note), **file the
+   updated upstream alphaTab issue** (draft ready, awaits user OK), and
+   **plan the song-switch stale-score feedback** (`/ardd-plan
+   feedback-song-switch-stale-score-e030.md` — corroborated during T006:
+   host "Change song" + immediate Start races the score reload). Push
+   when ready (several commits ahead of origin).
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
