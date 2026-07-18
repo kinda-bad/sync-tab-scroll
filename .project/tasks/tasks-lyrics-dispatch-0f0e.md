@@ -29,7 +29,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `finish(false)`) — do not reimplement the chunker. Working reference
   logic for all of this exists in the session probe scripts
   `packages/pipeline/src/tiro-probe5.ts`/`tiro-probe7.ts`.
-- [ ] T002 [artifacts: infrastructure] Create
+- [x] T002 [artifacts: infrastructure] Create
   `packages/shared/src/lyrics-dispatch.ts` exporting
   `dispatchLyrics(chunks: string[], beats: DispatchBeat[]): Syllable[]`
   where `DispatchBeat = { tickPosition: number; isRest: boolean;

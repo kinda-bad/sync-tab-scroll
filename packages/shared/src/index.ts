@@ -1,5 +1,6 @@
 export * from './messages.js';
 export * from './lyrics-walk.js';
+export * from './lyrics-dispatch.js';
 
 // --- Durable Account Layer (datamodel.md Account Layer; constitution v1.5.0) ---
 // Optional OAuth accounts backed by an optional Postgres store. These three
