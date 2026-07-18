@@ -704,7 +704,14 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**1 open feedback file:** `feedback-song-switch-stale-score-e030.md`
+**2 open feedback files:**
+`feedback-creep-lyrics-misalignment-0911.md` (2026-07-18) — the shipped
+dispatch fix verifies on TIRO but not Creep (tie-heaviest song): still
+~1 singable beat early at the "You float" entry (an unexplained alphaTab
+skip rule at bar 16 tick 60480 is the lead), GP `+` hold markers become
+`" "` chunks that consume beats and emit blank syllables (15 in Creep),
+and the ticker runs dry after ~bar 84. Also:
+`feedback-song-switch-stale-score-e030.md`
 (2026-07-18) — switching songs left both the tab view and playback audio
 on the previous song until a browser refresh; possibly a regression from
 the same-day `playback-engine.ts` raw-line wiring, possibly a latent
