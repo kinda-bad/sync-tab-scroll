@@ -58,7 +58,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   alongside `lyricsTrackIndex`/`lyricsLineIndex`/`lyricLineBreaks`.
   Songs with no track-level line (e.g. no lyrics, or true per-beat
   lyrics) omit the field.
-- [ ] T005 [artifacts: pipeline] Test-first: switch the pipeline's
+- [x] T005 [artifacts: pipeline] Test-first: switch the pipeline's
   syllable extraction for `.lrc` generation
   (`packages/pipeline/src/gp-parser.ts#extractSyllables` path) to use
   `dispatchLyrics` over the score's beats (chunked from the raw line via

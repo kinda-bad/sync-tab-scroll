@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { loadScore, findLyricsSource, extractSyllables, buildTickToMs, buildMsToTick } from './gp-parser.js';
+import { loadScore, findLyricsSource, extractSyllables, extractSyllablesFromRawLine, buildTickToMs, buildMsToTick } from './gp-parser.js';
 import { readRawLyricsLines, readRawLyricsLine, countSyllables, alignLinesByTimestamp } from './line-breaks.js';
 import { searchLrclib, parseLrclibLinesWithTimestamps } from './lrclib.js';
 import { buildLrc, passthroughLrc } from './lrc-writer.js';
@@ -35,7 +35,14 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
   };
 
   if (source) {
-    const syllables = extractSyllables(score, source);
+    // GP-semantics dispatch from the raw track-level line when it exists
+    // (feedback F001 — alphaTab's applyLyrics diverges from GP: ties not
+    // skipped, empty chunks burned only on playable beats); per-beat
+    // walkSyllables stays the fallback for songs with no raw line.
+    const rawLine = readRawLyricsLine(gpFilePath, source.trackIndex, source.lineIndex);
+    const syllables = rawLine
+      ? extractSyllablesFromRawLine(score, source.trackIndex, rawLine.text)
+      : extractSyllables(score, source);
     const tickToMs = buildTickToMs(score);
     const rawLines = readRawLyricsLines(gpFilePath, source.trackIndex, source.lineIndex);
 
@@ -60,7 +67,6 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
     lrcContent = buildLrc(lines, lyricLineBreaks, syllables, tickToMs);
     meta = { ...meta, lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
 
-    const rawLine = readRawLyricsLine(gpFilePath, source.trackIndex, source.lineIndex);
     if (rawLine) {
       meta.lyricsRawLine = rawLine.text;
       if (rawLine.startBar !== 0) meta.lyricsRawLineStartBar = rawLine.startBar;

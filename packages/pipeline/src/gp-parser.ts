@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as at from '@coderline/alphatab';
-import { walkSyllables, type Syllable } from '@sync-tab-scroll/shared';
+import { walkSyllables, dispatchLyrics, type Syllable, type DispatchBeat } from '@sync-tab-scroll/shared';
 
 export type LyricsSource = { trackIndex: number; lineIndex: number };
 
@@ -52,6 +52,37 @@ export function findLyricsSource(score: at.model.Score): LyricsSource | null {
  */
 export function extractSyllables(score: at.model.Score, source: LyricsSource): Syllable[] {
   return walkSyllables(score, source);
+}
+
+/**
+ * GP-semantics syllable extraction (feedback F001): chunks the raw
+ * track-level lyric line with alphaTab's own chunker (`at.model.Lyrics` —
+ * never reimplemented) and dispatches the chunks onto the track's beats
+ * with the shared `dispatchLyrics` (GP dispatch semantics: ties skipped for
+ * non-empty chunks, empty chunks burn any beat) instead of trusting the
+ * per-beat `beat.lyrics` alphaTab's divergent `applyLyrics` produced.
+ * Preferred over `extractSyllables` whenever a raw line exists
+ * (`readRawLyricsLine`); `walkSyllables` stays the fallback.
+ */
+export function extractSyllablesFromRawLine(score: at.model.Score, trackIndex: number, rawText: string): Syllable[] {
+  const lyrics = new at.model.Lyrics();
+  lyrics.text = rawText;
+  (lyrics as any).finish(false);
+  const chunks: string[] = (lyrics as any).chunks;
+
+  const beats: DispatchBeat[] = [];
+  for (const staff of score.tracks[trackIndex].staves) {
+    for (const bar of staff.bars) {
+      for (const beat of bar.voices[0].beats) {
+        beats.push({
+          tickPosition: beat.absolutePlaybackStart,
+          isRest: beat.isRest,
+          isTieDestination: beat.notes?.some((n) => n.isTieDestination) ?? false,
+        });
+      }
+    }
+  }
+  return dispatchLyrics(chunks, beats);
 }
 
 interface TempoSegment {
