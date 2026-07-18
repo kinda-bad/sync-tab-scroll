@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-17
+last_updated: 2026-07-18
 diagram_type: graph TD
 render_section: UI
 diagram_status: stale
@@ -354,6 +354,22 @@ regardless of whether playback has started:
     participant's own alphaTab instance immediately (`metronomeVolume`)
     whether visible or headless, with a hint making the scope plain
     ("Only you hear your metronome.").
+  - a personal "Lyrics ticker font size" control, visible to **every**
+    participant (not host-gated): four steps — small / medium / large /
+    huge — persisted client-side like the theme/Metronome choices
+    (`client/src/lyrics-ticker-font-size-preference.ts`, default
+    **medium**, matching the in-tab lyrics overlay's existing fixed size).
+    Each step is a clearly noticeable jump from its neighbor, not a subtle
+    scale. Applies to the in-tab lyrics overlay's syllable text (Playback
+    View, below) — has no effect on the tab-less Lyrics part's full lyric
+    sheet, which uses its own fixed reading size.
+  - a personal "Measure markers" toggle, visible to **every** participant
+    (not host-gated): persisted client-side like the theme/Metronome
+    choices (default **off**). When on, the in-tab lyrics overlay ticker
+    (Playback View, below) additionally renders a vertical line and
+    measure number at each measure boundary, interleaved into the
+    syllable strip. Has no effect on the tab-less Lyrics part's full
+    lyric sheet.
 - **Tracks**: a dedicated 4th tab for personal per-part mute controls,
   visible to **every** participant (not host-gated) — moved out of
   Preferences into its own tab so each part gets its own row rather than
@@ -375,6 +391,16 @@ regardless of whether playback has started:
   restriction; some practice workflows want to hear only the backing
   while reading their own tab. Hint text makes the personal scope plain
   ("Only you don't hear muted parts — everyone else still does.").
+  Each row also carries a "Solo" control alongside its mute toggle:
+  clicking it mutes every other available part except that one (calling
+  `api.changeTrackMute()` per part, same mechanism as the individual mute
+  toggles), leaving only the soloed part audible. Personal and
+  client-local only, same scope/persistence as the mute toggles above —
+  not a session-level solo. Soloing one part doesn't touch the mute
+  toggles' own persisted state for parts other than the ones it silences;
+  un-soloing (clicking "Solo" again, or muting/unmuting individual parts
+  afterward) is a plain mute-state change like any other, not a tracked
+  "solo mode" the UI has to remember separately.
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle
@@ -445,6 +471,21 @@ identically regardless of which one they're on:
   rendering — alphaTab only draws lyric text natively on the track that
   actually carries it, which usually isn't the instrument track a
   participant is viewing.
+
+  **Measure markers (personal preference, default off — Lobby View
+  Preferences tab, above)**: when enabled, a vertical line and measure
+  number are interleaved into the syllable strip at each measure
+  boundary, reusing the local-tempo/time-signature measure-duration math
+  the Gap timing indicator (below) already computes from the headless/
+  visible instance's own loaded score. Unlike syllable spans, which lay
+  out by text-flow width rather than a continuous tick-to-pixel mapping,
+  a marker's position is only well-defined by inserting it into the
+  syllable sequence at the correct tick-sorted point, not by computing an
+  absolute coordinate — so a marker sits between whichever two syllables
+  (or the placeholder) straddle that measure's start tick. Purely a
+  personal orientation aid — it does not affect syllable
+  highlighting/centering, which continues to index only the real
+  syllable stream.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked

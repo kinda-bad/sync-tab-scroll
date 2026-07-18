@@ -1,5 +1,31 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-later-4 (**plan-settings-personal-prefs-bundle approved
+and TASKED — 5 tasks across 3 phases, `ready`.** Bundles the three features
+`/ardd-plan --slate` grouped together (all edit `SettingsModal.svelte`):
+`lyrics-overlay-measure-lines-a` (in-tab ticker measure-boundary lines +
+numbers, gated behind a new "Measure markers" Preferences toggle, default
+off — reuses `lyrics-gap-timing.ts`'s measure-duration math and the
+existing `gap-dot`/`gap-drain` marker-insertion pattern),
+`lyrics-ticker-font-size-prefer` (4-step small/medium/large/huge Preferences
+control, medium = today's fixed `1.125rem`), and `solo-mute-button-per-part`
+(a "Solo" button per Tracks-tab row, reusing the existing
+`api.changeTrackMute()`/`track-mute-preference.ts` mute mechanism — not a
+new persisted "solo mode"). `ui.md` updated (Preferences/Playback
+View/Tracks sections), `last_updated: 2026-07-18`, `diagram_status: stale`.
+All 3 features flipped `backlogged → planned → tasked`. Feature backlog is
+now 4 backlogged / 3 tasked / 16 implemented (was 7/0/16). All 5 tasks carry
+test-first requirements (Playwright CT + unit tests for the new preference
+modules). Plan/tasks/artifact changes not yet committed. **User feedback on
+the `/ardd-plan --slate` report format itself** (not app feedback — feedback
+on this skill's output): the prior slate run's Bundle/Parallel-set/
+Solo-deferred prose was confusing about what was safe to plan together;
+should be laid out as clearer distinct phases/sections rather than dense
+prose. Noted for future `/ardd-status`/`/ardd-plan` slate-report formatting;
+not an app-code change. 2 open feedback files unchanged
+(`feedback-audio-output-latency-t014-dfa8.md`,
+`feedback-lyrics-ticker-tiro-measure8-9310.md`). Prior context below.)_
+
 _Updated: 2026-07-18-later-3 (**New feature backlogged:
 `lyrics-ticker-font-size-prefer`.** A personal Preferences-tab toggle
 (same pattern as Metronome/Mute-parts) for the in-tab lyrics ticker's
