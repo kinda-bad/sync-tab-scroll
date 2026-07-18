@@ -1,7 +1,7 @@
 ---
 plan: plan-creep-dispatch-2026-07-18-8a7c.md
 generated: 2026-07-18
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
@@ -270,7 +270,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   F001/F002 artifact revisions); stamp `last_updated` via
   `ardd-state.sh stamp`. Skip with a note if the docs already describe
   the semantics at the right level of detail.
-- [ ] T008 [parallel] Update the unfiled upstream alphaTab issue draft
+- [x] T008 [parallel] Update the unfiled upstream alphaTab issue draft
   (`alphatab-issue-draft.md` in the coordinator's session scratchpad;
   if unreachable from the worktree, write a fresh copy alongside the
   tasks file note) to state the completed rule set from T002 and the
