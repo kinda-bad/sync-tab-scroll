@@ -704,7 +704,13 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**0 open feedback files.** `feedback-lyrics-dispatch-root-cause-f0f6.md`
+**1 open feedback file:** `feedback-song-switch-stale-score-e030.md`
+(2026-07-18) — switching songs left both the tab view and playback audio
+on the previous song until a browser refresh; possibly a regression from
+the same-day `playback-engine.ts` raw-line wiring, possibly a latent
+song-switch race. Will be picked up by the next `/ardd-plan`.
+
+Previously: `feedback-lyrics-dispatch-root-cause-f0f6.md`
 flipped to `planned` (both items incorporated), bound to
 `plan-lyrics-dispatch-2026-07-18-8090.md`. Previously:
 `feedback-audio-output-latency-t014-dfa8.md`
