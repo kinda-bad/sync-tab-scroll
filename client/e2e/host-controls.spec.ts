@@ -18,9 +18,14 @@ test('host Start/Pause/Resume/Stop transitions are reflected for a joined member
   await expect(page.getByRole('button', { name: 'Start' })).toBeEnabled({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Start' }).click();
 
-  // Both host and member land in the Playback view once running.
+  // Both host and member land in the Playback view once running. The host
+  // is on an instrument part (.playback-controls, inside .app-content) but
+  // the member picked Lyrics — App.svelte collapses .app-content entirely
+  // for the lyrics part (`.app-content.collapsed { display: none }`,
+  // ui.md Playback View) since that participant's view is the separate
+  // .full-lyrics-view element instead.
   await expect(page.locator('.playback-controls')).toBeVisible({ timeout: 10_000 });
-  await expect(memberPage.locator('.playback-controls')).toBeVisible({ timeout: 10_000 });
+  await expect(memberPage.locator('.full-lyrics-view')).toBeVisible({ timeout: 10_000 });
 
   const pauseButton = page.getByRole('button', { name: /Pause|Resume/ }).last();
   await pauseButton.click(); // pause

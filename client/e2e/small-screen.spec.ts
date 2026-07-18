@@ -136,7 +136,10 @@ test('full-lyrics view (lyrics part) fits a phone screen', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Start' })).toBeEnabled({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Start' }).click();
   await page.waitForTimeout(1000); // full-lyrics view renders no svg; give it a beat
-  await expect(page.locator('svg')).toHaveCount(0);
+  // Scoped to the tab canvas specifically, not the whole page — the bar's
+  // icon-only controls render as inline <svg> too (tasks-bottom-bar-icons-
+  // 47a6.md), so a page-wide `svg` count is no longer 0 even here.
+  await expect(page.locator('.tab-container svg')).toHaveCount(0);
 
   await expectNoHorizontalOverflow(page, 'full-lyrics view');
 });

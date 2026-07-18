@@ -308,9 +308,17 @@
 
   /* Equal-width cells so the strip reads as one segmented control; the
      section-label type size keeps all four labels on one line down to
-     360px-wide screens. */
-  .tab-strip > :global(.btn) {
+     360px-wide screens. Targets .btn-wrap (Button.svelte's outer span,
+     the actual flex item since it wraps every .btn) for sizing, and the
+     nested .btn for padding/font-size — .btn itself is a grandchild now,
+     not a direct child of .tab-strip. */
+  .tab-strip > :global(.btn-wrap) {
     flex: 1;
+    min-width: 0;
+  }
+  .tab-strip > :global(.btn-wrap) > :global(.btn) {
+    width: 100%;
+    min-width: 0;
     padding-inline: var(--space-1);
     font-size: 0.6875rem;
   }

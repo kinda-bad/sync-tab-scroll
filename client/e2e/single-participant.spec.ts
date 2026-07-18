@@ -48,7 +48,11 @@ test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canv
   await page.getByRole('button', { name: 'Start' }).click();
 
   await page.waitForTimeout(1000);
-  await expect(page.locator('svg')).toHaveCount(0);
+  // Scoped to the tab canvas specifically, not the whole page — the bar's
+  // icon-only controls (Cog, Play/Pause/Square, LogOut, MicVocal) render as
+  // inline <svg> too (tasks-bottom-bar-icons-47a6.md), so a page-wide `svg`
+  // count is no longer 0 even when no tab is rendered.
+  await expect(page.locator('.tab-container svg')).toHaveCount(0);
 });
 
 test('Start closes the settings modal (plan-settings-modal-redesign T012)', async ({ page }) => {
