@@ -1,5 +1,14 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night-5 (**`tasks-99e6-e76f.md` (lyrics-ticker
+tie-boundary fix) run and merged, 2/5 — blocked on T003.** T001/T002
+ruled out both of the plan's declared candidate root causes (the shared
+walk's tie/dedup logic, and the client's tick-compare loop) against
+current code and the real "TIRO" catalog data; the reported early-highlight
+did not reproduce. See Plans & Tasks and Recommended next step below for
+the two follow-up leads. No other artifact/backlog/feedback state changed
+this pass — see Plans & Tasks for details._
+
 _Updated: 2026-07-18-night-4 (**Deploy crash fully resolved (2nd root cause
 found), Node 20→22 LTS shipped, and the two open feedback items planned +
 tasked.**
@@ -668,12 +677,32 @@ since shipped (`implemented`).
 
 - **Lyrics ticker tie-boundary fix + audio-latency feedback close-out** —
   `plan-99e6-2026-07-18-6d2b.md` (`approved`), `tasks-99e6-e76f.md`
-  (`ready`, 0/5). Not yet started. Phase 1 (T001–T002) diagnoses whether
-  the "TIRO" measure 8→9 early-highlight bug lives in the shared
-  `walkSyllables` tie/dedup logic or the client's tick-compare logic; Phase
-  2 (T003–T004) fixes and adds a regression test; Phase 3 (T005) is
-  bookkeeping-only, closing out the audio-latency feedback thread as
-  superseded rather than pursued further.
+  (**`in-progress`, 2/5**). Merged to `main` (delegated worktree,
+  `merge_policy: auto`). **T001** (regression test for a tie-across-barline
+  scenario in `packages/shared/src/lyrics-walk.ts#walkSyllables`) passes
+  against current code — rules out the walk/dedup misattribution
+  hypothesis. **T002** (trace of `client/src/lyrics-overlay.ts`'s
+  `updateActiveSyllable` tick-compare loop) found it structurally
+  correct — no off-by-one, no stale index caching, no lookahead;
+  documented inline. **T003 blocked** — replaying both candidate sites
+  against the real "TIRO" catalog file's measure 8/9 data did not
+  reproduce the reported early-highlight at all (the real vocals-track
+  beat the feedback describes isn't even a tie destination), so neither
+  declared candidate site shows a live bug. Blocker note appended to the
+  tasks file at Phase 2 naming two out-of-scope follow-up leads: the
+  catalog file may have changed since the original repro was filed, or
+  the real mechanism is upstream of both candidate sites — most likely
+  the newly-shipped `latency-compensated-position-extrapolation`
+  (`client/src/playback-sync.ts`, forwards `tickPosition` for non-host
+  participants), which this plan's Scope explicitly didn't cover.
+  **T004/T005 not attempted** (both depend on T003). Next step: either
+  re-run T003 against a fresh live repro of "TIRO" to confirm the bug
+  still reproduces as described, or `/ardd-plan` a follow-up scoped to
+  `playback-sync.ts`'s extrapolation path instead.
+- **Lobby cursor modes** — `tasks-lobby-cursor-modes-0bea.md`
+  (`in-progress`, 11/12, plan-lobby-cursor-modes-2026-07-03.md).
+  Pre-existing, unrelated to this session's work — untouched here, flagged
+  for visibility only.
 - **Lyrics-timing fixes, mute-parts tab, playback-stutter investigation** —
   `plan-1619-2026-07-17-39c6.md` (`approved`), `tasks-1619-1185.md`
   (`completed`, 20/20). Merged `8603fa9`. Shared `packages/shared/src/
@@ -760,8 +789,12 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** on `tasks-99e6-e76f.md` — the lyrics-ticker
-   tie-boundary fix is planned and tasked but not started.
+1. **Resolve the `tasks-99e6-e76f.md` blocker** — T003 (the actual fix)
+   couldn't reproduce the reported "TIRO" early-highlight against current
+   code/data. Either get a fresh live repro to confirm it still happens as
+   described, or scope a follow-up `/ardd-plan` at
+   `client/src/playback-sync.ts`'s `latency-compensated-position-
+   extrapolation` path instead, per the blocker note in the tasks file.
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
