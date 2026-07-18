@@ -89,6 +89,21 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
 
   if (isHost) return null;
 
+  // Extrapolation only makes sense while playback is actually running: once
+  // paused/stopped, playbackState.serverTimestamp stops advancing but
+  // Date.now() doesn't, so without this guard elapsedMs (and the projected
+  // tick below) grows without bound the longer playback stays paused —
+  // repeatedly forcing api.tickPosition forward well past the real paused
+  // position on every later store update, even though the pause branch
+  // above only runs once, on the transition instant. That phantom forward
+  // tickPosition still fires playerPositionChanged (isSeek: true, per this
+  // function's own doc comment) — which the lyrics ticker listens to
+  // directly — even where the bar cursor doesn't visibly follow it while
+  // stopped, surfacing as a ticker that runs ahead of a correctly-placed
+  // paused cursor (confirmed live 2026-07-18: paused on bar 14, ticker
+  // already two words ahead).
+  if (playbackState.status !== 'running') return null;
+
   // Latency-compensated extrapolation (infrastructure.md Session & Real-Time
   // Sync): project playbackState.tickPosition forward by the elapsed
   // wall-clock time since it was authoritative, compensating for

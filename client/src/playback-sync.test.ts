@@ -105,6 +105,23 @@ describe('correctDrift', () => {
     expect(result).toBeNull();
   });
 
+  it('does not extrapolate a phantom tick forward for a non-host once paused, even as wall-clock time elapses', () => {
+    // Regression for the live 2026-07-18 repro: paused on bar 14 with the
+    // cursor correctly placed, but the lyrics ticker had already advanced
+    // two words ahead. Root cause: the pause branch above didn't return,
+    // so later store updates (with wall-clock time having advanced past a
+    // now-stale serverTimestamp) fell through into the latency-extrapolation
+    // block below and kept forcing tickPosition forward even though nothing
+    // was playing.
+    const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 300 });
+    const playbackState = fakePlaybackState({ status: 'paused', tickPosition: 300, serverTimestamp: Date.now() });
+    vi.advanceTimersByTime(5000); // 5s paused — plenty to exceed the drift threshold if extrapolated
+    const result = correctDrift(api, playbackState, false);
+    expect(api.pause).not.toHaveBeenCalled(); // already paused, not a fresh transition
+    expect(api.tickPosition).toBe(300);
+    expect(result).toBeNull();
+  });
+
   it('never drift-corrects the host, even when drift exceeds the threshold', () => {
     const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 5000 });
     const result = correctDrift(api, fakePlaybackState({ status: 'running', tickPosition: 100 }), true);
