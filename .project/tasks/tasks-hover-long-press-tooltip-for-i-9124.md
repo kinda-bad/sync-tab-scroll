@@ -8,7 +8,7 @@ status: in-progress
 
 ## Phase 1: Tooltip component
 
-- [ ] T001 [artifacts: ui] Create `client/src/components/Tooltip.svelte` with `export let label: string` and `export let visible = false` props: renders a small absolutely-positioned popover showing `label` text when `visible` is true (nothing in the DOM, or `display: none`, when false), styled per `brand.md`'s existing token set (`--font-mono`, `--ink`/`--bg` or similar surface tokens, small font-size, a subtle border/background consistent with this app's other small chrome like `ReadinessBadge`). Write a Playwright CT spec (`client/src/components/Tooltip.ct.spec.ts`) mounting it standalone, asserting: with `visible=false` the label text is not visible/present; with `visible=true` the label text is visible. Write and confirm it fails before implementing (constitution Principle VII).
+- [x] T001 [artifacts: ui] Create `client/src/components/Tooltip.svelte` with `export let label: string` and `export let visible = false` props: renders a small absolutely-positioned popover showing `label` text when `visible` is true (nothing in the DOM, or `display: none`, when false), styled per `brand.md`'s existing token set (`--font-mono`, `--ink`/`--bg` or similar surface tokens, small font-size, a subtle border/background consistent with this app's other small chrome like `ReadinessBadge`). Write a Playwright CT spec (`client/src/components/Tooltip.ct.spec.ts`) mounting it standalone, asserting: with `visible=false` the label text is not visible/present; with `visible=true` the label text is visible. Write and confirm it fails before implementing (constitution Principle VII).
 
 ## Phase 2: Wire into Button.svelte
 
