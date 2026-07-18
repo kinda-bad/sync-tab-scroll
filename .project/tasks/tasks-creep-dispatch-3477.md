@@ -213,7 +213,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `.lrc`: a line containing "You float" starts at the time of tick
   59040, and the file's last lyric line matches T002's end-of-stream
   expectation. Supermassive/Lazy Eye untouched.
-- [ ] T006 Live verification in a real browser (client + server):
+- [x] T006 Live verification in a real browser (client + server):
   load Creep — click bar 16's first note (ticker must NOT yet show
   "You"; it appears only from the mid-bar note at tick 59040), scroll
   the song's end (lyrics present per T002's F003 verdict, no
@@ -222,6 +222,47 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   ground truth (bar 14 "be") as the regression check. Record outcomes
   in a tasks-file note, including a one-line ear-check guide for the
   user for Last Nite and Teenagers.
+> **T005 note (2026-07-18):** pipeline re-run for
+> time-is-running-out, last-nite, teenagers, creep (`pnpm
+> extract-lyrics <gp> catalog/kinda-bad`); all four published.
+> Creep spot-checks: `.lrc` line "[00:39.68]You float like a
+> fea-the-e-er" — 00:39.68 is exactly `tickToMs(59040)`; the file's
+> last lyric line is the final "I don't be-long here" ending at
+> ~03:47, matching the song's true final vocal note (tick 338400 =
+> 227.4s). Supermassive/Lazy Eye untouched. Known minor pre-existing
+> drift: the last `.lrc` line's own timestamp (03:46.45) sits on "be-"
+> rather than "I" — the `countSyllables` line-break heuristic, not the
+> dispatcher; out of scope here.
+
+> **T006 live verification (2026-07-18, real browser, client+server
+> from this branch, Creep + TIRO):** drove the actual app (create
+> session, vocals part, real playback; ticker `.at-highlight`
+> transitions recorded from `api.playerPositionChanged`):
+> - "You" flips active at EXACTLY tick 59040 (bar 16 mid-bar note),
+>   never earlier; "cry" active through bar 14-15 before it.
+> - Bar 18 = "In a beau-ti-ful world" (66722–68643, all bar 18);
+>   bar 19: no syllable ("world" held); bar 20 = "I wish I was spe-"
+>   with "cial" on the bar-21 downbeat (physically forced — bar 20 has
+>   5 singable beats).
+> - Outro residual EXACTLY as recorded (transcription defect, not a
+>   failure): She's@226561 (bar 60), ru-@230402 (bar 61), She@235680
+>   (bar 62) — each one bar early; un-/ning/out and run, land in their
+>   stated bars 62/63.
+> - End of song: I/don't/be-/long @336003–337443 (bar 88), "here"
+>   @338403 (bar 89, the final vocal note) — NO dry-out; the ticker
+>   stream reaches the true song end. No "+"/whitespace syllables ever
+>   rendered.
+> - TIRO regression: "be" flips at tick 49924 = bar 14 beat 1.
+> - Incidental observation (pre-existing, unrelated to dispatch): host
+>   "Change song" mid-lobby can leave the previous score+ticker
+>   rendered if Start is clicked before the new score finishes
+>   loading; a reload resyncs. Worth a /ardd-feedback if it annoys.
+> - Ear-check guide for the user: Last Nite — play the first verse
+>   ("Last night, she said..."): each ticker syllable should flip on
+>   its sung note, none during the guitar-only intro. Teenagers —
+>   verse 1 ("They're gonna clean up your looks..."): same check, and
+>   confirm the ticker doesn't run dry before the final chorus line.
+
 - [ ] T007 [artifacts: pipeline, infrastructure] Only if the adopted
   rule set changed the documented dispatch semantics: update
   pipeline.md's raw-line dispatch description and infrastructure.md's
