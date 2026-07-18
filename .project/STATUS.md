@@ -1,5 +1,24 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night-8 (**Lyrics-dispatch fix SHIPPED — all 13 tasks
+completed, merged to `main` (e37437d, fast-forward), worktree reaped.**
+Delivered: shared GP-semantics dispatcher
+`packages/shared/src/lyrics-dispatch.ts` (test-first; TIRO ground-truth
+tests `describe.skipIf` when the gitignored catalog is absent), pipeline
+`lyricsRawLine` publish + corrected `.lrc` (all four GP7/8 lyric songs
+regenerated on disk), server loader passthrough, client
+`walkLyricBeatsFromRawLine` wired into the overlay with `walkSyllables`
+fallback, and the `correctDrift` pause fix reshaped (extrapolate only
+while running, raw drift-correct otherwise — seek-while-paused
+propagation preserved). **Live-verified in real Chrome**: bar 14 "be",
+bar 69 "this?", bar 102 holds "ground", playback tracks verse 1. Suites:
+shared 11, pipeline 25, client 108, server 230, playback-sync 23 — all
+green. `tasks-99e6-e76f.md` flipped `abandoned` with a resolution note.
+Two follow-ups: (1) upstream alphaTab issue DRAFTED, not filed — awaits
+user OK (draft in the session scratchpad, `alphatab-issue-draft.md`);
+(2) minor deviation: regenerated metas dropped a legacy `bpm` field the
+pipeline never wrote — verified unread by any consumer._
+
 _Updated: 2026-07-18-night-7 (**Lyrics-dispatch plan approved + tasked.**
 `plan-lyrics-dispatch-2026-07-18-8090.md` (`approved`) consumes
 `feedback-lyrics-dispatch-root-cause-f0f6.md` (now `planned`, F001+F002
@@ -710,7 +729,8 @@ since shipped (`implemented`).
 
 - **Lyrics dispatch root fix + correctDrift pause fix** —
   `plan-lyrics-dispatch-2026-07-18-8090.md` (`approved`),
-  `tasks-lyrics-dispatch-0f0e.md` (**`ready`**, 13 tasks / 5 phases).
+  `tasks-lyrics-dispatch-0f0e.md` (**`completed`**, 13/13, merged
+  `e37437d`, live-verified — see the night-8 entry).
   Shared GP-semantics dispatcher (`packages/shared/src/lyrics-dispatch.ts`,
   test-first from 3 verified TIRO ground truths), pipeline `lyricsRawLine`
   publish + corrected `.lrc` + regen for the 4 GP7/8 lyric songs, client
@@ -835,10 +855,11 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** to execute `tasks-lyrics-dispatch-0f0e.md`
-   (`ready`, 13 tasks) — the lyric-dispatch root fix, catalog regen,
-   client switch-over, and the `correctDrift` pause-fix reshape (T011
-   builds on the uncommitted working-tree draft).
+1. **File the upstream alphaTab issue** (drafted, awaiting user OK —
+   `alphatab-issue-draft.md` in the session scratchpad), and spot-check
+   the other three regenerated songs' lyrics by ear (Last Nite,
+   Teenagers, Creep). Supermassive (GP5) remains a deferred follow-up
+   (`/ardd-backlog` candidate).
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
