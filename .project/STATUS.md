@@ -1,5 +1,62 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night-4 (**Deploy crash fully resolved (2nd root cause
+found), Node 20→22 LTS shipped, and the two open feedback items planned +
+tasked.**
+
+1. **Deploy crash — real fix.** The `b02a136` pipeline `main`-field fix
+   (previous entry) turned out to be necessary but not sufficient: a fresh
+   Railway deploy from that commit still crash-looped with the identical
+   `ERR_UNKNOWN_FILE_EXTENSION`. Root cause #2: `packages/shared/package.json`
+   had the same `"main": "./src/index.ts"` bug, and shared is **not**
+   type-only as the Dockerfile's stale comment claimed —
+   `packages/pipeline/dist/gp-parser.js` has a real runtime import
+   (`walkSyllables` from `@sync-tab-scroll/shared`). Fixed by pointing
+   shared's `main`/`types` at `./dist/index.js`/`./dist/index.d.ts` and
+   correcting the Dockerfile comment (`a9e7e73`). Verified via a real
+   prod-style `pnpm --filter server deploy --legacy --prod` build run under
+   `node dist/index.js` (Node 20) with no crash, and confirmed on Railway:
+   deployment `a8135fb6…` **Online**, `https://sts.ty-pe.com/` → HTTP 200.
+2. **Node.js 20 → 22 LTS.** `Dockerfile` (both stages), root
+   `engines.node`, `.github/workflows/ci.yml`, `@types/node` (server +
+   pipeline), README, and `pnpm-lock.yaml` all bumped (`4d4a6bf`). Verified
+   locally under Node 22.22.3: build, typecheck, and all tests (228 server +
+   104 client + 18 pipeline) green. No native-addon/alphaTab compatibility
+   issues found. Also added `.nvmrc` pinned to `22` (`2b4c6e5`). Railway
+   redeployed on the Node 22 image and is confirmed Online, logs clean.
+3. **`/ardd-plan` run on the 2 open feedback items** — `plan-99e6-
+   2026-07-18-6d2b.md` (**approved**), `tasks-99e6-e76f.md` (**ready**,
+   5 tasks / 3 phases). Diagnose-then-fix the lyrics-ticker early-highlight
+   at the "TIRO" measure 8→9 tie boundary (`feedback-lyrics-ticker-
+   tiro-measure8-9310.md` F001), with the still-open audio-output-latency
+   research thread (`feedback-audio-output-latency-t014-dfa8.md` F001)
+   folded in and closed out as superseded by this sharper, non-latency
+   repro rather than pursued further this pass. Both feedback files flipped
+   `open` → `planned`, bound to this plan. **0 open feedback files remain.**
+
+Prior context below.)_
+
+_Updated: 2026-07-18-night-3 (**Prod crash fixed: `packages/pipeline`'s
+`main` pointed at raw `.ts` source, not the built `dist`.** User reported a
+Railway crash alert; `railway logs` showed every boot failing with
+`ERR_UNKNOWN_FILE_EXTENSION` for `.../@sync-tab-scroll/pipeline/src/index.ts`
+— plain `node dist/index.js` in the production container has no TS loader.
+Root cause: `f83d939` (phase-2-in-app-authoring, T008–T010) added
+`"main": "./src/index.ts"` / `"types": "./src/index.ts"` to
+`packages/pipeline/package.json` when the server's upload route started
+importing the package at runtime — fine under `tsx`/`vite` in dev, fatal in
+prod where only `dist/*.js` exists (no `dist/index.js` had ever been
+generated either, since nothing referenced the package root before). Fixed
+by pointing `main`/`types` at `./dist/index.js` / `./dist/index.d.ts`.
+Verified: `pnpm --filter @sync-tab-scroll/pipeline build` produces
+`dist/index.js`, full `pnpm build` and `pnpm check` (typecheck) pass, all
+228 server tests pass, and a simulated `pnpm deploy --prod` layout resolves
+the package to the compiled JS (not `.ts`). Committed and pushed (signed)
+`b02a136`; Railway redeploy triggered, in progress as of this entry. This
+was a **pure infra/tooling fix** — no artifact, feature-register, or
+feedback-file changes, so most of this run was fact-gathering (see below)
+rather than a design/product update. Prior context below.)_
+
 _Updated: 2026-07-18-night-2 (**Full test suite green — all 6 failures from
 the prior entry root-caused and fixed (`e67d54e`).**
 
@@ -533,8 +590,8 @@ check (does muting actually silence audio) still pending** — bundle
 confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
-> **ARDD update available:** installed `bdd553e` (beta channel), source at
-> `v0.10.1-beta.11` — run `/ardd-update`.
+> **ARDD update available:** installed `a802dbc` (beta channel, v0.10.1),
+> latest release `v0.10.2` — run `/ardd-update`.
 
 ## Artifact Status
 
@@ -589,30 +646,34 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**1 open feedback file** — `feedback-audio-output-latency-t014-dfa8.md`
-(filed by `plan-1619`'s T014 research task: the ticker-offset
-latency-compensation hypothesis remains unconfirmed — alphaTab exposes no
-public `AudioContext`/`outputLatency` API, and empirical cross-device
-testing wasn't possible in a worktree environment. Needs real
-multi-device browser access before a fix is attempted).
-
-Every other feedback file is `planned` or superseded by a completed plan
-— `feedback-bottom-bar-icons-3a15.md`, `feedback-lyrics-timing-tiro-c741.md`,
-`feedback-mute-parts-own-tab-cf6d.md`, and
-`feedback-playback-start-stutter-2052.md` all landed via `plan-1619` or
-`plan-bottom-bar-icons`, both now `completed`/merged.
+**0 open feedback files.** `feedback-audio-output-latency-t014-dfa8.md`
+and `feedback-lyrics-ticker-tiro-measure8-9310.md` were the last two open
+files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
+(see Plans & Tasks). All other feedback files are `planned` or `split`
+(superseded by their group files, each independently `planned`).
 
 ## Feature Backlog
 
-**4 backlogged** · 0 planned · 0 tasked · **16 implemented** — see
+**3 backlogged** · 0 planned · 0 tasked · **21 implemented** — see
 `.project/features/`. Backlogged: `catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
-`latency-compensated-position-extrapolation`, `solo-mute-button-per-part`
-(new, filed 2026-07-17 — per-part "mute all but this" button).
+`count-in-metronome-beat-widget` (new, filed 2026-07-18 — shared beat
+widget for count-in/metronome, design detailed in the 2026-07-18-night
+entry above). `latency-compensated-position-extrapolation`,
+`hover-long-press-tooltip-for-i`, and `solo-mute-button-per-part` have
+since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Lyrics ticker tie-boundary fix + audio-latency feedback close-out** —
+  `plan-99e6-2026-07-18-6d2b.md` (`approved`), `tasks-99e6-e76f.md`
+  (`ready`, 0/5). Not yet started. Phase 1 (T001–T002) diagnoses whether
+  the "TIRO" measure 8→9 early-highlight bug lives in the shared
+  `walkSyllables` tie/dedup logic or the client's tick-compare logic; Phase
+  2 (T003–T004) fixes and adds a regression test; Phase 3 (T005) is
+  bookkeeping-only, closing out the audio-latency feedback thread as
+  superseded rather than pursued further.
 - **Lyrics-timing fixes, mute-parts tab, playback-stutter investigation** —
   `plan-1619-2026-07-17-39c6.md` (`approved`), `tasks-1619-1185.md`
   (`completed`, 20/20). Merged `8603fa9`. Shared `packages/shared/src/
@@ -693,22 +754,23 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
   `GITHUB_CLIENT_ID` Railway vars can be deleted.
 - **Lyrics-overlay + sign-out + part-mute-toggle — all deployed**
   (`index-Crk4cCoz.js` is the current live bundle, superseding both prior
-  builds referenced above).
+  builds referenced above). Node 22 image (`4d4a6bf`) and the shared-
+  package deploy fix (`a9e7e73`) are both live and confirmed Online as of
+  this entry.
 
 ## Recommended next step
 
-1. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
+1. **`/ardd-implement`** on `tasks-99e6-e76f.md` — the lyrics-ticker
+   tie-boundary fix is planned and tasked but not started.
+2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
-2. **Live check of `plan-1619`'s deliverables** — none of it has been
+3. **Live check of `plan-1619`'s deliverables** — none of it has been
    exercised in a real browser yet, only unit/CT tests: confirm the
    Tracks tab renders correctly, `.lrc` timing actually looks right on
    "Time Is Running Out" in a live session, and whether the new
    `warmUpAudioOutput()` call actually reduces the reported playback-start
    stutter in practice.
-3. **`feedback-audio-output-latency-t014-dfa8.md`** — needs real
-   multi-device browser access (a Bluetooth output vs. wired/built-in) to
-   confirm or rule out the latency hypothesis before any fix is planned.
 4. **Retire `catalogue-co-owner-invite-flow`** by hand — its scope shipped
    as phase-2-in-app-authoring's Phase 6.
 5. **Live check of Phase 2 in-app authoring** — no manual/live verification
@@ -717,7 +779,7 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
    invite link, confirm co-owner visibility, in a real running session.
 6. **`/ardd-defects`** — refresh against everything since 2026-07-12
    (part-mute-toggle, phase-2-in-app-authoring, plan-1619,
-   bottom-bar-icons).
+   bottom-bar-icons, the two deploy fixes, Node 22 upgrade).
 7. **Live prod check of part-mute-toggle** — open the Preferences tab in a
    real session, confirm "Mute parts" lists every available part and
    actually silences the muted track's audio.
