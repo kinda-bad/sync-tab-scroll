@@ -101,18 +101,21 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   // directly — even where the bar cursor doesn't visibly follow it while
   // stopped, surfacing as a ticker that runs ahead of a correctly-placed
   // paused cursor (confirmed live 2026-07-18: paused on bar 14, ticker
-  // already two words ahead).
-  if (playbackState.status !== 'running') return null;
+  // already two words ahead). But drift correction itself must still run
+  // while paused — against the RAW playbackState.tickPosition
+  // (elapsedTicks = 0) — so a host seek-while-paused still propagates to
+  // non-hosts (T011, feedback F002).
+  const isRunning = playbackState.status === 'running';
 
   // Latency-compensated extrapolation (infrastructure.md Session & Real-Time
-  // Sync): project playbackState.tickPosition forward by the elapsed
-  // wall-clock time since it was authoritative, compensating for
+  // Sync), only while running: project playbackState.tickPosition forward by
+  // the elapsed wall-clock time since it was authoritative, compensating for
   // host→server→client propagation latency rather than comparing against the
   // raw last-reported value as-is. Elapsed ms is converted to ticks using the
   // local tempo at that tick position, derived from this participant's own
   // already-loaded score — deliberately not playbackState.bpm, which stays
   // display-only.
-  const elapsedMs = Date.now() - playbackState.serverTimestamp;
+  const elapsedMs = isRunning ? Date.now() - playbackState.serverTimestamp : 0;
   // isReadyForPlayback (checked above) implies a score is loaded in
   // practice, but the type is nullable — fall back to no extrapolation
   // (raw comparison) in the defensive null case rather than throwing.

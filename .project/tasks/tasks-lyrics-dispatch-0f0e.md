@@ -110,7 +110,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 4: correctDrift pause fix (F002)
 
-- [ ] T011 [artifacts: infrastructure] Reshape the uncommitted
+- [x] T011 [artifacts: infrastructure] Reshape the uncommitted
   working-tree fix in `client/src/playback-sync.ts#correctDrift`
   (feedback F002): instead of `if (playbackState.status !== 'running')
   return null;` before the extrapolation block, extrapolate only while

@@ -122,6 +122,19 @@ describe('correctDrift', () => {
     expect(result).toBeNull();
   });
 
+  it('propagates a host seek-while-paused to a paused non-host (drift against the raw tick, no extrapolation)', () => {
+    // T011 (feedback F002): while paused, extrapolation is off (elapsedTicks
+    // = 0) but drift correction against the raw playbackState.tickPosition
+    // must still run — otherwise a host seek while paused never reaches
+    // non-hosts until playback resumes.
+    const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: 300 });
+    const playbackState = fakePlaybackState({ status: 'paused', tickPosition: 5000, serverTimestamp: Date.now() });
+    vi.advanceTimersByTime(5000); // stale timestamp must NOT inflate the target
+    const result = correctDrift(api, playbackState, false);
+    expect(api.tickPosition).toBe(5000);
+    expect(result).toBe(5000);
+  });
+
   it('never drift-corrects the host, even when drift exceeds the threshold', () => {
     const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 5000 });
     const result = correctDrift(api, fakePlaybackState({ status: 'running', tickPosition: 100 }), true);
