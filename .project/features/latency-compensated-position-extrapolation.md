@@ -1,6 +1,6 @@
 ---
 slug: latency-compensated-position-extrapolation
-status: tasked
+status: implemented
 logged: 2026-07-15
 plan: plan-latency-compensated-position-extrapolation-2026-07-18-81b7.md
 tasks: tasks-latency-compensated-position-extrapolation-415b.md

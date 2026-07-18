@@ -1,6 +1,7 @@
 import * as at from '@coderline/alphatab';
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { PlaybackState, Session } from '@sync-tab-scroll/shared';
+import { TICKS_PER_QUARTER_NOTE, localTempoAtTick } from './tempo-lookup';
 
 /** MIDI ticks — small relative to a beat (division is typically 960 ticks/quarter note). */
 const DRIFT_THRESHOLD_TICKS = 50;
@@ -88,11 +89,27 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
 
   if (isHost) return null;
 
-  const drift = Math.abs(api.tickPosition - playbackState.tickPosition);
+  // Latency-compensated extrapolation (infrastructure.md Session & Real-Time
+  // Sync): project playbackState.tickPosition forward by the elapsed
+  // wall-clock time since it was authoritative, compensating for
+  // host→server→client propagation latency rather than comparing against the
+  // raw last-reported value as-is. Elapsed ms is converted to ticks using the
+  // local tempo at that tick position, derived from this participant's own
+  // already-loaded score — deliberately not playbackState.bpm, which stays
+  // display-only.
+  const elapsedMs = Date.now() - playbackState.serverTimestamp;
+  // isReadyForPlayback (checked above) implies a score is loaded in
+  // practice, but the type is nullable — fall back to no extrapolation
+  // (raw comparison) in the defensive null case rather than throwing.
+  const tempo = api.score ? localTempoAtTick(api.score, playbackState.tickPosition) : 0;
+  const elapsedTicks = (elapsedMs * TICKS_PER_QUARTER_NOTE * tempo) / 60000;
+  const projectedTickPosition = playbackState.tickPosition + elapsedTicks;
+
+  const drift = Math.abs(api.tickPosition - projectedTickPosition);
   if (drift > DRIFT_THRESHOLD_TICKS) {
-    onApply?.(playbackState.tickPosition);
-    api.tickPosition = playbackState.tickPosition;
-    return playbackState.tickPosition;
+    onApply?.(projectedTickPosition);
+    api.tickPosition = projectedTickPosition;
+    return projectedTickPosition;
   }
   return null;
 }

@@ -1,5 +1,6 @@
 import type * as at from '@coderline/alphatab';
 import type { LrcLine } from './lrc-parser';
+import { localTempoAtTick, ticksToMs } from './tempo-lookup';
 
 export interface GapTimingResult {
   /** Whether this gap's real-time duration exceeds one local measure (ui.md Gap timing indicator). */
@@ -8,20 +9,6 @@ export interface GapTimingResult {
   measureDurationMs: number;
   /** The 4 beat timestamps (ms, ascending) immediately preceding `endMs`, at the local beat duration. Empty when `qualifies` is false. */
   beatTimestampsMs: number[];
-}
-
-/**
- * alphaTab's fixed MIDI tick resolution (`MidiUtils.QuarterTime` internally
- * — not part of the public `@coderline/alphatab` API surface, so this
- * module hardcodes the same stable constant rather than importing it).
- * `MasterBar.calculateDuration()` returns a bar's length in these ticks;
- * converting to real time at a given tempo is standard MIDI tick math:
- * ms = ticks * (60000 / (bpm * ticksPerQuarterNote)).
- */
-const TICKS_PER_QUARTER_NOTE = 960;
-
-function ticksToMs(ticks: number, bpm: number): number {
-  return (ticks * 60000) / (bpm * TICKS_PER_QUARTER_NOTE);
 }
 
 /**
@@ -46,18 +33,13 @@ function ticksToMs(ticks: number, bpm: number): number {
  */
 export function computeGapTiming(score: at.model.Score, startMs: number, endMs: number): GapTimingResult {
   let cumulativeMs = 0;
-  let tempo = score.tempo;
 
   let targetBarDurationMs = 0;
   let targetTimeSignatureNumerator = 4;
   let found = false;
 
   for (const masterBar of score.masterBars) {
-    const automations = masterBar.tempoAutomations;
-    if (automations && automations.length > 0) {
-      tempo = automations[0].value;
-    }
-
+    const tempo = localTempoAtTick(score, masterBar.start);
     const durationTicks = masterBar.calculateDuration();
     const durationMs = ticksToMs(durationTicks, tempo);
     const barEndMs = cumulativeMs + durationMs;
