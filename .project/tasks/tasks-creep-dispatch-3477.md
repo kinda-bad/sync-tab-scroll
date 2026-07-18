@@ -111,6 +111,64 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 >
 > Per the blocker rule, T003–T008 were not started.
 
+> **T002 resumption (2026-07-18, revised measure-level anchors) — STILL
+> BLOCKED, but much closer.** Re-ran the fit with the user's 8 new
+> anchors (b18 "In a beautiful world", b19 empty, b20 "I wish I was
+> special", b61 "She's", b62 "ru-un-ning out", b63 "She run, run,",
+> b88 "I don't belong", b89 "here") plus b14 "cry", "You" not before
+> b16, and the three TIRO truths — 13 checks total. Searched
+> exhaustively: skip-class powerset over {tie-dest, grace, hp-dest,
+> hp-origin, tie-origin, vibrato, hp+vib compound, slide-out shift (s1),
+> slide-out legato (s2), slide-destination (sd1/sd2), dotted,
+> long-note} x 4 whitespace-chunk semantics (emit / hold-next-singable /
+> hold-next-any-beat / consume-nothing) — ~16k combinations. **No rule
+> set passes 13/13.** Principled maximum is 10/13; the
+> only 11/13 sets are 5-class overfits (e.g. tie+hpvib+s1+s2+sd1,
+> hold-any) with WORSE residual shape (b61 late, b63 three bars late).
+>
+> **Best rule set: skip rests + tie destinations + grace beats +
+> shift-slide-out beats (slideOutType 1); whitespace `+` chunks consume
+> one singable beat, emit nothing** — 10/13:
+> - PASS: b14 cry@bar14; You first lands bar 16 (tick 59040!); b18 all
+>   six syllables in bar 18; b19 empty; b20 (phrase opens bar 20 —
+>   note: bar 20 has only 5 singable beats for 6 syllables under EVERY
+>   rule set, so "cial" lands the bar-21 downbeat; strict all-in-20 is
+>   physically impossible); b88 "I don't belong" in bar 88; b89 "here"
+>   at bar 89 (tick 338400, the final vocal note); all three TIRO
+>   truths (be / this? / ground).
+> - RESIDUALS (per-anchor): She's@bar60 tick 226560 (wanted 61/230400),
+>   ru-@61/230400 (wanted 62/234240), She@62/235680 (wanted 63/238080)
+>   — exactly one singable beat early, all three; un-/ning/out and
+>   run,/run, already land in their stated bars.
+> - **Why it can't close:** the trio needs exactly +1 extra skipped
+>   beat somewhere in bars 21–60, but the final line needs NET ZERO
+>   extra skips by bar 88 (verified: forcing any one extra skip fixes
+>   b61/62/63 completely and then pushes the final "here" off the end
+>   of the beat stream — bar 88–89 has exactly the 5 singable slots the
+>   last line needs). Monotone skip rules cannot add a skip and later
+>   take it back; the ws-chunk nonlinearity (hold-any) can, but no
+>   class assignment balances both regions (exhaustively checked).
+> - Diagnostics: the file's own per-beat lyrics are useless as
+>   arbiter here — in bars 57–64 they carry "...you want / You're so
+>   fuckin' special / I wish I was special / But I'm a creep" where the
+>   user hears "She's running out / She run, run," (a full section
+>   offset; they end at bar 72 vs the true bar-89 ending). The
+>   one-beat residual most likely reflects a missing melisma note in
+>   the transcription of the "do-o-o-o-o-or" run (bars 58–60), not a
+>   missing dispatch rule.
+> - For comparison, the SHIPPED rule set scores 5/13 on the same
+>   checks; the best set fixes both user-reported defects (the "In a
+>   beautiful world" placement and the end-of-song dry-out) and leaves
+>   only the 3-syllable/one-beat residual at bars 60–62.
+>
+> Stopping again per instruction ("if none fits, report the best
+> per-anchor residuals and stop"). Recommended next decision for the
+> user/coordinator: accept the best rule set above (rests + tie-dest +
+> grace + shift-slide skip) as the dispatch semantics — it is minimal,
+> musically motivated (all four classes are non-attack/ornament beats),
+> and TIRO-safe — and treat the bars-60-62 residual as transcription
+> error; then T003–T008 can proceed against it.
+
 ## Phase 2: Implement
 
 - [ ] T003 [artifacts: constitution, infrastructure] Test-first
