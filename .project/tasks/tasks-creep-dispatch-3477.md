@@ -169,6 +169,17 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 > and TIRO-safe — and treat the bars-60-62 residual as transcription
 > error; then T003–T008 can proceed against it.
 
+> **Decision (2026-07-18, coordinator/user): recommendation accepted.**
+> Adopted dispatch semantics: a non-empty chunk skips rests, tie
+> destinations, grace beats, and shift-slide-out beats, landing on the
+> next singable beat; a whitespace-only `+` chunk consumes one singable
+> beat (same skipping) and emits nothing; an empty chunk consumes any
+> one beat. The bars-60–62 one-singable-beat residual is recorded as a
+> TRANSCRIPTION DEFECT in the source tab (missing melisma note in the
+> bars-58–60 "do-o-o-o-or" run) — T006's live check must treat
+> "She's / ru-un-ning / She run" landing one bar early around bars
+> 60–62 as the expected observable, not a failure.
+
 ## Phase 2: Implement
 
 - [ ] T003 [artifacts: constitution, infrastructure] Test-first
