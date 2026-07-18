@@ -25,3 +25,47 @@ test('an iconOnly button renders no visible text but exposes the label via aria-
   await expect(button).toHaveAttribute('aria-label', 'Settings');
   await expect(button).toHaveAttribute('title', 'Settings');
 });
+
+/**
+ * T002 (tasks-hover-long-press-tooltip-for-i-9124.md): iconOnly Button
+ * wires Tooltip.svelte via pointer events — mouse/pen hover shows/hides
+ * it immediately, touch long-press (~500ms) shows it, and a short tap
+ * does not. Written and confirmed failing before the wiring existed, per
+ * constitution Principle VII.
+ */
+test('mouse hover shows the tooltip, pointerleave hides it', async ({ mount, page }) => {
+  await mount(IconButtonHarness, { props: { label: 'Settings', iconOnly: true } });
+  const button = page.locator('button');
+  const tooltip = page.getByRole('tooltip');
+
+  await expect(tooltip).not.toBeVisible();
+  await button.dispatchEvent('pointerenter', { pointerType: 'mouse' });
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toHaveText('Settings');
+  await button.dispatchEvent('pointerleave', { pointerType: 'mouse' });
+  await expect(tooltip).not.toBeVisible();
+});
+
+test('touch long-press shows the tooltip after the threshold, pointerup hides it', async ({ mount, page }) => {
+  await mount(IconButtonHarness, { props: { label: 'Settings', iconOnly: true } });
+  const button = page.locator('button');
+  const tooltip = page.getByRole('tooltip');
+
+  await button.dispatchEvent('pointerdown', { pointerType: 'touch' });
+  await expect(tooltip).not.toBeVisible();
+  await page.waitForTimeout(600);
+  await expect(tooltip).toBeVisible();
+  await button.dispatchEvent('pointerup', { pointerType: 'touch' });
+  await expect(tooltip).not.toBeVisible();
+});
+
+test('a short touch tap does not show the tooltip', async ({ mount, page }) => {
+  await mount(IconButtonHarness, { props: { label: 'Settings', iconOnly: true } });
+  const button = page.locator('button');
+  const tooltip = page.getByRole('tooltip');
+
+  await button.dispatchEvent('pointerdown', { pointerType: 'touch' });
+  await button.dispatchEvent('pointerup', { pointerType: 'touch' });
+  await page.waitForTimeout(600);
+  await expect(tooltip).not.toBeVisible();
+});

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte';
+  import Tooltip from './Tooltip.svelte';
 
   export let variant: 'ghost' | 'riot' | 'hazard' = 'ghost';
   export let label: string;
@@ -13,24 +14,79 @@
   // screen-reader- and hover-tooltip-accessible despite showing no text.
   export let icon: ComponentType | undefined = undefined;
   export let iconOnly = false;
+
+  // tasks-hover-long-press-tooltip-for-i-9124.md T002: the native `title`
+  // attribute above is an unreliable *visible* hover cue (inconsistent
+  // timing across browsers, nothing on touch), so a Tooltip supplements it
+  // for iconOnly controls — shown on mouse/pen hover, and on ~500ms touch
+  // long-press, dismissing on pointer-leave/release.
+  let showTooltip = false;
+  let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+  const LONG_PRESS_MS = 500;
+
+  function handlePointerEnter(event: PointerEvent) {
+    if (event.pointerType === 'touch') return;
+    showTooltip = true;
+  }
+
+  function handlePointerLeave(event: PointerEvent) {
+    if (event.pointerType === 'touch') {
+      clearTimeout(longPressTimer);
+    }
+    showTooltip = false;
+  }
+
+  function handlePointerDown(event: PointerEvent) {
+    if (event.pointerType !== 'touch') return;
+    longPressTimer = setTimeout(() => {
+      showTooltip = true;
+    }, LONG_PRESS_MS);
+  }
+
+  function handlePointerUp(event: PointerEvent) {
+    if (event.pointerType !== 'touch') return;
+    clearTimeout(longPressTimer);
+    showTooltip = false;
+  }
+
+  function handlePointerCancel(event: PointerEvent) {
+    if (event.pointerType !== 'touch') return;
+    clearTimeout(longPressTimer);
+    showTooltip = false;
+  }
 </script>
 
-<button
-  class="btn btn-{variant}"
-  {type}
-  {disabled}
-  {onclick}
-  aria-label={iconOnly ? label : undefined}
-  title={iconOnly ? label : undefined}
->
-  {#if iconOnly && icon}
-    <svelte:component this={icon} size={18} aria-hidden="true" />
-  {:else}
-    {label}
+<span class="btn-wrap">
+  <button
+    class="btn btn-{variant}"
+    {type}
+    {disabled}
+    {onclick}
+    aria-label={iconOnly ? label : undefined}
+    title={iconOnly ? label : undefined}
+    onpointerenter={iconOnly ? handlePointerEnter : undefined}
+    onpointerleave={iconOnly ? handlePointerLeave : undefined}
+    onpointerdown={iconOnly ? handlePointerDown : undefined}
+    onpointerup={iconOnly ? handlePointerUp : undefined}
+    onpointercancel={iconOnly ? handlePointerCancel : undefined}
+  >
+    {#if iconOnly && icon}
+      <svelte:component this={icon} size={18} aria-hidden="true" />
+    {:else}
+      {label}
+    {/if}
+  </button>
+  {#if iconOnly}
+    <Tooltip {label} visible={showTooltip} />
   {/if}
-</button>
+</span>
 
 <style>
+  .btn-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
   .btn {
     font-family: var(--font-mono);
     font-weight: 700;
