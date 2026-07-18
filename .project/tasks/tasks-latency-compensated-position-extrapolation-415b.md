@@ -1,7 +1,7 @@
 ---
 plan: plan-latency-compensated-position-extrapolation-2026-07-18-81b7.md
 generated: 2026-07-18
-status: in-progress
+status: completed
 ---
 
 # Tasks
