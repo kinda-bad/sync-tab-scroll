@@ -1,7 +1,7 @@
 ---
 plan: plan-lyrics-dispatch-2026-07-18-8090.md
 generated: 2026-07-18
-status: ready   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
