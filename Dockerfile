@@ -8,7 +8,7 @@
 # the runtime stage automatically by `pnpm --filter server deploy`, which
 # resolves transitive workspace deps into /app/server-deploy/node_modules.
 
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
@@ -43,7 +43,7 @@ RUN pnpm build
 # applies via the env var pnpm reads instead.
 RUN npm_config_ignore_scripts=true pnpm --filter server deploy --legacy --prod /app/server-deploy
 
-FROM node:20-slim AS runtime
+FROM node:22-slim AS runtime
 WORKDIR /app/server
 COPY --from=build /app/server-deploy ./
 # server/src/config.ts's CLIENT_ROOT default ('../client/dist', relative to

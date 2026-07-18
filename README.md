@@ -18,7 +18,7 @@ See `.project/artifacts/` for the full artifact-driven-dev specification
 
 ### Prerequisites and install
 
-Requires Node **>=20** (per root `package.json`'s `engines` field) and
+Requires Node **>=22** (per root `package.json`'s `engines` field) and
 [pnpm](https://pnpm.io/) (tested with pnpm 10.33.0). From the repo root:
 
 ```sh
