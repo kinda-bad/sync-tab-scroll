@@ -13,6 +13,10 @@ export interface CatalogMeta {
   lyricsTrackIndex: number | null;
   lyricsLineIndex: number | null;
   lyricLineBreaks: number[] | null;
+  /** Raw track-level GP lyric line for GP-semantics re-dispatch (feedback F001). Omitted when the song has no track-level line. */
+  lyricsRawLine?: string;
+  /** The raw line's start-bar offset (GPIF <Offset>); omitted when 0. */
+  lyricsRawLineStartBar?: number;
 }
 
 /**

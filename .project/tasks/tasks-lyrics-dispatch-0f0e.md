@@ -49,7 +49,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Pipeline raw-line publish + corrected .lrc
 
-- [ ] T004 [artifacts: pipeline, datamodel] Test-first in
+- [x] T004 [artifacts: pipeline, datamodel] Test-first in
   `packages/pipeline`: extend the pipeline's existing raw `score.gpif`
   zip+XML read to extract the lyrics track's raw track-level lyric line
   (`<Lyrics dispatched="true"><Line><Text>` CDATA for the track at

@@ -36,6 +36,42 @@ export function readRawLyricsLines(gpFilePath: string, trackIndex: number, lineI
   return lines.length > 0 ? lines : null;
 }
 
+export interface RawLyricsLine {
+  /** The raw, un-dispatched track-level lyric line text (GP hyphen/plus conventions intact). */
+  text: string;
+  /** The line's start-bar offset within the track (GPIF <Offset>), almost always 0. */
+  startBar: number;
+}
+
+/**
+ * Reads the raw track-level lyric line (`<Lyrics dispatched="true"><Line>
+ * <Text>` CDATA, GPIF) for one track — the un-dispatched source text GP
+ * itself dispatched from. Published as `CatalogSong.lyricsRawLine` so the
+ * client and pipeline can re-dispatch it with correct GP semantics
+ * (`dispatchLyrics`, feedback F001) instead of trusting alphaTab's
+ * divergent `applyLyrics` placement. Returns null when the track has no
+ * (non-empty) track-level line — e.g. no lyrics, or true per-beat lyrics.
+ */
+export function readRawLyricsLine(gpFilePath: string, trackIndex: number, lineIndex = 0): RawLyricsLine | null {
+  const zip = new AdmZip(gpFilePath);
+  const entry = zip.getEntry('Content/score.gpif');
+  if (!entry) return null;
+
+  const parser = new XMLParser({
+    isArray: (name) => name === 'Track' || name === 'Line',
+    cdataPropName: '#cdata',
+  });
+  const xml = parser.parse(entry.getData().toString('utf8'));
+
+  const track = xml?.GPIF?.Tracks?.Track?.[trackIndex];
+  const line = track?.Lyrics?.Line?.[lineIndex];
+  const text: string | undefined = line?.Text?.['#cdata'] ?? line?.Text;
+  if (typeof text !== 'string' || text.trim().length === 0) return null;
+
+  const startBar = Number(line?.Offset ?? 0) || 0;
+  return { text, startBar };
+}
+
 /**
  * Counts syllables in a GP-authored lyric line using GP's own hyphen/plus
  * conventions: hyphens mark syllable breaks within a word ("be-fore"), and a

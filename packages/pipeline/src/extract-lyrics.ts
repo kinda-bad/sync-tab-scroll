@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { loadScore, findLyricsSource, extractSyllables, buildTickToMs, buildMsToTick } from './gp-parser.js';
-import { readRawLyricsLines, countSyllables, alignLinesByTimestamp } from './line-breaks.js';
+import { readRawLyricsLines, readRawLyricsLine, countSyllables, alignLinesByTimestamp } from './line-breaks.js';
 import { searchLrclib, parseLrclibLinesWithTimestamps } from './lrclib.js';
 import { buildLrc, passthroughLrc } from './lrc-writer.js';
 import { publishSong, slugify, type CatalogMeta, type CatalogPartMeta } from './catalog.js';
@@ -59,6 +59,12 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
 
     lrcContent = buildLrc(lines, lyricLineBreaks, syllables, tickToMs);
     meta = { ...meta, lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
+
+    const rawLine = readRawLyricsLine(gpFilePath, source.trackIndex, source.lineIndex);
+    if (rawLine) {
+      meta.lyricsRawLine = rawLine.text;
+      if (rawLine.startBar !== 0) meta.lyricsRawLineStartBar = rawLine.startBar;
+    }
   } else {
     const lrclibResult = await searchLrclib(title, artist);
     if (lrclibResult?.syncedLyrics) {
