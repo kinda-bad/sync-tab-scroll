@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Shared dispatcher (F001 core)
 
-- [ ] T001 [artifacts: constitution, infrastructure] Create failing tests
+- [x] T001 [artifacts: constitution, infrastructure] Create failing tests
   for a new shared GP-semantics lyric dispatcher in
   `packages/shared/src/lyrics-dispatch.test.ts` (Principle VII —
   test-first). Two groups: (a) synthetic fixtures covering each semantic
