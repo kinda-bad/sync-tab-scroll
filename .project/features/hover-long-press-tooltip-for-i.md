@@ -1,6 +1,6 @@
 ---
 slug: hover-long-press-tooltip-for-i
-status: tasked
+status: implemented
 logged: 2026-07-18
 plan: plan-hover-long-press-tooltip-for-i-2026-07-18-c2e5.md
 tasks: tasks-hover-long-press-tooltip-for-i-9124.md
