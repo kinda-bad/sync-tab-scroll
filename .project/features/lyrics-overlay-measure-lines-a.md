@@ -1,6 +1,6 @@
 ---
 slug: lyrics-overlay-measure-lines-a
-status: tasked
+status: implemented
 logged: 2026-07-18
 plan: plan-settings-personal-prefs-bundle-2026-07-18-bd58.md
 tasks: tasks-settings-personal-prefs-bundle-ed57.md
