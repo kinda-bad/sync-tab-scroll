@@ -1,7 +1,7 @@
 ---
 plan: plan-99e6-2026-07-18-6d2b.md
 generated: 2026-07-18
-status: in-progress
+status: abandoned
 ---
 
 # Tasks
@@ -55,3 +55,15 @@ neither of which this plan's Scope covers.
 ## Phase 3: Close out audio-latency feedback [parallel]
 
 - [ ] T005 No implementation task required — `feedback-audio-output-latency-t014-dfa8.md` F001 was already marked incorporated and flipped to `status: planned` (bound to this plan) during `/ardd-plan`'s feedback bookkeeping. When Phase 2 lands, note in the final commit/PR description that this plan's fix addresses the reported "~2 syllables ahead" symptom via a non-latency root cause, so the Bluetooth-output-latency hypothesis in that feedback file is superseded rather than pursued further. If the symptom persists post-fix, file fresh feedback rather than reopening this item.
+
+## Resolution (2026-07-18)
+
+Abandoned as superseded: the tie-boundary early-highlight bug was upstream
+of both candidate sites investigated here — in alphaTab's score-load lyric
+dispatch (`applyLyrics` diverging from Guitar Pro semantics: ties not
+skipped; empty chunks burned only on playable beats). Root cause and fix:
+`feedback-lyrics-dispatch-root-cause-f0f6.md` and
+`plan-lyrics-dispatch-2026-07-18-8090.md` (tasks-lyrics-dispatch-0f0e.md),
+which re-dispatches the raw track-level lyric line with GP semantics via
+the shared `dispatchLyrics`. Plan `plan-99e6-2026-07-18-6d2b.md` is
+`superseded`.

@@ -126,7 +126,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 5: Close-out
 
-- [ ] T012 Close out the superseded tie-boundary effort: flip
+- [x] T012 Close out the superseded tie-boundary effort: flip
   `.project/tasks/tasks-99e6-e76f.md` to `abandoned` via
   `.claude/skills/ardd-scripts/ardd-state.sh tasks-flip` (its plan
   `plan-99e6-2026-07-18-6d2b.md` is already `superseded`), and append a
