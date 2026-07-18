@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Diagnose the missing rule(s)
 
-- [ ] T001 Research (no production code): explain why alphaTab 1.8.3's
+- [x] T001 Research (no production code): explain why alphaTab 1.8.3's
   own lyric dispatch left the Creep vocal-track note at bar 16 tick
   60480 (voice 0, 1 note, not rest/isEmpty/grace — verified) with NO
   lyric while continuing to assign afterward — sequential
@@ -44,6 +44,72 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   bar 102 holds "ground"). Record the winning rule set and the F003
   verdict as a note in this tasks file. If no rule set satisfies all
   checks, stop and surface per the blocker rule.
+
+> **T001 findings (2026-07-18):** Importer artifact, not a rule — and a
+> bigger one than expected. In alphaTab 1.8.3's GPIF importer
+> (`alphaTab.core.mjs`), any per-beat `<Lyrics>` element sets
+> `this._skipApplyLyrics = true` (line ~20735, `case "Lyrics": beat.lyrics =
+> this._parseBeatLyrics(c); this._skipApplyLyrics = true;`), and the
+> importer's entry point (line ~19471) then **never calls
+> `Track.applyLyrics` at all**. Creep's `Content/score.gpif` carries 246
+> per-beat `<Lyrics><Line><![CDATA[...]]></Line>` blocks on the lyrics
+> track, so every lyric alphaTab displays for Creep is read verbatim from
+> the file — Guitar Pro's own (hand-editable) per-beat placement — with
+> zero sequential dispatch. The "mysterious" bar-16 note at tick 60480 has
+> no lyric simply because its `<Beat id="52">` has no `<Lyrics>` child in
+> the XML; nothing "skipped" it at runtime. It is a plain note (fret 4,
+> string 3, no tie/grace/slur/chord — verified in the model), so no
+> beat-property rule can reproduce that hole: it is GP-author hand
+> placement (or a post-dispatch note edit) baked into the file.
+> Consequence: for GP7/8 files with per-beat lyrics, the file's own
+> per-beat data is the display-authoritative stream, and no raw-line rule
+> set is guaranteed to reproduce it.
+
+> **T002 findings — BLOCKED (2026-07-18):** Exhaustive fit of the candidate
+> space (skipTies x skipGrace x whitespace-chunk mode: emit /
+> hold-next-singable / hold-next-any = 12 rule sets, scripted in scratchpad
+> `fit-rules.mjs` against alphaTab chunker + real beats) — **no rule set
+> satisfies all acceptance checks**, and check (b) is provably
+> unsatisfiable by ANY beat-property rule:
+>
+> - Creep's own authoritative per-beat file data places `cry`@51360 (bar
+>   14), then `You`@51840, `float`@52320, `like`@52800, `a`@53280,
+>   `fea-`@53760(tie-dest!), rests, then `the-`@59040, `e-`@59520,
+>   `er`@60000, (hole)@60480, `In`@60960. So **tick 59040 carries "the-",
+>   not "You"** per the file; ground truth (b) "You"@59040 contradicts the
+>   file. And (a)+(b) jointly are impossible for sequential dispatch: to
+>   put "You" at 59040 after "cry"@51360, chunks You/float/like/a would
+>   have to skip four plain singable note beats (51840–53280) that no
+>   beat property distinguishes.
+> - Best-fit vs Creep's 246-entry per-beat truth: skip-rests-only (ties
+>   KEPT, graces kept, ws emit) — i.e. essentially alphaTab's applyLyrics
+>   rule — matches perfectly up to the 60480 hand-placed hole, then runs
+>   one beat early forever (45/246 exact-tick matches). The shipped
+>   ties-skipped rule scores 7/246 on Creep.
+> - But TIRO demands the OPPOSITE: its user-validated truths (bar 14
+>   "be", bar 69 "this?", bar 102 "ground") hold ONLY with ties skipped;
+>   with ties kept TIRO gives death/yeah,/it. And TIRO's own per-beat
+>   file data (333 entries) says bar 14 = "death" — i.e. TIRO's per-beat
+>   data is stale/divergent from the user's ear while Creep's is locally
+>   consistent. The two songs' ground truths select mutually exclusive
+>   rule sets.
+> - **F003 verdict:** the Creep raw line IS complete — it ends "...She
+>   run, run, run / Whatever makes you happy ... / I don't be-long here /
+>   I don't be-long here". Both the raw line and the file's per-beat
+>   lyrics end at bar 72 (`here`@275040); the lyric-track notes in bars
+>   73–89 genuinely carry no lyrics in the source. Correct end-of-stream
+>   is bar 72; any rendering past that is dispatcher misalignment, and a
+>   "dry-out" after bar 72 is source-accurate, not a defect.
+> - **Recommendation for the next plan:** stop fitting raw-line rules for
+>   per-beat-authored files. When the GPIF carries per-beat `<Lyrics>`
+>   (alphaTab exposes them as `beat.lyrics`), use that stream directly as
+>   the syllable source (it is what GP shows and what the author placed);
+>   keep raw-line dispatch (current ties-skip rules, TIRO-validated) only
+>   as the fallback for files without per-beat data. The user's Creep
+>   "You"@59040 expectation should be re-checked against the file's
+>   "the-"@59040 placement — no dispatcher can produce it from this file.
+>
+> Per the blocker rule, T003–T008 were not started.
 
 ## Phase 2: Implement
 
