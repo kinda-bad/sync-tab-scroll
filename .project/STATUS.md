@@ -715,8 +715,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · 0 tasked · **21 implemented** — see
-`.project/features/`. Backlogged: `catalogue-co-owner-invite-flow`
+**4 backlogged** · 0 planned · 0 tasked · **21 implemented** — see
+`.project/features/`. Backlogged: `gp5-raw-lyric-line-extraction` (new,
+2026-07-18 — GP5 binary raw-lyric-line reader so Supermassive gets the
+corrected dispatch; downstream stack already in place),
+`catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
 `count-in-metronome-beat-widget` (new, filed 2026-07-18 — shared beat
