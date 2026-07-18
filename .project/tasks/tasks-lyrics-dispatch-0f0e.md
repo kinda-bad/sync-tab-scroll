@@ -134,7 +134,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `feedback-lyrics-dispatch-root-cause-f0f6.md` and this plan: the bug
   was upstream of both candidate sites, in alphaTab's score-load lyric
   dispatch. No code.
-- [ ] T013 [parallel] Draft and file an upstream alphaTab GitHub issue
+- [x] T013 [parallel] Draft and file an upstream alphaTab GitHub issue
   (coderline/alphaTab) describing the `applyLyrics` divergence from
   Guitar Pro dispatch semantics (ties not skipped; empty chunks burned
   only on playable beats), with the TIRO-derived minimal repro. If
@@ -153,3 +153,10 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   highlighted held "ground" (dispatched in bar 101 — no syllable of its own
   at 102/1). Sanity-played verse 1: ticker advanced through
   "drown-ing … I wan-na break this spe-ll" in time with the singing.
+- T013 (2026-07-18): upstream issue text DRAFTED but NOT filed — filing on
+  coderline/alphaTab awaits user confirmation. Draft saved at
+  /private/tmp/claude-501/-Users-tylerpeckenpaugh-dev-sync-tab-scroll/0c83d860-779f-4b60-a020-be29323bfc44/scratchpad/alphatab-issue-draft.md
+  (title: "Lyrics.applyLyrics diverges from Guitar Pro's dispatch
+  semantics (ties not skipped; empty chunks consumed only on playable
+  beats)"; full body reproduced in the implement session report). No issue
+  URL yet.
