@@ -12,6 +12,8 @@ interface SongMeta {
   lyricsTrackIndex: number | null;
   lyricsLineIndex: number | null;
   lyricLineBreaks: number[] | null;
+  lyricsRawLine?: string;
+  lyricsRawLineStartBar?: number;
 }
 
 /** On-disk `catalogue.json` shape (datamodel.md Catalogue Activation Key) — the raw key material for a private catalogue. */
@@ -77,6 +79,8 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
     lyricsTrackIndex: meta.lyricsTrackIndex,
     lyricsLineIndex: meta.lyricsLineIndex,
     lyricLineBreaks: meta.lyricLineBreaks,
+    lyricsRawLine: meta.lyricsRawLine,
+    lyricsRawLineStartBar: meta.lyricsRawLineStartBar,
   };
 }
 

@@ -1,5 +1,5 @@
-import type * as at from '@coderline/alphatab';
-import { walkSyllables, type Syllable } from '@sync-tab-scroll/shared';
+import * as at from '@coderline/alphatab';
+import { walkSyllables, dispatchLyrics, type Syllable, type DispatchBeat } from '@sync-tab-scroll/shared';
 
 export type { Syllable };
 
@@ -23,6 +23,42 @@ export type { Syllable };
  */
 export function walkLyricBeats(score: at.model.Score, lyricsTrackIndex: number, lyricsLineIndex: number): Syllable[] {
   return walkSyllables(score, { trackIndex: lyricsTrackIndex, lineIndex: lyricsLineIndex });
+}
+
+/**
+ * GP-semantics syllable derivation (feedback F001): when the song's meta
+ * provides `lyricsRawLine` (the raw, un-dispatched track-level lyric line —
+ * datamodel.md), the overlay's syllable stream comes from re-dispatching it
+ * with GP's own semantics — chunked by alphaTab's own `at.model.Lyrics`
+ * chunker (never reimplemented), placed by the shared `dispatchLyrics`
+ * (ties skipped for non-empty chunks; an empty chunk burns the very next
+ * beat of any kind) — instead of trusting the per-beat `beat.lyrics` that
+ * alphaTab's divergent `applyLyrics` produced at score load.
+ * `walkLyricBeats` stays the fallback when the field is absent
+ * (legacy/personal catalog songs). Same tick source as `walkSyllables`
+ * (`beat.absolutePlaybackStart`); mirrors the pipeline's
+ * `extractSyllablesFromRawLine` so `.lrc` and overlay can't drift apart
+ * (constitution Principle II).
+ */
+export function walkLyricBeatsFromRawLine(score: at.model.Score, lyricsTrackIndex: number, rawLine: string): Syllable[] {
+  const lyrics = new at.model.Lyrics();
+  lyrics.text = rawLine;
+  (lyrics as any).finish(false);
+  const chunks: string[] = (lyrics as any).chunks;
+
+  const beats: DispatchBeat[] = [];
+  for (const staff of score.tracks[lyricsTrackIndex].staves) {
+    for (const bar of staff.bars) {
+      for (const beat of bar.voices[0].beats) {
+        beats.push({
+          tickPosition: beat.absolutePlaybackStart,
+          isRest: beat.isRest,
+          isTieDestination: beat.notes?.some((n) => n.isTieDestination) ?? false,
+        });
+      }
+    }
+  }
+  return dispatchLyrics(chunks, beats);
 }
 
 /** Regroups the flat syllable stream into lines using lyricLineBreaks (syllable-count-per-line, datamodel.md) — matches .lrc's line boundaries. */

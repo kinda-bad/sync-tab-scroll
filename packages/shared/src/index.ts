@@ -151,6 +151,10 @@ export interface CatalogSong {
   lyricsLineIndex: number | null;
   /** Syllable count per line, for regrouping the flat per-beat syllable stream. Same nullability as lyricsTrackIndex. */
   lyricLineBreaks: number[] | null;
+  /** Raw, un-dispatched track-level GP lyric line (datamodel.md). When present, the overlay and pipeline re-dispatch it with GP semantics (`dispatchLyrics`, feedback F001) instead of trusting alphaTab's divergent per-beat `beat.lyrics`. Omitted when the song has no track-level line — fall back to `walkSyllables`. */
+  lyricsRawLine?: string;
+  /** The raw line's start-bar offset (GPIF `<Offset>`); omitted when 0. */
+  lyricsRawLineStartBar?: number;
 }
 
 export interface PlaybackState {

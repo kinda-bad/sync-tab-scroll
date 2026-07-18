@@ -5,7 +5,7 @@ import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-rend
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
-import { walkLyricBeats, groupIntoLines } from './lyrics-beat-walk';
+import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
@@ -156,8 +156,13 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     const lyricsTrackIndex = song.lyricsTrackIndex;
     const lyricsLineIndex = song.lyricsLineIndex;
     const lyricLineBreaks = song.lyricLineBreaks;
+    const rawLine = song.lyricsRawLine;
     api.scoreLoaded.on((score) => {
-      const syllables = walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
+      // GP-semantics dispatch from the published raw line when present
+      // (feedback F001); per-beat walkSyllables stays the legacy fallback.
+      const syllables = rawLine
+        ? walkLyricBeatsFromRawLine(score, lyricsTrackIndex, rawLine)
+        : walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
       const lines = groupIntoLines(syllables, lyricLineBreaks);
       const measures = computeMeasureBoundaries(score);
       state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer, { measures });

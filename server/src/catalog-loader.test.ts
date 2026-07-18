@@ -63,6 +63,35 @@ describe('loadCatalog', () => {
     });
   });
 
+
+  it('passes lyricsRawLine (and start-bar offset) through from meta.json to CatalogSong', () => {
+    writeSong('creep', {
+      meta: {
+        name: 'Creep',
+        artist: 'Radiohead',
+        parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+        lyricsTrackIndex: 0,
+        lyricsLineIndex: 0,
+        lyricLineBreaks: [4],
+        lyricsRawLine: 'When you were here be-fore',
+        lyricsRawLineStartBar: 2,
+      },
+    });
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs[0].lyricsRawLine).toBe('When you were here be-fore');
+    expect(songs[0].lyricsRawLineStartBar).toBe(2);
+  });
+
+  it('leaves lyricsRawLine undefined when meta.json omits it', () => {
+    writeSong('creep');
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs[0].lyricsRawLine).toBeUndefined();
+  });
+
   it('sets lyricsLrc to a URL path when lyrics.lrc is present', () => {
     writeSong('creep', { lrc: true });
 

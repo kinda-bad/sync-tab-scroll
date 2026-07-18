@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupIntoLines, walkLyricBeats } from './lyrics-beat-walk';
+import { groupIntoLines, walkLyricBeats, walkLyricBeatsFromRawLine } from './lyrics-beat-walk';
 
 // T004 (tasks-7f0f-4f2d.md, feedback F001): `absolutePlaybackStart` is a
 // distinct alphaTab-computed value from `masterBar.start + playbackStart` —
@@ -201,5 +201,53 @@ describe('groupIntoLines', () => {
 
   it('returns an empty array for an empty lyricLineBreaks input', () => {
     expect(groupIntoLines([{ text: 'a', tickPosition: 0 }], [])).toEqual([]);
+  });
+});
+
+describe('walkLyricBeatsFromRawLine', () => {
+  // Fake beats for the dispatch path carry isRest + tie flags; the raw line
+  // is chunked by alphaTab's real `at.model.Lyrics` chunker (never
+  // reimplemented) and dispatched with GP semantics via the shared
+  // `dispatchLyrics` (feedback F001).
+  function dispatchBeat(absolutePlaybackStart: number, opts: { rest?: boolean; tie?: boolean } = {}) {
+    return {
+      lyrics: null,
+      playbackStart: absolutePlaybackStart,
+      absolutePlaybackStart,
+      isRest: opts.rest ?? false,
+      notes: opts.tie ? [{ isTieDestination: true }] : [{ isTieDestination: false }],
+    };
+  }
+
+  function dispatchScore(beats: ReturnType<typeof dispatchBeat>[]) {
+    return {
+      tracks: [{ staves: [{ bars: [{ masterBar: { start: 0 }, voices: [{ beats }] }] }] }],
+    } as unknown as Parameters<typeof walkLyricBeats>[0];
+  }
+
+  it('lands non-empty chunks on singable beats, skipping rests and tie destinations', () => {
+    const score = dispatchScore([
+      dispatchBeat(0),
+      dispatchBeat(10, { rest: true }),
+      dispatchBeat(20, { tie: true }),
+      dispatchBeat(30),
+    ]);
+
+    expect(walkLyricBeatsFromRawLine(score, 0, 'hel-lo world')).toEqual([
+      { text: 'hel-', tickPosition: 0 },
+      { text: 'lo', tickPosition: 30 },
+    ]);
+  });
+
+  it('burns an empty chunk (double space, GP convention) on the very next beat of any kind', () => {
+    // "one  two": the double space becomes an empty chunk that consumes
+    // exactly one beat — here the tie-destination beat — so "two" lands on
+    // the beat after it.
+    const score = dispatchScore([dispatchBeat(0), dispatchBeat(10, { tie: true }), dispatchBeat(20), dispatchBeat(30)]);
+
+    expect(walkLyricBeatsFromRawLine(score, 0, 'one  two')).toEqual([
+      { text: 'one', tickPosition: 0 },
+      { text: 'two', tickPosition: 20 },
+    ]);
   });
 });

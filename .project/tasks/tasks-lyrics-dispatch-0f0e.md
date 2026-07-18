@@ -84,7 +84,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Client overlay switch-over
 
-- [ ] T008 [artifacts: infrastructure, ui] Test-first (Playwright CT or
+- [x] T008 [artifacts: infrastructure, ui] Test-first (Playwright CT or
   vitest per module conventions): wire the client's overlay syllable
   derivation (`client/src/lyrics-beat-walk.ts` /
   `client/src/lyrics-overlay.ts` construction path) to use
