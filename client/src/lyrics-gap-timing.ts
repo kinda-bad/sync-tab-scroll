@@ -88,6 +88,32 @@ export function computeGapTiming(score: at.model.Score, startMs: number, endMs: 
   return { qualifies: true, measureDurationMs: targetBarDurationMs, beatTimestampsMs };
 }
 
+export interface MeasureBoundary {
+  /** MIDI tick (same tick space as Syllable.tickPosition) where this measure begins. */
+  tick: number;
+  /** 1-based measure number, in score order. */
+  number: number;
+}
+
+/**
+ * Derives each masterBar's start tick and 1-based measure number from the
+ * score (ui.md "Measure markers" preference, in-tab lyrics ticker) — reuses
+ * the same masterBar walk as computeGapTiming above, but ticks (unlike ms)
+ * are already tempo-independent (`MasterBar.calculateDuration()` returns
+ * ticks directly), so no tempo/bpm math is needed here at all.
+ */
+export function computeMeasureBoundaries(score: at.model.Score): MeasureBoundary[] {
+  const boundaries: MeasureBoundary[] = [];
+  let cumulativeTicks = 0;
+  let number = 1;
+  for (const masterBar of score.masterBars) {
+    boundaries.push({ tick: cumulativeTicks, number });
+    cumulativeTicks += masterBar.calculateDuration();
+    number++;
+  }
+  return boundaries;
+}
+
 export interface LyricGap {
   /** Index into the rendered (real-line-only) line list this gap precedes — 0 for the leading gap, before the first line. */
   insertBeforeIndex: number;

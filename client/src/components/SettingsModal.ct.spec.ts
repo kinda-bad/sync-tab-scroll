@@ -191,6 +191,42 @@ test('Preferences tab: any participant sees the personal metronome toggle; click
   expect(sent).toEqual([]);
 });
 
+// --- Preferences tab: lyrics ticker font size + measure markers (T002/T004) ---
+
+test('Preferences tab: the lyrics ticker font size control renders all four options and selecting one persists it', async ({
+  mount,
+  page,
+}) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByRole('button', { name: 'Small' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Medium' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Large' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Huge' })).toBeVisible();
+
+  await component.getByRole('button', { name: 'Huge' }).click();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-ticker-font-size'));
+  expect(stored).toBe('huge');
+});
+
+test('Preferences tab: the "Measure markers" toggle defaults off, persists, and sends nothing', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByText('Measure markers: Off')).toBeVisible();
+
+  await component.getByText('Measure markers: Off').click();
+  await expect(component.getByText('Measure markers: On')).toBeVisible();
+
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-measure-markers'));
+  expect(stored).toBe('on');
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toEqual([]);
+});
+
 // --- Tracks tab: personal per-part mute controls (T016-T018, own 4th tab) --
 
 /**

@@ -8,7 +8,13 @@
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
   import { loadStoredTrackMute, persistTrackMute } from '../track-mute-preference';
-  import { setEngineMetronome, setEngineTrackMute } from '../playback-engine';
+  import { setEngineMetronome, setEngineTrackMute, setEngineLyricsTickerFontSize, setEngineMeasureMarkersVisible } from '../playback-engine';
+  import {
+    loadStoredLyricsTickerFontSize,
+    persistLyricsTickerFontSize,
+    type LyricsTickerFontSize,
+  } from '../lyrics-ticker-font-size-preference';
+  import { loadStoredMeasureMarkers, persistMeasureMarkers } from '../lyrics-measure-markers-preference';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -29,6 +35,9 @@
   $: themeMode = theme.endsWith('dark') ? 'dark' : 'light';
 
   let metronome = loadStoredMetronome();
+  let lyricsTickerFontSize: LyricsTickerFontSize = loadStoredLyricsTickerFontSize();
+  let measureMarkers = loadStoredMeasureMarkers();
+  const LYRICS_TICKER_FONT_SIZES: LyricsTickerFontSize[] = ['small', 'medium', 'large', 'huge'];
 
   // Personal, this-device-only "mute parts" preference (ui.md Preferences
   // tab, track-mute-preference.ts) — keyed per song+track, so recomputed
@@ -93,6 +102,23 @@
   // toggleMetronome's two-call shape exactly, but keyed per (songId,
   // trackIndex) — a mute choice for one song's track must not carry over
   // to a different song's differently-indexed track.
+  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // toggleMetronome's two-call shape, but with a 4-way value instead of a
+  // boolean.
+  function setLyricsTickerFontSize(size: LyricsTickerFontSize) {
+    lyricsTickerFontSize = size;
+    persistLyricsTickerFontSize(size);
+    setEngineLyricsTickerFontSize(size);
+  }
+
+  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // toggleMetronome's two-call shape exactly.
+  function toggleMeasureMarkers() {
+    measureMarkers = !measureMarkers;
+    persistMeasureMarkers(measureMarkers);
+    setEngineMeasureMarkersVisible(measureMarkers);
+  }
+
   function toggleTrackMute(trackIndex: number) {
     if (!session?.selectedSong) return;
     const songId = session.selectedSong;
@@ -217,6 +243,27 @@
       />
     </div>
     <p class="hint">Only you hear your metronome.</p>
+
+    <span class="section-label">Lyrics ticker font size</span>
+    <div class="control-row">
+      {#each LYRICS_TICKER_FONT_SIZES as size (size)}
+        <Button
+          variant={lyricsTickerFontSize === size ? 'riot' : 'ghost'}
+          label={size[0].toUpperCase() + size.slice(1)}
+          onclick={() => setLyricsTickerFontSize(size)}
+        />
+      {/each}
+    </div>
+
+    <span class="section-label">Measure markers</span>
+    <div class="control-row">
+      <Button
+        variant={measureMarkers ? 'riot' : 'ghost'}
+        label={measureMarkers ? 'Measure markers: On' : 'Measure markers: Off'}
+        onclick={toggleMeasureMarkers}
+      />
+    </div>
+    <p class="hint">Shows measure-boundary lines and numbers in the lyrics ticker.</p>
   {:else}
     {#if session && session.availableParts.length > 0}
       <span class="section-label">Tracks</span>

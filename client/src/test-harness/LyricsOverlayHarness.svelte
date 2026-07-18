@@ -31,10 +31,22 @@
       },
     } as unknown as AlphaTabApi;
 
-    const overlay = createLyricsOverlay(fakeApi, lines, container);
+    // Measure boundaries at ticks 0 (measure 1, before "When") and 300
+    // (measure 2, between "were" tick 200 and "here" tick 400) — used by
+    // the measure-markers CT spec to assert marker DOM position.
+    const measures = [
+      { tick: 0, number: 1 },
+      { tick: 300, number: 2 },
+    ];
+
+    const overlay = createLyricsOverlay(fakeApi, lines, container, { measures });
 
     (window as unknown as { __drive: (tick: number) => void }).__drive = (tick: number) => handler?.({ currentTick: tick });
     (window as unknown as { __setVisible: (visible: boolean) => void }).__setVisible = (visible: boolean) => overlay.setVisible(visible);
+    (window as unknown as { __setFontSize: (size: string) => void }).__setFontSize = (size: string) =>
+      overlay.setFontSize(size as never);
+    (window as unknown as { __setMeasureMarkersVisible: (visible: boolean) => void }).__setMeasureMarkersVisible = (visible: boolean) =>
+      overlay.setMeasureMarkersVisible(visible);
   });
 </script>
 

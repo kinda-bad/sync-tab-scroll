@@ -385,7 +385,11 @@
      surface tone, so this now actually shows up in both themes. */
   background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
   font-family: var(--font-mono);
-  font-size: 1.125rem;
+  /* lyrics-ticker-font-size-preference.ts's four step values, set on this
+     element by lyrics-overlay.ts from the loaded/updated preference —
+     deliberately spaced far apart (not a subtle scale) so each step reads
+     as clearly, noticeably distinct from its neighbors. */
+  font-size: var(--lyrics-ticker-font-size, 1.125rem);
   color: var(--ink-dim);
   overflow: hidden;
   pointer-events: none;
@@ -399,4 +403,28 @@
 .lyric-syllable.at-highlight {
   color: var(--riot);
   font-weight: 700;
+}
+
+/* Measure markers (ui.md "Measure markers" preference, lyrics-overlay.ts
+   T003) — a vertical line + measure-number label inserted into
+   .lyrics-track's child sequence alongside the .lyric-syllable spans,
+   mirroring .gap-dot/.gap-drain's own marker-in-a-flow-of-text styling but
+   for the in-tab ticker instead of the full lyric sheet. Hidden by default
+   (display: none set inline by lyrics-overlay.ts) until the "Measure
+   markers" preference is on. */
+.lyrics-measure-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--ink-dim);
+  opacity: 0.7;
+}
+.lyrics-measure-marker-line {
+  display: inline-block;
+  width: 1px;
+  align-self: stretch;
+  background: var(--ink-dim);
+}
+.lyrics-measure-marker-number {
+  font-size: 0.75em;
 }

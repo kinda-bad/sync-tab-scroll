@@ -1,10 +1,27 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { Syllable } from './lyrics-beat-walk';
+import type { MeasureBoundary } from './lyrics-gap-timing';
+import { loadStoredLyricsTickerFontSize, type LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
+import { loadStoredMeasureMarkers } from './lyrics-measure-markers-preference';
 
 export interface LyricsOverlay {
   setVisible(visible: boolean): void;
+  setFontSize(size: LyricsTickerFontSize): void;
+  setMeasureMarkersVisible(visible: boolean): void;
   destroy(): void;
 }
+
+export interface LyricsOverlayOptions {
+  /** Measure-boundary tick data (lyrics-gap-timing.ts's computeMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
+  measures?: MeasureBoundary[];
+}
+
+const FONT_SIZE_REM: Record<LyricsTickerFontSize, string> = {
+  small: '0.85rem',
+  medium: '1.125rem',
+  large: '1.5rem',
+  huge: '2rem',
+};
 
 /**
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
@@ -15,10 +32,16 @@ export interface LyricsOverlay {
  * currently rendered, since the lyrics-bearing track need not be the one
  * on screen (infrastructure.md).
  */
-export function createLyricsOverlay(api: AlphaTabApi, lines: Syllable[][], container: HTMLElement): LyricsOverlay {
+export function createLyricsOverlay(
+  api: AlphaTabApi,
+  lines: Syllable[][],
+  container: HTMLElement,
+  options: LyricsOverlayOptions = {},
+): LyricsOverlay {
   const flat = lines.flat();
   const overlay = document.createElement('div');
   overlay.className = 'lyrics-overlay';
+  overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[loadStoredLyricsTickerFontSize()]);
   container.appendChild(overlay);
 
   const track = document.createElement('div');
@@ -42,6 +65,45 @@ export function createLyricsOverlay(api: AlphaTabApi, lines: Syllable[][], conta
     span.textContent = syllable.text + ' ';
     track.appendChild(span);
     return span;
+  });
+
+  // Measure markers (T003, ui.md "Measure markers" preference): inserted
+  // into `track`'s child sequence at the correct tick-sorted position
+  // relative to the syllable spans — mirroring playback-engine.ts's
+  // gap-dot/gap-drain insertion pattern for the full lyric sheet, applied
+  // here to the ticker. Deliberately NOT added to `flat`/`spans`: those
+  // arrays stay syllable-only so activeIndex/updateActiveSyllable/
+  // centerActiveSyllable's indexing is entirely unaffected by markers
+  // existing or not.
+  const markerEls: HTMLElement[] = (options.measures ?? []).map((measure) => {
+    const marker = document.createElement('span');
+    marker.className = 'lyrics-measure-marker';
+    marker.style.display = 'none';
+
+    const line = document.createElement('span');
+    line.className = 'lyrics-measure-marker-line';
+    marker.appendChild(line);
+
+    const number = document.createElement('span');
+    number.className = 'lyrics-measure-marker-number';
+    number.textContent = String(measure.number);
+    marker.appendChild(number);
+
+    // First syllable at or after this measure's start tick — insert the
+    // marker directly before it, so a measure starting exactly on a
+    // syllable's own tick (e.g. measure 1 at tick 0, same as the first
+    // syllable) still reads as "ahead of" that syllable, not after it. No
+    // match means the marker belongs after every syllable (end of the
+    // track).
+    const beforeSpan = spans[flat.findIndex((s) => s.tickPosition >= measure.tick)];
+    track.insertBefore(marker, beforeSpan ?? null);
+
+    return marker;
+  });
+
+  let measureMarkersVisible = loadStoredMeasureMarkers();
+  markerEls.forEach((el) => {
+    el.style.display = measureMarkersVisible ? '' : 'none';
   });
 
   let activeIndex = -1;
@@ -113,6 +175,15 @@ export function createLyricsOverlay(api: AlphaTabApi, lines: Syllable[][], conta
   return {
     setVisible(visible: boolean) {
       overlay.style.display = visible ? '' : 'none';
+    },
+    setFontSize(size: LyricsTickerFontSize) {
+      overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[size]);
+    },
+    setMeasureMarkersVisible(visible: boolean) {
+      measureMarkersVisible = visible;
+      markerEls.forEach((el) => {
+        el.style.display = visible ? '' : 'none';
+      });
     },
     destroy() {
       api.playerPositionChanged.off(handler);
