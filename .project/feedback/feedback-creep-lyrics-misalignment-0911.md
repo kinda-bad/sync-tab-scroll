@@ -1,7 +1,7 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-18
-plan: null
+plan: plan-creep-dispatch-2026-07-18-8a7c.md
 ---
 
 # Feedback
@@ -14,7 +14,7 @@ Partial live diagnosis was done in-session (details per item).
 
 ## Bugs
 
-- [ ] F001 Creep's ticker highlights syllables early: clicking bar 16's
+- [x] F001 Creep's ticker highlights syllables early: clicking bar 16's
   first note highlights "You" (of "You float"), which isn't sung until
   roughly halfway through bar 16; the ticker shows "You" before the
   measure-15 divider ("...makes me cry You |15 |16"). Diagnosed: the new
@@ -34,7 +34,7 @@ Partial live diagnosis was done in-session (details per item).
   `isEmpty`-at-import-time are involved). [artifacts: pipeline,
   infrastructure]
 
-- [ ] F002 GP "+" hold markers are mishandled: alphaTab's chunker
+- [x] F002 GP "+" hold markers are mishandled: alphaTab's chunker
   (`Lyrics._prepareChunk`) converts a standalone `+` into a single-space
   `" "` chunk (`split("+").join(" ")`), which the shared dispatcher
   treats as a normal non-empty syllable — it consumes a singable beat
@@ -47,7 +47,7 @@ Partial live diagnosis was done in-session (details per item).
   stream. TIRO was unaffected (its line uses multi-space skips, no
   `+`). [artifacts: pipeline, infrastructure]
 
-- [ ] F003 Creep's ticker runs dry before the song ends: from roughly
+- [x] F003 Creep's ticker runs dry before the song ends: from roughly
   bar 84 onward (after "I do-") the ticker shows only measure-number
   dividers with no further lyrics. Consistent with cumulative
   over-consumption (F001's under-skipping + F002's `+` chunks burning

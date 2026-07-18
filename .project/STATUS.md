@@ -704,13 +704,7 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**2 open feedback files:**
-`feedback-creep-lyrics-misalignment-0911.md` (2026-07-18) — the shipped
-dispatch fix verifies on TIRO but not Creep (tie-heaviest song): still
-~1 singable beat early at the "You float" entry (an unexplained alphaTab
-skip rule at bar 16 tick 60480 is the lead), GP `+` hold markers become
-`" "` chunks that consume beats and emit blank syllables (15 in Creep),
-and the ticker runs dry after ~bar 84. Also:
+**1 open feedback file:**
 `feedback-song-switch-stale-score-e030.md`
 (2026-07-18) — switching songs left both the tab view and playback audio
 on the previous song until a browser refresh; possibly a regression from
@@ -743,6 +737,17 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Creep-class dispatch semantics follow-up** —
+  `plan-creep-dispatch-2026-07-18-8a7c.md` (`approved`),
+  `tasks-creep-dispatch-3477.md` (**`ready`**, 8 tasks / 3 phases).
+  Diagnosis-led: Phase 1 finds the missing beat-skip rule (alphaTab's
+  unexplained no-chunk skip at Creep bar 16 tick 60480 is the lead) and
+  decides `+`-hold semantics empirically; Phase 2 amends the shared
+  dispatcher test-first (TIRO ground truths as regression gate); Phase 3
+  regenerates the 4 GP7/8 songs and live-verifies Creep (bar 16 "You"
+  mid-measure entry, no ~bar-84 dry-out). Consumes
+  `feedback-creep-lyrics-misalignment-0911.md` (now `planned`). Next:
+  `/ardd-implement`.
 - **Lyrics dispatch root fix + correctDrift pause fix** —
   `plan-lyrics-dispatch-2026-07-18-8090.md` (`approved`),
   `tasks-lyrics-dispatch-0f0e.md` (**`completed`**, 13/13, merged
@@ -871,11 +876,11 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **File the upstream alphaTab issue** (drafted, awaiting user OK —
-   `alphatab-issue-draft.md` in the session scratchpad), and spot-check
-   the other three regenerated songs' lyrics by ear (Last Nite,
-   Teenagers, Creep). Supermassive (GP5) remains a deferred follow-up
-   (`/ardd-backlog` candidate).
+1. **`/ardd-implement`** to execute `tasks-creep-dispatch-3477.md`
+   (`ready`, 8 tasks) — complete the dispatch semantics for Creep-class
+   files. The upstream alphaTab issue stays a draft until this lands
+   (its stated semantics would otherwise be incomplete); filing awaits
+   user OK afterward. Then plan the song-switch stale-score feedback.
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
