@@ -9,6 +9,10 @@
 </p>
 <!-- ardd-badge-end -->
 
+<p align="center">
+  <a href="https://github.com/sponsors/moui72"><img alt="sponsor" src="https://img.shields.io/badge/sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors&logoColor=white" /></a>
+</p>
+
 A synchronized tab-scrolling app for musicians playing together remotely.
 See `.project/artifacts/` for the full artifact-driven-dev specification
 (`constitution.md`, `datamodel.md`, `pipeline.md`, `infrastructure.md`,
