@@ -1,7 +1,7 @@
 ---
 plan: plan-hover-long-press-tooltip-for-i-2026-07-18-c2e5.md
 generated: 2026-07-18
-status: ready
+status: in-progress
 ---
 
 # Tasks
