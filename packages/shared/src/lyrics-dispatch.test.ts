@@ -19,7 +19,7 @@ function beat(
     isTieDestination: opts.tie ?? false,
     isGrace: opts.grace ?? false,
     isShiftSlideOrigin: opts.slide ?? false,
-  } as DispatchBeat;
+  };
 }
 
 describe('dispatchLyrics (GP dispatch semantics)', () => {
@@ -70,7 +70,7 @@ describe('dispatchLyrics (GP dispatch semantics)', () => {
 // --- Group (a2): rules adopted from the Creep fit (tasks-creep-dispatch) ---
 
 describe('dispatchLyrics (Creep-fit rules: grace, shift-slide, whitespace hold)', () => {
-  it.fails('a non-empty chunk skips grace beats', () => {
+  it('a non-empty chunk skips grace beats', () => {
     const beats = [beat(0), beat(10, { grace: true }), beat(20)];
     expect(dispatchLyrics(['sun', 'shine'], beats)).toEqual([
       { text: 'sun', tickPosition: 0 },
@@ -78,7 +78,7 @@ describe('dispatchLyrics (Creep-fit rules: grace, shift-slide, whitespace hold)'
     ]);
   });
 
-  it.fails('a non-empty chunk skips shift-slide-out beats', () => {
+  it('a non-empty chunk skips shift-slide-out beats', () => {
     const beats = [beat(0), beat(10, { slide: true }), beat(20)];
     expect(dispatchLyrics(['sun', 'shine'], beats)).toEqual([
       { text: 'sun', tickPosition: 0 },
@@ -86,7 +86,7 @@ describe('dispatchLyrics (Creep-fit rules: grace, shift-slide, whitespace hold)'
     ]);
   });
 
-  it.fails('a whitespace-only chunk consumes the next singable beat and emits nothing', () => {
+  it('a whitespace-only chunk consumes the next singable beat and emits nothing', () => {
     // "+" markers become whitespace-only chunks via alphaTab's _prepareChunk.
     const beats = [beat(0), beat(10, { rest: true }), beat(20), beat(30)];
     expect(dispatchLyrics(['la', ' ', 'di'], beats)).toEqual([
@@ -95,7 +95,7 @@ describe('dispatchLyrics (Creep-fit rules: grace, shift-slide, whitespace hold)'
     ]);
   });
 
-  it.fails('a whitespace-only chunk never appears in the output stream', () => {
+  it('a whitespace-only chunk never appears in the output stream', () => {
     const beats = [beat(0), beat(10), beat(20)];
     const out = dispatchLyrics([' ', ' ', 'la'], beats);
     expect(out).toEqual([{ text: 'la', tickPosition: 20 }]);
@@ -148,6 +148,8 @@ describe.skipIf(!hasTiro)('dispatchLyrics on the real TIRO catalog file', () => 
               tickPosition: b.absolutePlaybackStart,
               isRest: b.isRest,
               isTieDestination: b.notes?.some((n) => n.isTieDestination) ?? false,
+              isGrace: b.graceType !== at.model.GraceType.None,
+              isShiftSlideOrigin: b.notes?.some((n) => n.slideOutType === at.model.SlideOutType.Shift) ?? false,
             },
           });
         }
@@ -236,7 +238,7 @@ describe.skipIf(!hasCreep)('dispatchLyrics on the real Creep catalog file', () =
               isTieDestination: b.notes?.some((n) => n.isTieDestination) ?? false,
               isGrace: b.graceType !== at.model.GraceType.None,
               isShiftSlideOrigin: b.notes?.some((n) => n.slideOutType === at.model.SlideOutType.Shift) ?? false,
-            } as DispatchBeat,
+            },
           });
         }
       }
@@ -251,7 +253,7 @@ describe.skipIf(!hasCreep)('dispatchLyrics on the real Creep catalog file', () =
     return { beats, syllables, barOf };
   }
 
-  it.fails('places "You" (of "You float") first at tick 59040 in bar 16, never before', () => {
+  it('places "You" (of "You float") first at tick 59040 in bar 16, never before', () => {
     const { syllables, barOf } = creepSyllables();
     const cryIdx = syllables.findIndex((s) => s.text.trim() === 'cry');
     const you = syllables[cryIdx + 1];
@@ -260,14 +262,14 @@ describe.skipIf(!hasCreep)('dispatchLyrics on the real Creep catalog file', () =
     expect(barOf(you.tickPosition)).toBe(16);
   });
 
-  it.fails('places exactly "In a beau-ti-ful world" in bar 18 and nothing in bar 19', () => {
+  it('places exactly "In a beau-ti-ful world" in bar 18 and nothing in bar 19', () => {
     const { syllables, barOf } = creepSyllables();
     const bar18 = syllables.filter((s) => barOf(s.tickPosition) === 18).map((s) => s.text.trim());
     expect(bar18).toEqual(['In', 'a', 'beau-', 'ti-', 'ful', 'world']);
     expect(syllables.filter((s) => barOf(s.tickPosition) === 19)).toEqual([]);
   });
 
-  it.fails('ends the stream with "I don\'t be-long" in bar 88 and "here" on the final vocal note in bar 89', () => {
+  it('ends the stream with "I don\'t be-long" in bar 88 and "here" on the final vocal note in bar 89', () => {
     const { syllables, barOf } = creepSyllables();
     const tail = syllables.slice(-5).map((s) => ({ text: s.text.trim(), bar: barOf(s.tickPosition) }));
     expect(tail).toEqual([
@@ -280,7 +282,7 @@ describe.skipIf(!hasCreep)('dispatchLyrics on the real Creep catalog file', () =
     expect(syllables.at(-1)!.tickPosition).toBe(338400);
   });
 
-  it.fails('emits no whitespace-only syllables (the raw line has "+" hold markers)', () => {
+  it('emits no whitespace-only syllables (the raw line has "+" hold markers)', () => {
     const { syllables } = creepSyllables();
     expect(chunkRawLine(readRawLine()).some((c) => c.length > 0 && c.trim().length === 0)).toBe(true);
     expect(syllables.every((s) => s.text.trim().length > 0)).toBe(true);

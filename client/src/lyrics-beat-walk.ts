@@ -31,8 +31,10 @@ export function walkLyricBeats(score: at.model.Score, lyricsTrackIndex: number, 
  * datamodel.md), the overlay's syllable stream comes from re-dispatching it
  * with GP's own semantics — chunked by alphaTab's own `at.model.Lyrics`
  * chunker (never reimplemented), placed by the shared `dispatchLyrics`
- * (ties skipped for non-empty chunks; an empty chunk burns the very next
- * beat of any kind) — instead of trusting the per-beat `beat.lyrics` that
+ * (rests, tie destinations, grace beats, and shift-slide-out beats skipped
+ * for non-empty chunks; a whitespace-only `+` hold chunk consumes one
+ * singable beat emitting nothing; an empty chunk burns the very next beat
+ * of any kind) — instead of trusting the per-beat `beat.lyrics` that
  * alphaTab's divergent `applyLyrics` produced at score load.
  * `walkLyricBeats` stays the fallback when the field is absent
  * (legacy/personal catalog songs). Same tick source as `walkSyllables`
@@ -54,6 +56,8 @@ export function walkLyricBeatsFromRawLine(score: at.model.Score, lyricsTrackInde
           tickPosition: beat.absolutePlaybackStart,
           isRest: beat.isRest,
           isTieDestination: beat.notes?.some((n) => n.isTieDestination) ?? false,
+          isGrace: beat.graceType !== at.model.GraceType.None,
+          isShiftSlideOrigin: beat.notes?.some((n) => n.slideOutType === at.model.SlideOutType.Shift) ?? false,
         });
       }
     }

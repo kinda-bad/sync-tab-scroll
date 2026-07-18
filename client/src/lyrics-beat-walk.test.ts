@@ -215,7 +215,10 @@ describe('walkLyricBeatsFromRawLine', () => {
       playbackStart: absolutePlaybackStart,
       absolutePlaybackStart,
       isRest: opts.rest ?? false,
-      notes: opts.tie ? [{ isTieDestination: true }] : [{ isTieDestination: false }],
+      graceType: 0, // GraceType.None
+      notes: opts.tie
+        ? [{ isTieDestination: true, slideOutType: 0 }]
+        : [{ isTieDestination: false, slideOutType: 0 }],
     };
   }
 

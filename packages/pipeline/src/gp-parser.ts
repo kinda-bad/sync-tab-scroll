@@ -78,6 +78,8 @@ export function extractSyllablesFromRawLine(score: at.model.Score, trackIndex: n
           tickPosition: beat.absolutePlaybackStart,
           isRest: beat.isRest,
           isTieDestination: beat.notes?.some((n) => n.isTieDestination) ?? false,
+          isGrace: beat.graceType !== at.model.GraceType.None,
+          isShiftSlideOrigin: beat.notes?.some((n) => n.slideOutType === at.model.SlideOutType.Shift) ?? false,
         });
       }
     }
