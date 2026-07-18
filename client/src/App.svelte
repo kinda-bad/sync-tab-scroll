@@ -25,7 +25,8 @@
   import Pause from 'lucide-svelte/icons/pause';
   import Square from 'lucide-svelte/icons/square';
   import LogOut from 'lucide-svelte/icons/log-out';
-  import AudioLines from 'lucide-svelte/icons/audio-lines';
+  import MicVocal from 'lucide-svelte/icons/mic-vocal';
+  import ListMusic from 'lucide-svelte/icons/list-music';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -170,10 +171,10 @@
     {/snippet}
     {#snippet controls()}
       {#if $clientStore.view === 'lobby'}
-        <Button variant="ghost" label="Song & part" onclick={toggleSongPartModal} />
+        <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
       {/if}
-      {#if $clientStore.view === 'playback' && !isLyricsPart}
-        <Button variant="ghost" label="Toggle lyrics" iconOnly icon={AudioLines} onclick={toggleLyricsOverlay} />
+      {#if hasPart && !isLyricsPart}
+        <Button variant="ghost" label="Toggle lyrics" iconOnly icon={MicVocal} onclick={toggleLyricsOverlay} />
       {/if}
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
         <Button variant="ghost" label="Settings" iconOnly icon={Cog} onclick={toggleSettingsModal} />

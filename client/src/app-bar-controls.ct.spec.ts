@@ -77,20 +77,38 @@ async function setStore(page: import('@playwright/test').Page, view: 'lobby' | '
 // Start/Pause-Resume/Stop, Leave-session, and (T003) Toggle-lyrics
 // controls are icon-only buttons, each still exposing its original label
 // via aria-label (Button.svelte's iconOnly support from T001).
-test('lobby: Settings, Start, and Leave session render icon-only with correct aria-labels', async ({ mount, page }) => {
+test('lobby: Song & part, Settings, Start, and Leave session render icon-only with correct aria-labels', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'lobby', instrumentSession('lobby'));
 
+  const songPart = page.getByRole('button', { name: 'Song & part' });
   const settings = page.getByRole('button', { name: 'Settings' });
   const start = page.getByRole('button', { name: 'Start' });
   const leave = page.getByRole('button', { name: 'Leave session' });
 
+  await expect(songPart).toBeVisible();
   await expect(settings).toBeVisible();
   await expect(start).toBeVisible();
   await expect(leave).toBeVisible();
+  await expect(songPart).toHaveText('');
   await expect(settings).toHaveText('');
   await expect(start).toHaveText('');
   await expect(leave).toHaveText('');
+});
+
+// Feedback: the lyrics toggle was gated to the Playback view only, so it
+// wasn't reachable before playback started even though the overlay's
+// engine/DOM already exists once a part is picked in the Lobby (ui.md
+// Lobby View: load is triggered "the moment a participant's part is
+// known ... in the Lobby"). Widened the bar's gating from
+// `view === 'playback'` to `hasPart`, so it's visible in both views.
+test('lobby (instrument part selected): Toggle lyrics is visible before playback starts', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'lobby', instrumentSession('lobby'));
+
+  const toggleLyrics = page.getByRole('button', { name: 'Toggle lyrics' });
+  await expect(toggleLyrics).toBeVisible();
+  await expect(toggleLyrics).toHaveText('');
 });
 
 test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render icon-only in the bar', async ({ mount, page }) => {

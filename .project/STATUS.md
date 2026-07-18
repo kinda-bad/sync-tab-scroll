@@ -1,5 +1,64 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-later-3 (**New feature backlogged:
+`lyrics-ticker-font-size-prefer`.** A personal Preferences-tab toggle
+(same pattern as Metronome/Mute-parts) for the in-tab lyrics ticker's
+font size: small/medium/large/huge, with the current fixed
+`1.125rem` (`client/src/styles/motifs.css` `.lyrics-overlay`) becoming
+the medium default, and each step requested to be a large, clearly
+noticeable jump rather than a subtle scale. Feature backlog is now 7
+backlogged / 16 implemented (was 6/16). Prior context below.)_
+
+_Updated: 2026-07-18-later-2 (**Direct icon/a11y fixes applied to
+`App.svelte` (uncommitted), plus a new feature backlogged.** From live
+icon-pick feedback: swapped "Song & part" from a text button to an
+icon-only `ListMusic` button, and (earlier this session) the lyrics
+toggle from `AudioLines` to `MicVocal` and widened its visibility from
+Playback-only to `hasPart` (reachable in the Lobby too). Audited every
+other `<button>` in the client for missing accessible names — `Modal.svelte`'s
+close × already has `aria-label="Close"`, `AccountMenu.svelte`/
+`Landing.svelte` buttons all render visible text (self-describing); icons
+appear only via `Button.svelte`'s `iconOnly` prop, which already sets
+`aria-label`/`title` from the button's `label` — no gaps found. Extended
+`app-bar-controls.ct.spec.ts` to cover the new Song & part assertion and
+the Lobby-visible lyrics toggle; all 5 tests pass, typecheck clean. New
+feature backlogged: `hover-long-press-tooltip-for-i` — a styled,
+touch-aware tooltip (hover + long-press) for the bar's icon-only buttons,
+beyond the native `title` attribute already in place. Feature backlog is
+now 6 backlogged / 16 implemented (was 5/16). `client/src/App.svelte` and
+`client/src/app-bar-controls.ct.spec.ts` are modified, uncommitted. Prior
+context below.)_
+
+_Updated: 2026-07-18-later (**New bug filed:
+`feedback-lyrics-ticker-tiro-measure8-9310.md`.** Sharper repro of the
+in-tab lyrics ticker desync than the earlier `feedback-lyrics-timing-
+tiro-c741.md` F001 (accepted research-only, unresolved): on "TIRO" bass
+part, measure 8's last note (fret 3, lowest string) is a breath with no
+syllable, but the ticker jumps early and highlights "You're" — which
+should instead tie to measure 9's first note. Tagged `[artifacts: ui]`.
+Suggests the root cause may be a note/tie-boundary bug in the
+syllable-tick walk itself, not output latency (the `feedback-audio-
+output-latency-t014-dfa8.md` open item's working hypothesis) — worth
+investigating both together when this is next planned. Open feedback
+count is now 2. Everything else unchanged from the prior entry. Prior
+context below.)_
+
+_Updated: 2026-07-18 (**New feature backlogged: `lyrics-overlay-measure-
+lines-a`.** From a live-inspection conversation about whether Bluetooth
+output latency explains a perceived ticker offset — the user asked how
+hard it'd be to add measure lines/numbers to the in-tab lyrics ticker for
+easier orientation; classified as a new capability (not a fix to existing
+behavior) and re-filed straight to the feature register rather than a
+feedback file, per `/ardd-feedback`'s new-capability re-file step. Scope
+confirmed with the user: gated behind a personal Preferences toggle
+(default off), same pattern as the existing Metronome/Mute-parts personal
+toggles. `status: backlogged` — not yet targeted by any plan. Feature
+backlog is now 5 backlogged / 16 implemented (was 4/16). Everything else
+unchanged from the prior entry: ArDD `up-to-date` at v0.10.1 (beta
+channel), 1 open feedback file (`feedback-audio-output-latency-t014-
+dfa8.md`), no in-flight worktrees, `infrastructure.md`/`ui.md` diagrams
+still stale. Prior context below.)_
+
 _Updated: 2026-07-17-night-5 (**ArDD updated to v0.10.1 (beta channel),
 commit `a802dbc`.** `/ardd-update --beta` switched the tracked source
 from the recorded dev-mode checkout to the tooling-owned checkout
