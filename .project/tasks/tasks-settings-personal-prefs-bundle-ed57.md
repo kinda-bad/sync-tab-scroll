@@ -1,7 +1,7 @@
 ---
 plan: plan-settings-personal-prefs-bundle-2026-07-18-bd58.md
 generated: 2026-07-18
-status: ready
+status: in-progress
 ---
 
 # Tasks
