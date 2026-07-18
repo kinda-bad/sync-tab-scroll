@@ -67,7 +67,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   behavior as the fallback when no raw line is found. Assert on TIRO
   that the generated `.lrc` places "be"/"this?" lines at the corrected
   times.
-- [ ] T006 Re-run the pipeline (`pnpm --filter pipeline extract-lyrics`
+- [x] T006 Re-run the pipeline (`pnpm --filter pipeline extract-lyrics`
   flow) for the four lyric-bearing GP7/8 catalog songs
   (time-is-running-out, last-nite, teenagers, creep) so their
   `meta.json` gains `lyricsRawLine` and their `.lrc` files regenerate
