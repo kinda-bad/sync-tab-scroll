@@ -1,5 +1,37 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-18-night-2 (**Full test suite green — all 6 failures from
+the prior entry root-caused and fixed (`e67d54e`).**
+
+1. **The real regression** (`SettingsModal.ct.spec.ts` phone-width test):
+   `.tab-strip > :global(.btn) { flex: 1; ... }` silently stopped matching
+   once `Button.svelte` started wrapping every `.btn` in a `.btn-wrap` span
+   (`tasks-hover-long-press-tooltip-for-i-9124`) — `.btn` became a
+   grandchild, not a direct child. The 4 tab buttons lost their compact
+   sizing and overflowed the strip by ~145px at phone widths. Fixed by
+   retargeting the selector at `.btn-wrap` (plus `min-width: 0`, needed
+   for `flex: 1` to actually shrink below the longest single-word label's
+   min-content width — without it, "Preferences" alone still overflowed
+   by ~30px at 360px) and sizing the nested `.btn` to `width: 100%`.
+2. **Two stale e2e assumptions**, invalidated by earlier bottom-bar-icons
+   work this session, not by the fan-out: `expect(page.locator('svg')).
+   toHaveCount(0)` used to mean "no tab canvas rendered," but icon-only
+   bar controls (Cog, Play/Pause/Square, LogOut, MicVocal) render inline
+   `<svg>` too, so a page-wide count is never 0 anymore — rescoped both
+   assertions to `.tab-container svg`.
+3. **One pre-existing test/behavior mismatch**: `host-controls.spec.ts`
+   asserted `.playback-controls` visible for a member who deliberately
+   selected the Lyrics part — but `App.svelte`'s `.app-content.collapsed
+   { display: none }` intentionally hides `.playback-controls` for the
+   lyrics part (that participant's view is the separate `.full-lyrics-
+   view` element instead). Fixed the assertion to check the right element
+   per participant.
+
+All three diagnosed with targeted CT-harness diagnostics (not guessed) —
+see the fix commit's message for the reasoning trail. **Final verified
+state**: `tsc --noEmit` clean, 104/104 vitest unit tests, 173/173
+Playwright tests (CT + e2e), all green together. Prior context below.)_
+
 _Updated: 2026-07-18-night (**All 3 fanned-out worktrees merged; new feature
 backlogged; one test regression found, not yet fixed.**
 
