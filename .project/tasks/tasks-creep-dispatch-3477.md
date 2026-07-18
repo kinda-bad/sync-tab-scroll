@@ -263,7 +263,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 >   verse 1 ("They're gonna clean up your looks..."): same check, and
 >   confirm the ticker doesn't run dry before the final chorus line.
 
-- [ ] T007 [artifacts: pipeline, infrastructure] Only if the adopted
+- [x] T007 [artifacts: pipeline, infrastructure] Only if the adopted
   rule set changed the documented dispatch semantics: update
   pipeline.md's raw-line dispatch description and infrastructure.md's
   In-Tab Lyrics Overlay note to state the complete rule set (feedback

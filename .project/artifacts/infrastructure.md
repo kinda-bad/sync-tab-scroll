@@ -563,13 +563,20 @@ tickPosition, isRest, isTieDestination }`, and places the chunks with
 `packages/shared/src/lyrics-dispatch.ts#dispatchLyrics`
 (`client/src/lyrics-beat-walk.ts#walkLyricBeatsFromRawLine`; the pipeline
 uses the identical path for `.lrc` — `extractSyllablesFromRawLine`). The
-reason is an alphaTab divergence from Guitar Pro's own dispatch: alphaTab's
-`applyLyrics` does not skip tie-destination beats and burns empty chunks
-only on playable beats, where GP skips ties for non-empty chunks and
-burns an empty chunk on the very next beat of any kind — so trusting
-`beat.lyrics` placed syllables measurably wrong (TIRO ground truths:
-"be" at bar 14 beat 1, "this?" at bar 69 beat 1, bar 102 beat 1 holding
-"ground" from bar 101). When `lyricsRawLine` is absent (legacy/personal
+reason is an alphaTab divergence from Guitar Pro's own dispatch — and
+for GP7/8 files with per-beat `<Lyrics>` XML, alphaTab's `applyLyrics`
+never runs at all (the importer shows the file's hand-placed, possibly
+stale per-beat lyrics verbatim). The complete dispatch rule set
+(tasks-creep-dispatch-3477): non-empty chunks skip rests, tie
+destinations, grace beats, and shift-slide-out beats; whitespace-only
+`+` hold chunks consume one singable beat emitting nothing; empty
+chunks consume the very next beat of any kind. Trusting `beat.lyrics`
+placed syllables measurably wrong (TIRO ground truths: "be" at bar 14
+beat 1, "this?" at bar 69 beat 1, bar 102 beat 1 holding "ground" from
+bar 101; Creep ground truths: "You" active exactly from tick 59040,
+lyrics reaching the true final vocal note at bar 89 — with the
+accepted bars-60–62 one-bar-early residual recorded as a source-tab
+transcription defect). When `lyricsRawLine` is absent (legacy/personal
 catalog songs), the client falls back to the legacy per-beat walk over
 `beat.lyrics`: it reads `CatalogSong.lyricsTrackIndex` to
 find the track whose beats carry lyrics and walks that track's beats in

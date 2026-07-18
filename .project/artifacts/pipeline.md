@@ -62,13 +62,28 @@ infrastructure.md.
    done by **re-dispatching it with GP's own semantics** (the shared
    `dispatchLyrics`, chunked by alphaTab's own `at.model.Lyrics`
    chunker) rather than trusting alphaTab's per-beat `beat.lyrics`:
-   alphaTab's `applyLyrics` dispatch diverges from Guitar Pro's — it
-   does not skip tie-destination beats, and it burns empty chunks only
-   on playable beats, where GP burns an empty chunk on the very next
-   beat of any kind — which measurably shifted syllables (validated on
-   Time Is Running Out: "be" belongs at bar 14 beat 1, "this?" at bar
-   69 beat 1, and bar 102 beat 1 holds the previous "ground" rather
-   than carrying its own syllable). `walkSyllables` over `beat.lyrics`
+   alphaTab's `applyLyrics` dispatch diverges from Guitar Pro's — and
+   for GP7/8 files carrying per-beat `<Lyrics>` XML it never even runs
+   (the importer displays the file's hand-placed per-beat lyrics
+   verbatim, which can themselves be stale/misaligned author data —
+   Creep's end at written bar 72 while the song's vocals end at bar
+   89). The complete adopted rule set (tasks-creep-dispatch-3477,
+   empirically fitted against user-supplied measure anchors for Creep
+   and re-validated on TIRO): a **non-empty chunk** skips *unsingable*
+   beats — rests, tie destinations, grace beats, and shift-slide-out
+   beats (`note.slideOutType === Shift`) — and lands on the next
+   singable beat; a **whitespace-only chunk** (a standalone `+` hold
+   marker) consumes one singable beat, emitting nothing; an **empty
+   chunk** consumes the very next beat of any kind, emitting nothing.
+   Validated ground truths: TIRO "be" at bar 14 beat 1, "this?" at bar
+   69 beat 1, bar 102 beat 1 holding "ground"; Creep "You" (of "You
+   float") active exactly from tick 59040 (bar 16), "In a beau-ti-ful
+   world" in bar 18, bar 19 empty, and the stream's final "here" on
+   the song's last vocal note (bar 89). Known accepted residual:
+   Creep's "She's / ru- / She" land one bar early around bars 60–62 —
+   recorded as a transcription defect in the source tab (a missing
+   melisma note in the bars-58–60 vocal run), not a dispatcher rule.
+   `walkSyllables` over `beat.lyrics`
    remains the fallback when no raw line exists. GP
    syllable timing is the reason `.lrc` is generated from GP rather than
    taken from lrclib directly: it lets each `.lrc` line carry an accurate
