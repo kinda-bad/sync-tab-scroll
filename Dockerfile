@@ -3,9 +3,10 @@
 # Deployment target for Railway (infrastructure.md "Deployment (Railway +
 # Terraform)"): one process serves the built client SPA, the song catalog,
 # and the WebSocket upgrade on one port (server.ts already combines all
-# three). packages/shared is type-only (no runtime exports — every
-# server/client import of it is `import type`), so it's needed only to
-# build, never copied into the runtime stage.
+# three). packages/shared now has real runtime exports (e.g. walkSyllables,
+# imported by pipeline's compiled dist), so its built dist/ is carried into
+# the runtime stage automatically by `pnpm --filter server deploy`, which
+# resolves transitive workspace deps into /app/server-deploy/node_modules.
 
 FROM node:20-slim AS build
 WORKDIR /app
