@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-17
+last_updated: 2026-07-18
 ---
 
 # Lyrics Extraction Pipeline
@@ -49,7 +49,27 @@ infrastructure.md.
    from the parsed score into the same lines as `.lrc` — no tick
    positions are published; the client reads those directly off the
    track's beats via alphaTab at render time, datamodel.md) and a derived
-   `CatalogSong.lyricsLrc`. GP
+   `CatalogSong.lyricsLrc`. Since feedback F001
+   (`feedback-lyrics-dispatch-root-cause-f0f6.md`) this step also
+   extracts the **raw track-level lyric line** — the un-dispatched
+   `<Lyrics dispatched="true"><Line><Text>` CDATA on the lyrics track in
+   `score.gpif` (`readRawLyricsLine`, the same lightweight zip+XML read
+   used for line breaks) — and publishes it as
+   `CatalogSong.lyricsRawLine` (plus `lyricsRawLineStartBar` when the
+   line's `<Offset>` is non-zero; omitted otherwise). Songs with no
+   track-level line (no lyrics, or true per-beat lyrics) omit the field.
+   When the raw line exists, syllable placement for `.lrc` generation is
+   done by **re-dispatching it with GP's own semantics** (the shared
+   `dispatchLyrics`, chunked by alphaTab's own `at.model.Lyrics`
+   chunker) rather than trusting alphaTab's per-beat `beat.lyrics`:
+   alphaTab's `applyLyrics` dispatch diverges from Guitar Pro's — it
+   does not skip tie-destination beats, and it burns empty chunks only
+   on playable beats, where GP burns an empty chunk on the very next
+   beat of any kind — which measurably shifted syllables (validated on
+   Time Is Running Out: "be" belongs at bar 14 beat 1, "this?" at bar
+   69 beat 1, and bar 102 beat 1 holds the previous "ground" rather
+   than carrying its own syllable). `walkSyllables` over `beat.lyrics`
+   remains the fallback when no raw line exists. GP
    syllable timing is the reason `.lrc` is generated from GP rather than
    taken from lrclib directly: it lets each `.lrc` line carry an accurate
    *end* timestamp — taken from the timing of that line's last syllable —
@@ -148,7 +168,8 @@ not kept as a fallback or alternate path.
 containing the source `.gp` file — which is what gets published/served
 as-is, no separate transformed copy — together with its generated `.lrc`
 and a small metadata file (e.g. `meta.json`) holding `lyricsTrackIndex`,
-`lyricsLineIndex`, and `lyricLineBreaks`. "What's the current output for
+`lyricsLineIndex`, `lyricLineBreaks`, and (when a raw track-level lyric
+line exists) `lyricsRawLine` / `lyricsRawLineStartBar`. "What's the current output for
 song X" is just "look in that song's directory"; adding or removing a
 song is one directory operation, not a cross-reference between separate
 input and output trees. No intermediate/scratch output is written to this

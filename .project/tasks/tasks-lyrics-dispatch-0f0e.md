@@ -74,7 +74,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   with corrected timing. Do NOT touch Supermassive Black Hole (GP5 —
   out of scope) or Lazy Eye (no lyrics). Spot-check the regenerated
   TIRO `.lrc` against the three ground truths.
-- [ ] T007 [artifacts: pipeline, datamodel] Revise artifacts for the new
+- [x] T007 [artifacts: pipeline, datamodel] Revise artifacts for the new
   field and semantics (feedback F001): pipeline.md — document the
   raw-line extraction/publish step and why dispatch is done with GP
   semantics rather than alphaTab's (`applyLyrics` divergence: ties not
