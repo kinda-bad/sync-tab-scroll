@@ -348,6 +348,47 @@ test('Tracks tab: each part renders in its own row', async ({ mount, page }) => 
   expect(rowCount).toBe(2);
 });
 
+/**
+ * T005 (tasks-settings-personal-prefs-bundle-ed57): a "Solo" button per
+ * part row — clicking it mutes every other part while leaving the soloed
+ * one unmuted, via the same track-mute-preference.ts persistence as the
+ * ordinary mute toggles (no separate "solo" concept).
+ */
+test('Tracks tab: clicking "Solo" on a part mutes every other part, leaves it unmuted, and persists via track-mute-preference', async ({
+  mount,
+  page,
+}) => {
+  const session = baseSession({
+    selectedSong: 'creep',
+    availableParts: [
+      { trackIndex: 0, instrumentName: 'Lead Guitar' },
+      { trackIndex: 1, instrumentName: 'Bass' },
+      { trackIndex: 2, instrumentName: 'Drums' },
+    ],
+  });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Tracks' }).click();
+
+  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
+  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+  await expect(component.getByText('Drums: Unmuted')).toBeVisible();
+
+  const bassRow = component.locator('.control-row', { hasText: 'Bass:' });
+  await bassRow.getByRole('button', { name: 'Solo' }).click();
+
+  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+  await expect(component.getByText('Drums: Muted')).toBeVisible();
+
+  const storedLead = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
+  const storedBass = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:1'));
+  const storedDrums = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:2'));
+  expect(storedLead).toBe('on');
+  expect(storedBass).toBe('off');
+  expect(storedDrums).toBe('on');
+});
+
 test('Preferences tab: no longer renders any mute-parts controls (moved to the Tracks tab)', async ({ mount }) => {
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });

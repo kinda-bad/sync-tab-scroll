@@ -128,6 +128,23 @@
     setEngineTrackMute(trackIndex, muted);
   }
 
+  // "Solo" (T005, ui.md Tracks tab): no new persisted concept — an ordinary
+  // batch mute-state change reusing the exact same per-song+track
+  // track-mute-preference.ts mechanism as toggleTrackMute, applied to every
+  // other part at once (muted) while the soloed part is left unmuted.
+  function soloTrack(soloTrackIndex: number) {
+    if (!session?.selectedSong) return;
+    const songId = session.selectedSong;
+    const next: Record<number, boolean> = {};
+    for (const part of session.availableParts) {
+      const muted = part.trackIndex !== soloTrackIndex;
+      next[part.trackIndex] = muted;
+      persistTrackMute(songId, part.trackIndex, muted);
+      setEngineTrackMute(part.trackIndex, muted);
+    }
+    trackMutes = { ...trackMutes, ...next };
+  }
+
   function toggleCountIn() {
     wsClient?.send({ type: 'count-in-set', enabled: !session?.countInEnabled });
   }
@@ -274,6 +291,7 @@
             label={`${part.instrumentName}: ${trackMutes[part.trackIndex] ? 'Muted' : 'Unmuted'}`}
             onclick={() => toggleTrackMute(part.trackIndex)}
           />
+          <Button variant="ghost" label="Solo" onclick={() => soloTrack(part.trackIndex)} />
         </div>
       {/each}
       <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
