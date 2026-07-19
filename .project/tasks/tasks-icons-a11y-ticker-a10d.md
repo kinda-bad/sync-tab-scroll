@@ -1,7 +1,7 @@
 ---
 plan: plan-icons-a11y-ticker-2026-07-19-2584.md
 generated: 2026-07-19
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
@@ -85,7 +85,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 5: Live verification + close-out
 
-- [ ] T009 Live verification in a real browser (own server+client on
+- [x] T009 Live verification in a real browser (own server+client on
   non-default ports, scratch public catalog; clean up after):
   (a) tooltips visible over the rendered tab during Playback;
   (b) icons — bone on Leave session, log-out/log-in in the account
@@ -97,3 +97,45 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   (record the chosen rem values in the note); (f) VoiceOver/accessible-
   name spot check via the accessibility tree for 3-4 controls. Record
   all outcomes in a tasks-file note.
+
+## T009 live-verification note (2026-07-19)
+
+Environment: own server (tsx, PORT=6185) + vite dev (6101) against a
+scratch PUBLIC catalog copy (catalogue.json deleted); real Chrome, desktop
+window (CSS viewport 2184px wide, >=1024px breakpoint active). All
+processes and the scratch catalog cleaned up afterward.
+
+- (a) Tooltips over the tab — **found a further root cause live**: the
+  Bar's torn-edge/glitch-cut-edge `clip-path` clips descendants, so the
+  z-index raise alone left tooltips sliced to a sliver. Fixed by portaling
+  the Tooltip to `<body>` (`position: fixed`, z-index 1200, anchored to
+  the host control's rect). Verified live: hovered Settings during real
+  Creep playback — "SETTINGS" popover fully visible over the rendered
+  tab and over the bottom ticker.
+- (b) Icons — bone on Leave session, `settings` gear, `mic-vocal` lyrics
+  toggle, crown on the host participant row (SR-only "Host" adjacent):
+  all verified live (screenshot + DOM class check:
+  `lucide-bone`/`lucide-settings`/`lucide-crown`). Account-menu
+  log-out/log-in icons verified in CT only — the dev server runs without
+  a DB, so the AccountMenu renders nothing live (expected States rule).
+- (c) Lyrics toggle: enabled on Creep+Lead Guitar; disabled with
+  aria-label/title "Toggle lyrics — Lyrics part shows the full sheet" on
+  the Lyrics part; disabled with "— No lyrics for this song" on
+  Supermassive Black Hole (no lyricsTrackIndex). Never absent.
+- (d) Ticker position pref: Top moved the ticker under the top hazard
+  strip live; persisted across a full reload (rejoin); Bottom restored.
+- (e) Desktop font sizes (chosen values, >=1024px media query —
+  small 1.5rem / medium 2rem / large 2.75rem / huge 3.5rem, ~1.75x the
+  small-screen 0.85/1.125/1.5/2rem steps, computed live as
+  24/32/44/56px). Screenshots for user eyeballing:
+  - scratchpad/t009-screens/ticker-desktop-small-1.5rem.jpg
+  - scratchpad/t009-screens/ticker-desktop-medium-2rem.jpg
+  - scratchpad/t009-screens/ticker-desktop-large-2.75rem.jpg
+  - scratchpad/t009-screens/ticker-desktop-huge-3.5rem.jpg
+  (under /private/tmp/claude-501/-Users-tylerpeckenpaugh-dev-sync-tab-scroll/0c83d860-779f-4b60-a020-be29323bfc44/)
+- (f) Accessibility-tree spot check (Chrome a11y tree): bar exposes
+  button "Song & part", "Toggle lyrics — No lyrics for this song"
+  (disabled state + reason announced), "Settings", "Start",
+  "Leave session" — all icon-only controls carry full names.
+
+Suites at close: client vitest 134 passed; Playwright CT 177 passed.

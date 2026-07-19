@@ -1,6 +1,6 @@
 ---
 slug: lyrics-ticker-position-preference
-status: tasked
+status: implemented
 logged: 2026-07-19
 plan: plan-icons-a11y-ticker-2026-07-19-2584.md
 tasks: tasks-icons-a11y-ticker-a10d.md
