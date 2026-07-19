@@ -734,16 +734,14 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 ## Feature Backlog
 
 **2 backlogged** · 0 planned · **1 tasked** · **26 implemented** — see
-`.project/features/`. Newly implemented:
-`lyrics-ticker-position-preference`, `mute-all-parts-button`
-(2026-07-19). Tasked: `explicit-participant-readiness`
+`.project/features/`. Tasked: `explicit-participant-readiness`
 (tasks-explicit-readiness-0580.md). Backlogged:
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
-planning), and `host-mandated-bars-per-row-layout`. Newly implemented (2026-07-19):
-`count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, and
-`catalogue-co-owner-invite-flow` (closed — scope had shipped as phase-2
-Phase 6, bound to that plan). Remaining backlogged:
-`sync-tabs-to-real-audio`
+planning) and `host-mandated-bars-per-row-layout`. Implemented
+2026-07-19: `lyrics-ticker-position-preference`,
+`mute-all-parts-button`, `count-in-metronome-beat-widget`,
+`gp5-raw-lyric-line-extraction`, `catalogue-co-owner-invite-flow`
+(closed — scope had shipped as phase-2 Phase 6).
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
 `count-in-metronome-beat-widget` (new, filed 2026-07-18 — shared beat
