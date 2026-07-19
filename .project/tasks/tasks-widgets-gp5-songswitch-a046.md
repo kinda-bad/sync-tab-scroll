@@ -24,7 +24,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   broadcast vs playback-start ordering contributes. Write the diagnosis
   as a note in this tasks file, naming the seam where a regression test
   can live.
-- [ ] T002 [artifacts: constitution, infrastructure] Test-first fix for
+- [x] T002 [artifacts: constitution, infrastructure] Test-first fix for
   the diagnosed race: write the failing regression test at the seam T001
   identified (vitest or Playwright CT per the module's existing
   conventions; `it.fails` marker on the red commit per the

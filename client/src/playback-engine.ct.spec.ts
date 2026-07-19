@@ -526,7 +526,6 @@ test('debounces rapid host seeks into a single broadcast carrying the last tick'
  * really fetched/parsed by a fresh engine.
  */
 test('a song switch with the same track index loads the new song (not the stale score)', async ({ mount, page }) => {
-  test.fail(); // red-state marker (constitution Principle VII) — removed on the paired green commit
   const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
 

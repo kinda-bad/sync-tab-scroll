@@ -31,6 +31,17 @@ export interface EngineContainers {
 
 interface EngineState {
   api: AlphaTabApi;
+  /**
+   * Which catalog song this engine instance loaded — the missing identity
+   * behind feedback F001 (song-switch stale-score race): without it, a host
+   * "Change song" re-invoked ensurePlaybackEngine with the NEW song but the
+   * early-return ladder matched on part kind/track index alone, so the old
+   * api (old score, old lyrics overlay, old synth MIDI) survived and Start
+   * played the OLD song until a refresh. A differing songId now tears the
+   * engine down and rebuilds from scratch, same as the lyrics-part
+   * kind-change path.
+   */
+  songId: string;
   overlay?: LyricsOverlay;
   isLyricsPart: boolean;
   trackIndex: number;
@@ -69,9 +80,11 @@ let state: EngineState | undefined;
  */
 export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsClient, song: CatalogSong, trackIndex: number, isLyricsPart: boolean): void {
   if (state) {
-    if (state.isLyricsPart !== isLyricsPart) {
-      state.api.destroy();
-      state = undefined;
+    if (state.songId !== song.id || state.isLyricsPart !== isLyricsPart) {
+      // Song changed (or engine kind changed): the loaded score, lyrics
+      // overlay/lrc DOM, and synth state all belong to the old song — tear
+      // down and rebuild rather than trying to reload in place (F001).
+      destroyEngine();
     } else if (!isLyricsPart && state.trackIndex !== trackIndex) {
       if (state.score) switchTrack(state.api, state.score, trackIndex);
       state.trackIndex = trackIndex;
@@ -103,7 +116,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // no cursor DOM, so the handler simply never gets invoked there.
   installCountInCursorGuard(api);
 
-  state = { api, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
+  state = { api, songId: song.id, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
   // A fresh engine always starts with the overlay shown (matches
   // `showOverlay: true` above) — resets any stale `false` left over from a
   // previous song/session (T004).
@@ -460,6 +473,28 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
  * one whenever `renderedWhileVisible` is false, not only when `scoreLoaded`
  * itself hasn't fired yet (self-healing rather than order-dependent).
  */
+/** Destroys the live engine (stopping any playback) and resets the store's engineReady flag so the loading indicator reappears for the next engine. */
+function destroyEngine(): void {
+  if (!state) return;
+  state.api.destroy();
+  state = undefined;
+  clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
+}
+
+/**
+ * Tears the engine down the moment the session's selectedSong no longer
+ * matches what it has loaded (feedback F001) — called reactively from
+ * App.svelte on every selectedSong change. This covers the window where the
+ * host has changed songs but this participant hasn't re-picked a part yet
+ * (the server clears selectedPart on song change, so ensurePlaybackEngine's
+ * own song-identity teardown wouldn't run until a part is chosen): without
+ * this, a Start landing in that window would play the OLD song's still-loaded
+ * score. No-op when the engine already matches (or none exists).
+ */
+export function dropEngineIfSongChanged(songId: string): void {
+  if (state && state.songId !== songId) destroyEngine();
+}
+
 export function renderNowVisible(): void {
   if (!state || state.isLyricsPart) return;
   if (state.scoreLoaded && !state.renderedWhileVisible) {

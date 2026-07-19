@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { clientStore } from './store';
-  import { ensurePlaybackEngine, renderNowVisible } from './playback-engine';
+  import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged } from './playback-engine';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
@@ -43,6 +43,14 @@
   // state (Lobby or Playback, running/paused/stopped) — not gated to the
   // Playback view the way it used to be.
   $: hasPart = participant?.selectedPart != null;
+
+  // Song-switch stale-score guard (feedback F001): the instant the host's
+  // selectedSong broadcast lands, an engine still holding a DIFFERENT song's
+  // score is torn down — the server clears selectedPart on song change, so
+  // the ensurePlaybackEngine block below wouldn't re-run (and apply its own
+  // song-identity teardown) until this participant re-picks a part, leaving
+  // a window where Start would play the old song's still-loaded score.
+  $: if (session?.selectedSong) dropEngineIfSongChanged(session.selectedSong);
 
   // Fires the moment a participant's part is known (song selected +
   // selectedPart set) — in the Lobby, not on Playback mount — so
