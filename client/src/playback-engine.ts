@@ -476,6 +476,11 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 /** Destroys the live engine (stopping any playback) and resets the store's engineReady flag so the loading indicator reappears for the next engine. */
 function destroyEngine(): void {
   if (!state) return;
+  // api.destroy() only tears down alphaTab's own DOM/synth — the lyrics
+  // ticker overlay is this module's DOM (createLyricsOverlay) and would
+  // otherwise keep scrolling the OLD song's lyrics under the new engine
+  // (observed live during the F001 fix verification).
+  state.overlay?.destroy();
   state.api.destroy();
   state = undefined;
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));

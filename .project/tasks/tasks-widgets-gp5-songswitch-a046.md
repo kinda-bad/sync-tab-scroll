@@ -32,7 +32,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   (e.g. gate play/seek on the new score's readiness, or tear down and
   rebuild engine state on song change). Remove the marker; full client
   (and server, if touched) suites green.
-- [ ] T003 Live verification in a real browser: repeat T001's repro
+- [x] T003 Live verification in a real browser: repeat T001's repro
   recipe post-fix — the new song's tab renders and Start plays the new
   song's audio with no refresh needed; also verify a normal
   (non-immediate) song switch and that the lyrics ticker follows the new
@@ -64,6 +64,23 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 > `__switchSong` hook mirroring the existing `__switchPart`), asserting a
 > second ensurePlaybackEngine call with a different gpFilePath actually
 > loads the new file's score instead of early-returning.
+
+> **T003 live verification (2026-07-19, post-fix).** Same rig as T001.
+> (1) Immediate switch: Creep (Lead Guitar, READY) → Change song → Last
+> Nite → part + Start in one motion — the OLD Creep tab disappears the
+> instant the selectedSong broadcast lands (dropEngineIfSongChanged), the
+> Last Nite tab renders, the cursor advances over it, and the ticker
+> scrolls Last Nite's lyrics ("Last ni- ght, she sa- id…"). No refresh.
+> (2) Normal switch: Last Nite → Supermassive Black Hole, part picked at
+> leisure — new tab renders and plays. (3) Ticker follows: found during
+> this verification that api.destroy() left the OLD song's lyrics-ticker
+> overlay DOM scrolling under the new engine (Supermassive has no lyric
+> data, so the Last Nite ticker persisted) — destroyEngine() now also
+> calls overlay.destroy(); re-verified live: switching Last Nite →
+> Supermassive removes the ticker immediately. Engine-audio and renderer
+> share one alphaTab api, so the rendered score being correct implies
+> the played score is too (and the ticker/cursor tracked the new song's
+> timing in real playback).
 
 ## Phase 2: GP5 raw lyric line (gp5-raw-lyric-line-extraction)
 
