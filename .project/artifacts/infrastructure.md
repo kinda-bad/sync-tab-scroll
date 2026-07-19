@@ -85,8 +85,21 @@ threshold and "correct only if drift exceeds it" behavior are unchanged,
 just measured against a latency-compensated projection instead of the
 stale broadcast value directly.
 
-Realtime session state is server-memory-only: a grace-period timer destroys
-empty sessions, and a server restart drops active ones. **No durable backing
+Realtime session state is server-memory-only: an idle-TTL timer destroys
+empty sessions, and a server restart drops active ones. The empty-session
+TTL is configurable (`ServerConfig.sessionEmptyTtlMs`, env
+`SESSION_EMPTY_TTL_MS`; injected into `SessionStore`), **default 12 hours**
+(feedback F001, `research-session-expiration-2026-07-19-9b87.md`): the
+timer arms when the last connected participant disconnects and cancels on
+any (re)join, so time-since-empty is what distinguishes a resumable
+session (band on a break, rejoin within the window with the same code and
+full state) from an abandoned one. It deliberately does not go indefinite —
+never-expiring sessions slowly pollute the 4-character join-code space
+until typos become join-a-stranger's-session leaks. When a disconnect
+leaves the session empty while playback is `'running'`, the server flips
+`playbackState.status` to `'paused'` (with a fresh `serverTimestamp`)
+before arming the timer, so an hours-later rejoin resumes a cleanly paused
+session instead of drift-correcting against a long-stale running clock. **No durable backing
 store for *session state*** — this remains true after the accounts addition
 (constitution v1.5.0). The durable Postgres store introduced for user accounts
 holds only identity / catalogue-membership / auth-session records (User
@@ -156,8 +169,18 @@ moves to them, their `role` becomes `'host'`, and the outgoing host's
 `role` becomes `'member'` (they keep their seat and can still rejoin
 later, just without host privileges). If no other participant is
 connected when the timer fires, nothing is promoted — an empty-of-
-connections session is already covered by the session-destruction grace
-timer above.
+connections session is already covered by the empty-session idle TTL
+above.
+
+The disconnect-time timer alone doesn't cover a rejoin into a long-empty
+session (the empty-session TTL is hours): everyone leaves, the host's
+reassignment timer fires with nobody to promote, and a member rejoining
+later would otherwise find `Session.hostId` pointing at a disconnected
+participant forever. So `session-join` also checks: if the joined
+session's `hostId` belongs to a `disconnected` participant, host
+reassignment is (re)scheduled — a no-op if a timer is already pending,
+and a host reclaiming their own seat still cancels any pending timer as
+before.
 
 This grace period is configurable (`ServerConfig.hostReassignGraceMs`,
 env `HOST_REASSIGN_GRACE_MS`) — mainly so it can be shortened for tests;
