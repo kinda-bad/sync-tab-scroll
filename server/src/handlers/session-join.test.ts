@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NullAccountStore } from '../accounts/null-store.js';
 import type { WebSocket } from 'ws';
 import { SessionStore } from '../session-store.js';
@@ -13,6 +13,48 @@ function fakeSocket(): WebSocket {
 function makeCtx() {
   return { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
 }
+
+describe('session-join absent-host reassignment (rejoin into an empty session)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it.fails('schedules host reassignment when a member joins a session whose host is disconnected', () => {
+    // With a long empty-session TTL, a member can rejoin hours after everyone
+    // left; scheduleHostReassignment only fires on host *disconnect*, so
+    // without a join-time check the absent host would stay hostId forever.
+    const ctx = { sessionStore: new SessionStore(1000), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0, userId: null });
+    ctx.connections.broadcast = () => {};
+
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: 'Member' });
+
+    vi.advanceTimersByTime(1000);
+
+    const member = session.participants.find((p) => p.displayName === 'Member')!;
+    expect(session.hostId).toBe(member.id);
+    expect(member.role).toBe('host');
+  });
+
+  it('does not reassign when the disconnected host reclaims their own seat', () => {
+    const ctx = { sessionStore: new SessionStore(1000), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } } satisfies HandlerContext;
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0, userId: null });
+    ctx.connections.broadcast = () => {};
+
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: 'Host', participantId: 'host-1' });
+
+    vi.advanceTimersByTime(1000);
+
+    expect(session.hostId).toBe('host-1');
+    expect(session.participants.find((p) => p.id === 'host-1')!.role).toBe('host');
+  });
+});
 
 describe('session-join', () => {
   it('sends a typed session-not-found (carrying the code) and no error when the code has no live session (F001)', () => {
