@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Shared enum + loaded/ready split
 
-- [ ] T001 [artifacts: constitution, datamodel] Extend the shared
+- [x] T001 [artifacts: constitution, datamodel] Extend the shared
   `ReadinessStatus` type (`packages/shared/src/index.ts`) to
   `'no-part' | 'loading' | 'loaded' | 'ready'` and add the new client
   message type `ready-set { ready: boolean }` to
