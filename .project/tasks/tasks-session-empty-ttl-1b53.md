@@ -1,14 +1,14 @@
 ---
 plan: plan-session-empty-ttl-2026-07-19-ce83.md
 generated: 2026-07-19
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
 
 ## Phase 1: TTL + pause-on-empty (server)
 
-- [ ] T001 [artifacts: constitution, infrastructure] Test-first (red):
+- [x] T001 [artifacts: constitution, infrastructure] Test-first (red):
   in `server/src/session-store.test.ts` (fake timers) and
   `server/src/config` tests, add failing tests for: (a)
   `ServerConfig.sessionEmptyTtlMs` parsed from env
@@ -23,7 +23,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   disconnects while `playbackState.status === 'running'`, the status
   becomes `'paused'` before the empty timer arms. Use `it.fails`
   markers on the red commit per the pre-commit-hook convention.
-- [ ] T002 [artifacts: infrastructure] Implement: replace the hardcoded
+- [x] T002 [artifacts: infrastructure] Implement: replace the hardcoded
   `GRACE_PERIOD_MS = 30_000` (`server/src/session-store.ts:3`) with a
   constructor-injected duration; add `sessionEmptyTtlMs` to
   `server/src/config.ts` (env `SESSION_EMPTY_TTL_MS`, default
@@ -36,7 +36,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Absent-host rejoin reassignment
 
-- [ ] T003 [artifacts: infrastructure] Test-first fix for the
+- [x] T003 [artifacts: infrastructure] Test-first fix for the
   pre-existing edge a 12h TTL amplifies: a member (re)joining a session
   whose `hostId` points at a `disconnected` participant currently
   leaves that absent host in place forever (`scheduleHostReassignment`
@@ -52,7 +52,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Artifact revision + close-out
 
-- [ ] T004 [artifacts: infrastructure] Revise infrastructure.md's
+- [x] T004 [artifacts: infrastructure] Revise infrastructure.md's
   session-lifecycle text (feedback
   `feedback-session-expiry-question-8f83.md` F001): the "grace-period
   timer destroys empty sessions" wording becomes the configurable
@@ -62,8 +62,17 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   `research-session-expiration-2026-07-19-9b87.md`), plus the
   pause-on-empty guard and the join-time host-reassignment check. Stamp
   `last_updated` via `ardd-state.sh stamp`. No code in this task.
-- [ ] T005 Quick live sanity check (real server, small injected TTL via
+- [x] T005 Quick live sanity check (real server, small injected TTL via
   env): create a session, disconnect all tabs, verify it survives past
   30s and dies after the injected TTL; rejoin within the window and
   verify the session resumes with playback paused. Record the outcome
   in a tasks-file note.
+
+> **T005 note (2026-07-19):** Live check ran against a real server
+> (`tsx src/index.ts`, PORT=6199, `SESSION_EMPTY_TTL_MS=35000`) driven
+> by a scripted `ws` client: host created session `ETLR`, started
+> playback, disconnected. Rejoin at t≈31s (past the old 30s grace)
+> returned `session-state` with `playbackState.status: 'paused'`
+> (pause-on-empty confirmed). After disconnecting again and waiting
+> past the 35s TTL, rejoin returned `session-not-found`. All four
+> checks passed; server process cleaned up afterward.
