@@ -41,15 +41,22 @@
     data-parity={parity}
     style={`--beat-ms: ${beatDurationMs}ms`}
   >
+    <!-- Measure slot LEFT of the beat count (feedback beat-widget-layout
+         F001/F002): always rendered with fixed width so the beat count's
+         horizontal position is identical in count-in mode (contents
+         hidden, space reserved) and playback mode — the countdown becomes
+         the metronome without the beat number moving. The measure is the
+         number stacked over a small "MES" caption, no "Measure 12" prose. -->
+    <div class="measure-slot" data-testid="measure-slot" class:measure-hidden={!showPlayback}>
+      <span class="measure-number" data-testid="beat-measure-number">{barNumber}</span>
+      <span class="measure-caption" data-testid="beat-measure-caption">MES</span>
+    </div>
     <div class="beat-shape">
       {#key beatInBar}
         <div class="beat-fill" data-testid="beat-fill"></div>
       {/key}
       <span class="beat-count" data-testid="beat-count">{displayCount}</span>
     </div>
-    {#if showPlayback}
-      <span class="beat-measure" data-testid="beat-measure">Measure {barNumber}</span>
-    {/if}
   </div>
 {/if}
 
@@ -123,11 +130,38 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Less prominent than the beat count, labeled (ui.md). */
-  .beat-measure {
+  /* Less prominent than the beat count, stacked number-over-caption.
+     Fixed width so the reserved space is identical whether or not the
+     measure is shown — the beat count never moves across the
+     count-in→playback transition. */
+  .measure-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    flex: none;
+  }
+
+  /* Space reserved, contents invisible (count-in mode). */
+  .measure-hidden > * {
+    visibility: hidden;
+  }
+
+  .measure-number {
     color: var(--ink-dim);
-    font-size: 0.75rem;
-    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.1;
     font-variant-numeric: tabular-nums;
+  }
+
+  .measure-caption {
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.1;
   }
 </style>

@@ -35,7 +35,7 @@ test.describe('gating matrix', () => {
     });
     await expect(component.getByTestId('beat-widget')).toBeVisible();
     await expect(component.getByTestId('beat-count')).toHaveText('2'); // counts UP: tick Q = beat 2
-    await expect(component.getByTestId('beat-measure')).toHaveText('Measure 1');
+    await expect(component.getByTestId('beat-measure-number')).toHaveText('1');
   });
 
   test('playing phase with metronome pref off renders nothing (personal gate)', async ({ mount }) => {
@@ -59,7 +59,7 @@ test.describe('count values at known ticks', () => {
       props: { phase: 'playing', countInEnabled: false, metronomeOn: true, tick: 4 * Q, bars: fourFour },
     });
     await expect(component.getByTestId('beat-count')).toHaveText('1');
-    await expect(component.getByTestId('beat-measure')).toHaveText('Measure 2');
+    await expect(component.getByTestId('beat-measure-number')).toHaveText('2');
   });
 
   test('counts to the actual numerator in a 3/4 bar (no hard-coded 4)', async ({ mount }) => {
@@ -90,7 +90,6 @@ test.describe('count values at known ticks', () => {
 
 test.describe('measure-left-of-beat stacked layout (T007)', () => {
   test('playback mode: measure renders left of the beat count, as a number stacked over a "MES" caption', async ({ mount }) => {
-    test.fail(); // red until T008
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'playing', countInEnabled: false, metronomeOn: true, tick: 4 * Q, bars: fourFour },
     });
@@ -113,7 +112,6 @@ test.describe('measure-left-of-beat stacked layout (T007)', () => {
   });
 
   test('count-in mode: the measure slot reserves its space but shows no measure number', async ({ mount }) => {
-    test.fail(); // red until T008
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'count-in', countInEnabled: true, metronomeOn: false, tick: 0, bars: fourFour, countInBeat: 1 },
     });
@@ -129,7 +127,6 @@ test.describe('measure-left-of-beat stacked layout (T007)', () => {
   });
 
   test('the beat count does not move between count-in and playback modes', async ({ mount }) => {
-    test.fail(); // red until T008
     const countIn = await mount(BeatWidgetHarness, {
       props: { phase: 'count-in', countInEnabled: true, metronomeOn: true, tick: 0, bars: fourFour, countInBeat: 1 },
     });
