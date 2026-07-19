@@ -111,6 +111,8 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
             wsClient: null,
             playbackProgress: 0,
             engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
             connectionStatus: 'connecting',
             lyricsOverlayVisible: true,
           });
@@ -131,6 +133,17 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
           else if (view === 'playback' && message.session.playbackState.status === 'stopped') view = 'lobby';
           return { ...s, view, session: message.session, selfParticipantId: message.selfParticipantId };
         });
+      } else if (message.type === 'start-confirmation-needed') {
+        // Start negotiation (ui.md Explicit Readiness): opens the host's
+        // "start anyway?" modal. The live not-ready count is derived from
+        // session-state broadcasts, not this one-shot message.
+        clientStore.update((s) => ({ ...s, startConfirmationOpen: true }));
+      } else if (message.type === 'host-start-pending') {
+        clientStore.update((s) => ({ ...s, hostStartPendingOpen: true }));
+      } else if (message.type === 'host-start-resolved') {
+        // Auto-dismisses the participant's modal whichever way the host
+        // answered (started true or false alike).
+        clientStore.update((s) => ({ ...s, hostStartPendingOpen: false, startConfirmationOpen: false }));
       } else if (message.type === 'catalog') {
         clientStore.update((s) => ({ ...s, catalog: message.songs, catalogues: message.catalogues }));
       } else if (message.type === 'session-not-found') {
@@ -156,6 +169,8 @@ export function createWsClient(url: string, reconnectDelayMs = 2000): WsClient {
           wsClient: null,
           playbackProgress: 0,
           engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
           connectionStatus: 'connecting',
           lyricsOverlayVisible: true,
         });

@@ -20,6 +20,8 @@ export function leaveSession(): void {
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
     connectionStatus: 'connecting',
     lyricsOverlayVisible: true,
   });

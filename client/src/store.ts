@@ -42,6 +42,18 @@ export interface ClientState {
    * overlay's own initial `showOverlay: true`.
    */
   lyricsOverlayVisible: boolean;
+  /**
+   * Start negotiation modal flags (explicit-participant-readiness, ui.md
+   * Explicit Readiness & Start Negotiation). `startConfirmationOpen`: the
+   * host's "N participants are not yet ready, start anyway?" modal — opened
+   * by `start-confirmation-needed`, closed locally on answer or Esc (Esc
+   * sends nothing; the server-side negotiation stays pending).
+   * `hostStartPendingOpen`: the participant's "Host wants to start, are you
+   * ready?" modal — opened by `host-start-pending`, auto-dismissed by
+   * `host-start-resolved` either way.
+   */
+  startConfirmationOpen: boolean;
+  hostStartPendingOpen: boolean;
 }
 
 function createClientStore() {
@@ -53,6 +65,8 @@ function createClientStore() {
     wsClient: null,
     playbackProgress: 0,
     engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
     connectionStatus: 'connecting',
     lyricsOverlayVisible: true,
   });

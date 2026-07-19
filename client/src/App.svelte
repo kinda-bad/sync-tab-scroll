@@ -14,6 +14,7 @@
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
+  import StartNegotiationModals from './components/StartNegotiationModals.svelte';
   import AccountMenu from './components/AccountMenu.svelte';
   import AuthoringModal from './components/AuthoringModal.svelte';
   import { accountStore, signIn, signOut, authoringModalOpen, loadAccount } from './account';
@@ -141,6 +142,24 @@
   function closeSongPartModal() {
     songPartDismissed = true;
     songPartModalOpen = false;
+  }
+
+  // Start negotiation (ui.md Explicit Readiness & Start Negotiation): the
+  // host modal's live count — connected, non-host, not-`ready` participants,
+  // recomputed from every session-state broadcast so it drops as members
+  // ready up during the window. Mirrors the server's own count rule (host
+  // exempt, connected only).
+  $: notReadyCount = session ? session.participants.filter((p) => p.id !== session!.hostId && p.connectionStatus === 'connected' && p.readiness !== 'ready').length : 0;
+
+  function answerStartConfirmation(proceed: boolean) {
+    $clientStore.wsClient?.send({ type: 'start-confirmation-answer', proceed });
+    clientStore.update((s) => ({ ...s, startConfirmationOpen: false }));
+  }
+
+  function imReady() {
+    // An ordinary ready-set — the modal itself stays open until the host's
+    // answer arrives as host-start-resolved (auto-dismiss in ws-client.ts).
+    $clientStore.wsClient?.send({ type: 'ready-set', ready: true });
   }
 
   // The Bar's readiness indicator is the participant's own ready control
@@ -283,6 +302,16 @@
   ownedCatalogueIds={$accountStore.ownedCatalogueIds}
   onCatalogueCreated={() => void loadAccount()}
   songUploadEnabled={$accountStore.songUploadEnabled}
+/>
+
+<StartNegotiationModals
+  hostModalOpen={$clientStore.startConfirmationOpen}
+  participantModalOpen={$clientStore.hostStartPendingOpen}
+  {notReadyCount}
+  onAnswer={answerStartConfirmation}
+  onImReady={imReady}
+  onCloseHostModal={() => clientStore.update((s) => ({ ...s, startConfirmationOpen: false }))}
+  onCloseParticipantModal={() => clientStore.update((s) => ({ ...s, hostStartPendingOpen: false }))}
 />
 
 <Toasts />

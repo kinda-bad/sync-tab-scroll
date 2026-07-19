@@ -133,6 +133,8 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
@@ -165,6 +167,8 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
@@ -185,6 +189,8 @@ describe('ws-client self-removal detection', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
@@ -205,5 +211,48 @@ describe('ws-client self-removal detection', () => {
     expect(state?.view).toBe('lobby');
     expect(state?.selfParticipantId).toBe('p1');
     expect(socket.closeCalls).toBe(0);
+  });
+});
+
+// T005 (explicit-participant-readiness): the start-negotiation server
+// messages (infrastructure.md Start Negotiation) map onto the two modal
+// flags — `start-confirmation-needed` opens the host modal,
+// `host-start-pending` opens the participant modal, `host-start-resolved`
+// auto-dismisses the participant modal whether or not the start proceeded.
+describe('ws-client start negotiation messages', () => {
+  function currentState(): Record<string, unknown> {
+    let state: Record<string, unknown> = {};
+    clientStore.subscribe((s) => (state = s as unknown as Record<string, unknown>))();
+    return state;
+  }
+
+  it('start-confirmation-needed opens the host confirmation modal flag', () => {
+    createWsClient('ws://test');
+    const socket = FakeWebSocket.instances[0];
+
+    socket.dispatch('message', { data: JSON.stringify({ type: 'start-confirmation-needed', notReadyCount: 2 }) });
+
+    expect(currentState().startConfirmationOpen).toBe(true);
+  });
+
+  it('host-start-pending opens the participant modal flag', () => {
+    createWsClient('ws://test');
+    const socket = FakeWebSocket.instances[0];
+
+    socket.dispatch('message', { data: JSON.stringify({ type: 'host-start-pending' }) });
+
+    expect(currentState().hostStartPendingOpen).toBe(true);
+  });
+
+  it.each([true, false])('host-start-resolved (started: %s) auto-dismisses both modal flags', (started) => {
+    createWsClient('ws://test');
+    const socket = FakeWebSocket.instances[0];
+    socket.dispatch('message', { data: JSON.stringify({ type: 'host-start-pending' }) });
+    socket.dispatch('message', { data: JSON.stringify({ type: 'start-confirmation-needed', notReadyCount: 1 }) });
+
+    socket.dispatch('message', { data: JSON.stringify({ type: 'host-start-resolved', started }) });
+
+    expect(currentState().hostStartPendingOpen).toBe(false);
+    expect(currentState().startConfirmationOpen).toBe(false);
   });
 });

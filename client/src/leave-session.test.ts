@@ -46,6 +46,8 @@ describe('leaveSession', () => {
       wsClient: fakeWsClient,
       playbackProgress: 0.5,
       engineReady: true,
+      startConfirmationOpen: false,
+      hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connected',
     });
@@ -65,6 +67,8 @@ describe('leaveSession', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
@@ -79,6 +83,8 @@ describe('leaveSession', () => {
       wsClient: null,
       playbackProgress: 0,
       engineReady: false,
+    startConfirmationOpen: false,
+    hostStartPendingOpen: false,
       lyricsOverlayVisible: true,
       connectionStatus: 'connecting',
     });
