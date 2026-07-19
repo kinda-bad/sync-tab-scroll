@@ -1,7 +1,7 @@
 ---
 plan: plan-explicit-readiness-2026-07-19-841d.md
 generated: 2026-07-19
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
@@ -81,7 +81,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 4: Live verification + close-out
 
-- [ ] T006 Live two-client verification in a real browser (own
+- [x] T006 Live two-client verification in a real browser (own
   server+client on non-default ports, scratch public catalog; two
   browser contexts — host + member): (a) member loads a part →
   indicator shows clock; click → check; un-click → clock; host's
@@ -94,3 +94,21 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   no modals, starts immediately. Record outcomes in a tasks-file note;
   clean up processes. Leave the three stale diagrams for a later
   /ardd-diagram pass (note it).
+
+  > **T006 verification note (2026-07-19).** Ran server (tsx, PORT=6185,
+  > scratch public catalog copy with every catalogue.json deleted) + Vite
+  > (6105, VITE_BACKEND_PORT=6185); Playwright chromium, two isolated
+  > contexts (host "Hosty" created session, member "Membo" joined by
+  > code). All five scenarios passed live:
+  > (a) member indicator showed clock on load-complete, click → check,
+  > un-click → clock; host's Settings participants list mirrored
+  > check/clock both ways. (b) host Start with member loaded → host got
+  > the "1 participant is not yet ready. Start anyway?" modal, member got
+  > "Host wants to start, are you ready?"; member's I'm ready dropped the
+  > host's live count 1 → 0. (c) Start anyway → playback started (Stop
+  > control appeared), member modal auto-dismissed. (d) Cancel → nothing
+  > started (host still in Lobby with Start), member modal
+  > auto-dismissed. (e) all-ready Start → immediate playback, no modal on
+  > either side. Server, Vite, and browser processes all cleaned up.
+  > The three stale diagrams are deliberately left for a later
+  > /ardd-diagram pass.

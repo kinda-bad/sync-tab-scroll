@@ -1,6 +1,6 @@
 ---
 slug: explicit-participant-readiness
-status: tasked
+status: implemented
 logged: 2026-07-19
 plan: plan-explicit-readiness-2026-07-19-841d.md
 tasks: tasks-explicit-readiness-0580.md
