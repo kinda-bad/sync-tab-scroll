@@ -254,14 +254,14 @@ test('Tracks tab: a mute toggle renders per available part, reflecting stored mu
 
   await component.getByRole('button', { name: 'Tracks' }).click();
 
-  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
-  await expect(component.getByText('Bass: Muted')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Lead Guitar' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Unmute Bass' })).toBeVisible();
 
-  await component.getByText('Lead Guitar: Unmuted').click();
-  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+  await component.getByRole('button', { name: 'Mute Lead Guitar' }).click();
+  await expect(component.getByRole('button', { name: 'Unmute Lead Guitar' })).toBeVisible();
 
-  await component.getByText('Bass: Muted').click();
-  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
+  await component.getByRole('button', { name: 'Unmute Bass' }).click();
+  await expect(component.getByRole('button', { name: 'Mute Bass' })).toBeVisible();
 });
 
 /**
@@ -277,8 +277,8 @@ test('Tracks tab: clicking a mute toggle persists via track-mute-preference (rou
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
   await component.getByRole('button', { name: 'Tracks' }).click();
-  await component.getByText('Lead Guitar: Unmuted').click();
-  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+  await component.getByRole('button', { name: 'Mute Lead Guitar' }).click();
+  await expect(component.getByRole('button', { name: 'Unmute Lead Guitar' })).toBeVisible();
 
   const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
   expect(stored).toBe('on');
@@ -309,9 +309,9 @@ test('Tracks tab: a participant can mute their own currently-selected part (no r
 
   // member-1's own selectedPart is trackIndex 0 ("Lead Guitar") — muting it
   // must succeed exactly like muting any other part.
-  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
-  await component.getByText('Lead Guitar: Unmuted').click();
-  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Lead Guitar' })).toBeVisible();
+  await component.getByRole('button', { name: 'Mute Lead Guitar' }).click();
+  await expect(component.getByRole('button', { name: 'Unmute Lead Guitar' })).toBeVisible();
 
   const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
   expect(stored).toBe('on');
@@ -342,8 +342,8 @@ test('Tracks tab: each part renders in its own row', async ({ mount, page }) => 
 
   await component.getByRole('button', { name: 'Tracks' }).click();
 
-  const rowCount = await page.evaluate(() => document.querySelectorAll('.control-row').length);
-  // One .control-row per part -- not one shared row wrapping every part's
+  const rowCount = await page.evaluate(() => document.querySelectorAll('.track-row').length);
+  // One .track-row per part -- not one shared row wrapping every part's
   // button together.
   expect(rowCount).toBe(2);
 });
@@ -370,16 +370,16 @@ test('Tracks tab: clicking "Solo" on a part mutes every other part, leaves it un
 
   await component.getByRole('button', { name: 'Tracks' }).click();
 
-  await expect(component.getByText('Lead Guitar: Unmuted')).toBeVisible();
-  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
-  await expect(component.getByText('Drums: Unmuted')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Lead Guitar' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Bass' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Drums' })).toBeVisible();
 
-  const bassRow = component.locator('.control-row', { hasText: 'Bass:' });
+  const bassRow = component.locator('.track-row', { hasText: 'Bass' });
   await bassRow.getByRole('button', { name: 'Solo' }).click();
 
-  await expect(component.getByText('Bass: Unmuted')).toBeVisible();
-  await expect(component.getByText('Lead Guitar: Muted')).toBeVisible();
-  await expect(component.getByText('Drums: Muted')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Mute Bass' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Unmute Lead Guitar' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Unmute Drums' })).toBeVisible();
 
   const storedLead = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:0'));
   const storedBass = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:creep:1'));
@@ -636,7 +636,6 @@ test.describe('Tracks tab redesign (T004)', () => {
     });
 
   test('each part renders as a single-line row with a display-only, instrument-prominent label', async ({ mount, page }) => {
-    test.fail(); // red until T005
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Tracks' }).click();
 
@@ -662,7 +661,6 @@ test.describe('Tracks tab redesign (T004)', () => {
     mount,
     page,
   }) => {
-    test.fail(); // red until T005
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Tracks' }).click();
 
@@ -682,7 +680,6 @@ test.describe('Tracks tab redesign (T004)', () => {
   });
 
   test('Solo stays a text button on the redesigned rows', async ({ mount, page }) => {
-    test.fail(); // red until T005
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Tracks' }).click();
 
@@ -700,7 +697,6 @@ test.describe('Tracks tab redesign (T004)', () => {
     mount,
     page,
   }) => {
-    test.fail(); // red until T005
     const session = baseSession({
       selectedSong: 'tiro',
       availableParts: [
@@ -738,7 +734,6 @@ test.describe('Tracks tab redesign (T004)', () => {
     mount,
     page,
   }) => {
-    test.fail(); // red until T005
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Tracks' }).click();
 
@@ -761,7 +756,6 @@ test.describe('Tracks tab redesign (T004)', () => {
   });
 
   test('"Mute all" never touches count-in/metronome (no WS sends, metronome preference untouched)', async ({ mount, page }) => {
-    test.fail(); // red until T005
     await page.evaluate(() => localStorage.setItem('sync-tab-scroll:metronome', 'on'));
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'Tracks' }).click();
