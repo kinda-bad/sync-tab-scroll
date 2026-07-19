@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Song-switch race (feedback F001)
 
-- [ ] T001 Research (no production code): reproduce and diagnose the
+- [x] T001 Research (no production code): reproduce and diagnose the
   song-switch stale-score race
   (`feedback-song-switch-stale-score-e030.md` F001). Repro recipe from
   live testing: in a running session, host clicks "Change song", picks a
@@ -37,6 +37,33 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   song's audio with no refresh needed; also verify a normal
   (non-immediate) song switch and that the lyrics ticker follows the new
   song. Record outcomes in a tasks-file note.
+
+> **T001 diagnosis (2026-07-19).** Reproduced live (dev server 6180 / vite
+> 6101, scratch public catalog): host on Creep with a part selected, then
+> Change song → Last Nite → re-select part + Start immediately. Result: the
+> Bar shows "LAST NITE — The Strokes" and playback runs, but the lyrics
+> ticker scrolls Creep's lyrics and the beat cursor advances over Creep's
+> (still-loaded) score — exactly F001. Root cause is client-side and needs
+> no timing race at all: `client/src/playback-engine.ts`'s module-level
+> `EngineState` carries **no song identity** (`isLyricsPart`, `trackIndex`,
+> theme… but no `songId`/`gpFilePath`). `App.svelte`'s reactive block does
+> re-invoke `ensurePlaybackEngine(...)` with the NEW song after the
+> `selectedSong` broadcast, but the function's early-return ladder
+> (playback-engine.ts:71-82) matches on `isLyricsPart`/`trackIndex` only,
+> so a same-part song switch hits the final `return` and the old api —
+> old score, old lyrics overlay, old synth MIDI — survives untouched.
+> When the host hits Start, the `clientStore.subscribe` block's
+> `correctDrift` sees status `running` and calls `play()` on that stale
+> engine. The server side is innocent (selectedSong broadcast arrives
+> before playback-start; verified in the repro — the Bar title had
+> already updated). Fix seam: add song identity to `EngineState` and make
+> `ensurePlaybackEngine` tear down (`api.destroy()`) + rebuild when the
+> incoming `song.id` differs — same shape as the existing
+> lyrics-part-kind-change teardown. Regression test seam:
+> `playback-engine.ct.spec.ts` via `PlaybackEngineHarness` (add a
+> `__switchSong` hook mirroring the existing `__switchPart`), asserting a
+> second ensurePlaybackEngine call with a different gpFilePath actually
+> loads the new file's score instead of early-returning.
 
 ## Phase 2: GP5 raw lyric line (gp5-raw-lyric-line-extraction)
 
