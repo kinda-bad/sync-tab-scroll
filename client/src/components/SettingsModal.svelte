@@ -218,8 +218,8 @@
                 : ((idx) => (idx >= 0 && partNames[idx] ? formatPartDisplayName(partNames[idx]) : undefined))(
                   session.availableParts.findIndex((ap) => ap.trackIndex === p.selectedPart),
                 )}
-          {@const sublabel = p.role === 'host' ? (partLabel ? `HOST · ${partLabel}` : 'HOST') : partLabel}
-          <ListRow label={p.displayName} {sublabel}>
+          <!-- T003: "HOST" text badge → ListRow's crown icon (host prop). -->
+          <ListRow label={p.displayName} sublabel={partLabel} host={p.role === 'host'}>
             {#if isPendingRow && isHost}
               <Button variant="ghost" label="Decline" onclick={declineHostRequest} />
             {:else if isPendingRow}

@@ -502,7 +502,10 @@ test('a row shows "Lyrics" for a participant on the tab-less lyrics part', async
   await expect(component.getByText('Lyrics')).toBeVisible();
 });
 
-test('the host row combines "HOST" and the selected part as "HOST · <part>"', async ({ mount }) => {
+// T003 (tasks-icons-a11y-ticker-a10d.md, feedback F002): the "HOST" text
+// badge is replaced by a lucide crown icon; the designation stays announced
+// via visually-hidden "Host" text next to the aria-hidden icon.
+test('the host row shows a crown icon (with SR-only "Host" text) alongside the selected part', async ({ mount }) => {
   const session = baseSession({
     availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }],
     participants: [
@@ -512,7 +515,13 @@ test('the host row combines "HOST" and the selected part as "HOST · <part>"', a
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await expect(component.getByText('HOST · Lead Guitar')).toBeVisible();
+  const hostRow = component.locator('.row', { hasText: 'Host' }).first();
+  await expect(hostRow.locator('svg.lucide-crown')).toBeVisible();
+  await expect(hostRow.locator('svg.lucide-crown')).toHaveAttribute('aria-hidden', 'true');
+  // Accessible announcement survives the icon swap: SR-only text "Host".
+  await expect(hostRow.locator('.sr-only', { hasText: 'Host' })).toHaveCount(1);
+  await expect(hostRow.getByText('Lead Guitar')).toBeVisible();
+  await expect(component.getByText(/HOST/)).toHaveCount(0);
 });
 
 test('a row with no selected part shows no part text', async ({ mount }) => {
@@ -524,8 +533,9 @@ test('a row with no selected part shows no part text', async ({ mount }) => {
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
 
-  await expect(component.getByText('HOST', { exact: true })).toBeVisible();
-  await expect(component.getByText(/HOST ·/)).toHaveCount(0);
+  // Crown badge present even with no part selected; no "HOST" text at all.
+  await expect(component.locator('svg.lucide-crown')).toBeVisible();
+  await expect(component.getByText(/HOST/)).toHaveCount(0);
 });
 
 test('a non-host, non-requesting viewer sees a plain pending label on the requester\'s row, not a Decline button', async ({ mount }) => {
