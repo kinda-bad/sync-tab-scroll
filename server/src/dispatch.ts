@@ -5,6 +5,7 @@ import { handleSessionCreate } from './handlers/session-create.js';
 import { handleSessionJoin } from './handlers/session-join.js';
 import { handlePartSelect } from './handlers/part-select.js';
 import { handleReadinessUpdate } from './handlers/readiness-update.js';
+import { handleReadySet } from './handlers/ready-set.js';
 import { handleHostRemoveParticipant } from './handlers/host-remove-participant.js';
 import { handlePlaybackControl } from './handlers/playback-control.js';
 import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
@@ -31,6 +32,8 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handlePartSelect(ctx, socket, message);
     case 'readiness-update':
       return handleReadinessUpdate(ctx, socket, message);
+    case 'ready-set':
+      return handleReadySet(ctx, socket, message);
     case 'host-remove-participant':
       return handleHostRemoveParticipant(ctx, socket, message);
     case 'playback-control':
