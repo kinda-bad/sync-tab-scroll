@@ -706,7 +706,10 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**2 open feedback files:**
+**3 open feedback files:**
+`feedback-settings-tracks-rows-0501.md` (2026-07-19) — UX: Tracks tab
+one-line-per-track rows (marquee overflow, non-interactable label,
+volume-off/volume-2 icon mute button, Solo stays text).
 `feedback-beat-widget-layout-362c.md` (2026-07-19) — UX: measure display
 moves left of the beat count (seamless count-in→metronome transition)
 and becomes a number stacked over a small "MES" label. And:
