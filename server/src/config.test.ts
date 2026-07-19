@@ -5,6 +5,7 @@ const ENV_KEYS = [
   'PORT',
   'CATALOG_ROOT',
   'HOST_REASSIGN_GRACE_MS',
+  'SESSION_EMPTY_TTL_MS',
   'REQUIRE_SONG_CONSENT',
   'SONG_UPLOAD_ENABLED',
   'CLIENT_ROOT',
@@ -101,6 +102,16 @@ describe('loadConfig', () => {
 
   it('defaults requireSongConsent to false when REQUIRE_SONG_CONSENT is unset', () => {
     expect(loadConfig().requireSongConsent).toBe(false);
+  });
+
+  it.fails('reads sessionEmptyTtlMs from SESSION_EMPTY_TTL_MS when set', () => {
+    process.env.SESSION_EMPTY_TTL_MS = '5000';
+
+    expect(loadConfig()).toMatchObject({ sessionEmptyTtlMs: 5000 });
+  });
+
+  it.fails('defaults sessionEmptyTtlMs to 12 hours when SESSION_EMPTY_TTL_MS is unset', () => {
+    expect(loadConfig()).toMatchObject({ sessionEmptyTtlMs: 43_200_000 });
   });
 
   it('defaults songUploadEnabled to true when SONG_UPLOAD_ENABLED is unset (T014 — self-hosted works unconfigured)', () => {

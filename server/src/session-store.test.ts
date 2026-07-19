@@ -74,6 +74,34 @@ describe('SessionStore grace-period timers', () => {
     expect(store.get(session.code)).toBeDefined();
   });
 
+  it.fails('an empty session survives well past 30s and 4h by default (12h TTL)', () => {
+    const store = new SessionStore();
+    const session = store.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
+
+    store.markPossiblyEmpty(session.code);
+    vi.advanceTimersByTime(30_000);
+    expect(store.get(session.code)).toBeDefined();
+    vi.advanceTimersByTime(4 * 60 * 60 * 1000);
+    expect(store.get(session.code)).toBeDefined();
+    // Past the 12h default the session is destroyed.
+    vi.advanceTimersByTime(8 * 60 * 60 * 1000);
+    expect(store.get(session.code)).toBeUndefined();
+  });
+
+  it.fails('destroys an empty session only after the constructor-injected TTL', () => {
+    // Cast until the (hostReassignGraceMs, sessionEmptyTtlMs) signature lands (T002).
+    const store = new (SessionStore as new (grace?: number, ttl?: number) => SessionStore)(120_000, 5_000);
+    const session = store.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
+
+    store.markPossiblyEmpty(session.code);
+    vi.advanceTimersByTime(4_999);
+    expect(store.get(session.code)).toBeDefined();
+    vi.advanceTimersByTime(1);
+    expect(store.get(session.code)).toBeUndefined();
+  });
+
   it('markActive cancels a pending destruction timer', () => {
     const store = new SessionStore();
     const session = store.create('host-1');

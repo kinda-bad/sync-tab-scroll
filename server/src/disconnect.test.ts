@@ -56,6 +56,33 @@ describe('handleDisconnect', () => {
     expect(session.pendingHostRequest).toBe('member-1');
   });
 
+  it.fails('pauses running playback when the last connected participant disconnects', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
+    session.playbackState = { status: 'running', tickPosition: 960, bpm: 120, serverTimestamp: Date.now() };
+    ctx.connections.broadcast = () => {};
+
+    handleDisconnect(ctx, session.code, 'host-1');
+
+    expect(session.playbackState.status).toBe('paused');
+  });
+
+  it('leaves running playback untouched when other participants remain connected', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push(
+      { id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null},
+      { id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1 , userId: null},
+    );
+    session.playbackState = { status: 'running', tickPosition: 960, bpm: 120, serverTimestamp: Date.now() };
+    ctx.connections.broadcast = () => {};
+
+    handleDisconnect(ctx, session.code, 'host-1');
+
+    expect(session.playbackState.status).toBe('running');
+  });
+
   it('is a no-op if the session is already gone', () => {
     const ctx = makeCtx();
     expect(() => handleDisconnect(ctx, 'NOPE', 'anyone')).not.toThrow();
