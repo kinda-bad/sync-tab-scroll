@@ -4,5 +4,21 @@ status: backlogged
 logged: 2026-07-19
 ---
 
-Sync tab playback (cursor, lyrics ticker, session position) to a real recording instead of the alphaTab synth — e.g. a linked YouTube video (as Songsterr does) or an operator-supplied mp3 — with a per-song time-alignment mapping between the recording's timeline and the score's tick timeline.
-Why: the synth is a practice aid, but playing along with the actual recording is the real use case; requires solving audio-source licensing/hosting (YouTube embed vs local mp3), a tick<->recording-time alignment map per song (tempo drift in live recordings won't match the score's tempo track), and integration with the existing session playbackState sync (host transport + drift correction currently assume the synth clock). Substantial — vet with /ardd-research before planning.
+Sync tab playback (cursor, lyrics ticker, session position) to a real
+recording instead of the alphaTab synth: an operator-supplied
+`recording.mp3` in the song's catalog dir played via alphaTab's native
+`PlayerMode.EnabledBackingTrack`, aligned by alphaTab's own
+`MasterBar.syncPoints` (stored as a `syncPoints` field in `meta.json`),
+with every participant playing the recording locally and the server/sync
+protocol unchanged.
+Why: vetted 2026-07-19 (`research-sync-tabs-to-real-audio-2026-07-19-3394.md`)
+— strongly positive: alphaTab 1.6+ (installed 1.8.3) already ships
+backing-track playback and the tick<->recording-time sync-point model
+(Guitar Pro 8's own format), so no bespoke alignment engine or clock
+replacement is needed; the host stays clock authority through the same
+api surface. MVP excludes YouTube (TOS-encumbered; separate proposal if
+ever), in-app sync-point authoring (later phase-2-authoring addition),
+and synth+recording mixing (alphaTab can't) — recording mode disables
+per-part mute/solo, metronome, and count-in with clear UI, needing a
+mode-scoped artifact carve-out of the "full mix audible" decision.
+Phase-sized; plan directly with /ardd-plan when wanted.
