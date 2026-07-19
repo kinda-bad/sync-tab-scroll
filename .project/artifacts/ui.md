@@ -399,10 +399,22 @@ regardless of whether playback has started:
 - **Tracks**: a dedicated 4th tab for personal per-part mute controls,
   visible to **every** participant (not host-gated) — moved out of
   Preferences into its own tab so each part gets its own row rather than
-  sharing one flex-wrapped row of buttons. One `<div class="control-row">`
-  per part, listing every part in `Session.availableParts` (instrument
-  name, same source the Participants list and Playback View's "Playing:
-  X" label already read) with its own mute toggle. Muting a part calls
+  sharing one flex-wrapped row of buttons. **Each part row is exactly one
+  line** (`TrackRow.svelte`; feedback settings-tracks-rows F001/F002),
+  listing every part in `Session.availableParts` rendered through the
+  part-name display rule (Lobby View, above — instrument prominent,
+  detail de-emphasized): a **display-only label** (not a
+  button/interactive element) that **never wraps** — when its content
+  overflows the row it scrolls marquee-style in a **bounce** pattern
+  (scroll to the end, pause, return; less distracting in a settings list
+  than a continuous loop), with the animation active only when DOM
+  measurement shows real overflow (content vs. container via
+  `getBoundingClientRect`, the same plain-DOM idiom the lyrics ticker's
+  centering uses) — a fitting label never animates; a **small icon-only
+  mute button** — lucide `volume-2` while audible, `volume-off` while
+  muted — using `Button.svelte`'s existing iconOnly + tooltip idiom (the
+  full "Mute/Unmute «part»" wording stays as the accessible name); and
+  "Solo", which **stays a text button** (user decision). Muting a part calls
   alphaTab's own `api.changeTrackMute()` against that participant's
   already-loaded full mix (Playback View, above) — nothing is added to or
   removed from what's loaded, only which already-loaded tracks are
