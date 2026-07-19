@@ -141,7 +141,7 @@ test('bar icons: Leave session renders lucide bone, Settings renders lucide sett
 
   const leave = page.getByRole('button', { name: 'Leave session' });
   const settings = page.getByRole('button', { name: 'Settings' });
-  await expect(leave.locator('svg.lucide-bone')).toBeVisible();
+  await expect(leave.locator('svg.lucide-bone-fracture')).toBeVisible();
   await expect(leave.locator('svg.lucide-log-out')).toHaveCount(0);
   await expect(settings.locator('svg.lucide-settings')).toBeVisible();
   await expect(settings.locator('svg.lucide-cog')).toHaveCount(0);

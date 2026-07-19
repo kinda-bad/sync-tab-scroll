@@ -29,7 +29,7 @@
   import Play from 'lucide-svelte/icons/play';
   import Pause from 'lucide-svelte/icons/pause';
   import Square from 'lucide-svelte/icons/square';
-  import Bone from 'lucide-svelte/icons/bone';
+  import Bone from './components/icons/BoneFracture.svelte';
   import MicVocal from 'lucide-svelte/icons/mic-vocal';
   import ListMusic from 'lucide-svelte/icons/list-music';
 
