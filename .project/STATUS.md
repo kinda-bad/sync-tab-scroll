@@ -735,10 +735,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
+**4 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
 `.project/features/`. Tasked: `mute-all-parts-button`
 (tasks-settings-ux-bundle-02e8.md). Backlogged:
-`explicit-participant-readiness` (new 2026-07-19 — user-confirmed
+`lyrics-ticker-position-preference` (new 2026-07-19 — top/bottom
+ticker position pref), `explicit-participant-readiness` (new 2026-07-19 — user-confirmed
 ready stage: loaded vs ready, clock/checkbox Bar indicator, host
 start-anyway modal + participant are-you-ready modal),
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
