@@ -609,3 +609,173 @@ test.describe('phone width', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// T004 (tasks-settings-ux-bundle-02e8.md): redesigned Tracks tab rows —
+// exactly one line each: a display-only label (instrument prominent +
+// detail dim, via part-display-name.ts), marquee (bounce) scroll only on
+// overflow and never wrapping; a small icon-only mute button (lucide
+// volume-off when muted / volume-2 when audible) via the Button iconOnly +
+// tooltip idiom; Solo stays a text button. Plus the "Mute all" control
+// (feature mute-all-parts-button): one action batch-mutes every part
+// (same changeTrackMute mechanism as Solo), toggling back to all-unmuted
+// when everything is already muted (plan OQ2 default); count-in/metronome
+// stay untouched (countInVolume/metronomeVolume, never track channels);
+// per-(song,track) persistence unchanged.
+// ---------------------------------------------------------------------------
+
+test.describe('Tracks tab redesign (T004)', () => {
+  const trackSession = () =>
+    baseSession({
+      selectedSong: 'tiro',
+      availableParts: [
+        { trackIndex: 0, instrumentName: 'M. Bellamy (Vocals)' },
+        { trackIndex: 1, instrumentName: 'Chris (bass)' },
+        { trackIndex: 2, instrumentName: 'Dom (drums)' },
+      ],
+    });
+
+  test('each part renders as a single-line row with a display-only, instrument-prominent label', async ({ mount, page }) => {
+    test.fail(); // red until T005
+    const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    await expect(component.locator('.track-row')).toHaveCount(3);
+
+    // The label is not a button/interactive element; instrument prominent,
+    // detail (performer) de-emphasized but present.
+    const firstLabel = component.locator('.track-row').first().getByTestId('track-label');
+    await expect(firstLabel).toBeVisible();
+    const tag = await firstLabel.evaluate((el) => el.tagName.toLowerCase());
+    expect(tag).not.toBe('button');
+    await expect(firstLabel.locator('.track-instrument')).toHaveText('Vocals');
+    await expect(firstLabel.locator('.track-detail')).toHaveText('M. Bellamy');
+
+    // One line: the label never wraps.
+    const whiteSpace = await firstLabel
+      .getByTestId('track-marquee')
+      .evaluate((el) => getComputedStyle(el).whiteSpace);
+    expect(whiteSpace).toBe('nowrap');
+  });
+
+  test('the mute control is a small icon-only button toggling volume-2 (audible) to volume-off (muted), persisting per song+track', async ({
+    mount,
+    page,
+  }) => {
+    test.fail(); // red until T005
+    const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    const bassRow = component.locator('.track-row', { hasText: 'Bass' });
+    const muteButton = bassRow.getByRole('button', { name: 'Mute Bass · Chris' });
+    await expect(muteButton).toBeVisible();
+    // Icon-only: no visible text, lucide volume-2 while audible.
+    await expect(muteButton.locator('svg.lucide-volume-2')).toBeVisible();
+    await expect(muteButton).toHaveText('');
+
+    await muteButton.click();
+    const unmuteButton = bassRow.getByRole('button', { name: 'Unmute Bass · Chris' });
+    await expect(unmuteButton.locator('svg.lucide-volume-off')).toBeVisible();
+
+    const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:tiro:1'));
+    expect(stored).toBe('on');
+  });
+
+  test('Solo stays a text button on the redesigned rows', async ({ mount, page }) => {
+    test.fail(); // red until T005
+    const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    const bassRow = component.locator('.track-row', { hasText: 'Bass' });
+    const solo = bassRow.getByRole('button', { name: 'Solo' });
+    await expect(solo).toHaveText('Solo');
+    await solo.click();
+
+    expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:tiro:0'))).toBe('on');
+    expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:tiro:1'))).toBe('off');
+    expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:mute:tiro:2'))).toBe('on');
+  });
+
+  test('a long label marquees (bounce animation) only when its content overflows the row; short labels do not animate', async ({
+    mount,
+    page,
+  }) => {
+    test.fail(); // red until T005
+    const session = baseSession({
+      selectedSong: 'tiro',
+      availableParts: [
+        { trackIndex: 0, instrumentName: 'Bass' },
+        {
+          trackIndex: 1,
+          instrumentName: 'An Extremely Long Performer Name That Cannot Possibly Fit (Vocals)',
+        },
+      ],
+    });
+    await page.setViewportSize({ width: 420, height: 800 });
+    const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    const shortMarquee = component.locator('.track-row').nth(0).getByTestId('track-marquee');
+    const longMarquee = component.locator('.track-row').nth(1).getByTestId('track-marquee');
+
+    // Overflow measured (content vs container, lyrics-ticker style) and
+    // reflected as a data attribute driving the CSS animation.
+    await expect(longMarquee).toHaveAttribute('data-overflowing', 'true');
+    await expect(shortMarquee).toHaveAttribute('data-overflowing', 'false');
+
+    const longAnim = await longMarquee.evaluate((el) => getComputedStyle(el).animationName);
+    const shortAnim = await shortMarquee.evaluate((el) => getComputedStyle(el).animationName);
+    expect(longAnim).not.toBe('none');
+    expect(shortAnim).toBe('none');
+
+    // Bounce style: scroll-out-pause-return, i.e. an alternating animation,
+    // not an infinite one-direction loop.
+    const direction = await longMarquee.evaluate((el) => getComputedStyle(el).animationDirection);
+    expect(direction).toContain('alternate');
+  });
+
+  test('"Mute all" mutes every part in one action and persists per song+track; pressing again unmutes all (simple toggle)', async ({
+    mount,
+    page,
+  }) => {
+    test.fail(); // red until T005
+    const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    const muteAll = component.getByRole('button', { name: 'Mute all' });
+    await expect(muteAll).toBeVisible({ timeout: 3000 });
+    await muteAll.click();
+    for (const idx of [0, 1, 2]) {
+      expect(await page.evaluate((i) => localStorage.getItem(`sync-tab-scroll:mute:tiro:${i}`), idx)).toBe('on');
+    }
+    for (const idx of [0, 1, 2]) {
+      const muteButtons = component.locator('.track-row').nth(idx).locator('svg.lucide-volume-off');
+      await expect(muteButtons).toHaveCount(1);
+    }
+
+    // Everything muted: the same control now unmutes all.
+    await component.getByRole('button', { name: 'Unmute all' }).click();
+    for (const idx of [0, 1, 2]) {
+      expect(await page.evaluate((i) => localStorage.getItem(`sync-tab-scroll:mute:tiro:${i}`), idx)).toBe('off');
+    }
+  });
+
+  test('"Mute all" never touches count-in/metronome (no WS sends, metronome preference untouched)', async ({ mount, page }) => {
+    test.fail(); // red until T005
+    await page.evaluate(() => localStorage.setItem('sync-tab-scroll:metronome', 'on'));
+    const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
+    await component.getByRole('button', { name: 'Tracks' }).click();
+
+    const muteAll = component.getByRole('button', { name: 'Mute all' });
+    await expect(muteAll).toBeVisible({ timeout: 3000 });
+    await muteAll.click();
+
+    // Track mutes go through changeTrackMute (track channels) only: nothing
+    // is broadcast, and the personal metronome preference — the client-side
+    // seam feeding metronomeVolume — is untouched. countInEnabled is
+    // session state; no count-in-set was sent either.
+    const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+    expect(sent).toEqual([]);
+    expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:metronome'))).toBe('on');
+  });
+});
