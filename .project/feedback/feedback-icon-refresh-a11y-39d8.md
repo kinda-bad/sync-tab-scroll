@@ -6,6 +6,16 @@ plan: null
 
 # Feedback
 
+## Bugs
+
+- [ ] F005 Bar tooltips (the icon-button hover text from
+  `client/src/components/Button.svelte`'s Tooltip) render underneath
+  the alphaTab tab view — wrong z-index/stacking context, so hovering a
+  Bar control during Playback shows a clipped/hidden tooltip. Likely
+  needs a higher z-index than the alphaTab surface (or portal-style
+  rendering out of the Bar's stacking context); check against the
+  lyrics overlay's layering too. [artifacts: ui]
+
 ## UX
 
 - [ ] F001 Icon reassignment for session/account actions: "Leave/End
