@@ -79,6 +79,21 @@
     (window as unknown as { __switchPart: (newTrackIndex: number) => void }).__switchPart = (newTrackIndex: number) => {
       ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, newTrackIndex, isLyricsPart);
     };
+
+    // Test-only: mirrors App.svelte's reactive re-invocation of
+    // ensurePlaybackEngine when the HOST changes the session's selectedSong
+    // (T002, tasks-widgets-gp5-songswitch-a046.md) — a different CatalogSong
+    // (new id + gpFilePath), same part kind/track index. Without a song-
+    // identity check in EngineState this used to early-return and leave the
+    // old score loaded (feedback F001).
+    (window as unknown as { __switchSong: (newSongId: string, newGpFilePath: string, newTrackIndex: number) => void }).__switchSong = (
+      newSongId: string,
+      newGpFilePath: string,
+      newTrackIndex: number,
+    ) => {
+      const newSong: CatalogSong = { ...song, id: newSongId, name: newSongId, gpFilePath: newGpFilePath };
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, newSong, newTrackIndex, isLyricsPart);
+    };
   });
 </script>
 

@@ -511,3 +511,40 @@ test('debounces rapid host seeks into a single broadcast carrying the last tick'
   expect(seeks).toHaveLength(1);
   expect(seeks[0].tickPosition).toBe(300);
 });
+
+/**
+ * Regression test for the song-switch stale-score race (feedback F001,
+ * T002 tasks-widgets-gp5-songswitch-a046.md). `EngineState` carried no
+ * song identity, so a second `ensurePlaybackEngine()` call for a
+ * DIFFERENT song (same part kind + track index — exactly what
+ * App.svelte's reactive block does after the host's selectedSong
+ * broadcast) hit the early-return ladder and left the old api — old
+ * score, old lyrics, old synth MIDI — loaded; the host's Start then
+ * played the OLD song. Asserts a same-track-index song switch actually
+ * loads the new file: fixture.gp has 1 track, two-track.gp has 2, so the
+ * loaded score's track count flips 1 -> 2 only if the new GP file was
+ * really fetched/parsed by a fresh engine.
+ */
+test('a song switch with the same track index loads the new song (not the stale score)', async ({ mount, page }) => {
+  test.fail(); // red-state marker (constitution Principle VII) — removed on the paired green commit
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate(() => {
+    (window as unknown as { __switchSong: (id: string, gp: string, trackIndex: number) => void }).__switchSong('two-track', '/two-track.gp', 0);
+  });
+
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() => {
+          const state = (window as unknown as { __getEngineState: () => { score?: { tracks: unknown[] } } | undefined }).__getEngineState();
+          return state?.score?.tracks.length ?? 0;
+        }),
+      { timeout: 20_000 },
+    )
+    .toBe(2);
+
+  await page.waitForTimeout(500);
+  expect(pageErrors).toEqual([]);
+});
