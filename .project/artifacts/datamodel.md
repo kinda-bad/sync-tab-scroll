@@ -1,10 +1,10 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-07-18
+last_updated: 2026-07-19
 diagram_type: erDiagram
 render_section: Datamodel
-diagram_status: current
+diagram_status: stale
 ---
 
 # Data Model
@@ -97,7 +97,7 @@ no key — so existing local/personal deployments need no migration.
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
 | selectedPart | number \| 'lyrics' \| null | A `CatalogPart.trackIndex` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for the shared clock (infrastructure.md), with this participant's own personal metronome preference (`client/src/metronome-preference.ts`) applied locally to that instance — not a session-level setting. Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |
-| readiness | ReadinessStatus | e.g. 'no-part' \| 'loading' \| 'ready' |
+| readiness | ReadinessStatus | 'no-part' \| 'loading' \| 'loaded' \| 'ready' (`explicit-participant-readiness`): `loaded` = this participant's assets (score render/SoundFont) finished loading — the state formerly called "ready"; `ready` = the participant (host included) has additionally **confirmed they're ready** via the Bar's readiness control (`ready-set` message). Any transition back into `no-part`/`loading` (part/song change, reconnect) clears the human confirmation along with the technical state. Start negotiation: a host `playback-control start` while any connected participant is not `ready` triggers the server's confirmation exchange — `start-confirmation-needed { notReadyCount }` to the host, `host-start-pending` to each not-ready participant, `host-start-resolved { started }` to those participants when the host answers (infrastructure.md Start Negotiation) |
 | joinedAt | number | Wall-clock time this participant first joined; preserved across a reconnect, not reset. Determines tenure for host succession (infrastructure.md) |
 
 ### CatalogSong

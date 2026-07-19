@@ -733,13 +733,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · 0 tasked · **26 implemented** — see
+**2 backlogged** · 0 planned · **1 tasked** · **26 implemented** — see
 `.project/features/`. Newly implemented:
 `lyrics-ticker-position-preference`, `mute-all-parts-button`
-(2026-07-19). Backlogged:
-`explicit-participant-readiness` (new 2026-07-19 — user-confirmed
-ready stage: loaded vs ready, clock/checkbox Bar indicator, host
-start-anyway modal + participant are-you-ready modal),
+(2026-07-19). Tasked: `explicit-participant-readiness`
+(tasks-explicit-readiness-0580.md). Backlogged:
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
 planning), and `host-mandated-bars-per-row-layout`. Newly implemented (2026-07-19):
 `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, and
@@ -756,6 +754,18 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Explicit participant readiness + start negotiation** —
+  `plan-explicit-readiness-2026-07-19-841d.md` (`approved`, feature:
+  `explicit-participant-readiness` now `tasked`),
+  `tasks-explicit-readiness-0580.md` (**`ready`**, 6 tasks / 4 phases):
+  shared `ReadinessStatus` gains `loaded` (assets done) vs `ready`
+  (human-confirmed via new `ready-set` message), Bar clock/check ready
+  control + participant-list badges, server-held start negotiation
+  (host "start anyway?" + participant "are you ready?" modals with
+  auto-dismiss; host exempt from the count; connected-only), two-client
+  live verification. Artifact design applied to
+  datamodel/infrastructure/ui (all three diagrams stale again). Next:
+  `/ardd-implement`.
 - **Icon refresh + a11y + ticker position/size** —
   `plan-icons-a11y-ticker-2026-07-19-2584.md` (`approved`),
   `tasks-icons-a11y-ticker-a10d.md` (**`completed`**, 9/9, merged

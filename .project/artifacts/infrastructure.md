@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -198,6 +198,37 @@ coherent — private content never outlives the authenticated host that granted
 it, closing the leak an all-anonymous post-succession session would otherwise
 carry (accounts design §13 S4). With accounts disabled (no DB), there is no
 membership-derived slice and this recomputation is a no-op.
+
+## Start Negotiation (Explicit Readiness)
+
+`explicit-participant-readiness`: readiness has a human-confirmation
+stage on top of asset loading (datamodel.md's `ReadinessStatus`). A
+participant flips `loaded → ready` (or back) with a `ready-set` client
+message, handled like `readiness-update` and broadcast in
+`session-state`.
+
+When the host sends `playback-control start` and **every connected
+participant is `ready`**, playback starts exactly as today — no new
+round-trips on the happy path. Otherwise the server **holds the start**
+and runs a confirmation exchange:
+
+- `start-confirmation-needed { notReadyCount }` → the host (opens the
+  "N participants are not yet ready, start anyway?" modal).
+- `host-start-pending` → each not-ready connected participant (opens
+  their "Host wants to start, are you ready?" modal). A participant
+  answering "I'm ready" during the window is an ordinary `ready-set`;
+  the updated count reaches the host via the normal `session-state`
+  broadcast.
+- The host answers with a start-anyway confirm (proceeds with the normal
+  start flow) or a cancel (nothing starts). Either way the server sends
+  `host-start-resolved { started }` to the pending participants, which
+  auto-dismisses their modal.
+
+Only one negotiation is pending per session at a time; a second host
+`start` while one is pending replaces it (recount, re-broadcast).
+Disconnection of the host while pending cancels the negotiation
+(resolved `started: false`). All state is in-memory session state like
+everything else here — no persistence.
 
 ## Host Transfer
 

@@ -627,6 +627,31 @@ nav bar here too, so the Preferences tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view. "Leave session" (Lobby View, above) is likewise always present.
 
+### Explicit Readiness & Start Negotiation
+
+`explicit-participant-readiness` (datamodel.md `ReadinessStatus`,
+infrastructure.md Start Negotiation):
+
+- **The Bar's readiness indicator is the participant's own ready
+  control.** While `loaded` (assets done, not yet confirmed) it shows a
+  **clock icon** and clicking it declares "I'm ready" (`ready-set`);
+  while `ready` it shows a **check/checkbox icon** and clicking it
+  un-readies. Loading states render as today. Icon-only → accessible
+  name required (the Bar's standing accessibility rule), reason text
+  distinguishing the two states.
+- **Participants list** rows show the same clock-vs-check distinction
+  for each member's readiness badge (`loaded` vs `ready`), alongside the
+  existing states.
+- **Start negotiation modals** (only when the host starts with someone
+  not ready): the **host** gets a confirmation modal — "N participants
+  are not yet ready, start anyway?" with Start anyway / Cancel; each
+  **not-ready participant** simultaneously gets "Host wants to start,
+  are you ready?" with an "I'm ready" action (an ordinary `ready-set`),
+  and their modal is **auto-dismissed** the moment the host answers
+  either way (`host-start-resolved`). Neither modal blocks the Bar's
+  other controls; both follow the existing modal idiom (dismissible,
+  Esc closes = no action).
+
 ### Count-In & Metronome Beat Widget
 
 A single-shape visual beat widget rendered in the persistent Bar
