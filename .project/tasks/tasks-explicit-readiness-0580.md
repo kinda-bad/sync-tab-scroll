@@ -41,7 +41,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Start negotiation (server)
 
-- [ ] T004 [artifacts: infrastructure, datamodel] Test-first server
+- [x] T004 [artifacts: infrastructure, datamodel] Test-first server
   start-negotiation per infrastructure.md's Start Negotiation section:
   when the host sends `playback-control start` and every connected
   participant is `ready`, start exactly as today (assert no new
