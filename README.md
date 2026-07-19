@@ -261,6 +261,8 @@ erDiagram
         number lyricsTrackIndex
         number lyricsLineIndex
         number_array lyricLineBreaks
+        string lyricsRawLine
+        number lyricsRawLineStartBar
     }
     CATALOGUE {
         string id
@@ -331,7 +333,7 @@ graph TD
     end
 
     subgraph Server["Single Node process (http.Server)"]
-        WS["WebSocket upgrade<br/>(session-create/join, playback-control,<br/>host-transfer, catalogue-unlock, ...)"]
+        WS["WebSocket upgrade<br/>(session-create/join, playback-control,<br/>ready-set + start negotiation,<br/>host-transfer, catalogue-unlock, ...)"]
         SS["Session Store (in-memory only)<br/>Session / Participant / PlaybackState<br/>empty-session TTL: SESSION_EMPTY_TTL_MS<br/>(default 12h; pause-on-empty)"]
         CL["catalog-loader.ts<br/>(server-global catalog, mutable at runtime<br/>as of Phase 2)"]
         STATIC["/catalog static file route"]
@@ -384,7 +386,7 @@ graph TD
 ```mermaid
 graph TD
     Landing["Landing View<br/>Create / Join session<br/>+ optional Account menu"]
-    Lobby["Lobby View<br/>persistent Bar: join code, Song &amp; part,<br/>Toggle lyrics, Beat widget, Settings,<br/>transport, Leave session (all tooltipped)"]
+    Lobby["Lobby View<br/>persistent Bar: join code, Song &amp; part,<br/>Toggle lyrics (disabled w/ reason when n/a),<br/>Ready control (clock/check), Beat widget,<br/>Settings, transport, Leave session<br/>(all tooltipped + aria-labeled)"]
     Playback["Playback View<br/>instrument tab + optional lyrics ticker,<br/>OR headless + full lyric sheet"]
 
     Landing -->|create/join succeeds| Lobby
@@ -402,6 +404,7 @@ graph TD
         SongPart["Song &amp; Part modal<br/>(auto-opens, dismissible)<br/>catalog picker, activation key,<br/>part picker incl. Lyrics"]
         Settings["Settings modal<br/>Participants / Session /<br/>Preferences / Tracks tabs"]
         Authoring["Authoring modal (Phase 2, owner-only)<br/>My catalogues, Create catalogue,<br/>Add song, Co-owners/invite"]
+        StartNeg["Start-negotiation modals:<br/>host 'N not ready, start anyway?' /<br/>participant 'are you ready?'<br/>(auto-dismissed on host answer)"]
     end
 
     Lobby --> SongPart
@@ -411,7 +414,7 @@ graph TD
     subgraph SettingsTabs["Settings tabs"]
         Participants["Participants:<br/>readiness, Make host, Remove,<br/>Request to become host"]
         Session["Session:<br/>Lobby cursor + Spotlight,<br/>Count-in toggle (host-only)"]
-        Preferences["Preferences (personal, client-local):<br/>Theme, Metronome, ticker font size,<br/>measure markers"]
+        Preferences["Preferences (personal, client-local):<br/>Theme, Metronome, ticker font size,<br/>ticker position (top/bottom),<br/>measure markers"]
         Tracks["Tracks (personal):<br/>per-part mute + Solo + Mute all<br/>(count-in/metronome stay audible)"]
     end
 
