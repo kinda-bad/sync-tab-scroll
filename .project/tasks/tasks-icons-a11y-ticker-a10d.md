@@ -8,7 +8,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 1: Tooltip stacking fix (feedback F005)
 
-- [ ] T001 [artifacts: constitution, ui] Test-first fix for the tooltip
+- [x] T001 [artifacts: constitution, ui] Test-first fix for the tooltip
   z-index bug: Bar tooltips (`client/src/components/Button.svelte`'s
   Tooltip) render underneath the alphaTab tab view during Playback. Red
   CT first (assert the tooltip element's resolved stacking places it
