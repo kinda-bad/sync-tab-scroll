@@ -116,7 +116,7 @@ describe('readRawLyricsLineAuto (T005 format dispatch)', () => {
     return p;
   }
 
-  it.fails('reads a legacy GP5 file via the lyrics-block parser (no zip error)', () => {
+  it('reads a legacy GP5 file via the lyrics-block parser (no zip error)', () => {
     const p = writeTemp(buildGp5({ line1: { measure: 2, bytes: Buffer.from('Oh ba- by', 'latin1') } }));
     expect(isLegacyGpFile(p)).toBe(true);
     expect(readRawLyricsLineAuto(p, 0, 0)).toEqual({ text: 'Oh ba- by', startBar: 1 });

@@ -98,7 +98,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   layout deviates from the documented GP5 structure, return null (field
   omitted, current fallback behavior) and record findings in a
   tasks-file note rather than forcing a parse.
-- [ ] T005 [artifacts: pipeline, datamodel] Wire the GP5 reader into the
+- [x] T005 [artifacts: pipeline, datamodel] Wire the GP5 reader into the
   extraction flow: `extract-lyrics` publishes `lyricsRawLine` (and
   `lyricsRawLineStartBar` when non-zero) for GP3–5 files exactly as the
   GP7/8 gpif path does; the `.lrc` generation and client already consume
@@ -108,6 +108,28 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   catalog dir) and spot-check: meta gains `lyricsRawLine`, regenerated
   `.lrc` looks sane (first line at a plausible time, last line near song
   end). Record a one-line ear-check guide for the user.
+
+> **T004/T005 GP5 findings (2026-07-19).** The documented GP5 layout parses
+> cleanly against the real file — version block (31 bytes), nine
+> int32+byte info strings, int32 notice count, then the lyrics block
+> {int32 lyric track; five × {int32 startMeasure, int32 length + cp1252
+> bytes}} — no structural deviation. BUT Supermassive Black Hole's GP5
+> carries an **empty lyrics block** (all five lines zero-length,
+> startMeasure 1) and no per-beat lyrics on any of its 5 tracks either
+> (verified via alphaTab model walk). So per plan Open Question 3 the
+> reader returns null for it and `meta.json` keeps omitting
+> `lyricsRawLine` — its `.lrc` remains the lrclib passthrough, same as
+> before this feature. The reader + format dispatch
+> (`readRawLyricsLineAuto`, which also keeps the zip/gpif reader from
+> throwing on legacy binaries) are fully built and unit-tested against a
+> synthetic GP5 fixture (incl. cp1252 decoding and GP3 rejection), so any
+> future lyric-bearing GP4/GP5 upload gets the raw-line dispatch
+> automatically. Re-ingest ran clean: regenerated .lrc first line at
+> 00:32.81 ("Ooh, baby, don't you know I suffer?"), last line 03:26.54
+> near song end. **Ear-check guide:** play Supermassive with the Lyrics
+> part and confirm the first "Ooh, baby…" lands with the first sung word
+> (~0:33) — timing shifts a fraction of a second vs. the previous ingest
+> (lrclib passthrough refresh), nothing structural.
 
 ## Phase 3: Beat widget (count-in-metronome-beat-widget)
 
