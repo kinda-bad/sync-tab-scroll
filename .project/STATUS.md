@@ -704,9 +704,13 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**0 open feedback files.** Most recently:
+**1 open feedback file:**
+`feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
+the instrument from raw GP part names and make it the prominent element
+wherever parts are shown, de-emphasizing performer/numbering detail.
+Will be picked up by the next `/ardd-plan`. Previously:
 `feedback-song-switch-stale-score-e030.md` flipped to `planned`, bound to
-`plan-widgets-gp5-songswitch-2026-07-18-8bee.md`. Previously:
+`plan-widgets-gp5-songswitch-2026-07-18-8bee.md`, and:
 `feedback-song-switch-stale-score-e030.md`
 (2026-07-18) — switching songs left both the tab view and playback audio
 on the previous song until a browser refresh; possibly a regression from
