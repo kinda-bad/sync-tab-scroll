@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-18
+last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: stale
@@ -334,7 +334,8 @@ catalogue's metadata is never sent to the client (Song Catalog Delivery,
 above), the host has nothing to name; they type a key only, and the server
 resolves *which* catalogue it unlocks. The server iterates every **locked,
 not-yet-unlocked** catalogue (`!public && salt && hash && id ∉
-Session.unlockedCatalogueIds`), computes `crypto.scrypt(key, storedSalt, 64)`
+Session.unlockedCatalogueIds`), computes `crypto.scryptSync(key,
+storedSalt, storedHash.length)` (the stored hash is 64 bytes)
 for each, and compares it to that catalogue's stored hash with
 `crypto.timingSafeEqual` — not a plain `===`, to avoid a timing side-channel
 on the hash comparison itself. The first catalogue whose hash matches is
@@ -795,8 +796,9 @@ gated on real consent/ToS text existing (owner decision) — self-hosted/
 local deployments can use it immediately. The **public Railway
 deployment** must not accept uploads until real text replaces the
 `dev-placeholder` `tosVersion` (datamodel.md's Production Annotations) —
-enforced as a runtime feature flag (e.g. an env var gating the upload
-route's availability, mirroring `REQUIRE_SONG_CONSENT`'s existing
+enforced as a runtime feature flag (`ServerConfig.songUploadEnabled`,
+env `SONG_UPLOAD_ENABLED`, gating the upload route's availability —
+mirroring `REQUIRE_SONG_CONSENT`'s existing
 self-hosted-vs-public-deployment pattern in Song Consent Gate, below),
 not a code-absence. In-app consent capture (ui.md) writes the same
 Consent Record shape (datamodel.md) the CLI's `record-consent` writes

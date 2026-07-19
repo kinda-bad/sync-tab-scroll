@@ -11,11 +11,10 @@
   // Participant list, lobby cursor, and Spotlight-mode controls moved into
   // SettingsModal.svelte's Participants tab (settings-modal-redesign). This
   // body is now a single state-dependent hint, one of four mutually
-  // exclusive cases. Cases 1-3 normally render behind the song/part modal's
-  // existing forced-open, non-dismissible backdrop (unchanged scope) —
-  // reachable in principle (e.g. during a dismiss/reopen window, or if that
-  // gating logic changes later), not literally dead code, just usually
-  // covered immediately in today's normal flow.
+  // exclusive cases. Cases 1-3 normally render behind the song/part
+  // modal's backdrop (auto-opened, dismissible — ui.md) — reachable in
+  // practice after the user dismisses the modal, or if that gating logic
+  // changes later; usually covered immediately in today's normal flow.
   $: hint = !session
     ? 'Connecting…'
     : !isHost && !session.selectedSong
