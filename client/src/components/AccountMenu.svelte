@@ -1,5 +1,11 @@
 <script lang="ts">
   import type { AccountStatus } from '../account';
+  // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001): the account
+  // actions carry the door icons — Sign out gets `log-out` (freed up from
+  // the Bar's Leave session, now `bone`), Sign in gets `log-in`. Decorative
+  // (aria-hidden): the visible text remains the accessible name.
+  import LogIn from 'lucide-svelte/icons/log-in';
+  import LogOut from 'lucide-svelte/icons/log-out';
 
   // Persistent account menu for the Lobby/Playback Bar identity area (ui.md
   // Account & Sign-In). Prop-driven and presentational: the parent wires it to
@@ -28,13 +34,19 @@
        PointerEvent to signOut() as its first arg, shadowing its defaulted
        `fetchFn` param — so the real fetch never fired and logout silently
        no-op'd. Invoke with no args so `fetchFn` keeps its `fetch` default. -->
-  <button type="button" class="account-action" onclick={() => onSignOut()}>Sign out</button>
+  <button type="button" class="account-action" onclick={() => onSignOut()}>
+    <LogOut size={14} aria-hidden="true" />
+    Sign out
+  </button>
 {:else if status === 'signed-out'}
   {#if expanded}
     <button type="button" class="account-action" onclick={() => onSignIn('google')}>Google</button>
     <button type="button" class="account-action" onclick={() => onSignIn('github')}>GitHub</button>
   {:else}
-    <button type="button" class="account-action account-signin" onclick={() => (expanded = true)}>Sign in</button>
+    <button type="button" class="account-action account-signin" onclick={() => (expanded = true)}>
+      <LogIn size={14} aria-hidden="true" />
+      Sign in
+    </button>
   {/if}
 {/if}
 
@@ -50,6 +62,9 @@
   }
 
   .account-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     background: none;
     border: none;
     padding: 0;

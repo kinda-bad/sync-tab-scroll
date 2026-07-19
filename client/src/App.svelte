@@ -22,11 +22,14 @@
   // Bar control icons (tasks-bottom-bar-icons-47a6.md T002/T003,
   // feedback-bottom-bar-icons-3a15 F003-F006) — lucide-svelte, adopted per
   // Principle V rather than hand-rolled inline SVGs.
-  import Cog from 'lucide-svelte/icons/cog';
+  // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): Settings
+  // moved cog → settings; Leave session moved log-out → bone ("breaking up
+  // the band" — log-out now belongs to the account menu's actual Sign out).
+  import Settings from 'lucide-svelte/icons/settings';
   import Play from 'lucide-svelte/icons/play';
   import Pause from 'lucide-svelte/icons/pause';
   import Square from 'lucide-svelte/icons/square';
-  import LogOut from 'lucide-svelte/icons/log-out';
+  import Bone from 'lucide-svelte/icons/bone';
   import MicVocal from 'lucide-svelte/icons/mic-vocal';
   import ListMusic from 'lucide-svelte/icons/list-music';
 
@@ -199,7 +202,7 @@
         <Button variant="ghost" label="Toggle lyrics" iconOnly icon={MicVocal} onclick={toggleLyricsOverlay} />
       {/if}
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
-        <Button variant="ghost" label="Settings" iconOnly icon={Cog} onclick={toggleSettingsModal} />
+        <Button variant="ghost" label="Settings" iconOnly icon={Settings} onclick={toggleSettingsModal} />
       {/if}
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
@@ -209,7 +212,7 @@
           <Button variant="ghost" label="Stop" iconOnly icon={Square} onclick={stopPlayback} />
         {/if}
       {/if}
-      <Button variant="ghost" label="Leave session" iconOnly icon={LogOut} onclick={leaveSession} />
+      <Button variant="ghost" label="Leave session" iconOnly icon={Bone} onclick={leaveSession} />
     {/snippet}
     {#snippet status()}
       {#if participant}

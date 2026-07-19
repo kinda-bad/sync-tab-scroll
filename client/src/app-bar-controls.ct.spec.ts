@@ -131,6 +131,22 @@ test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render i
   await expect(page.locator('.playback-controls button')).toHaveCount(0);
 });
 
+// T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): icon
+// reassignment. Leave session drops `log-out` (now reserved for the account
+// menu's actual sign-out) for lucide `bone` — "breaking up the band"; the
+// Settings control moves cog → settings.
+test('bar icons: Leave session renders lucide bone, Settings renders lucide settings', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'lobby', instrumentSession('lobby'));
+
+  const leave = page.getByRole('button', { name: 'Leave session' });
+  const settings = page.getByRole('button', { name: 'Settings' });
+  await expect(leave.locator('svg.lucide-bone')).toBeVisible();
+  await expect(leave.locator('svg.lucide-log-out')).toHaveCount(0);
+  await expect(settings.locator('svg.lucide-settings')).toBeVisible();
+  await expect(settings.locator('svg.lucide-cog')).toHaveCount(0);
+});
+
 // T001 (tasks-icons-a11y-ticker-a10d.md, feedback F005): Bar tooltips
 // rendered UNDERNEATH the alphaTab tab view during Playback. The tooltip
 // lives inside `.bar-wrap` (position: fixed, z-index — the stacking context

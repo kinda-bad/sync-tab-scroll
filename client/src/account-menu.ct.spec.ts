@@ -80,3 +80,23 @@ test('clicking "My catalogues" calls onOpenAuthoring', async ({ mount }) => {
   await menu.getByText('My catalogues').click();
   expect(calls.length).toBe(1);
 });
+
+// T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001): the account menu's
+// own actions carry the door icons — Sign out gets lucide `log-out` (freed
+// up from Leave session, which is now `bone`), Sign in gets `log-in`. The
+// icons are decorative (aria-hidden) — the visible text stays the name.
+test('Sign out renders a lucide log-out icon (decorative)', async ({ mount }) => {
+  const menu = await mount(AccountMenu, { props: { status: 'signed-in', displayName: 'Ada' } });
+  const icon = menu.getByRole('button', { name: 'Sign out' }).locator('svg.lucide-log-out');
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('Sign in renders a lucide log-in icon (decorative)', async ({ mount }) => {
+  const menu = await mount(AccountMenu, { props: { status: 'signed-out' } });
+  // Signed-out renders the Sign in button as the component's single root
+  // element, so locate the icon within the component root directly.
+  const icon = menu.locator('svg.lucide-log-in');
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute('aria-hidden', 'true');
+});
