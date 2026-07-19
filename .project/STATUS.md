@@ -735,11 +735,14 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
+**3 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
 `.project/features/`. Tasked: `mute-all-parts-button`
 (tasks-settings-ux-bundle-02e8.md). Backlogged:
+`explicit-participant-readiness` (new 2026-07-19 — user-confirmed
+ready stage: loaded vs ready, clock/checkbox Bar indicator, host
+start-anyway modal + participant are-you-ready modal),
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
-planning) and `host-mandated-bars-per-row-layout`. Newly implemented (2026-07-19):
+planning), and `host-mandated-bars-per-row-layout`. Newly implemented (2026-07-19):
 `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, and
 `catalogue-co-owner-invite-flow` (closed — scope had shipped as phase-2
 Phase 6, bound to that plan). Remaining backlogged:
