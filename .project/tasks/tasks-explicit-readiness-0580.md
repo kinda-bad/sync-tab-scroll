@@ -21,7 +21,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   Semantics per datamodel.md: any transition back into
   `no-part`/`loading` (part/song change, reconnect) clears the human
   confirmation. Rebuild shared dist; all suites green.
-- [ ] T002 [artifacts: infrastructure, datamodel] Test-first server
+- [x] T002 [artifacts: infrastructure, datamodel] Test-first server
   handler for `ready-set` (new file
   `server/src/handlers/ready-set.ts`, routed in `dispatch.ts`,
   modeled on `readiness-update.ts`): sets the participant's readiness
