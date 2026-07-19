@@ -394,6 +394,14 @@
   overflow: hidden;
   pointer-events: none;
 }
+/* T005 (feature lyrics-ticker-position-preference): the personal "Lyrics
+   ticker position" preference fixes the strip to the top of the viewport
+   instead of the default bottom — cleared just below the top-pinned hazard
+   strip (Bar.svelte's .hazard-wrap) so neither covers the other. */
+.lyrics-overlay.lyrics-overlay--top {
+  bottom: auto;
+  top: var(--space-6);
+}
 .lyrics-track {
   display: inline-flex;
   white-space: nowrap;

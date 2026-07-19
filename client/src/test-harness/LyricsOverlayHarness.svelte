@@ -47,6 +47,8 @@
       overlay.setFontSize(size as never);
     (window as unknown as { __setMeasureMarkersVisible: (visible: boolean) => void }).__setMeasureMarkersVisible = (visible: boolean) =>
       overlay.setMeasureMarkersVisible(visible);
+    (window as unknown as { __setPosition: (position: string) => void }).__setPosition = (position: string) =>
+      overlay.setPosition(position as never);
   });
 </script>
 

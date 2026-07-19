@@ -9,7 +9,18 @@
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
   import { loadStoredTrackMute, persistTrackMute } from '../track-mute-preference';
-  import { setEngineMetronome, setEngineTrackMute, setEngineLyricsTickerFontSize, setEngineMeasureMarkersVisible } from '../playback-engine';
+  import {
+    setEngineMetronome,
+    setEngineTrackMute,
+    setEngineLyricsTickerFontSize,
+    setEngineLyricsTickerPosition,
+    setEngineMeasureMarkersVisible,
+  } from '../playback-engine';
+  import {
+    loadStoredLyricsTickerPosition,
+    persistLyricsTickerPosition,
+    type LyricsTickerPosition,
+  } from '../lyrics-ticker-position-preference';
   import {
     loadStoredLyricsTickerFontSize,
     persistLyricsTickerFontSize,
@@ -39,7 +50,9 @@
   let metronome = loadStoredMetronome();
   let lyricsTickerFontSize: LyricsTickerFontSize = loadStoredLyricsTickerFontSize();
   let measureMarkers = loadStoredMeasureMarkers();
+  let lyricsTickerPosition: LyricsTickerPosition = loadStoredLyricsTickerPosition();
   const LYRICS_TICKER_FONT_SIZES: LyricsTickerFontSize[] = ['small', 'medium', 'large', 'huge'];
+  const LYRICS_TICKER_POSITIONS: LyricsTickerPosition[] = ['top', 'bottom'];
 
   // Personal, this-device-only "mute parts" preference (ui.md Preferences
   // tab, track-mute-preference.ts) — keyed per song+track, so recomputed
@@ -117,6 +130,15 @@
     lyricsTickerFontSize = size;
     persistLyricsTickerFontSize(size);
     setEngineLyricsTickerFontSize(size);
+  }
+
+  // Personal, this-device-only (ui.md Preferences tab, T005 feature
+  // lyrics-ticker-position-preference): mirrors setLyricsTickerFontSize's
+  // shape — a 2-way value instead of 4-way.
+  function setLyricsTickerPosition(position: LyricsTickerPosition) {
+    lyricsTickerPosition = position;
+    persistLyricsTickerPosition(position);
+    setEngineLyricsTickerPosition(position);
   }
 
   // Personal, this-device-only (ui.md Preferences tab): mirrors
@@ -299,6 +321,17 @@
           variant={lyricsTickerFontSize === size ? 'riot' : 'ghost'}
           label={size[0].toUpperCase() + size.slice(1)}
           onclick={() => setLyricsTickerFontSize(size)}
+        />
+      {/each}
+    </div>
+
+    <span class="section-label">Lyrics ticker position</span>
+    <div class="control-row">
+      {#each LYRICS_TICKER_POSITIONS as position (position)}
+        <Button
+          variant={lyricsTickerPosition === position ? 'riot' : 'ghost'}
+          label={position[0].toUpperCase() + position.slice(1)}
+          onclick={() => setLyricsTickerPosition(position)}
         />
       {/each}
     </div>

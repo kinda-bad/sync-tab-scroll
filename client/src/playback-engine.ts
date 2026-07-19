@@ -8,6 +8,7 @@ import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
+import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
 import { findLyricGaps, computeMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
 
@@ -630,6 +631,11 @@ export function setEngineMetronome(enabled: boolean): void {
 /** Applies the personal lyrics-ticker font-size preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
 export function setEngineLyricsTickerFontSize(size: LyricsTickerFontSize): void {
   state?.overlay?.setFontSize(size);
+}
+
+/** Applies the personal "Lyrics ticker position" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
+export function setEngineLyricsTickerPosition(position: LyricsTickerPosition): void {
+  state?.overlay?.setPosition(position);
 }
 
 /** Applies the personal "Measure markers" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */

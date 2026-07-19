@@ -2,11 +2,13 @@ import type { AlphaTabApi } from '@coderline/alphatab';
 import type { Syllable } from './lyrics-beat-walk';
 import type { MeasureBoundary } from './lyrics-gap-timing';
 import { loadStoredLyricsTickerFontSize, type LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
+import { loadStoredLyricsTickerPosition, type LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { loadStoredMeasureMarkers } from './lyrics-measure-markers-preference';
 
 export interface LyricsOverlay {
   setVisible(visible: boolean): void;
   setFontSize(size: LyricsTickerFontSize): void;
+  setPosition(position: LyricsTickerPosition): void;
   setMeasureMarkersVisible(visible: boolean): void;
   destroy(): void;
 }
@@ -42,6 +44,10 @@ export function createLyricsOverlay(
   const overlay = document.createElement('div');
   overlay.className = 'lyrics-overlay';
   overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[loadStoredLyricsTickerFontSize()]);
+  // T005 (lyrics-ticker-position-preference): the ticker fixes to the top
+  // or bottom of the viewport per the personal preference — a class toggle
+  // (motifs.css `.lyrics-overlay--top`), bottom being the class-less default.
+  overlay.classList.toggle('lyrics-overlay--top', loadStoredLyricsTickerPosition() === 'top');
   container.appendChild(overlay);
 
   const track = document.createElement('div');
@@ -195,6 +201,11 @@ export function createLyricsOverlay(
     },
     setFontSize(size: LyricsTickerFontSize) {
       overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[size]);
+    },
+    setPosition(position: LyricsTickerPosition) {
+      overlay.classList.toggle('lyrics-overlay--top', position === 'top');
+      // The strip's pixel geometry moved — recenter against the new rect.
+      centerActiveSyllable();
     },
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;

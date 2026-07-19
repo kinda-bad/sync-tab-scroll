@@ -211,6 +211,25 @@ test('Preferences tab: the lyrics ticker font size control renders all four opti
   expect(stored).toBe('huge');
 });
 
+// T005 (tasks-icons-a11y-ticker-a10d.md, feature
+// lyrics-ticker-position-preference): personal Preferences control for the
+// ticker's viewport position — Top | Bottom, default bottom, persisted
+// client-side like the font-size steps.
+test('Preferences tab: the lyrics ticker position control renders Top/Bottom and selecting Top persists it', async ({
+  mount,
+  page,
+}) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+
+  await component.getByRole('button', { name: 'Preferences' }).click();
+  await expect(component.getByRole('button', { name: 'Top' })).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Bottom' })).toBeVisible();
+
+  await component.getByRole('button', { name: 'Top' }).click();
+  const stored = await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-ticker-position'));
+  expect(stored).toBe('top');
+});
+
 test('Preferences tab: the "Measure markers" toggle defaults off, persists, and sends nothing', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 

@@ -10,6 +10,10 @@ function setFontSize(page: Page, size: string) {
   return page.evaluate((s) => (window as unknown as { __setFontSize: (size: string) => void }).__setFontSize(s), size);
 }
 
+function setPosition(page: Page, position: string) {
+  return page.evaluate((p) => (window as unknown as { __setPosition: (position: string) => void }).__setPosition(p), position);
+}
+
 function setMeasureMarkersVisible(page: Page, visible: boolean) {
   return page.evaluate(
     (v) => (window as unknown as { __setMeasureMarkersVisible: (visible: boolean) => void }).__setMeasureMarkersVisible(v),
@@ -83,4 +87,20 @@ test('measure markers do not affect syllable highlighting/centering', async ({ m
   const activeCenter = activeBox!.x + activeBox!.width / 2;
   const overlayCenter = overlayBox!.x + overlayBox!.width / 2;
   expect(Math.abs(activeCenter - overlayCenter)).toBeLessThanOrEqual(2);
+});
+
+// T005 (feature lyrics-ticker-position-preference): the overlay carries the
+// `.lyrics-overlay--top` class for the top position and drops it for
+// bottom (the class-less default) — the fixed-position CSS keys off it.
+test('position preference toggles the overlay top class for both values', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+
+  const overlay = page.locator('.lyrics-overlay');
+  await expect(overlay).not.toHaveClass(/lyrics-overlay--top/);
+
+  await setPosition(page, 'top');
+  await expect(overlay).toHaveClass(/lyrics-overlay--top/);
+
+  await setPosition(page, 'bottom');
+  await expect(overlay).not.toHaveClass(/lyrics-overlay--top/);
 });
