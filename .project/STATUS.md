@@ -698,9 +698,11 @@ violations there either.
 
 ## Code-vs-Artifact Defects
 
-**No defects** — `DEFECTS.md` last checked **2026-07-12** (Accounts Phase 1
-layer). Run `/ardd-defects` to refresh against the newer client fixes
-(lyrics-overlay, sign-out, part-mute-toggle) if desired.
+**No drift/broken-contract defects** — `DEFECTS.md` last checked
+**2026-07-19** (full six-artifact pass covering everything through the
+lyric-dispatch, beat-widget, and song-switch work). Three cosmetic-only
+notes recorded (scrypt wording, `SONG_UPLOAD_ENABLED` doc omission, one
+stale code comment) — none warrants its own fix task.
 
 ## Feedback
 
