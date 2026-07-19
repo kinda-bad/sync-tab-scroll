@@ -733,9 +733,9 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · **1 tasked** · **26 implemented** — see
-`.project/features/`. Tasked: `explicit-participant-readiness`
-(tasks-explicit-readiness-0580.md). Backlogged:
+**2 backlogged** · 0 planned · 0 tasked · **27 implemented** — see
+`.project/features/`. Newly implemented: `explicit-participant-readiness`
+(2026-07-19). Backlogged:
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
 planning) and `host-mandated-bars-per-row-layout`. Implemented
 2026-07-19: `lyrics-ticker-position-preference`,
@@ -753,17 +753,19 @@ since shipped (`implemented`).
 ## Plans & Tasks
 
 - **Explicit participant readiness + start negotiation** —
-  `plan-explicit-readiness-2026-07-19-841d.md` (`approved`, feature:
-  `explicit-participant-readiness` now `tasked`),
-  `tasks-explicit-readiness-0580.md` (**`ready`**, 6 tasks / 4 phases):
-  shared `ReadinessStatus` gains `loaded` (assets done) vs `ready`
-  (human-confirmed via new `ready-set` message), Bar clock/check ready
-  control + participant-list badges, server-held start negotiation
-  (host "start anyway?" + participant "are you ready?" modals with
-  auto-dismiss; host exempt from the count; connected-only), two-client
-  live verification. Artifact design applied to
-  datamodel/infrastructure/ui (all three diagrams stale again). Next:
-  `/ardd-implement`.
+  `plan-explicit-readiness-2026-07-19-841d.md` (`approved`),
+  `tasks-explicit-readiness-0580.md` (**`completed`**, 6/6, merged
+  `56e9273`; feature `explicit-participant-readiness` flipped
+  **`implemented`**). Delivered: `ReadinessStatus` gains `loaded`
+  (assets done) vs `ready` (human-confirmed via `ready-set`); Bar
+  clock/check ready control + ReadinessBadge clock/check in list rows;
+  server-held start negotiation in playback-control (host exempt +
+  auto-ready on start, connected-only counting, one pending per
+  session, host-disconnect cancel, answers persist on cancel);
+  StartNegotiationModals with live count + auto-dismiss. Two-client
+  live verification passed all five scenarios. Suites post-merge:
+  server 257, client 139 unit + 189 CT — green. The three diagrams
+  remain stale (deliberate; run /ardd-diagram when convenient).
 - **Icon refresh + a11y + ticker position/size** —
   `plan-icons-a11y-ticker-2026-07-19-2584.md` (`approved`),
   `tasks-icons-a11y-ticker-a10d.md` (**`completed`**, 9/9, merged
