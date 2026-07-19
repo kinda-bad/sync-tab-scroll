@@ -4,6 +4,7 @@ import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
 import { seedHostMembershipUnlocks } from '../membership-unlock.js';
+import { promoteNextHost } from '../host-succession.js';
 import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
@@ -64,6 +65,19 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
 
   ctx.connections.attach(socket, { sessionCode: session.code, participantId });
   ctx.sessionStore.markActive(session.code);
+
+  // Absent-host check (infrastructure.md Host Succession): if this join lands
+  // in a session whose hostId points at a disconnected participant, schedule
+  // host reassignment. The disconnect-time timer doesn't cover this — with the
+  // hours-long empty-session TTL a member can rejoin long after everyone left,
+  // and without this check the absent host would keep hostId forever.
+  // scheduleHostReassignment is a no-op if a timer is already pending, and a
+  // host reclaiming their own seat was set 'connected' above (and cancelled
+  // any pending timer), so this only arms for a genuinely absent host.
+  const host = session.participants.find((p) => p.id === session.hostId);
+  if (host && host.connectionStatus === 'disconnected') {
+    ctx.sessionStore.scheduleHostReassignment(session.code, () => promoteNextHost(ctx, session.code));
+  }
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.send(socket, { type: 'catalog', ...visibleCatalog(ctx.catalog, session) });
 

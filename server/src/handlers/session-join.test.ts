@@ -23,7 +23,7 @@ describe('session-join absent-host reassignment (rejoin into an empty session)',
     vi.useRealTimers();
   });
 
-  it.fails('schedules host reassignment when a member joins a session whose host is disconnected', () => {
+  it('schedules host reassignment when a member joins a session whose host is disconnected', () => {
     // With a long empty-session TTL, a member can rejoin hours after everyone
     // left; scheduleHostReassignment only fires on host *disconnect*, so
     // without a join-time check the absent host would stay hostId forever.
