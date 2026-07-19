@@ -188,10 +188,19 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 4: Close-out
 
-- [ ] T009 [parallel] Note the prod-catalog follow-up: Supermassive's
+- [x] T009 [parallel] Note the prod-catalog follow-up: Supermassive's
   regenerated `meta.json`/`.lrc` live only in the local gitignored
   catalog until the volume re-upload procedure (README "populate the
   catalog volume": `COPYFILE_DISABLE=1 tar … | railway ssh …` +
   `railway redeploy`) is run again. Append the reminder to this tasks
   file's notes (the coordinator/user runs the transfer — do NOT run
   railway commands from the worktree). No code.
+
+> **T009 prod-catalog follow-up (2026-07-19).** Supermassive Black Hole's
+> regenerated `meta.json` + `lyrics.lrc` (T005 re-ingest) live only in the
+> local gitignored catalog. To reach prod they need the volume re-upload
+> procedure from the README's "populate the catalog volume" section:
+> `COPYFILE_DISABLE=1 tar … | railway ssh …` followed by
+> `railway redeploy` — run by the coordinator/user, NOT from a worktree.
+> (Content change is a timing-refresh of the lrclib passthrough only — no
+> `lyricsRawLine` was gained; the GP5 file's lyrics block is empty.)
