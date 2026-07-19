@@ -18,13 +18,6 @@ export interface LyricsOverlayOptions {
   measures?: MeasureBoundary[];
 }
 
-const FONT_SIZE_REM: Record<LyricsTickerFontSize, string> = {
-  small: '0.85rem',
-  medium: '1.125rem',
-  large: '1.5rem',
-  huge: '2rem',
-};
-
 /**
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
  * right now, using brand.md's `.at-highlight` active/base color roles.
@@ -43,7 +36,11 @@ export function createLyricsOverlay(
   const flat = lines.flat();
   const overlay = document.createElement('div');
   overlay.className = 'lyrics-overlay';
-  overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[loadStoredLyricsTickerFontSize()]);
+  // T006 (feedback F007): the step's rem value is no longer set inline
+  // (an inline custom property would beat any media query) — the step is
+  // carried as a data attribute and motifs.css maps it to a rem value,
+  // with a >=1024px desktop override scaling the four steps up ~1.75x.
+  overlay.dataset.lyricsSize = loadStoredLyricsTickerFontSize();
   // T005 (lyrics-ticker-position-preference): the ticker fixes to the top
   // or bottom of the viewport per the personal preference — a class toggle
   // (motifs.css `.lyrics-overlay--top`), bottom being the class-less default.
@@ -200,7 +197,7 @@ export function createLyricsOverlay(
       overlay.style.display = visible ? '' : 'none';
     },
     setFontSize(size: LyricsTickerFontSize) {
-      overlay.style.setProperty('--lyrics-ticker-font-size', FONT_SIZE_REM[size]);
+      overlay.dataset.lyricsSize = size;
     },
     setPosition(position: LyricsTickerPosition) {
       overlay.classList.toggle('lyrics-overlay--top', position === 'top');

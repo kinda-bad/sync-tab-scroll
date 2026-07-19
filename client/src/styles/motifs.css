@@ -385,15 +385,51 @@
      surface tone, so this now actually shows up in both themes. */
   background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
   font-family: var(--font-mono);
-  /* lyrics-ticker-font-size-preference.ts's four step values, set on this
-     element by lyrics-overlay.ts from the loaded/updated preference —
-     deliberately spaced far apart (not a subtle scale) so each step reads
-     as clearly, noticeably distinct from its neighbors. */
+  /* lyrics-ticker-font-size-preference.ts's four steps, carried as a
+     data-lyrics-size attribute by lyrics-overlay.ts (per-step rules below)
+     — deliberately spaced far apart (not a subtle scale) so each step
+     reads as clearly, noticeably distinct from its neighbors. Set via CSS
+     rather than an inline custom property so the desktop media query
+     below can override the values (T006, feedback F007). */
   font-size: var(--lyrics-ticker-font-size, 1.125rem);
   color: var(--ink-dim);
   overflow: hidden;
   pointer-events: none;
 }
+/* Font-size steps (lyrics-ticker-font-size-preference.ts, keyed by the
+   data-lyrics-size attribute lyrics-overlay.ts sets). Small-screen values
+   are the original four. */
+.lyrics-overlay[data-lyrics-size='small'] {
+  --lyrics-ticker-font-size: 0.85rem;
+}
+.lyrics-overlay[data-lyrics-size='medium'] {
+  --lyrics-ticker-font-size: 1.125rem;
+}
+.lyrics-overlay[data-lyrics-size='large'] {
+  --lyrics-ticker-font-size: 1.5rem;
+}
+.lyrics-overlay[data-lyrics-size='huge'] {
+  --lyrics-ticker-font-size: 2rem;
+}
+/* T006 (feedback F007): on desktop viewports the ticker was dispro-
+   portionately small against the much larger tab canvas — scale the four
+   steps up ~1.75x at >=1024px (visual-judgment values, flagged for user
+   eyeballing in the T009 live check). Steps stay clearly distinct. */
+@media (min-width: 1024px) {
+  .lyrics-overlay[data-lyrics-size='small'] {
+    --lyrics-ticker-font-size: 1.5rem;
+  }
+  .lyrics-overlay[data-lyrics-size='medium'] {
+    --lyrics-ticker-font-size: 2rem;
+  }
+  .lyrics-overlay[data-lyrics-size='large'] {
+    --lyrics-ticker-font-size: 2.75rem;
+  }
+  .lyrics-overlay[data-lyrics-size='huge'] {
+    --lyrics-ticker-font-size: 3.5rem;
+  }
+}
+
 /* T005 (feature lyrics-ticker-position-preference): the personal "Lyrics
    ticker position" preference fixes the strip to the top of the viewport
    instead of the default bottom — cleared just below the top-pinned hazard

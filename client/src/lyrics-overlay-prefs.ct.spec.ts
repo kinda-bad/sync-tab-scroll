@@ -104,3 +104,30 @@ test('position preference toggles the overlay top class for both values', async 
   await setPosition(page, 'bottom');
   await expect(overlay).not.toHaveClass(/lyrics-overlay--top/);
 });
+
+// T006 (tasks-icons-a11y-ticker-a10d.md, feedback F007): the four ticker
+// font-size steps scale up substantially on desktop viewports (>=1024px
+// media query, roughly 1.5-2x), while small-screen values stay unchanged.
+test('ticker font size scales up at the desktop breakpoint and steps stay distinct', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+  const overlay = page.locator('.lyrics-overlay');
+  const fontSizeOf = () => overlay.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+  await page.setViewportSize({ width: 800, height: 600 });
+  const phoneMedium = await fontSizeOf();
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const desktopMedium = await fontSizeOf();
+  expect(desktopMedium).toBeGreaterThanOrEqual(phoneMedium * 1.4);
+
+  // Steps remain clearly distinct at the desktop sizes too.
+  await setFontSize(page, 'small');
+  const desktopSmall = await fontSizeOf();
+  await setFontSize(page, 'large');
+  const desktopLarge = await fontSizeOf();
+  await setFontSize(page, 'huge');
+  const desktopHuge = await fontSizeOf();
+  expect(desktopSmall).toBeLessThan(desktopMedium);
+  expect(desktopLarge).toBeGreaterThan(desktopMedium);
+  expect(desktopHuge).toBeGreaterThan(desktopLarge);
+});
