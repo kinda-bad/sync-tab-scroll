@@ -20,7 +20,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: Icon swaps (feedback F001/F002/F004)
 
-- [ ] T002 [artifacts: ui, brand] Icon reassignment, test-first (CT
+- [x] T002 [artifacts: ui, brand] Icon reassignment, test-first (CT
   assertions on the rendered icon per control): Leave/End session
   changes from `log-out` to lucide `bone` (use the closest
   fracture-styled lucide variant if one exists — check the installed
