@@ -733,10 +733,10 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · **1 tasked** · **25 implemented** — see
-`.project/features/`. Tasked: `lyrics-ticker-position-preference`
-(tasks-icons-a11y-ticker-a10d.md). Newly implemented:
-`mute-all-parts-button` (2026-07-19). Backlogged:
+**3 backlogged** · 0 planned · 0 tasked · **26 implemented** — see
+`.project/features/`. Newly implemented:
+`lyrics-ticker-position-preference`, `mute-all-parts-button`
+(2026-07-19). Backlogged:
 `explicit-participant-readiness` (new 2026-07-19 — user-confirmed
 ready stage: loaded vs ready, clock/checkbox Bar indicator, host
 start-anyway modal + participant are-you-ready modal),
@@ -757,16 +757,20 @@ since shipped (`implemented`).
 ## Plans & Tasks
 
 - **Icon refresh + a11y + ticker position/size** —
-  `plan-icons-a11y-ticker-2026-07-19-2584.md` (`approved`, feature:
-  `lyrics-ticker-position-preference` now `tasked`),
-  `tasks-icons-a11y-ticker-a10d.md` (**`ready`**, 9 tasks / 5 phases):
-  tooltip z-index fix, icon swaps (bone/log-out/log-in/crown/settings),
-  lyrics toggle always-visible-but-disabled (confirmed reversal of
-  ui.md's absent-entirely decision), ticker top/bottom position pref,
-  desktop font-size scaling, full icon a11y sweep, live verification.
-  Consumes `feedback-icon-refresh-a11y-39d8.md` (all 7 items). ui.md
-  gained the position-pref text this run (diagram_status → stale
-  again). Next: `/ardd-implement`.
+  `plan-icons-a11y-ticker-2026-07-19-2584.md` (`approved`),
+  `tasks-icons-a11y-ticker-a10d.md` (**`completed`**, 9/9, merged
+  `6d7e53b`; feature `lyrics-ticker-position-preference` flipped
+  **`implemented`**). Delivered: tooltip fix (z-index AND a
+  live-discovered second root cause — the Bar's torn-edge clip-path
+  clipped tooltip descendants; fixed by portaling Tooltip to body);
+  icon swaps (bone leave, settings, log-out/log-in in account menu,
+  crown host badge with SR-only "Host"); lyrics toggle
+  always-visible-but-disabled with per-cause aria/tooltip reasons
+  (ui.md reversal recorded); ticker top/bottom position pref
+  (persists across reload); desktop font steps 1.5/2/2.75/3.5rem at
+  >=1024px (screenshots sent to user); a11y-sweep CT locking the
+  accessible-name invariant. Suites: client vitest 134, CT 177 —
+  green. Consumed `feedback-icon-refresh-a11y-39d8.md` (7 items).
 - **Settings/Bar UX bundle** —
   `plan-settings-ux-bundle-2026-07-19-d27d.md` (`approved`),
   `tasks-settings-ux-bundle-02e8.md` (**`completed`**, 10/10, merged
