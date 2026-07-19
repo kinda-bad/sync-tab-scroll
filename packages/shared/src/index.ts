@@ -85,7 +85,15 @@ export interface AuthSession {
   revokedAt: number | null;
 }
 
-export type ReadinessStatus = 'no-part' | 'loading' | 'ready';
+/**
+ * Participant readiness (`explicit-participant-readiness`, datamodel.md):
+ * `loaded` = this participant's assets (score render/SoundFont) finished
+ * loading — the state formerly called "ready"; `ready` = the participant
+ * additionally confirmed they're ready via the `ready-set` message. Any
+ * transition back into `no-part`/`loading` (part/song change, reconnect)
+ * clears the human confirmation along with the technical state.
+ */
+export type ReadinessStatus = 'no-part' | 'loading' | 'loaded' | 'ready';
 
 /**
  * A participant's chosen part, single source of truth for both

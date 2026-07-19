@@ -7,6 +7,7 @@
   const labels: Record<ReadinessStatus, string> = {
     'no-part': 'NO PART',
     loading: 'LOADING',
+    loaded: 'LOADED',
     ready: 'READY',
   };
 </script>

@@ -23,9 +23,9 @@ describe('readiness-update', () => {
       broadcasts.push(buildMessage('host-1'));
     };
 
-    handleReadinessUpdate(ctx, socket, { type: 'readiness-update', readiness: 'ready' });
+    handleReadinessUpdate(ctx, socket, { type: 'readiness-update', readiness: 'loaded' });
 
-    expect(session.participants[0].readiness).toBe('ready');
+    expect(session.participants[0].readiness).toBe('loaded');
     expect(broadcasts).toHaveLength(1);
   });
 });

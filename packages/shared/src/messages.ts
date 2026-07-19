@@ -5,6 +5,9 @@ export type ClientMessage =
   | { type: 'session-join'; code: string; displayName: string; participantId?: string }
   | { type: 'part-select'; part: SelectedPart }
   | { type: 'readiness-update'; readiness: ReadinessStatus }
+  // Human ready confirmation (`explicit-participant-readiness`): flips the
+  // sender's readiness `loaded → ready` (true) or `ready → loaded` (false).
+  | { type: 'ready-set'; ready: boolean }
   | { type: 'host-remove-participant'; participantId: string }
   | { type: 'playback-control'; action: 'start' | 'pause' | 'resume' | 'stop' | 'seek'; tickPosition?: number }
   | { type: 'lobby-cursor-set'; tickPosition: number | null }

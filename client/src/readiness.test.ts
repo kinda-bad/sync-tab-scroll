@@ -82,3 +82,22 @@ describe('warmUpAudioOutput', () => {
     expect(() => warmUpAudioOutput(api)).not.toThrow();
   });
 });
+
+// T001 (explicit-participant-readiness): asset completion now reports the
+// new intermediate 'loaded' state — human confirmation ('ready') is a
+// separate, explicit step (ready-set), never implied by loading finishing.
+describe('reportAssetReadiness', () => {
+  it('sends readiness-update loaded once assets finish', async () => {
+    const { api, scoreLoaded, soundFontLoaded } = fakeApi();
+    const send = vi.fn();
+    const { reportAssetReadiness } = await import('./readiness');
+    reportAssetReadiness({ send } as never, api);
+
+    scoreLoaded.fire();
+    soundFontLoaded.fire();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(send).toHaveBeenCalledWith({ type: 'readiness-update', readiness: 'loaded' });
+  });
+});

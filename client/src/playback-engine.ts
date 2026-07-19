@@ -18,7 +18,7 @@ interface GapIndicatorHandle {
   dotEls: HTMLElement[];
   drainEl: HTMLElement;
 }
-import { waitUntilReady, warmUpAudioOutput } from './readiness';
+import { reportAssetReadiness, waitUntilReady, warmUpAudioOutput } from './readiness';
 import { correctDrift, applyPlaybackSettings, installCountInCursorGuard } from './playback-sync';
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
@@ -150,7 +150,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   warmUpAudioOutput(api);
   api.playerReady.on(() => warmUpAudioOutput(api));
 
-  waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'ready' }));
+  reportAssetReadiness(wsClient, api);
 
   // The engine is created (and its first render fires) while still in the
   // Lobby, with the tab container hidden via `display:none` (T011c) —

@@ -1,4 +1,5 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
+import type { WsClient } from './ws-client';
 
 /**
  * Resolves once both the score has parsed/rendered and the SoundFont has
@@ -23,6 +24,17 @@ export function waitUntilReady(api: AlphaTabApi): Promise<void> {
       checkDone();
     });
   });
+}
+
+/**
+ * Reports this participant's asset completion to the server
+ * (`explicit-participant-readiness`, T001): once both assets are done the
+ * participant is `loaded` — NOT `ready`, which is now a separate,
+ * human-confirmed state flipped only by the Bar's ready control
+ * (`ready-set`). Asset loading never implies human readiness.
+ */
+export function reportAssetReadiness(wsClient: WsClient, api: AlphaTabApi): void {
+  void waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'loaded' }));
 }
 
 /**
