@@ -751,13 +751,16 @@ since shipped (`implemented`).
 
 - **Configurable empty-session TTL (12h)** —
   `plan-session-empty-ttl-2026-07-19-ce83.md` (`approved`),
-  `tasks-session-empty-ttl-1b53.md` (**`ready`**, 5 tasks / 3 phases).
-  Replaces the hardcoded 30s empty-session destroy
-  (`session-store.ts:3`) with env `SESSION_EMPTY_TTL_MS` (default 12h,
-  user decision), pause-on-empty guard, and the absent-host
-  rejoin-reassignment fix. Grounded in
-  `research-session-expiration-2026-07-19-9b87.md`; consumes
-  `feedback-session-expiry-question-8f83.md`. Next: `/ardd-implement`.
+  `tasks-session-empty-ttl-1b53.md` (**`completed`**, 5/5, merged
+  `ab317ce`). Hardcoded 30s empty-session destroy replaced by env
+  `SESSION_EMPTY_TTL_MS` (default 12h, user decision) threaded into
+  SessionStore; pause-on-empty guard in the disconnect path;
+  absent-host rejoin now schedules host reassignment. Server suite 238
+  green; live-checked with an injected 35s TTL (survives past 30s,
+  rejoin resumes paused, post-TTL rejoin gets session-not-found).
+  infrastructure.md lifecycle text updated with the rationale (cites
+  `research-session-expiration-2026-07-19-9b87.md`). Consumed
+  `feedback-session-expiry-question-8f83.md`.
 - **Beat widget + GP5 lyric extraction + song-switch race fix** —
   `plan-widgets-gp5-songswitch-2026-07-18-8bee.md` (`approved`),
   `tasks-widgets-gp5-songswitch-a046.md` (**`completed`**, 9/9, merged
