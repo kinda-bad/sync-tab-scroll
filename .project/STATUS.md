@@ -724,11 +724,10 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · **2 tasked** · **21 implemented** — see
-`.project/features/`. Tasked: `count-in-metronome-beat-widget`,
-`gp5-raw-lyric-line-extraction` (both bound to
-tasks-widgets-gp5-songswitch-a046.md). Backlogged:
-`catalogue-co-owner-invite-flow`
+**2 backlogged** · 0 planned · 0 tasked · **23 implemented** — see
+`.project/features/`. Newly implemented (2026-07-19):
+`count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`.
+Backlogged: `catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
 `count-in-metronome-beat-widget` (new, filed 2026-07-18 — shared beat
@@ -740,15 +739,28 @@ since shipped (`implemented`).
 ## Plans & Tasks
 
 - **Beat widget + GP5 lyric extraction + song-switch race fix** —
-  `plan-widgets-gp5-songswitch-2026-07-18-8bee.md` (`approved`, features:
-  `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, both
-  now `tasked`), `tasks-widgets-gp5-songswitch-a046.md` (**`ready`**,
-  9 tasks / 4 phases: song-switch race diagnose→fix→verify; GP5
-  lyrics-block binary reader + Supermassive re-ingest; beat-clock module
-  + Bar widget + live check; prod-catalog follow-up note). ui.md gained
-  the Count-In & Metronome Beat Widget section, pipeline.md the Legacy
-  GP3–5 Raw-Line Extraction section (both stamped 2026-07-18). Consumes
-  `feedback-song-switch-stale-score-e030.md`. Next: `/ardd-implement`.
+  `plan-widgets-gp5-songswitch-2026-07-18-8bee.md` (`approved`),
+  `tasks-widgets-gp5-songswitch-a046.md` (**`completed`**, 9/9, merged
+  `a2df7f6` 2026-07-19; both features flipped **`implemented`**).
+  Delivered: (1) **song-switch race fixed** — not a timing race:
+  `playback-engine.ts`'s EngineState carried no song identity, so the
+  old api/score/synth survived a song change; fixed with `songId`
+  teardown+rebuild plus reactive `dropEngineIfSongChanged()` from
+  App.svelte, and a second leak (destroyed engines left the old lyrics
+  overlay DOM alive) fixed via `overlay.destroy()`; CT regression test;
+  live-verified (immediate + normal switch, ticker follows). (2) **GP5
+  reader** (`gp5-lyrics.ts`, header walk + cp1252, null on deviation) +
+  `readRawLyricsLineAuto` dispatch; finding: Supermassive's GP5 lyrics
+  block is EMPTY (all five lines zero-length, no per-beat lyrics
+  either) so it stays on lrclib-passthrough `.lrc` per plan OQ3 — any
+  future lyric-bearing GP4/5 gets the corrected dispatch automatically.
+  (3) **Beat widget** — `beat-clock.ts` (real time-signature numerators
+  + localTempoAtTick), `BeatWidget.svelte` (alternating fill sweep,
+  countdown/count-up + Measure label, gating matrix), wired via
+  `beatWidgetState` off `playerPositionChanged` with self-scheduled
+  count-in countdown; live-verified all modes. Suites: client vitest
+  116, client CT 157, pipeline 33 — all green. ui.md/pipeline.md
+  sections from the plan run stand as written.
 - **Creep-class dispatch semantics follow-up** —
   `plan-creep-dispatch-2026-07-18-8a7c.md` (`approved`),
   `tasks-creep-dispatch-3477.md` (**`completed`**, 8/8, merged `7a41ee5`).
@@ -904,13 +916,13 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **`/ardd-implement`** to execute `tasks-widgets-gp5-songswitch-a046.md`
-   (`ready`, 9 tasks — song-switch race fix first). Still pending
-   separately: ear-check Last Nite + Teenagers (guide in
+1. **Push** (commits ahead of origin; the push triggers the prod rebuild
+   that ships the song-switch fix + beat widget), then **re-upload the
+   catalog volume** (Supermassive re-ingest) per the README procedure.
+   Still pending separately: ear-check Last Nite + Teenagers (guide in
    tasks-creep-dispatch-3477.md's T006 note), file the updated upstream
    alphaTab issue (awaits user OK), retire
-   `catalogue-co-owner-invite-flow` by hand. Push when ready (commits
-   ahead of origin; a push triggers a prod rebuild).
+   `catalogue-co-owner-invite-flow` by hand.
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
