@@ -706,11 +706,8 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**2 open feedback files:**
-`feedback-session-expiry-question-8f83.md` (2026-07-19) — investigate
-whether host-created sessions need to expire (establish today's actual
-server-side lifecycle first, then recommend expire-or-not semantics).
-And: `feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
+**1 open feedback file:**
+`feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
 the instrument from raw GP part names and make it the prominent element
 wherever parts are shown, de-emphasizing performer/numbering detail.
 Will be picked up by the next `/ardd-plan`. Previously:
@@ -752,6 +749,15 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Configurable empty-session TTL (12h)** —
+  `plan-session-empty-ttl-2026-07-19-ce83.md` (`approved`),
+  `tasks-session-empty-ttl-1b53.md` (**`ready`**, 5 tasks / 3 phases).
+  Replaces the hardcoded 30s empty-session destroy
+  (`session-store.ts:3`) with env `SESSION_EMPTY_TTL_MS` (default 12h,
+  user decision), pause-on-empty guard, and the absent-host
+  rejoin-reassignment fix. Grounded in
+  `research-session-expiration-2026-07-19-9b87.md`; consumes
+  `feedback-session-expiry-question-8f83.md`. Next: `/ardd-implement`.
 - **Beat widget + GP5 lyric extraction + song-switch race fix** —
   `plan-widgets-gp5-songswitch-2026-07-18-8bee.md` (`approved`),
   `tasks-widgets-gp5-songswitch-a046.md` (**`completed`**, 9/9, merged

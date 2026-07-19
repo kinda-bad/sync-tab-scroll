@@ -1,14 +1,14 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-19
-plan: null
+plan: plan-session-empty-ttl-2026-07-19-ce83.md
 ---
 
 # Feedback
 
 ## UX
 
-- [ ] F001 Investigate session length/lifecycle: do host-created
+- [x] F001 Investigate session length/lifecycle: do host-created
   (music) sessions need to expire? Today's behavior should be
   established first as part of the investigation (how long a session
   object lives server-side once created; what happens when the host
