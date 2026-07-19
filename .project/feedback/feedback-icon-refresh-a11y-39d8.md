@@ -37,6 +37,12 @@ plan: null
   menu. [artifacts: ui]
 - [ ] F004 The Settings control should use the lucide `settings` icon
   instead of the current `cog`. [artifacts: ui]
+- [ ] F007 The lyrics ticker's font-size steps (small/medium/large/huge)
+  should trend much bigger on desktop-sized viewports — the current
+  scale reads too small on a large screen; keep the existing 4-step
+  preference but scale the step values up responsively (e.g. viewport
+  media query or clamp()), leaving small-screen sizes roughly as they
+  are. [artifacts: ui]
 
 ## Reconsidered
 
