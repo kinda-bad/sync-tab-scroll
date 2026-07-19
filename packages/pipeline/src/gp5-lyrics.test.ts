@@ -61,13 +61,13 @@ describe('readGp5RawLyricsLineFromBuffer', () => {
     expect(readGp5RawLyricsLineFromBuffer(Buffer.from('PK\x03\x04 not a legacy file at all, padded well past 31 bytes'))).toBeNull();
   });
 
-  it.fails('parses line 1 text and start measure from a synthetic GP5 lyrics block', () => {
+  it('parses line 1 text and start measure from a synthetic GP5 lyrics block', () => {
     const buf = buildGp5({ line1: { measure: 3, bytes: Buffer.from('Oh ba- by dont you know I suf- fer', 'latin1') } });
     const result = readGp5RawLyricsLineFromBuffer(buf);
     expect(result).toEqual({ text: 'Oh ba- by dont you know I suf- fer', startBar: 2 });
   });
 
-  it.fails('decodes GP5 text as cp1252 (0x80-0x9F punctuation, accented latin1)', () => {
+  it('decodes GP5 text as cp1252 (0x80-0x9F punctuation, accented latin1)', () => {
     // "don’t café" with cp1252 right-single-quote (0x92) and é (0xE9).
     const bytes = Buffer.from([0x64, 0x6f, 0x6e, 0x92, 0x74, 0x20, 0x63, 0x61, 0x66, 0xe9]);
     const result = readGp5RawLyricsLineFromBuffer(buildGp5({ line1: { measure: 1, bytes } }));

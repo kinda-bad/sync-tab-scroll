@@ -84,7 +84,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 2: GP5 raw lyric line (gp5-raw-lyric-line-extraction)
 
-- [ ] T004 [artifacts: pipeline] Test-first: create a GP5 lyrics-block
+- [x] T004 [artifacts: pipeline] Test-first: create a GP5 lyrics-block
   reader in `packages/pipeline` (sibling to `readRawLyricsLine` in
   `line-breaks.ts`) that detects the legacy binary header (`FICHIER
   GUITAR PRO…`, no zip) and parses the GP5 lyrics block: version string,
