@@ -97,9 +97,12 @@
 
   .landing-title {
     font-family: var(--font-display);
-    font-size: 2.5rem;
+    /* Sized to keep SYNC-TAB-SCROLL on one line inside the 24rem card,
+       shrinking with the viewport on narrow screens. */
+    font-size: clamp(1.25rem, 5.4vw, 2rem);
     letter-spacing: 0.02em;
     line-height: 1;
+    white-space: nowrap;
     margin: 0;
   }
 
@@ -117,9 +120,17 @@
   }
 
   .landing-choice {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-2);
+  }
+
+  .landing-choice :global(.btn-wrap) {
+    display: block;
+  }
+
+  .landing-choice :global(.btn) {
+    width: 100%;
   }
 
   form {
