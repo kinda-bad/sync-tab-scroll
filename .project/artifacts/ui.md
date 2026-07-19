@@ -554,6 +554,34 @@ nav bar here too, so the Preferences tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view. "Leave session" (Lobby View, above) is likewise always present.
 
+### Count-In & Metronome Beat Widget
+
+A single-shape visual beat widget rendered in the persistent Bar
+(`count-in-metronome-beat-widget`). One shape — not four separate
+segments — whose fill color animates on every beat, alternating
+direction each beat: primary→secondary on beats 1→2 and 3→4,
+secondary→primary on 2→3 and 4→1. Two modes sharing the one widget:
+
+- **Count-in mode**: during the pre-playback count-in it counts down
+  4→1, visible to **every participant**, gated on the host-broadcast
+  `Session.countInEnabled` — the same visibility rule as the count-in
+  audio click itself.
+- **Playback mode**: during playback it counts up 1→4 and additionally
+  shows the current measure number, less prominently than the beat count
+  and labeled (e.g. "Measure 12"). Personal/per-participant, gated on
+  each participant's own Metronome preference
+  (`metronome-preference.ts`) — matching that toggle's existing
+  personal, this-device-only scope.
+
+Timing is driven by real beat boundaries — derived from
+`api.tickPosition` plus `tempo-lookup.ts`'s `localTempoAtTick`, the same
+tempo-lookup infrastructure `correctDrift` and lyrics-gap-timing already
+use — never a naive fixed-interval timer, so the animation stays
+sample-accurate with the actual audio click and doesn't drift across
+tempo changes. Colors are a theme-appropriate primary/secondary token
+pair from brand.md; the exact shape and the beat-count/measure-number
+layout are left to implementation-time visual judgment.
+
 ## Small Screens
 
 The app is a responsive web app, phone-first down to ~360px CSS width

@@ -166,6 +166,24 @@ small XML read, per Dependencies below), separate files/processes would
 add indirection without a real benefit. Name the script for what it does
 (e.g. `extract-lyrics`), not a leftover from the render-era naming.
 
+### Legacy GP3–5 Raw-Line Extraction
+
+GP7/8 files carry the raw track-level lyric line in `Content/score.gpif`
+(read via the zip+XML mechanism in Dependencies, below). Legacy GP3–5
+binary files (`FICHIER GUITAR PRO…` header — e.g. the catalog's
+Supermassive Black Hole) have no zip and no gpif; their lyrics live in
+the GP5 lyrics block near the file header: the lyric track number
+followed by five `{start-measure int32, length-prefixed string}` lines
+(`gp5-raw-lyric-line-extraction`). The pipeline reads line 1 of that
+block with a small binary parse (no new dependency) and publishes the
+same `CatalogSong.lyricsRawLine`/`lyricsRawLineStartBar` `meta.json`
+fields the GP7/8 path writes — everything downstream (chunking, the
+shared GP-semantics dispatcher, the client overlay, `.lrc` generation)
+is format-agnostic past that point. A GP3–5 file with no lyrics block
+(or an empty line) simply omits the field, keeping the
+`beat.lyrics`-trusting fallback exactly as for any other song without a
+raw line.
+
 ## Source Format
 
 Guitar Pro (`.gp`) files are the only source format read by the pipeline.

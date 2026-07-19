@@ -1,7 +1,7 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-18
-plan: null
+plan: plan-widgets-gp5-songswitch-2026-07-18-8bee.md
 ---
 
 # Feedback
@@ -13,7 +13,7 @@ but unconfirmed; could equally be a pre-existing song-switch race).
 
 ## Bugs
 
-- [ ] F001 Switching songs mid-session left the client on stale state
+- [x] F001 Switching songs mid-session left the client on stale state
   twice over: the tab view rendered was the wrong one (not the newly
   selected song's), and starting playback played the *previous* song's
   audio — i.e. neither the alphaTab renderer nor the synth/player had

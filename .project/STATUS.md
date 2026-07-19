@@ -704,7 +704,9 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**1 open feedback file:**
+**0 open feedback files.** Most recently:
+`feedback-song-switch-stale-score-e030.md` flipped to `planned`, bound to
+`plan-widgets-gp5-songswitch-2026-07-18-8bee.md`. Previously:
 `feedback-song-switch-stale-score-e030.md`
 (2026-07-18) — switching songs left both the tab view and playback audio
 on the previous song until a browser refresh; possibly a regression from
@@ -722,10 +724,10 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**4 backlogged** · 0 planned · 0 tasked · **21 implemented** — see
-`.project/features/`. Backlogged: `gp5-raw-lyric-line-extraction` (new,
-2026-07-18 — GP5 binary raw-lyric-line reader so Supermassive gets the
-corrected dispatch; downstream stack already in place),
+**2 backlogged** · 0 planned · **2 tasked** · **21 implemented** — see
+`.project/features/`. Tasked: `count-in-metronome-beat-widget`,
+`gp5-raw-lyric-line-extraction` (both bound to
+tasks-widgets-gp5-songswitch-a046.md). Backlogged:
 `catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
 retire by hand**), `host-mandated-bars-per-row-layout`,
@@ -737,6 +739,16 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Beat widget + GP5 lyric extraction + song-switch race fix** —
+  `plan-widgets-gp5-songswitch-2026-07-18-8bee.md` (`approved`, features:
+  `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, both
+  now `tasked`), `tasks-widgets-gp5-songswitch-a046.md` (**`ready`**,
+  9 tasks / 4 phases: song-switch race diagnose→fix→verify; GP5
+  lyrics-block binary reader + Supermassive re-ingest; beat-clock module
+  + Bar widget + live check; prod-catalog follow-up note). ui.md gained
+  the Count-In & Metronome Beat Widget section, pipeline.md the Legacy
+  GP3–5 Raw-Line Extraction section (both stamped 2026-07-18). Consumes
+  `feedback-song-switch-stale-score-e030.md`. Next: `/ardd-implement`.
 - **Creep-class dispatch semantics follow-up** —
   `plan-creep-dispatch-2026-07-18-8a7c.md` (`approved`),
   `tasks-creep-dispatch-3477.md` (**`completed`**, 8/8, merged `7a41ee5`).
@@ -892,13 +904,13 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-1. **Ear-check Last Nite + Teenagers** (regenerated under the final rule
-   set; guide in tasks-creep-dispatch-3477.md's T006 note), **file the
-   updated upstream alphaTab issue** (draft ready, awaits user OK), and
-   **plan the song-switch stale-score feedback** (`/ardd-plan
-   feedback-song-switch-stale-score-e030.md` — corroborated during T006:
-   host "Change song" + immediate Start races the score reload). Push
-   when ready (several commits ahead of origin).
+1. **`/ardd-implement`** to execute `tasks-widgets-gp5-songswitch-a046.md`
+   (`ready`, 9 tasks — song-switch race fix first). Still pending
+   separately: ear-check Last Nite + Teenagers (guide in
+   tasks-creep-dispatch-3477.md's T006 note), file the updated upstream
+   alphaTab issue (awaits user OK), retire
+   `catalogue-co-owner-invite-flow` by hand. Push when ready (commits
+   ahead of origin; a push triggers a prod rebuild).
 2. Regenerate the two stale diagrams: `/ardd-diagram infrastructure`,
    `/ardd-diagram ui` (both touched by plan-1619's Phase 1/4/5 and the
    bottom-bar-icons plan).
