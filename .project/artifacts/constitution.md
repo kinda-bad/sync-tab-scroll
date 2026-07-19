@@ -1,6 +1,14 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.6.0 → 1.6.1
+Amended: Development Workflow — wording fixes only (PATCH): the stale
+`/ardd-analyze` skill name updated to its current name `/ardd-status`
+(renamed upstream; WORKFLOW.md already noted the rename), and the "ADD"
+acronym updated to "ArDD" to match the toolkit's current name. No
+principle added, removed, or redefined; no behavioral change.
+
+Previous report (1.5.0 → 1.6.0):
 Version change: 1.5.0 → 1.6.0
 Amended: Project Scope & Intent — sanctions Phase 2 in-app authoring
 (catalogue/song creation from the web UI), reversing two prior decisions:
@@ -92,7 +100,7 @@ yet; this records the intended design ahead of building it.
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-14
+last_updated: 2026-07-19
 next_step_prompt: true
 delegation: eager
 merge_policy: auto
@@ -315,10 +323,10 @@ source-of-state requirement.
 
 ## Development Workflow
 
-1. New features go through ADD: refine the relevant artifact(s) before
-   writing code, run `/ardd-analyze` before planning, plan, then implement.
+1. New features go through ArDD: refine the relevant artifact(s) before
+   writing code, run `/ardd-status` before planning, plan, then implement.
 2. Each feature's task list declares which artifacts it depends on, per
-   ADD's task format — keeping context loading scoped per task.
+   ArDD's task format — keeping context loading scoped per task.
 
 ## Governance
 
@@ -332,4 +340,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.6.0 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-14
+**Version**: 1.6.1 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-19
