@@ -1,5 +1,6 @@
 import type { HandlerContext } from './handlers/context.js';
 import { promoteNextHost } from './host-succession.js';
+import { resolvePendingStart } from './handlers/playback-control.js';
 
 /**
  * Handles a socket disconnect for a given session/participant: marks the
@@ -17,6 +18,11 @@ export function handleDisconnect(ctx: HandlerContext, sessionCode: string, parti
   if (participant) participant.connectionStatus = 'disconnected';
 
   if (session.pendingHostRequest === participantId) session.pendingHostRequest = null;
+
+  // Start negotiation (infrastructure.md): the host disconnecting while a
+  // negotiation is pending cancels it — resolved `started: false` so the
+  // pending participants' modals dismiss instead of hanging forever.
+  if (participantId === session.hostId) resolvePendingStart(ctx, session, false);
 
   // Pause-on-empty: if this disconnect leaves nobody connected while playback
   // is running, freeze it as 'paused' so a much-later rejoin (the empty-TTL

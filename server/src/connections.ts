@@ -83,6 +83,21 @@ export class ConnectionRegistry {
     socket.send(JSON.stringify(message));
   }
 
+  /**
+   * Sends a message to one participant's live socket, if any (start
+   * negotiation, infrastructure.md: `host-start-pending`/`host-start-resolved`
+   * go to specific not-ready participants, not the whole session). A no-op
+   * for a participant with no live connection.
+   */
+  sendToParticipant(sessionCode: string, participantId: string, message: ServerMessage): void {
+    for (const socket of this.sockets.get(sessionCode) ?? []) {
+      if (this.info.get(socket)?.participantId === participantId) {
+        socket.send(JSON.stringify(message));
+        return;
+      }
+    }
+  }
+
   broadcast(sessionCode: string, buildMessage: (participantId: string) => ServerMessage): void {
     for (const socket of this.sockets.get(sessionCode) ?? []) {
       const conn = this.info.get(socket);

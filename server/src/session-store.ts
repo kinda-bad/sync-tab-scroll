@@ -31,6 +31,14 @@ export class SessionStore {
    * recompute `unlockedCatalogueIds = key-typed ∪ new-host-memberships`.
    */
   private keyUnlocked = new Map<string, Set<string>>();
+  /**
+   * At most one pending start negotiation per session (infrastructure.md
+   * Start Negotiation): the connected, not-ready participant ids that were
+   * counted and messaged when the host's start was held. In-memory like all
+   * session state; replaced wholesale by a second host start, cleared on
+   * resolve (host answer) or host disconnect.
+   */
+  private pendingStarts = new Map<string, string[]>();
 
   constructor(
     private hostReassignGraceMs: number = DEFAULT_HOST_REASSIGN_GRACE_MS,
@@ -88,6 +96,21 @@ export class SessionStore {
     return [...this.sessions.values()];
   }
 
+  /** Records the pending start negotiation's counted participant ids (replaces any prior one). */
+  setPendingStart(code: string, notReadyIds: string[]): void {
+    this.pendingStarts.set(code.toUpperCase(), notReadyIds);
+  }
+
+  /** The pending start negotiation's counted participant ids, if one is open. */
+  getPendingStart(code: string): string[] | undefined {
+    return this.pendingStarts.get(code.toUpperCase());
+  }
+
+  /** Clears the pending start negotiation (resolved or cancelled). */
+  clearPendingStart(code: string): void {
+    this.pendingStarts.delete(code.toUpperCase());
+  }
+
   /** Cancels any pending grace-period destruction — a participant is present again. */
   markActive(code: string): void {
     const timer = this.graceTimers.get(code);
@@ -107,6 +130,7 @@ export class SessionStore {
     const timer = setTimeout(() => {
       this.sessions.delete(code);
       this.keyUnlocked.delete(code);
+      this.pendingStarts.delete(code);
       this.graceTimers.delete(code);
     }, this.sessionEmptyTtlMs);
     this.graceTimers.set(code, timer);
