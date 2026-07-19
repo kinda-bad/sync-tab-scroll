@@ -117,7 +117,7 @@ test('sweep: Bar, settings modal (all four tabs), and part picker have no unname
   // Preferences, Tracks incl. TrackRow's icon-only mute buttons).
   await page.getByRole('button', { name: 'Settings' }).click();
   for (const tab of ['Participants', 'Session', 'Preferences', 'Tracks']) {
-    await page.getByRole('button', { name: tab }).click();
+    await page.getByRole('button', { name: tab, exact: true }).click();
     expect(await sweep(page), `tab: ${tab}`).toEqual([]);
   }
 
