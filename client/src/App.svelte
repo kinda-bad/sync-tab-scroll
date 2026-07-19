@@ -1,7 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { clientStore } from './store';
-  import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged } from './playback-engine';
+  import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged, beatWidgetState } from './playback-engine';
+  import { metronomeStore } from './metronome-preference';
+  import BeatWidget from './components/BeatWidget.svelte';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
   import Playback from './views/Playback.svelte';
@@ -178,6 +180,18 @@
       {/if}
     {/snippet}
     {#snippet controls()}
+      <!-- Count-In & Metronome Beat Widget (ui.md): count-in mode is
+           session-gated (countInEnabled, everyone), playback mode is
+           personal (metronomeStore); renders nothing otherwise. -->
+      <BeatWidget
+        countInEnabled={session.countInEnabled}
+        metronomeOn={$metronomeStore}
+        phase={$beatWidgetState.phase}
+        beatInBar={$beatWidgetState.beatInBar}
+        beatCount={$beatWidgetState.beatCount}
+        barNumber={$beatWidgetState.barNumber}
+        beatDurationMs={$beatWidgetState.beatDurationMs}
+      />
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
       {/if}

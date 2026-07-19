@@ -22,6 +22,22 @@ import { correctDrift, applyPlaybackSettings, installCountInCursorGuard } from '
 import { clientStore } from './store';
 import type { WsClient } from './ws-client';
 import { debounce } from './debounce';
+import { writable } from 'svelte/store';
+import * as atLib from '@coderline/alphatab';
+import { beatAtTick, beatDurationMs } from './beat-clock';
+
+/** Beat state feeding the Bar's beat widget (ui.md Count-In & Metronome Beat Widget) — real beat boundaries, never a fixed-interval timer. */
+export interface BeatWidgetState {
+  phase: 'count-in' | 'playing' | 'idle';
+  beatInBar: number;
+  beatCount: number;
+  barNumber: number;
+  beatDurationMs: number;
+}
+
+const IDLE_BEAT_STATE: BeatWidgetState = { phase: 'idle', beatInBar: 1, beatCount: 4, barNumber: 1, beatDurationMs: 500 };
+
+export const beatWidgetState = writable<BeatWidgetState>(IDLE_BEAT_STATE);
 
 export interface EngineContainers {
   tabContainer: HTMLElement;
@@ -353,6 +369,52 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     });
   }
 
+  // Beat widget feed (ui.md Count-In & Metronome Beat Widget). Playback
+  // mode: each real playerPositionChanged tick maps through beat-clock.ts
+  // (masterBar numerators + localTempoAtTick) — the store only updates on a
+  // beat/bar change, so the widget animates exactly on beat boundaries.
+  // Count-in mode: alphaTab suppresses position events for the whole
+  // count-in bar (see installCountInCursorGuard's doc comment), so the
+  // countdown steps are self-scheduled from the bar's real beat duration
+  // (beatDurationMs at the start position) — beat-boundary-derived timing,
+  // not a naive fixed interval; the chain is cancelled by the first real
+  // position event or a state flip away from Playing.
+  let countInTimers: ReturnType<typeof setTimeout>[] = [];
+  const cancelCountIn = () => {
+    for (const t of countInTimers) clearTimeout(t);
+    countInTimers = [];
+  };
+  api.playerStateChanged.on((e) => {
+    if (e.state === atLib.synth.PlayerState.Playing && api.countInVolume > 0 && api.score) {
+      const startTick = api.tickPosition;
+      const pos = beatAtTick(api.score, startTick);
+      const stepMs = beatDurationMs(api.score, startTick);
+      beatWidgetState.set({ phase: 'count-in', beatInBar: 1, beatCount: pos.beatCount, barNumber: pos.barNumber, beatDurationMs: stepMs });
+      cancelCountIn();
+      for (let beat = 2; beat <= pos.beatCount; beat++) {
+        countInTimers.push(
+          setTimeout(() => {
+            beatWidgetState.update((s) => (s.phase === 'count-in' ? { ...s, beatInBar: beat } : s));
+          }, (beat - 1) * stepMs),
+        );
+      }
+    } else if (e.state !== atLib.synth.PlayerState.Playing) {
+      cancelCountIn();
+      beatWidgetState.set(IDLE_BEAT_STATE);
+    }
+  });
+  api.playerPositionChanged.on((e) => {
+    if (e.isSeek) return; // programmatic resets/seeks aren't beat boundaries
+    if (api.playerState !== atLib.synth.PlayerState.Playing || !api.score) return;
+    cancelCountIn();
+    const pos = beatAtTick(api.score, e.currentTick);
+    beatWidgetState.update((s) =>
+      s.phase === 'playing' && s.beatInBar === pos.beatInBar && s.barNumber === pos.barNumber
+        ? s
+        : { phase: 'playing', ...pos, beatDurationMs: beatDurationMs(api.score!, e.currentTick) },
+    );
+  });
+
   // Hazard-bar real playback progress (plan-hazard-bar-progress): a third,
   // narrowly-scoped playerPositionChanged subscription, distinct from the
   // lrc-line-matching and seek-broadcast ones elsewhere in this function.
@@ -484,6 +546,7 @@ function destroyEngine(): void {
   state.api.destroy();
   state = undefined;
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
+  beatWidgetState.set(IDLE_BEAT_STATE);
 }
 
 /**

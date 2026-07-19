@@ -157,7 +157,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   Bar controls). CT covers: mode selection + gating matrix (countIn
   on/off × metronome pref on/off), count values at known ticks, and
   that the widget renders nothing when both gates are off.
-- [ ] T008 Wire the widget into the persistent Bar (`client/src/`
+- [x] T008 Wire the widget into the persistent Bar (`client/src/`
   wherever Bar controls mount — alongside transport/settings), reading
   session `countInEnabled` and the local Metronome preference from
   their existing sources. Live verification in a real browser: start
@@ -166,6 +166,25 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   (1→4 + measure number advancing, staying locked to the click through
   the song), and confirm it disappears when both gates are off. Record
   outcomes in a tasks-file note.
+
+> **T008 live verification (2026-07-19).** Same rig (server 6180 / vite
+> 6101). Wiring: `beatWidgetState` store fed by playback-engine.ts —
+> playback mode updates only on real beat/bar changes from
+> `playerPositionChanged` (beat-clock.ts derivation), count-in mode
+> self-schedules its countdown from the bar's real `beatDurationMs`
+> (alphaTab emits no position events during the count-in bar — same fact
+> the count-in cursor guard documents); personal gate is the new reactive
+> `metronomeStore` (metronome-preference.ts), session gate is
+> `session.countInEnabled` read in App.svelte. Live: with Count-in ON +
+> Metronome ON on Supermassive (4/4), Start showed the widget in the Bar
+> counting down from 4 (primary-red fill) during the count-in clicks,
+> then flipping to count-up mode — observed "1" with "Measure 3" label
+> (secondary-yellow fill) advancing with the cursor during playback.
+> Toggling Metronome OFF mid-playback removed the widget instantly
+> (playback kept running); with both gates off and idle, nothing renders.
+> Beat-lock to the audible click follows from the shared derivation
+> (tickPosition + localTempoAtTick) rather than a timer; no drift
+> mechanism exists to observe.
 
 ## Phase 4: Close-out
 
