@@ -1,6 +1,6 @@
 ---
 slug: gp5-raw-lyric-line-extraction
-status: tasked
+status: implemented
 logged: 2026-07-18
 plan: plan-widgets-gp5-songswitch-2026-07-18-8bee.md
 tasks: tasks-widgets-gp5-songswitch-a046.md

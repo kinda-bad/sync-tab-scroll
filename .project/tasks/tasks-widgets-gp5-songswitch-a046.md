@@ -1,7 +1,7 @@
 ---
 plan: plan-widgets-gp5-songswitch-2026-07-18-8bee.md
 generated: 2026-07-18
-status: in-progress   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
+status: completed   # generating -> ready -> in-progress -> completed (schema-of-record: scripts/lint-project.sh)
 ---
 
 # Tasks
