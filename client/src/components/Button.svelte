@@ -21,6 +21,7 @@
   // for iconOnly controls — shown on mouse/pen hover, and on ~500ms touch
   // long-press, dismissing on pointer-leave/release.
   let showTooltip = false;
+  let buttonEl: HTMLButtonElement | undefined;
   let longPressTimer: ReturnType<typeof setTimeout> | undefined;
   const LONG_PRESS_MS = 500;
 
@@ -58,6 +59,7 @@
 
 <span class="btn-wrap">
   <button
+    bind:this={buttonEl}
     class="btn btn-{variant}"
     {type}
     {disabled}
@@ -77,7 +79,7 @@
     {/if}
   </button>
   {#if iconOnly}
-    <Tooltip {label} visible={showTooltip} />
+    <Tooltip {label} visible={showTooltip} anchor={buttonEl} />
   {/if}
 </span>
 

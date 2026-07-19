@@ -165,18 +165,26 @@ test('tooltip stacking: bar sits above the lyrics ticker, which sits above the a
 
   // Show a bar tooltip via mouse hover on an icon-only control.
   await page.getByRole('button', { name: 'Settings' }).hover();
-  const tooltip = page.locator('.bar-wrap [role="tooltip"]');
+  const tooltip = page.locator('body > [role="tooltip"]');
   await expect(tooltip).toBeVisible();
 
-  const { barZ, overlayZ } = await page.evaluate(() => ({
-    barZ: Number(getComputedStyle(document.querySelector('.bar-wrap')!).zIndex),
-    overlayZ: Number(getComputedStyle(document.querySelector('.lyrics-overlay')!).zIndex),
-  }));
+  const { tipZ, tipInBody, overlayZ } = await page.evaluate(() => {
+    const tip = document.querySelector('[role="tooltip"]')!;
+    return {
+      // Portaled to <body>: found live, the Bar's torn-edge clip-path clips
+      // every descendant's painting, so a tooltip inside the bar could
+      // never fully render above it regardless of z-index.
+      tipInBody: tip.parentElement === document.body,
+      tipZ: Number(getComputedStyle(tip).zIndex),
+      overlayZ: Number(getComputedStyle(document.querySelector('.lyrics-overlay')!).zIndex),
+    };
+  });
+  expect(tipInBody).toBe(true);
   // Ticker still above alphaTab's .at-cursors inline z-index: 1000 …
   expect(overlayZ).toBeGreaterThan(1000);
-  // … and the bar (the tooltip's stacking context) above the ticker, so
-  // the tooltip paints over both the tab view and the ticker.
-  expect(barZ).toBeGreaterThan(overlayZ);
+  // … and the tooltip above the ticker, so it paints over both the tab
+  // view and the ticker.
+  expect(tipZ).toBeGreaterThan(overlayZ);
 });
 
 // T004 (tasks-icons-a11y-ticker-a10d.md, feedback F006 — confirmed
