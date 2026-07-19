@@ -68,7 +68,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 4: Accessibility sweep (feedback F003)
 
-- [ ] T007 [artifacts: ui] Audit every icon-only control and status
+- [x] T007 [artifacts: ui] Audit every icon-only control and status
   icon across the Bar, settings modal (incl. TrackRow's mute buttons),
   part picker, participant list (crown), and account menu: each
   icon-only control gets an aria-label (tooltip/title complements, not
