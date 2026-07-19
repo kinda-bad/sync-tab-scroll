@@ -704,8 +704,11 @@ layer). Run `/ardd-defects` to refresh against the newer client fixes
 
 ## Feedback
 
-**1 open feedback file:**
-`feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
+**2 open feedback files:**
+`feedback-session-expiry-question-8f83.md` (2026-07-19) — investigate
+whether host-created sessions need to expire (establish today's actual
+server-side lifecycle first, then recommend expire-or-not semantics).
+And: `feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
 the instrument from raw GP part names and make it the prominent element
 wherever parts are shown, de-emphasizing performer/numbering detail.
 Will be picked up by the next `/ardd-plan`. Previously:
