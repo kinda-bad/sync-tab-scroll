@@ -204,7 +204,27 @@ participants already have parts chosen resets those choices (a part
 index/id from the old song's `CatalogSong.parts` has no guaranteed
 meaning against the new song) — each participant's `selectedPart`
 reverts to `null` and readiness to `'no-part'`, same as first joining.
-Each participant picks their part and signals readiness. The part picker
+Each participant picks their part and signals readiness.
+
+**Part-name display rule** (feedback part-name-instrument-ux F001;
+`client/src/part-display-name.ts`): everywhere a part renders — the part
+picker, the Participants list's selected-part sublabel, the Playback
+View's "Playing: X" label, and the Tracks tab — the raw GP part name is
+mapped to an `{instrument, detail}` pair with the **instrument extracted
+and prominent** and the detail **de-emphasized** (smaller/dimmer, kept
+not dropped). "Name (Instrument)" puts the performer in the detail
+("M. Bellamy (Vocals)" → **Vocals** · M. Bellamy); bare instrument
+phrases pass through whole ("Backing Vocals"), with trailing
+roman-numeral/digit or comma qualifiers becoming the detail
+("Keyboards I" → **Keyboards** · I, "Guitar, lead" → **Guitar** · lead).
+Instrument+detail pairs are **unique per song**: GP's own qualifiers are
+preferred as the disambiguator, and colliding pairs with no usable
+qualifier get sequential numbering in track order (**Guitar** · 1,
+**Guitar** · 2). A name with no recognizable instrument falls back to
+the raw name whole, detail-less — the extraction dictionary is small
+(guitar/bass/drums/vocals/keys/keyboards/synth/piano/strings/brass,
+case-insensitive) and grows from real feedback rather than aiming for
+completeness. The part picker
 includes a **Lyrics** option alongside the instrument parts — selectable
 like any other part, but disabled when the song has no `.lrc` file
 (datamodel.md `CatalogSong.lyricsLrc`). The in-tab lyrics overlay
