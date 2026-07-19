@@ -15,7 +15,6 @@ const fourFour = [
  */
 test.describe('gating matrix', () => {
   test('count-in phase with countInEnabled shows the countdown regardless of metronome pref', async ({ mount }) => {
-    test.fail(); // red-state marker (T007) — removed on the paired green commit
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'count-in', countInEnabled: true, metronomeOn: false, tick: 0, bars: fourFour, countInBeat: 1 },
     });
@@ -31,7 +30,6 @@ test.describe('gating matrix', () => {
   });
 
   test('playing phase with metronome pref on shows the count-up + measure label', async ({ mount }) => {
-    test.fail(); // red-state marker (T007)
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'playing', countInEnabled: false, metronomeOn: true, tick: Q, bars: fourFour },
     });
@@ -57,7 +55,6 @@ test.describe('gating matrix', () => {
 
 test.describe('count values at known ticks', () => {
   test('rolls into measure 2 beat 1 at the bar boundary', async ({ mount }) => {
-    test.fail(); // red-state marker (T007)
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'playing', countInEnabled: false, metronomeOn: true, tick: 4 * Q, bars: fourFour },
     });
@@ -66,7 +63,6 @@ test.describe('count values at known ticks', () => {
   });
 
   test('counts to the actual numerator in a 3/4 bar (no hard-coded 4)', async ({ mount }) => {
-    test.fail(); // red-state marker (T007)
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'playing', countInEnabled: false, metronomeOn: true, tick: 2 * Q, bars: [{ durationTicks: 3 * Q, numerator: 3 }] },
     });
@@ -76,7 +72,6 @@ test.describe('count values at known ticks', () => {
   });
 
   test('count-in countdown in 3/4 counts down from 3', async ({ mount }) => {
-    test.fail(); // red-state marker (T007)
     const component = await mount(BeatWidgetHarness, {
       props: { phase: 'count-in', countInEnabled: true, metronomeOn: false, tick: 0, bars: [{ durationTicks: 3 * Q, numerator: 3 }], countInBeat: 2 },
     });

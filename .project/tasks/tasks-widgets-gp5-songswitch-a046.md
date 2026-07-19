@@ -141,7 +141,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   counting to the actual time-signature numerator, not a hard-coded 4
   (plan Open Question 1 default). Unit tests: 4/4 steady tempo, a tempo
   change mid-song, a non-4/4 bar, tick 0/negative (count-in region).
-- [ ] T007 [artifacts: ui, brand] Test-first (Playwright CT per client
+- [x] T007 [artifacts: ui, brand] Test-first (Playwright CT per client
   conventions): create the Bar beat-widget component per ui.md's
   Count-In & Metronome Beat Widget section — single shape, fill color
   animating each beat with alternating direction (primary→secondary on

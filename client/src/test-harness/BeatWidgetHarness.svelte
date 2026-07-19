@@ -29,12 +29,18 @@
   $: beatMs = beatDuration(score, tick);
 </script>
 
-<BeatWidget
-  {countInEnabled}
-  {metronomeOn}
-  {phase}
-  beatInBar={phase === 'count-in' && countInBeat !== null ? countInBeat : position.beatInBar}
-  beatCount={position.beatCount}
-  barNumber={position.barNumber}
-  beatDurationMs={beatMs}
-/>
+<!-- Wrapper div: Playwright CT's component locator only matches DESCENDANTS
+     of the mounted root, and without this the widget's own outer div IS the
+     root — making getByTestId('beat-widget') unfindable while its children
+     still matched. -->
+<div data-testid="beat-widget-harness">
+  <BeatWidget
+    {countInEnabled}
+    {metronomeOn}
+    {phase}
+    beatInBar={phase === 'count-in' && countInBeat !== null ? countInBeat : position.beatInBar}
+    beatCount={position.beatCount}
+    barNumber={position.barNumber}
+    beatDurationMs={beatMs}
+  />
+</div>
