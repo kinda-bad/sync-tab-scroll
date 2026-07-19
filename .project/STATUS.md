@@ -733,11 +733,12 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · 0 tasked · **24 implemented** — see
+**3 backlogged** · 0 planned · 0 tasked · **24 implemented** — see
 `.project/features/`. Newly backlogged (2026-07-19):
-`sync-tabs-to-real-audio` (sync playback to a real recording —
-YouTube/mp3 — instead of the synth; substantial, vet with
-/ardd-research before planning). Newly implemented (2026-07-19):
+`mute-all-parts-button` (Settings→Tracks control muting all parts while
+count-in/metronome stay audible) and `sync-tabs-to-real-audio` (sync
+playback to a real recording — YouTube/mp3 — instead of the synth;
+substantial, vet with /ardd-research before planning). Newly implemented (2026-07-19):
 `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, and
 `catalogue-co-owner-invite-flow` (closed — scope had shipped as phase-2
 Phase 6, bound to that plan). Remaining backlogged:
