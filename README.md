@@ -324,22 +324,23 @@ erDiagram
 graph TD
     subgraph Client["Client (Svelte + Vite)"]
         WSC["ws-client.ts<br/>(ConnectionStatus, reconnect-by-identity)"]
-        AT["@coderline/alphatab<br/>(tab render + audio + shared clock)"]
-        LO["In-tab Lyrics Overlay<br/>(derived live from .gp beats)"]
+        AT["@coderline/alphatab<br/>(tab render + audio + shared clock,<br/>engine rebuilt per song)"]
+        LO["In-tab Lyrics Overlay<br/>(GP-semantics dispatch of meta's raw<br/>lyric line; beat.lyrics fallback)"]
+        BW["Beat widget<br/>(count-in countdown / metronome,<br/>beat-clock from tick + local tempo)"]
         AM["Account Menu / Authoring Modal<br/>(optional)"]
     end
 
     subgraph Server["Single Node process (http.Server)"]
         WS["WebSocket upgrade<br/>(session-create/join, playback-control,<br/>host-transfer, catalogue-unlock, ...)"]
-        SS["Session Store (in-memory only)<br/>Session / Participant / PlaybackState"]
+        SS["Session Store (in-memory only)<br/>Session / Participant / PlaybackState<br/>empty-session TTL: SESSION_EMPTY_TTL_MS<br/>(default 12h; pause-on-empty)"]
         CL["catalog-loader.ts<br/>(server-global catalog, mutable at runtime<br/>as of Phase 2)"]
         STATIC["/catalog static file route"]
         AUTH["OAuth routes<br/>/auth/&lt;provider&gt;/login,callback,logout · /me"]
-        UPLOAD["Upload trust surface<br/>(size limit, parse timeout, staging)"]
+        UPLOAD["Upload trust surface<br/>(size limit, parse timeout, staging,<br/>SONG_UPLOAD_ENABLED gate)"]
     end
 
     subgraph Disk["Filesystem / Volume"]
-        CATFS["catalog/&lt;catalogue&gt;/&lt;song&gt;/<br/>*.gp, lyrics.lrc, meta.json,<br/>catalogue.json, consent.json"]
+        CATFS["catalog/&lt;catalogue&gt;/&lt;song&gt;/<br/>*.gp, lyrics.lrc, meta.json<br/>(incl. lyricsRawLine),<br/>catalogue.json, consent.json"]
     end
 
     subgraph DB["Postgres (optional, DB-optional boot)"]
@@ -347,12 +348,13 @@ graph TD
     end
 
     subgraph Pipeline["Offline pipeline (pipeline.md)"]
-        PL["create-catalogue / extract-lyrics /<br/>record-consent CLI"]
+        PL["create-catalogue / extract-lyrics /<br/>record-consent CLI<br/>(raw lyric line: gpif XML for GP7/8,<br/>GP5 lyrics block for legacy)"]
         LRCLIB["lrclib.net<br/>(line-break ref / fallback source)"]
     end
 
     WSC <-->|WebSocket, host is clock authority<br/>periodic playback-tick-report| WS
     AT --> LO
+    AT --> BW
     WS --> SS
     WS --> CL
     CL -->|reads/re-scans| CATFS
@@ -382,7 +384,7 @@ graph TD
 ```mermaid
 graph TD
     Landing["Landing View<br/>Create / Join session<br/>+ optional Account menu"]
-    Lobby["Lobby View<br/>persistent Bar: join code, Song &amp; part,<br/>Settings cog, Leave session"]
+    Lobby["Lobby View<br/>persistent Bar: join code, Song &amp; part,<br/>Toggle lyrics, Beat widget, Settings,<br/>transport, Leave session (all tooltipped)"]
     Playback["Playback View<br/>instrument tab + optional lyrics ticker,<br/>OR headless + full lyric sheet"]
 
     Landing -->|create/join succeeds| Lobby
@@ -390,9 +392,15 @@ graph TD
     Playback -.->|Leave session| Landing
     Lobby -.->|Leave session| Landing
 
+    subgraph BarWidgets["Bar widgets"]
+        BeatW["Beat widget:<br/>count-in countdown (session-wide) /<br/>beat + measure count (personal,<br/>Metronome-gated)"]
+    end
+    Lobby --- BarWidgets
+    Playback --- BarWidgets
+
     subgraph LobbyModals["Lobby modals"]
-        SongPart["Song &amp; Part modal<br/>(auto-opens until both set)<br/>catalog picker, activation key,<br/>part picker incl. Lyrics"]
-        Settings["Settings modal<br/>Participants / Session / Preferences tabs"]
+        SongPart["Song &amp; Part modal<br/>(auto-opens, dismissible)<br/>catalog picker, activation key,<br/>part picker incl. Lyrics"]
+        Settings["Settings modal<br/>Participants / Session /<br/>Preferences / Tracks tabs"]
         Authoring["Authoring modal (Phase 2, owner-only)<br/>My catalogues, Create catalogue,<br/>Add song, Co-owners/invite"]
     end
 
@@ -403,15 +411,17 @@ graph TD
     subgraph SettingsTabs["Settings tabs"]
         Participants["Participants:<br/>readiness, Make host, Remove,<br/>Request to become host"]
         Session["Session:<br/>Lobby cursor + Spotlight,<br/>Count-in toggle (host-only)"]
-        Preferences["Preferences (personal, client-local):<br/>Theme, Metronome, Mute parts"]
+        Preferences["Preferences (personal, client-local):<br/>Theme, Metronome, ticker font size,<br/>measure markers"]
+        Tracks["Tracks (personal):<br/>per-part mute + Solo + Mute all<br/>(count-in/metronome stay audible)"]
     end
 
     Settings --> Participants
     Settings --> Session
     Settings --> Preferences
+    Settings --> Tracks
 
     subgraph PlaybackRender["Playback rendering, per participant"]
-        Instrument["Instrument part:<br/>visible alphaTab tab + cursor<br/>+ optional lyrics ticker overlay"]
+        Instrument["Instrument part:<br/>visible alphaTab tab + cursor<br/>+ optional lyrics ticker overlay<br/>(GP-semantics dispatched syllables)"]
         LyricsPart["Lyrics part:<br/>headless alphaTab (audio/clock only)<br/>+ full scrolling lyric sheet<br/>+ gap-timing indicator"]
     end
 
