@@ -29,7 +29,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   the participant isn't in a ready-able state (`no-part`/`loading` —
   terse error like other handlers), broadcasts `session-state`.
   Handler tests for all branches.
-- [ ] T003 [artifacts: ui] Test-first client control: the Bar's
+- [x] T003 [artifacts: ui] Test-first client control: the Bar's
   readiness indicator becomes the participant's own ready control —
   clock icon (lucide `clock`) while `loaded` with accessible name/
   tooltip like "I'm ready — click to confirm", check icon (lucide
