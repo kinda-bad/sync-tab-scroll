@@ -37,7 +37,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Lyrics toggle + ticker position + desktop sizes
 
-- [ ] T004 [artifacts: ui] F006 (confirmed reversal): make the Bar's
+- [x] T004 [artifacts: ui] F006 (confirmed reversal): make the Bar's
   "Toggle lyrics" control always visible; disabled (not absent) when no
   ticker is available — song has no lyrics track, or the participant is
   on the tab-less Lyrics part — with a tooltip + aria reason (e.g. "No

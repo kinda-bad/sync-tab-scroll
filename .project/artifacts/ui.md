@@ -500,11 +500,18 @@ identically regardless of which one they're on:
   lyrics overlay can be toggled on as a single-line horizontal ticker
   fixed to the top or bottom of the viewport (per the personal "Lyrics
   ticker position" preference; default bottom), via an icon-only "Toggle lyrics"
-  control (an `AudioLines` icon) that lives in the **persistent bar's**
-  controls, not standalone in this view's own body — reachable the same
-  way Settings/transport/Leave-session are, gated on `!isLyricsPart`
-  exactly as before (absent entirely for a participant on the tab-less
-  Lyrics part, since there is no in-tab strip for them to toggle).
+  control that lives in the **persistent bar's** controls, not standalone
+  in this view's own body — reachable the same way
+  Settings/transport/Leave-session are. The control is **always visible,
+  never absent**: when no ticker is available it renders disabled with the
+  reason carried in its accessible name/title — "Lyrics part shows the
+  full sheet" for a participant on the tab-less Lyrics part (the full
+  sheet replaces the ticker for them), or "No lyrics for this song" when
+  the song has no GP-sourced lyrics track (`CatalogSong.lyricsTrackIndex`
+  absent). This reverses the earlier "absent entirely for a participant
+  on the tab-less Lyrics part" decision — confirmed reversal, feedback
+  feedback-icon-refresh-a11y-39d8 F006: a control that vanishes reads as
+  a bug; disabled-with-reason keeps the affordance discoverable.
   Toggling the strip off hides it **entirely** — both the syllable text
   and the strip's own background band/reserved layout space — not just
   the words, leaving nothing behind. Syllable text and tick position

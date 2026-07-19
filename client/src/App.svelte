@@ -100,6 +100,19 @@
   // (playback-engine.ts's playerPositionChanged subscription).
   $: barProgress = $clientStore.view === 'playback' ? $clientStore.playbackProgress : totalCount > 0 ? readyCount / totalCount : 0;
 
+  // T004 (feedback F006): the in-tab lyrics ticker is available only when
+  // this participant has an instrument part AND the song's lyrics came from
+  // the source GP file (lyricsTrackIndex) — the tab-less Lyrics part shows
+  // the full sheet instead, and a song without a lyrics track has nothing
+  // to tick. The bar control stays visible in every case; when unavailable
+  // it is disabled with one of these reasons.
+  $: lyricsTickerAvailable = hasPart && !isLyricsPart && catalogSong?.lyricsTrackIndex != null;
+  $: lyricsToggleReason = isLyricsPart
+    ? 'Lyrics part shows the full sheet'
+    : catalogSong?.lyricsTrackIndex == null
+      ? 'No lyrics for this song'
+      : 'Pick a part first';
+
   // Song/part selection lives in a modal (ui.md Lobby View), not inline —
   // auto-opened ONCE whenever either is missing (pre-playback only; once
   // playback starts every participant necessarily already has a part). The
@@ -198,9 +211,18 @@
       {#if $clientStore.view === 'lobby'}
         <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
       {/if}
-      {#if hasPart && !isLyricsPart}
-        <Button variant="ghost" label="Toggle lyrics" iconOnly icon={MicVocal} onclick={toggleLyricsOverlay} />
-      {/if}
+      <!-- T004 (tasks-icons-a11y-ticker-a10d.md, feedback F006 — confirmed
+           reversal of ui.md's "absent entirely" decision): always visible,
+           disabled (never absent) when no ticker is available, with the
+           reason carried in the accessible name/title. -->
+      <Button
+        variant="ghost"
+        label={lyricsTickerAvailable ? 'Toggle lyrics' : `Toggle lyrics — ${lyricsToggleReason}`}
+        iconOnly
+        icon={MicVocal}
+        disabled={!lyricsTickerAvailable}
+        onclick={toggleLyricsOverlay}
+      />
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
         <Button variant="ghost" label="Settings" iconOnly icon={Settings} onclick={toggleSettingsModal} />
       {/if}

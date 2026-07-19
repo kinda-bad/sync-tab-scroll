@@ -179,11 +179,49 @@ test('tooltip stacking: bar sits above the lyrics ticker, which sits above the a
   expect(barZ).toBeGreaterThan(overlayZ);
 });
 
-test('playback (lyrics part): Toggle lyrics is absent entirely', async ({ mount, page }) => {
+// T004 (tasks-icons-a11y-ticker-a10d.md, feedback F006 — confirmed
+// reversal of ui.md's "absent entirely" decision): the Toggle lyrics
+// control is ALWAYS visible in the bar; when no ticker is available it is
+// disabled with the reason carried in its accessible name/title, never
+// absent.
+test('playback (lyrics part): Toggle lyrics is present but disabled, with the Lyrics-part reason', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'playback', lyricsSession());
 
-  await expect(page.getByRole('button', { name: 'Toggle lyrics' })).toHaveCount(0);
+  const toggle = page.getByRole('button', { name: /Toggle lyrics/ });
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toBeDisabled();
+  await expect(toggle).toHaveAttribute('aria-label', /Lyrics part shows the full sheet/);
+  await expect(toggle).toHaveAttribute('title', /Lyrics part shows the full sheet/);
+});
+
+test('song without a lyrics track: Toggle lyrics is present but disabled, with the no-lyrics reason', async ({ mount, page }) => {
+  await mount(AppHarness);
+  const noLyricsSong: CatalogSong = { ...song, lyricsTrackIndex: null, lyricsLrc: null };
+  const session = instrumentSession('lobby');
+  await page.evaluate(
+    ({ session, song, view }) => {
+      const store = (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore;
+      const wsClient = (window as unknown as { __wsClient: unknown }).__wsClient;
+      store.update((s) => ({ ...(s as object), view, session, selfParticipantId: 'p1', catalog: [song], wsClient }));
+    },
+    { session, song: noLyricsSong, view: 'lobby' },
+  );
+
+  const toggle = page.getByRole('button', { name: /Toggle lyrics/ });
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toBeDisabled();
+  await expect(toggle).toHaveAttribute('aria-label', /No lyrics for this song/);
+});
+
+test('lyrics available + instrument part: Toggle lyrics is enabled with no reason suffix', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'lobby', instrumentSession('lobby'));
+
+  const toggle = page.getByRole('button', { name: 'Toggle lyrics' });
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toBeEnabled();
+  await expect(toggle).toHaveAttribute('aria-label', 'Toggle lyrics');
 });
 
 /**
