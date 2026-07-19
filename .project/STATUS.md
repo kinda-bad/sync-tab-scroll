@@ -706,7 +706,10 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**1 open feedback file:**
+**2 open feedback files:**
+`feedback-beat-widget-layout-362c.md` (2026-07-19) — UX: measure display
+moves left of the beat count (seamless count-in→metronome transition)
+and becomes a number stacked over a small "MES" label. And:
 `feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
 the instrument from raw GP part names and make it the prominent element
 wherever parts are shown, de-emphasizing performer/numbering detail.
