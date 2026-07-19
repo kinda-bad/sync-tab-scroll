@@ -37,3 +37,16 @@ plan: null
   menu. [artifacts: ui]
 - [ ] F004 The Settings control should use the lucide `settings` icon
   instead of the current `cog`. [artifacts: ui]
+
+## Reconsidered
+
+- [ ] F006 The Bar's "Toggle lyrics" control should be **always
+  visible**, rendered disabled when no lyrics ticker is available for
+  the current context (song has no lyrics track / participant is on the
+  tab-less Lyrics part where there's no in-tab strip), instead of being
+  absent. This reverses ui.md's recorded decision that the control is
+  "absent entirely" for a Lyrics-part participant (and the general
+  "absent, not disabled" pattern for this control) — a persistent
+  disabled control keeps the Bar layout stable and teaches that the
+  feature exists. Disabled state needs a tooltip/aria reason (ties into
+  F003's a11y audit). [artifacts: ui]
