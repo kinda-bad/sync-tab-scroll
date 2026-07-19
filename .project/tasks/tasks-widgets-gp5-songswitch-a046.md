@@ -133,7 +133,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Beat widget (count-in-metronome-beat-widget)
 
-- [ ] T006 [artifacts: ui, brand, infrastructure] Test-first: create the
+- [x] T006 [artifacts: ui, brand, infrastructure] Test-first: create the
   beat-timing derivation for the widget — a pure module (e.g.
   `client/src/beat-clock.ts`) that, given a tick position, the score's
   master bars (time signature numerator per bar), and `localTempoAtTick`
