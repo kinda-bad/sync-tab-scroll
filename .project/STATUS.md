@@ -731,8 +731,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · 0 tasked · **23 implemented** — see
-`.project/features/`. Newly implemented (2026-07-19):
+**3 backlogged** · 0 planned · 0 tasked · **23 implemented** — see
+`.project/features/`. Newly backlogged (2026-07-19):
+`sync-tabs-to-real-audio` (sync playback to a real recording —
+YouTube/mp3 — instead of the synth; substantial, vet with
+/ardd-research before planning). Newly implemented (2026-07-19):
 `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`.
 Backlogged: `catalogue-co-owner-invite-flow`
 (**superseded — its scope shipped as phase-2-in-app-authoring's Phase 6;
