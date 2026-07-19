@@ -611,11 +611,19 @@ secondary→primary on 2→3 and 4→1. Two modes sharing the one widget:
   `Session.countInEnabled` — the same visibility rule as the count-in
   audio click itself.
 - **Playback mode**: during playback it counts up 1→4 and additionally
-  shows the current measure number, less prominently than the beat count
-  and labeled (e.g. "Measure 12"). Personal/per-participant, gated on
-  each participant's own Metronome preference
-  (`metronome-preference.ts`) — matching that toggle's existing
-  personal, this-device-only scope.
+  shows the current measure, less prominently than the beat count.
+  Personal/per-participant, gated on each participant's own Metronome
+  preference (`metronome-preference.ts`) — matching that toggle's
+  existing personal, this-device-only scope.
+
+**Layout** (feedback beat-widget-layout F001/F002): the measure display
+renders to the **left of** the beat count, as the measure number
+**stacked above a small "MES" caption** — not "Measure 12" prose. The
+measure slot's width is **reserved in both modes** (contents hidden
+during count-in, shown during playback), so the beat count's horizontal
+position is identical across the count-in→playback transition — the
+countdown becomes the metronome without the beat number moving, the MES
+stack simply appearing to its left.
 
 Timing is driven by real beat boundaries — derived from
 `api.tickPosition` plus `tempo-lookup.ts`'s `localTempoAtTick`, the same
