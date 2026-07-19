@@ -25,3 +25,5 @@ plan: null
   so screen readers announce every control and status. Verify across
   the Bar, settings modal, part picker, participant list, and account
   menu. [artifacts: ui]
+- [ ] F004 The Settings control should use the lucide `settings` icon
+  instead of the current `cog`. [artifacts: ui]
