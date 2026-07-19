@@ -1,5 +1,6 @@
 <script lang="ts">
   import { clientStore } from '../store';
+  import { partDisplayNames } from '../part-display-name';
 
   // Derived from clientStore (constitution Principle I).
   $: participant = $clientStore.session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -8,16 +9,25 @@
   // being followed — a participant switching parts (Song & part modal) had
   // no way to confirm which instrument/lyrics they'd landed on without
   // reopening that modal.
-  $: currentPartLabel = isLyricsPart
-    ? 'Lyrics'
-    : $clientStore.session?.availableParts.find((p) => p.trackIndex === participant?.selectedPart)?.instrumentName;
+  // Instrument-prominent + de-emphasized detail (ui.md part-name display
+  // rule): derived over the whole part list, since uniqueness/numbering is
+  // a per-song property of partDisplayNames.
+  $: partNames = partDisplayNames(($clientStore.session?.availableParts ?? []).map((p) => p.instrumentName));
+  $: selectedIdx = $clientStore.session?.availableParts.findIndex((p) => p.trackIndex === participant?.selectedPart) ?? -1;
+  $: currentPart = isLyricsPart
+    ? { instrument: 'Lyrics', detail: null }
+    : selectedIdx >= 0
+      ? partNames[selectedIdx]
+      : undefined;
 </script>
 
 <!-- "Toggle lyrics" moved into the persistent bar's controls() snippet
      (App.svelte) — tasks-bottom-bar-icons-47a6.md T003, feedback F002. -->
 <section class="playback-controls">
-  {#if currentPartLabel}
-    <span class="current-part" data-testid="current-part">Playing: {currentPartLabel}</span>
+  {#if currentPart}
+    <span class="current-part" data-testid="current-part"
+      >Playing: {currentPart.instrument}{#if currentPart.detail}<span class="part-detail"> · {currentPart.detail}</span>{/if}</span
+    >
   {/if}
 </section>
 
@@ -41,6 +51,12 @@
   .current-part {
     color: var(--ink-dim);
     font-size: 0.875rem;
+  }
+
+  /* De-emphasized detail (performer/qualifier) — kept, not dropped (ui.md). */
+  .part-detail {
+    font-size: 0.75rem;
+    opacity: 0.7;
   }
 
   .loading-banner {

@@ -15,6 +15,7 @@
     type LyricsTickerFontSize,
   } from '../lyrics-ticker-font-size-preference';
   import { loadStoredMeasureMarkers, persistMeasureMarkers } from '../lyrics-measure-markers-preference';
+  import { partDisplayNames, formatPartDisplayName } from '../part-display-name';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -54,6 +55,12 @@
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
+
+  // Instrument-prominent part labels (ui.md part-name display rule) —
+  // derived for the whole part list at once, since uniqueness/numbering is
+  // a per-song property. Index-aligned with session.availableParts; shared
+  // by the Participants sublabels and the Tracks rows.
+  $: partNames = partDisplayNames((session?.availableParts ?? []).map((p) => p.instrumentName));
 
   function setTheme(family: 'riot' | 'cyberpunk', mode: 'dark' | 'light'): void {
     theme = family === 'riot' ? mode : (`cyberpunk-${mode}` as StoredTheme);
@@ -186,7 +193,9 @@
               ? 'Lyrics'
               : p.selectedPart === null
                 ? undefined
-                : session.availableParts.find((ap) => ap.trackIndex === p.selectedPart)?.instrumentName}
+                : ((idx) => (idx >= 0 && partNames[idx] ? formatPartDisplayName(partNames[idx]) : undefined))(
+                  session.availableParts.findIndex((ap) => ap.trackIndex === p.selectedPart),
+                )}
           {@const sublabel = p.role === 'host' ? (partLabel ? `HOST · ${partLabel}` : 'HOST') : partLabel}
           <ListRow label={p.displayName} {sublabel}>
             {#if isPendingRow && isHost}
