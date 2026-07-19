@@ -249,22 +249,37 @@ a dropped socket.
 **Bar controls are icon-based** (`lucide-svelte`, adopted per constitution
 Principle V rather than hand-rolled inline SVGs), reclaiming horizontal
 space in the persistent bar: "Song & part" renders as a `ListMusic` icon,
-the settings control as a cog icon, the in-tab lyrics toggle as a
+the settings control as a `Settings` (gear) icon (was a cog — feedback
+feedback-icon-refresh-a11y-39d8 F004), the in-tab lyrics toggle as a
 `MicVocal` icon (Playback View, below — also reachable from the Lobby,
-not just Playback, once a part is picked), "Leave session" as an
-exit-door icon (`LogOut`), and the host's transport controls (Playback
-View, below) as tape-recorder-style symbols (play/pause/square). Every
-icon-only control still carries its full text as an accessible name —
-`Button.svelte`'s `iconOnly` mode sets `aria-label`/`title` from the same
-`label` a text button would show, so screen readers read the original
-wording even though no text is visibly rendered. The native `title`
+not just Playback, once a part is picked), "Leave session" as a `Bone`
+icon ("breaking up the band" — the exit-door `LogOut`/`LogIn` pair moved
+to the account menu's actual Sign out/Sign in actions, rendered as
+decorative icons beside their text; feedback F001), and the host's
+transport controls (Playback View, below) as tape-recorder-style symbols
+(play/pause/square). In the Participants list, the host designation
+renders as a `Crown` icon in place of the former "HOST" text badge, with
+visually-hidden "Host" text keeping it announced (feedback F002).
+
+**Accessibility rule (feedback F003)**: every icon-only control always
+carries a non-empty accessible name — `Button.svelte`'s `iconOnly` mode
+sets `aria-label`/`title` from the same `label` a text button would show,
+so screen readers read the original wording even though no text is
+visibly rendered. Tooltips and `title` *complement* that name, never
+substitute for it. Decorative icons (including icons inside labelled or
+text-bearing controls, and status icons like the crown) are
+`aria-hidden`, with adjacent or SR-only text wherever the meaning must
+still be announced. Enforced by a sweep-style CT spec
+(`client/src/a11y-sweep.ct.spec.ts`) across the Bar, settings modal
+(including TrackRow's mute buttons), part picker, and participant list.
+The native `title`
 attribute alone is an unreliable *visible* hover cue (inconsistent timing
 across browsers, and does nothing on touch screens); a dedicated `Tooltip`
 component supplements it — shown on mouse hover (desktop) and on
 long-press (touch), dismissing on pointer-leave or release/tap-elsewhere —
 applied uniformly to every icon-only bar control listed above.
 
-A second, separate modal — opened via a settings-cog control in the
+A second, separate modal — opened via a settings-gear control in the
 persistent nav bar — holds everything that used to render inline in the
 Lobby body. Unlike the song/part modal, it's a plain freely-openable/
 dismissible modal with no forced-open gating, and it has four tabs,
@@ -607,7 +622,7 @@ tape-recorder-style transport controls (play/pause/square — see above); a
 count-in countdown can precede playback start. The host's view exposes
 seek (click-to-position) when paused; participants' views don't.
 
-The settings-cog control (Lobby View, above) remains in the persistent
+The settings-gear control (Lobby View, above) remains in the persistent
 nav bar here too, so the Preferences tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view. "Leave session" (Lobby View, above) is likewise always present.
