@@ -706,7 +706,12 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**0 open feedback files.** Most recently: all three 2026-07-19 UX files
+**1 open feedback file:** `feedback-icon-refresh-a11y-39d8.md`
+(2026-07-19) — UX: leave-session icon → bone-fracture ("breaking up the
+band"), log-out/log-in move to Sign out/Sign in, HOST badge → crown
+icon, plus an icon accessibility audit (aria-labels everywhere). Will be
+picked up by the next `/ardd-plan`. Previously: all three earlier
+2026-07-19 UX files
 (`feedback-settings-tracks-rows-0501.md`,
 `feedback-beat-widget-layout-362c.md`,
 `feedback-part-name-instrument-ux-7b1a.md`) flipped to `planned`, bound
