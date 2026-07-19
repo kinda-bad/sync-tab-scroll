@@ -4,6 +4,7 @@
   import ListRow from './ListRow.svelte';
   import Button from './Button.svelte';
   import TextInput from './TextInput.svelte';
+  import { partDisplayNames } from '../part-display-name';
 
   export let open: boolean;
   export let dismissible: boolean;
@@ -33,6 +34,11 @@
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
   $: selfParticipant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
   $: selectedSong = catalog.find((s) => s.id === session?.selectedSong);
+
+  // Instrument-prominent part labels (ui.md part-name display rule):
+  // derived for the whole part list at once — uniqueness/numbering is a
+  // per-song property, not a per-row one. Index-aligned with availableParts.
+  $: partNames = partDisplayNames((session?.availableParts ?? []).map((p) => p.instrumentName));
 
   // The server only ever sends catalogues this session may see (public +
   // already-unlocked — infrastructure.md `visibleCatalog`), so grouping and the
@@ -137,8 +143,8 @@
 
       <span class="section-label">Your part</span>
       <ul class="list">
-        {#each session.availableParts as part (part.trackIndex)}
-          <ListRow label={part.instrumentName}>
+        {#each session.availableParts as part, i (part.trackIndex)}
+          <ListRow label={partNames[i]?.instrument ?? part.instrumentName} sublabel={partNames[i]?.detail ?? undefined}>
             <Button
               variant={selfParticipant?.selectedPart === part.trackIndex ? 'riot' : 'ghost'}
               label="Select"

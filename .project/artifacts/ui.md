@@ -204,7 +204,27 @@ participants already have parts chosen resets those choices (a part
 index/id from the old song's `CatalogSong.parts` has no guaranteed
 meaning against the new song) — each participant's `selectedPart`
 reverts to `null` and readiness to `'no-part'`, same as first joining.
-Each participant picks their part and signals readiness. The part picker
+Each participant picks their part and signals readiness.
+
+**Part-name display rule** (feedback part-name-instrument-ux F001;
+`client/src/part-display-name.ts`): everywhere a part renders — the part
+picker, the Participants list's selected-part sublabel, the Playback
+View's "Playing: X" label, and the Tracks tab — the raw GP part name is
+mapped to an `{instrument, detail}` pair with the **instrument extracted
+and prominent** and the detail **de-emphasized** (smaller/dimmer, kept
+not dropped). "Name (Instrument)" puts the performer in the detail
+("M. Bellamy (Vocals)" → **Vocals** · M. Bellamy); bare instrument
+phrases pass through whole ("Backing Vocals"), with trailing
+roman-numeral/digit or comma qualifiers becoming the detail
+("Keyboards I" → **Keyboards** · I, "Guitar, lead" → **Guitar** · lead).
+Instrument+detail pairs are **unique per song**: GP's own qualifiers are
+preferred as the disambiguator, and colliding pairs with no usable
+qualifier get sequential numbering in track order (**Guitar** · 1,
+**Guitar** · 2). A name with no recognizable instrument falls back to
+the raw name whole, detail-less — the extraction dictionary is small
+(guitar/bass/drums/vocals/keys/keyboards/synth/piano/strings/brass,
+case-insensitive) and grows from real feedback rather than aiming for
+completeness. The part picker
 includes a **Lyrics** option alongside the instrument parts — selectable
 like any other part, but disabled when the song has no `.lrc` file
 (datamodel.md `CatalogSong.lyricsLrc`). The in-tab lyrics overlay
@@ -379,10 +399,22 @@ regardless of whether playback has started:
 - **Tracks**: a dedicated 4th tab for personal per-part mute controls,
   visible to **every** participant (not host-gated) — moved out of
   Preferences into its own tab so each part gets its own row rather than
-  sharing one flex-wrapped row of buttons. One `<div class="control-row">`
-  per part, listing every part in `Session.availableParts` (instrument
-  name, same source the Participants list and Playback View's "Playing:
-  X" label already read) with its own mute toggle. Muting a part calls
+  sharing one flex-wrapped row of buttons. **Each part row is exactly one
+  line** (`TrackRow.svelte`; feedback settings-tracks-rows F001/F002),
+  listing every part in `Session.availableParts` rendered through the
+  part-name display rule (Lobby View, above — instrument prominent,
+  detail de-emphasized): a **display-only label** (not a
+  button/interactive element) that **never wraps** — when its content
+  overflows the row it scrolls marquee-style in a **bounce** pattern
+  (scroll to the end, pause, return; less distracting in a settings list
+  than a continuous loop), with the animation active only when DOM
+  measurement shows real overflow (content vs. container via
+  `getBoundingClientRect`, the same plain-DOM idiom the lyrics ticker's
+  centering uses) — a fitting label never animates; a **small icon-only
+  mute button** — lucide `volume-2` while audible, `volume-off` while
+  muted — using `Button.svelte`'s existing iconOnly + tooltip idiom (the
+  full "Mute/Unmute «part»" wording stays as the accessible name); and
+  "Solo", which **stays a text button** (user decision). Muting a part calls
   alphaTab's own `api.changeTrackMute()` against that participant's
   already-loaded full mix (Playback View, above) — nothing is added to or
   removed from what's loaded, only which already-loaded tracks are
@@ -579,11 +611,19 @@ secondary→primary on 2→3 and 4→1. Two modes sharing the one widget:
   `Session.countInEnabled` — the same visibility rule as the count-in
   audio click itself.
 - **Playback mode**: during playback it counts up 1→4 and additionally
-  shows the current measure number, less prominently than the beat count
-  and labeled (e.g. "Measure 12"). Personal/per-participant, gated on
-  each participant's own Metronome preference
-  (`metronome-preference.ts`) — matching that toggle's existing
-  personal, this-device-only scope.
+  shows the current measure, less prominently than the beat count.
+  Personal/per-participant, gated on each participant's own Metronome
+  preference (`metronome-preference.ts`) — matching that toggle's
+  existing personal, this-device-only scope.
+
+**Layout** (feedback beat-widget-layout F001/F002): the measure display
+renders to the **left of** the beat count, as the measure number
+**stacked above a small "MES" caption** — not "Measure 12" prose. The
+measure slot's width is **reserved in both modes** (contents hidden
+during count-in, shown during playback), so the beat count's horizontal
+position is identical across the count-in→playback transition — the
+countdown becomes the metronome without the beat number moving, the MES
+stack simply appearing to its left.
 
 Timing is driven by real beat boundaries — derived from
 `api.tickPosition` plus `tempo-lookup.ts`'s `localTempoAtTick`, the same

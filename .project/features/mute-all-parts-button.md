@@ -1,6 +1,6 @@
 ---
 slug: mute-all-parts-button
-status: tasked
+status: implemented
 logged: 2026-07-19
 plan: plan-settings-ux-bundle-2026-07-19-d27d.md
 tasks: tasks-settings-ux-bundle-02e8.md

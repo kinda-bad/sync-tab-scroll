@@ -4,6 +4,7 @@
   import Button from './Button.svelte';
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
+  import TrackRow from './TrackRow.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
@@ -15,6 +16,7 @@
     type LyricsTickerFontSize,
   } from '../lyrics-ticker-font-size-preference';
   import { loadStoredMeasureMarkers, persistMeasureMarkers } from '../lyrics-measure-markers-preference';
+  import { partDisplayNames, formatPartDisplayName } from '../part-display-name';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -54,6 +56,12 @@
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
+
+  // Instrument-prominent part labels (ui.md part-name display rule) —
+  // derived for the whole part list at once, since uniqueness/numbering is
+  // a per-song property. Index-aligned with session.availableParts; shared
+  // by the Participants sublabels and the Tracks rows.
+  $: partNames = partDisplayNames((session?.availableParts ?? []).map((p) => p.instrumentName));
 
   function setTheme(family: 'riot' | 'cyberpunk', mode: 'dark' | 'light'): void {
     theme = family === 'riot' ? mode : (`cyberpunk-${mode}` as StoredTheme);
@@ -145,6 +153,27 @@
     trackMutes = { ...trackMutes, ...next };
   }
 
+  // "Mute all" (feature mute-all-parts-button, ui.md Tracks tab): one
+  // batch changeTrackMute application over every part — the exact
+  // mechanism soloTrack uses — never a new mute state. Simple toggle
+  // (plan OQ2 default): when everything is already muted it unmutes all.
+  // Count-in/metronome are countInVolume/metronomeVolume, not track
+  // channels, so they are structurally untouched here.
+  $: allMuted = (session?.availableParts ?? []).length > 0 && (session?.availableParts ?? []).every((p) => trackMutes[p.trackIndex]);
+
+  function toggleMuteAll() {
+    if (!session?.selectedSong) return;
+    const songId = session.selectedSong;
+    const muted = !allMuted;
+    const next: Record<number, boolean> = {};
+    for (const part of session.availableParts) {
+      next[part.trackIndex] = muted;
+      persistTrackMute(songId, part.trackIndex, muted);
+      setEngineTrackMute(part.trackIndex, muted);
+    }
+    trackMutes = { ...trackMutes, ...next };
+  }
+
   function toggleCountIn() {
     wsClient?.send({ type: 'count-in-set', enabled: !session?.countInEnabled });
   }
@@ -186,7 +215,9 @@
               ? 'Lyrics'
               : p.selectedPart === null
                 ? undefined
-                : session.availableParts.find((ap) => ap.trackIndex === p.selectedPart)?.instrumentName}
+                : ((idx) => (idx >= 0 && partNames[idx] ? formatPartDisplayName(partNames[idx]) : undefined))(
+                  session.availableParts.findIndex((ap) => ap.trackIndex === p.selectedPart),
+                )}
           {@const sublabel = p.role === 'host' ? (partLabel ? `HOST · ${partLabel}` : 'HOST') : partLabel}
           <ListRow label={p.displayName} {sublabel}>
             {#if isPendingRow && isHost}
@@ -284,15 +315,16 @@
   {:else}
     {#if session && session.availableParts.length > 0}
       <span class="section-label">Tracks</span>
-      {#each session.availableParts as part (part.trackIndex)}
-        <div class="control-row">
-          <Button
-            variant={trackMutes[part.trackIndex] ? 'riot' : 'ghost'}
-            label={`${part.instrumentName}: ${trackMutes[part.trackIndex] ? 'Muted' : 'Unmuted'}`}
-            onclick={() => toggleTrackMute(part.trackIndex)}
-          />
-          <Button variant="ghost" label="Solo" onclick={() => soloTrack(part.trackIndex)} />
-        </div>
+      <div class="control-row">
+        <Button variant="ghost" label={allMuted ? 'Unmute all' : 'Mute all'} onclick={toggleMuteAll} />
+      </div>
+      {#each session.availableParts as part, i (part.trackIndex)}
+        <TrackRow
+          display={partNames[i] ?? { instrument: part.instrumentName, detail: null }}
+          muted={!!trackMutes[part.trackIndex]}
+          onToggleMute={() => toggleTrackMute(part.trackIndex)}
+          onSolo={() => soloTrack(part.trackIndex)}
+        />
       {/each}
       <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
     {/if}
