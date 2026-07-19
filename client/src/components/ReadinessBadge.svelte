@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { ReadinessStatus } from '@sync-tab-scroll/shared';
+  import Clock from 'lucide-svelte/icons/clock';
+  import Check from 'lucide-svelte/icons/check';
 
   export let readiness: ReadinessStatus;
   export let connected: boolean = true;
@@ -12,13 +14,23 @@
   };
 </script>
 
+<!-- `loaded` vs `ready` carry the clock-vs-check icon distinction
+     (explicit-participant-readiness, ui.md Explicit Readiness): clock =
+     assets done but not yet human-confirmed, check = confirmed ready. -->
 <span class="badge" class:ready={readiness === 'ready'} class:loading={readiness === 'loading'} class:offline={!connected}>
+  {#if connected && readiness === 'loaded'}
+    <Clock size={12} aria-hidden="true" />
+  {:else if connected && readiness === 'ready'}
+    <Check size={12} aria-hidden="true" />
+  {/if}
   {connected ? labels[readiness] : 'OFFLINE'}
 </span>
 
 <style>
   .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 700;

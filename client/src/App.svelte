@@ -32,6 +32,8 @@
   import Bone from './components/icons/BoneFracture.svelte';
   import MicVocal from 'lucide-svelte/icons/mic-vocal';
   import ListMusic from 'lucide-svelte/icons/list-music';
+  import Clock from 'lucide-svelte/icons/clock';
+  import Check from 'lucide-svelte/icons/check';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -141,6 +143,13 @@
     songPartModalOpen = false;
   }
 
+  // The Bar's readiness indicator is the participant's own ready control
+  // (explicit-participant-readiness, ui.md Explicit Readiness): while
+  // `loaded` it confirms, while `ready` it un-readies (ready-set).
+  function toggleReady() {
+    $clientStore.wsClient?.send({ type: 'ready-set', ready: participant?.readiness !== 'ready' });
+  }
+
   function toggleSettingsModal() {
     settingsModalOpen = !settingsModalOpen;
   }
@@ -238,7 +247,16 @@
     {/snippet}
     {#snippet status()}
       {#if participant}
-        <ReadinessBadge readiness={participant.readiness} connected={participant.connectionStatus === 'connected'} />
+        <!-- The badge becomes the participant's own ready control once
+             loaded (clock = confirm, check = un-ready); loading/no-part
+             stay the non-interactive badge exactly as before. -->
+        {#if participant.connectionStatus === 'connected' && participant.readiness === 'loaded'}
+          <Button variant="ghost" label="I'm ready — click to confirm" iconOnly icon={Clock} onclick={toggleReady} />
+        {:else if participant.connectionStatus === 'connected' && participant.readiness === 'ready'}
+          <Button variant="ghost" label="Ready — click to un-ready" iconOnly icon={Check} onclick={toggleReady} />
+        {:else}
+          <ReadinessBadge readiness={participant.readiness} connected={participant.connectionStatus === 'connected'} />
+        {/if}
       {/if}
       <!-- Persistent account menu (ui.md Account & Sign-In). Absent when
            accounts are unavailable (no DB) — AccountMenu renders nothing. -->
