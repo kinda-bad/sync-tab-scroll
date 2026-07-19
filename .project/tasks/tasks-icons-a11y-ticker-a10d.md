@@ -48,7 +48,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   tab-less Lyrics part" decision → always-visible-but-disabled with
   reason; note the reversal source: feedback
   feedback-icon-refresh-a11y-39d8 F006) and stamp `last_updated`.
-- [ ] T005 [artifacts: ui] Feature `lyrics-ticker-position-preference`,
+- [x] T005 [artifacts: ui] Feature `lyrics-ticker-position-preference`,
   test-first: create `client/src/lyrics-ticker-position-preference.ts`
   (top | bottom, default bottom, persisted client-side — mirror
   `lyrics-ticker-font-size-preference.ts`), a Preferences-tab control
