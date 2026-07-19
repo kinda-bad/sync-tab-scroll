@@ -30,12 +30,20 @@
 </div>
 
 <style>
+  /* z-index 1100 (was 100), feedback F005 / tasks-icons-a11y-ticker-a10d
+     T001: alphaTab injects `.at-cursors` with an inline z-index: 1000 and
+     the lyrics ticker sits at 1001 (motifs.css) — both painted over the
+     bar's children, including Button.svelte's tooltips, which are trapped
+     in this fixed element's stacking context and can't out-stack it from
+     inside. Required order: tab cursors (1000) < ticker (1001) < bar/
+     tooltip (1100). The ticker never overlaps the bar itself (it's
+     anchored above --bar-height), so raising the bar over it is safe. */
   .hazard-wrap {
     position: fixed;
     left: 0;
     right: 0;
     top: 0;
-    z-index: 100;
+    z-index: 1100;
   }
 
   .bar-wrap {
@@ -43,7 +51,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 100;
+    z-index: 1100;
   }
 
   .bar {

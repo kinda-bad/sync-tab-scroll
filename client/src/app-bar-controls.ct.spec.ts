@@ -131,6 +131,38 @@ test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render i
   await expect(page.locator('.playback-controls button')).toHaveCount(0);
 });
 
+// T001 (tasks-icons-a11y-ticker-a10d.md, feedback F005): Bar tooltips
+// rendered UNDERNEATH the alphaTab tab view during Playback. The tooltip
+// lives inside `.bar-wrap` (position: fixed, z-index — the stacking context
+// every bar child, tooltip included, is trapped in), while alphaTab injects
+// its own `.at-cursors` wrapper with an inline z-index: 1000 and the lyrics
+// ticker sits at 1001 — both above the bar's old z-index: 100, so a child
+// z-index could never escape to paint the tooltip over them. The fix raises
+// the bar's own stacking context above both; the required order is
+// tab cursors (1000) < lyrics ticker < bar/tooltip.
+test('tooltip stacking: bar sits above the lyrics ticker, which sits above the alphaTab cursor layer', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'playback', instrumentSession('playback'));
+
+  // Engine DOM present (the ticker is what the bar must out-stack).
+  await page.waitForSelector('.lyrics-overlay');
+
+  // Show a bar tooltip via mouse hover on an icon-only control.
+  await page.getByRole('button', { name: 'Settings' }).hover();
+  const tooltip = page.locator('.bar-wrap [role="tooltip"]');
+  await expect(tooltip).toBeVisible();
+
+  const { barZ, overlayZ } = await page.evaluate(() => ({
+    barZ: Number(getComputedStyle(document.querySelector('.bar-wrap')!).zIndex),
+    overlayZ: Number(getComputedStyle(document.querySelector('.lyrics-overlay')!).zIndex),
+  }));
+  // Ticker still above alphaTab's .at-cursors inline z-index: 1000 …
+  expect(overlayZ).toBeGreaterThan(1000);
+  // … and the bar (the tooltip's stacking context) above the ticker, so
+  // the tooltip paints over both the tab view and the ticker.
+  expect(barZ).toBeGreaterThan(overlayZ);
+});
+
 test('playback (lyrics part): Toggle lyrics is absent entirely', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'playback', lyricsSession());
