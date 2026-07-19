@@ -735,9 +735,9 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**4 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
-`.project/features/`. Tasked: `mute-all-parts-button`
-(tasks-settings-ux-bundle-02e8.md). Backlogged:
+**4 backlogged** · 0 planned · 0 tasked · **25 implemented** — see
+`.project/features/`. Newly implemented: `mute-all-parts-button`
+(2026-07-19). Backlogged:
 `lyrics-ticker-position-preference` (new 2026-07-19 — top/bottom
 ticker position pref), `explicit-participant-readiness` (new 2026-07-19 — user-confirmed
 ready stage: loaded vs ready, clock/checkbox Bar indicator, host
@@ -759,15 +759,20 @@ since shipped (`implemented`).
 ## Plans & Tasks
 
 - **Settings/Bar UX bundle** —
-  `plan-settings-ux-bundle-2026-07-19-d27d.md` (`approved`, feature:
-  `mute-all-parts-button` now `tasked`),
-  `tasks-settings-ux-bundle-02e8.md` (**`ready`**, 10 tasks / 4
-  phases): part-name instrument extraction module + wiring, Tracks-tab
-  one-line marquee rows + icon mute + Mute-all, beat-widget
-  measure-left stacked-MES layout, live verification. Consumes all
-  three 2026-07-19 UX feedback files. ui.md gained the Mute-all
-  paragraph (plan run); further ui.md revisions are in-plan tasks.
-  Next: `/ardd-implement`.
+  `plan-settings-ux-bundle-2026-07-19-d27d.md` (`approved`),
+  `tasks-settings-ux-bundle-02e8.md` (**`completed`**, 10/10, merged
+  `ec8684e`; feature `mute-all-parts-button` flipped **`implemented`**).
+  Delivered: `part-display-name.ts` (instrument-prominent extraction,
+  15 unit cases) wired into picker/participants/Playing label; new
+  `TrackRow.svelte` (one-line grid, bounce marquee on real overflow,
+  volume-2/volume-off icon mute, text Solo) + Mute all (batch mute,
+  metronome/count-in verified untouched); BeatWidget reordered to
+  fixed-width [measure][beat] with stacked number-over-"MES" (beat-count
+  x position pixel-identical across the count-in→playback transition,
+  129 samples). ui.md revised in T003/T006/T009. Suites: client unit
+  131, CT 166, all green post-merge (one pre-existing flaky
+  lobby-cursor-debounce CT noted, passes standalone). Consumed all
+  three earlier 2026-07-19 UX feedback files.
 - **Configurable empty-session TTL (12h)** —
   `plan-session-empty-ttl-2026-07-19-ce83.md` (`approved`),
   `tasks-session-empty-ttl-1b53.md` (**`completed`**, 5/5, merged
