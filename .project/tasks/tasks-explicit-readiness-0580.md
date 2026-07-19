@@ -65,7 +65,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
 
 ## Phase 3: Negotiation modals (client)
 
-- [ ] T005 [artifacts: ui] Test-first client modals (existing modal
+- [x] T005 [artifacts: ui] Test-first client modals (existing modal
   idiom — dismissible, Esc = no action): host modal on
   `start-confirmation-needed` ("N participants are not yet ready,
   start anyway?" with Start anyway / Cancel wired to
