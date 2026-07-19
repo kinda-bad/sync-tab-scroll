@@ -56,7 +56,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   (`lyrics-overlay.ts` — fixed to top vs bottom of viewport). CT: pref
   round-trip, control renders, overlay carries the position class/style
   for both values.
-- [ ] T006 [artifacts: ui, brand] F007, test-first where practical:
+- [x] T006 [artifacts: ui, brand] F007, test-first where practical:
   scale the ticker font-size steps up substantially on desktop
   viewports — media query (~1024px breakpoint) raising the four step
   values to roughly 1.5–2× their current rem sizes (exact values are
