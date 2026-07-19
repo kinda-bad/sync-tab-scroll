@@ -118,3 +118,16 @@ function decodeCp1252(bytes: Buffer): string {
   }
   return out;
 }
+
+/** True when the file starts with the legacy GP3–5 binary header (1 length byte + "FICHIER GUITAR PRO…") rather than a zip. */
+export function isLegacyGpFile(gpFilePath: string): boolean {
+  const fd = fs.openSync(gpFilePath, 'r');
+  try {
+    const head = Buffer.alloc(31);
+    fs.readSync(fd, head, 0, 31, 0);
+    const len = head[0];
+    return len >= HEADER.length && 1 + len <= 31 && head.toString('latin1', 1, 1 + len).startsWith(HEADER);
+  } finally {
+    fs.closeSync(fd);
+  }
+}

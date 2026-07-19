@@ -98,3 +98,8 @@ if (isMain) {
     process.exit(1);
   });
 }
+
+/** Red-state stub (T005) — format dispatch lands on the paired green commit. */
+export function readRawLyricsLineAuto(_gpFilePath: string, _trackIndex: number, _lineIndex = 0): import('./line-breaks.js').RawLyricsLine | null {
+  return null;
+}
