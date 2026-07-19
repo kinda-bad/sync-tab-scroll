@@ -30,7 +30,7 @@ export function createServer(config: ServerConfig): http.Server {
   void accountStore.init().catch((err) => console.error('[account-store] init (migrations) failed:', err instanceof Error ? err.message : err));
 
   const ctx: HandlerContext = {
-    sessionStore: new SessionStore(config.hostReassignGraceMs),
+    sessionStore: new SessionStore(config.hostReassignGraceMs, config.sessionEmptyTtlMs),
     connections: new ConnectionRegistry(),
     catalog: loadCatalog(config.catalogRoot, config.requireSongConsent),
     accountStore,

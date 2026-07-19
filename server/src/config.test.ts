@@ -52,6 +52,7 @@ describe('loadConfig', () => {
       port: 9999,
       catalogRoot: '/tmp/my-catalog',
       hostReassignGraceMs: 5000,
+      sessionEmptyTtlMs: 43_200_000,
       requireSongConsent: false,
       songUploadEnabled: true,
       clientRoot: '/tmp/my-client-dist',
@@ -64,6 +65,7 @@ describe('loadConfig', () => {
       port: 6080,
       catalogRoot: './catalog',
       hostReassignGraceMs: 120_000,
+      sessionEmptyTtlMs: 43_200_000,
       requireSongConsent: false,
       songUploadEnabled: true,
       clientRoot: '../client/dist',
@@ -104,13 +106,13 @@ describe('loadConfig', () => {
     expect(loadConfig().requireSongConsent).toBe(false);
   });
 
-  it.fails('reads sessionEmptyTtlMs from SESSION_EMPTY_TTL_MS when set', () => {
+  it('reads sessionEmptyTtlMs from SESSION_EMPTY_TTL_MS when set', () => {
     process.env.SESSION_EMPTY_TTL_MS = '5000';
 
     expect(loadConfig()).toMatchObject({ sessionEmptyTtlMs: 5000 });
   });
 
-  it.fails('defaults sessionEmptyTtlMs to 12 hours when SESSION_EMPTY_TTL_MS is unset', () => {
+  it('defaults sessionEmptyTtlMs to 12 hours when SESSION_EMPTY_TTL_MS is unset', () => {
     expect(loadConfig()).toMatchObject({ sessionEmptyTtlMs: 43_200_000 });
   });
 

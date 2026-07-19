@@ -53,7 +53,7 @@ describe('SessionStore grace-period timers', () => {
   });
 
   it('markPossiblyEmpty schedules destruction only when no participants are connected', () => {
-    const store = new SessionStore();
+    const store = new SessionStore(120_000, 30_000);
     const session = store.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
@@ -64,7 +64,7 @@ describe('SessionStore grace-period timers', () => {
   });
 
   it('markPossiblyEmpty does not schedule destruction when a participant is connected', () => {
-    const store = new SessionStore();
+    const store = new SessionStore(120_000, 30_000);
     const session = store.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
@@ -74,7 +74,7 @@ describe('SessionStore grace-period timers', () => {
     expect(store.get(session.code)).toBeDefined();
   });
 
-  it.fails('an empty session survives well past 30s and 4h by default (12h TTL)', () => {
+  it('an empty session survives well past 30s and 4h by default (12h TTL)', () => {
     const store = new SessionStore();
     const session = store.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
@@ -89,9 +89,8 @@ describe('SessionStore grace-period timers', () => {
     expect(store.get(session.code)).toBeUndefined();
   });
 
-  it.fails('destroys an empty session only after the constructor-injected TTL', () => {
-    // Cast until the (hostReassignGraceMs, sessionEmptyTtlMs) signature lands (T002).
-    const store = new (SessionStore as new (grace?: number, ttl?: number) => SessionStore)(120_000, 5_000);
+  it('destroys an empty session only after the constructor-injected TTL', () => {
+    const store = new SessionStore(120_000, 5_000);
     const session = store.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 
@@ -103,7 +102,7 @@ describe('SessionStore grace-period timers', () => {
   });
 
   it('markActive cancels a pending destruction timer', () => {
-    const store = new SessionStore();
+    const store = new SessionStore(120_000, 30_000);
     const session = store.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'disconnected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});
 

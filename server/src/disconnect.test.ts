@@ -56,7 +56,7 @@ describe('handleDisconnect', () => {
     expect(session.pendingHostRequest).toBe('member-1');
   });
 
-  it.fails('pauses running playback when the last connected participant disconnects', () => {
+  it('pauses running playback when the last connected participant disconnects', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 0 , userId: null});

@@ -18,6 +18,14 @@ export function handleDisconnect(ctx: HandlerContext, sessionCode: string, parti
 
   if (session.pendingHostRequest === participantId) session.pendingHostRequest = null;
 
+  // Pause-on-empty: if this disconnect leaves nobody connected while playback
+  // is running, freeze it as 'paused' so a much-later rejoin (the empty-TTL
+  // window is hours) doesn't drift-correct against a stale serverTimestamp.
+  const anyConnected = session.participants.some((p) => p.connectionStatus === 'connected');
+  if (!anyConnected && session.playbackState.status === 'running') {
+    session.playbackState = { ...session.playbackState, status: 'paused', serverTimestamp: Date.now() };
+  }
+
   ctx.sessionStore.markPossiblyEmpty(sessionCode);
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
 

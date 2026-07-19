@@ -1,7 +1,8 @@
 import type { Session } from '@sync-tab-scroll/shared';
 
-const GRACE_PERIOD_MS = 30_000;
 const DEFAULT_HOST_REASSIGN_GRACE_MS = 120_000;
+/** Default idle TTL for empty sessions: 12 hours (infrastructure.md session lifecycle; SESSION_EMPTY_TTL_MS). */
+const DEFAULT_SESSION_EMPTY_TTL_MS = 43_200_000;
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -11,8 +12,9 @@ function generateJoinCode(): string {
 }
 
 /**
- * Sessions are server-memory-only: a grace-period timer destroys empty
- * sessions, and a server restart drops active ones. No durable backing
+ * Sessions are server-memory-only: an idle-TTL timer (SESSION_EMPTY_TTL_MS,
+ * default 12h) destroys empty sessions, and a server restart drops active
+ * ones. No durable backing
  * store for session state (infrastructure.md Production Posture — a known
  * production characteristic, not a shortcut to silently fix later).
  */
@@ -30,7 +32,10 @@ export class SessionStore {
    */
   private keyUnlocked = new Map<string, Set<string>>();
 
-  constructor(private hostReassignGraceMs: number = DEFAULT_HOST_REASSIGN_GRACE_MS) {}
+  constructor(
+    private hostReassignGraceMs: number = DEFAULT_HOST_REASSIGN_GRACE_MS,
+    private sessionEmptyTtlMs: number = DEFAULT_SESSION_EMPTY_TTL_MS,
+  ) {}
 
   create(hostId: string): Session {
     let code = generateJoinCode();
@@ -92,7 +97,7 @@ export class SessionStore {
     }
   }
 
-  /** Starts the grace-period timer if the session has no connected participants. */
+  /** Starts the empty-session idle-TTL timer if the session has no connected participants. */
   markPossiblyEmpty(code: string): void {
     const session = this.sessions.get(code);
     if (!session) return;
@@ -103,7 +108,7 @@ export class SessionStore {
       this.sessions.delete(code);
       this.keyUnlocked.delete(code);
       this.graceTimers.delete(code);
-    }, GRACE_PERIOD_MS);
+    }, this.sessionEmptyTtlMs);
     this.graceTimers.set(code, timer);
   }
 
