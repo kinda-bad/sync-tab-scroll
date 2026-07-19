@@ -706,17 +706,11 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**3 open feedback files:**
-`feedback-settings-tracks-rows-0501.md` (2026-07-19) — UX: Tracks tab
-one-line-per-track rows (marquee overflow, non-interactable label,
-volume-off/volume-2 icon mute button, Solo stays text).
-`feedback-beat-widget-layout-362c.md` (2026-07-19) — UX: measure display
-moves left of the beat count (seamless count-in→metronome transition)
-and becomes a number stacked over a small "MES" label. And:
-`feedback-part-name-instrument-ux-7b1a.md` (2026-07-19) — UX: extract
-the instrument from raw GP part names and make it the prominent element
-wherever parts are shown, de-emphasizing performer/numbering detail.
-Will be picked up by the next `/ardd-plan`. Previously:
+**0 open feedback files.** Most recently: all three 2026-07-19 UX files
+(`feedback-settings-tracks-rows-0501.md`,
+`feedback-beat-widget-layout-362c.md`,
+`feedback-part-name-instrument-ux-7b1a.md`) flipped to `planned`, bound
+to `plan-settings-ux-bundle-2026-07-19-d27d.md`. Previously:
 `feedback-song-switch-stale-score-e030.md` flipped to `planned`, bound to
 `plan-widgets-gp5-songswitch-2026-07-18-8bee.md`, and:
 `feedback-song-switch-stale-score-e030.md`
@@ -736,12 +730,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**3 backlogged** · 0 planned · 0 tasked · **24 implemented** — see
-`.project/features/`. Newly backlogged (2026-07-19):
-`mute-all-parts-button` (Settings→Tracks control muting all parts while
-count-in/metronome stay audible) and `sync-tabs-to-real-audio` (sync
-playback to a real recording — YouTube/mp3 — instead of the synth;
-substantial, vet with /ardd-research before planning). Newly implemented (2026-07-19):
+**2 backlogged** · 0 planned · **1 tasked** · **24 implemented** — see
+`.project/features/`. Tasked: `mute-all-parts-button`
+(tasks-settings-ux-bundle-02e8.md). Backlogged:
+`sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
+planning) and `host-mandated-bars-per-row-layout`. Newly implemented (2026-07-19):
 `count-in-metronome-beat-widget`, `gp5-raw-lyric-line-extraction`, and
 `catalogue-co-owner-invite-flow` (closed — scope had shipped as phase-2
 Phase 6, bound to that plan). Remaining backlogged:
@@ -756,6 +749,16 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Settings/Bar UX bundle** —
+  `plan-settings-ux-bundle-2026-07-19-d27d.md` (`approved`, feature:
+  `mute-all-parts-button` now `tasked`),
+  `tasks-settings-ux-bundle-02e8.md` (**`ready`**, 10 tasks / 4
+  phases): part-name instrument extraction module + wiring, Tracks-tab
+  one-line marquee rows + icon mute + Mute-all, beat-widget
+  measure-left stacked-MES layout, live verification. Consumes all
+  three 2026-07-19 UX feedback files. ui.md gained the Mute-all
+  paragraph (plan run); further ui.md revisions are in-plan tasks.
+  Next: `/ardd-implement`.
 - **Configurable empty-session TTL (12h)** —
   `plan-session-empty-ttl-2026-07-19-ce83.md` (`approved`),
   `tasks-session-empty-ttl-1b53.md` (**`completed`**, 5/5, merged

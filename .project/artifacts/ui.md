@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-18
+last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: UI
 diagram_status: stale
@@ -407,6 +407,18 @@ regardless of whether playback has started:
   un-soloing (clicking "Solo" again, or muting/unmuting individual parts
   afterward) is a plain mute-state change like any other, not a tracked
   "solo mode" the UI has to remember separately.
+  The tab also carries a **"Mute all"** control
+  (`mute-all-parts-button`): one action muting every part's MIDI audio
+  at once while the count-in and metronome clicks stay audible (those
+  come from alphaTab's `countInVolume`/`metronomeVolume`, not track
+  channels, so track-muting never silences them). Same
+  personal/client-local scope and per-(song, track) persistence as the
+  per-part toggles; mechanically it's the same batch
+  `api.changeTrackMute()` application the Solo button already uses,
+  applied to all parts — not a new mute state. Un-muting afterward is a
+  plain per-part change (or pressing the control again toggles all back
+  on) — exact affordance is implementation-time judgment, consistent
+  with the single-line row layout below.
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle

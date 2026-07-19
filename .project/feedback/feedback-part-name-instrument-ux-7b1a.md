@@ -1,14 +1,14 @@
 ---
-status: open      # open -> planned
+status: planned      # open -> planned
 created: 2026-07-19
-plan: null
+plan: plan-settings-ux-bundle-2026-07-19-d27d.md
 ---
 
 # Feedback
 
 ## UX
 
-- [ ] F001 Part names in the UI are shown as raw GP track names (e.g.
+- [x] F001 Part names in the UI are shown as raw GP track names (e.g.
   "M. Bellamy (Vocals)", "Chris (bass)", "Keyboards I"), which buries
   the thing a user actually scans for — the instrument. Extract the
   instrument from each part name and make it the prominent element
