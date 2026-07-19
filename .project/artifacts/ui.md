@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -389,6 +389,12 @@ regardless of whether playback has started:
     scale. Applies to the in-tab lyrics overlay's syllable text (Playback
     View, below) — has no effect on the tab-less Lyrics part's full lyric
     sheet, which uses its own fixed reading size.
+  - a personal "Lyrics ticker position" toggle
+    (`lyrics-ticker-position-preference`), visible to **every**
+    participant (not host-gated): top or bottom of the viewport,
+    persisted client-side like the theme/Metronome choices (default
+    **bottom**, today's behavior). Applies to the in-tab lyrics overlay
+    ticker only; no effect on the Lyrics part's full lyric sheet.
   - a personal "Measure markers" toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
@@ -492,7 +498,8 @@ identically regardless of which one they're on:
   computed overlay, so it can't drift out of position relative to the
   notation the way a precomputed layout-derived cursor could. An optional
   lyrics overlay can be toggled on as a single-line horizontal ticker
-  fixed to the bottom of the viewport, via an icon-only "Toggle lyrics"
+  fixed to the top or bottom of the viewport (per the personal "Lyrics
+  ticker position" preference; default bottom), via an icon-only "Toggle lyrics"
   control (an `AudioLines` icon) that lives in the **persistent bar's**
   controls, not standalone in this view's own body — reachable the same
   way Settings/transport/Leave-session are, gated on `!isLyricsPart`

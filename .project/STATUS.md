@@ -706,12 +706,10 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**1 open feedback file:** `feedback-icon-refresh-a11y-39d8.md`
-(2026-07-19) — UX: leave-session icon → bone-fracture ("breaking up the
-band"), log-out/log-in move to Sign out/Sign in, HOST badge → crown
-icon, plus an icon accessibility audit (aria-labels everywhere). Will be
-picked up by the next `/ardd-plan`. Previously: all three earlier
-2026-07-19 UX files
+**0 open feedback files.** Most recently:
+`feedback-icon-refresh-a11y-39d8.md` (7 items) flipped to `planned`,
+bound to `plan-icons-a11y-ticker-2026-07-19-2584.md`. Previously: all
+three earlier 2026-07-19 UX files
 (`feedback-settings-tracks-rows-0501.md`,
 `feedback-beat-widget-layout-362c.md`,
 `feedback-part-name-instrument-ux-7b1a.md`) flipped to `planned`, bound
@@ -735,11 +733,11 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**4 backlogged** · 0 planned · 0 tasked · **25 implemented** — see
-`.project/features/`. Newly implemented: `mute-all-parts-button`
-(2026-07-19). Backlogged:
-`lyrics-ticker-position-preference` (new 2026-07-19 — top/bottom
-ticker position pref), `explicit-participant-readiness` (new 2026-07-19 — user-confirmed
+**3 backlogged** · 0 planned · **1 tasked** · **25 implemented** — see
+`.project/features/`. Tasked: `lyrics-ticker-position-preference`
+(tasks-icons-a11y-ticker-a10d.md). Newly implemented:
+`mute-all-parts-button` (2026-07-19). Backlogged:
+`explicit-participant-readiness` (new 2026-07-19 — user-confirmed
 ready stage: loaded vs ready, clock/checkbox Bar indicator, host
 start-anyway modal + participant are-you-ready modal),
 `sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
@@ -758,6 +756,17 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Icon refresh + a11y + ticker position/size** —
+  `plan-icons-a11y-ticker-2026-07-19-2584.md` (`approved`, feature:
+  `lyrics-ticker-position-preference` now `tasked`),
+  `tasks-icons-a11y-ticker-a10d.md` (**`ready`**, 9 tasks / 5 phases):
+  tooltip z-index fix, icon swaps (bone/log-out/log-in/crown/settings),
+  lyrics toggle always-visible-but-disabled (confirmed reversal of
+  ui.md's absent-entirely decision), ticker top/bottom position pref,
+  desktop font-size scaling, full icon a11y sweep, live verification.
+  Consumes `feedback-icon-refresh-a11y-39d8.md` (all 7 items). ui.md
+  gained the position-pref text this run (diagram_status → stale
+  again). Next: `/ardd-implement`.
 - **Settings/Bar UX bundle** —
   `plan-settings-ux-bundle-2026-07-19-d27d.md` (`approved`),
   `tasks-settings-ux-bundle-02e8.md` (**`completed`**, 10/10, merged
