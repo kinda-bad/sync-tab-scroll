@@ -77,7 +77,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   assertions that every iconOnly Button instance has a non-empty
   accessible name (a sweep-style CT helper is fine), plus targeted
   checks for the crown and disabled lyrics-toggle reason.
-- [ ] T008 [artifacts: ui] Revise ui.md: add a short accessibility rule
+- [x] T008 [artifacts: ui] Revise ui.md: add a short accessibility rule
   to the components/Bar description (icon-only controls always carry
   an accessible name; tooltips complement; status icons announced) so
   the standard is recorded, not just implemented (feedback F003).
