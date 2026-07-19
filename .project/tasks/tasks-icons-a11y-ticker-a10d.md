@@ -29,7 +29,7 @@ status: in-progress   # generating -> ready -> in-progress -> completed (schema-
   Sign in gets `log-in`; the Settings control changes `cog` →
   `settings`. Update tooltips/labels to stay accurate. Update any CT
   specs asserting the old icons.
-- [ ] T003 [artifacts: ui] Replace the "HOST" text badge in the
+- [x] T003 [artifacts: ui] Replace the "HOST" text badge in the
   participant list (and anywhere else the host is marked) with a crown
   icon (lucide `crown`), test-first. Keep an accessible name so the
   host designation is still announced (coordinate with Phase 4's
