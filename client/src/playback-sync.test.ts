@@ -219,9 +219,10 @@ describe('correctDrift', () => {
     });
 
     it('corrects against the elapsed-time-projected tick position, not the raw stale value', () => {
-      // 120bpm: 1 tick = 60000/(120*960) ms. 400ms elapsed ≈ 768 ticks, so the
-      // projected tick is ~1768. api sits 132 ticks from the projection
-      // (exceeds the 50-tick threshold) but only 900 from the raw value —
+      // 120bpm: 1 tick = 60000/(120*960) ms ≈ 0.52ms. 400ms elapsed ≈ 768
+      // ticks, so the projected tick is ~1768. api sits 132 ticks ≈ 68.8ms
+      // from the projection (exceeds the 35ms tolerance) but 900 ticks
+      // ≈ 469ms from the raw value —
       // asserting the *applied* correction equals the projection (~1768),
       // not the raw playbackState.tickPosition (1000), proves the projection
       // feeds both the comparison and the assignment.
@@ -236,9 +237,10 @@ describe('correctDrift', () => {
     });
 
     it('triggers a correction against the projected value that a raw-value comparison would have missed', () => {
-      // 80ms elapsed at 120bpm ≈ 153.6 ticks. Raw drift |1040-1000|=40 is
-      // within DRIFT_THRESHOLD_TICKS(=50) — a naive raw-only comparison would
-      // NOT correct. Projected drift |1040-(1000+153.6)|≈113.6 exceeds it,
+      // 80ms elapsed at 120bpm ≈ 153.6 ticks. Raw drift |1040-1000|=40 ticks
+      // is 20.8ms at this tempo, within the 35ms tolerance — a naive
+      // raw-only comparison would NOT correct. Projected drift
+      // |1040-(1000+153.6)|≈113.6 ticks ≈ 59.2ms exceeds it,
       // proving the projection (not the raw tickPosition) drives the decision.
       const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 1040, score: fakeScore(120) });
       const playbackState = fakePlaybackState({ status: 'running', tickPosition: 1000, serverTimestamp: NOW - 80 });
@@ -250,10 +252,11 @@ describe('correctDrift', () => {
     });
 
     it('skips correction for a small elapsed time that keeps the projected value within the drift threshold', () => {
-      // 5ms elapsed at 120bpm ≈ 9.6 ticks. api sits within threshold of the
-      // projected value (1000 + 9.6 ≈ 1009.6) even though it's outside
-      // DRIFT_THRESHOLD_TICKS(=50) of a hypothetical larger elapsed window,
-      // proving the small, real elapsed-time projection is what's compared.
+      // 5ms elapsed at 120bpm ≈ 9.6 ticks. api sits 20.4 ticks ≈ 10.6ms from
+      // the projected value (1000 + 9.6 ≈ 1009.6) — within the 35ms
+      // tolerance — even though it would be outside that tolerance of a
+      // hypothetical larger elapsed window, proving the small, real
+      // elapsed-time projection is what's compared.
       const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 1030, score: fakeScore(120) });
       const playbackState = fakePlaybackState({ status: 'running', tickPosition: 1000, serverTimestamp: NOW - 5 });
 
