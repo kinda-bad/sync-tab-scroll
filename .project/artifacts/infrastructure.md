@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
@@ -84,6 +84,35 @@ the same periodic-correction mechanism, not a new one: the 50-tick drift
 threshold and "correct only if drift exceeds it" behavior are unchanged,
 just measured against a latency-compensated projection instead of the
 stale broadcast value directly.
+
+**The extrapolation rate is keyed off the *host's* audio source, not the
+participant's own** (`sync-tabs-to-real-audio`;
+`research-recording-mode-drift-2026-07-19-b7c2.md`). What is being
+projected forward is where *the host* is now, so the correct rate is the
+rate the host's clock advances at: a synth-source host advances at the
+score's notated tempo (the `tempoAutomations` walk above), while a
+recording-source host advances at the sync-point-derived tempo. These are
+different collections in alphaTab's model — `MasterBar.syncPoints` is
+separate from `MasterBar.tempoAutomations`, and `syncBpm` is expressly
+"the BPM the song will have virtually after this sync point" — so a
+tempo-automation walk **never** sees the recording's effective rate. Using
+the notated rate against a recording-driven clock accumulates error at
+`elapsed_s × Δbpm × 16` ticks, crossing the 50-tick threshold within one
+report interval once Δbpm exceeds ~3.1 — producing a corrective seek
+roughly every second, which in backing-track mode re-seeks the audio
+element. This is a property of the *source mismatch*, not of
+per-participant mode: it would occur identically in a
+uniform-recording-mode session, so the rate must be host-keyed regardless
+of how audio source is scoped.
+
+Because the host's source is not on the wire (datamodel.md
+`PlaybackState`), it is inferred from the same information every client
+already has: the selected song's `syncPoints` plus the host's reported
+tick advance. [OPEN: whether to infer the host's effective rate from
+observed tick advance across consecutive reports, or to put the host's
+source on the wire after all — the former keeps the zero-protocol-change
+property, the latter is simpler to reason about. Retire with the Phase 1
+skewed-recording test.]
 
 Realtime session state is server-memory-only: an idle-TTL timer destroys
 empty sessions, and a server restart drops active ones. The empty-session
@@ -344,7 +373,8 @@ catalogue for this session does it appear — metadata and songs together — in
 the delivered catalog. See Catalogue Activation Key Unlock, below, for the one
 case that re-sends this message mid-session.
 
-Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`)
+Catalog file assets (`CatalogSong.gpFilePath`, `CatalogSong.lyricsLrc`,
+and — for a recording-capable song — `CatalogSong.recordingPath`)
 live on the server's disk under `catalog/<song-slug>/`, or
 `catalog/<catalogue-slug>/<song-slug>/` for a song belonging to a
 non-default catalogue (pipeline.md), but `CatalogSong` as published to a
@@ -363,7 +393,13 @@ loader already applies to a malformed song or catalogue entry — an
 unrecognized `.`-prefixed file is noise, not a song asset. `catalog-static.ts`'s existing
 handler needs no change for the nested layout — it already serves
 whatever's under `CATALOG_ROOT` by relative path, catalogue subdirectory
-or not. This is the first HTTP surface this server exposes — until now it
+or not. It does, however, need two changes for recordings: an
+`audio/mpeg` entry in its content-type map (everything unrecognized
+currently falls back to `application/octet-stream`), and **HTTP Range
+request support** — it presently pipes a plain `200` with no range
+handling, which an `HTMLAudioElement` requires in order to seek. Seeking
+is not optional here: drift correction and every host seek land on the
+audio element as a range request. This is the first HTTP surface this server exposes — until now it
 was WebSocket-only (`ws`) with no static-file serving at all; the
 WebSocket upgrade and the static catalog route share the same underlying
 `http.Server` instance rather than running as two separate listeners on
@@ -497,6 +533,60 @@ selector that can split `mainGlyphColor` into sub-roles. brand.md has the
 full color reasoning and values, and documents a feature request filed
 with alphaTab requesting finer-grained resource colors or semantic
 classes, which would let this be revisited if it lands upstream.
+
+### Recording Playback Mode
+
+`sync-tabs-to-real-audio`. When a participant selects the **recording**
+audio source for a recording-capable song (ui.md — a per-participant
+personal preference, not a session setting), that participant's alphaTab
+instance is built with `settings.player.playerMode =
+PlayerMode.EnabledBackingTrack` instead of the default synthesizer mode,
+with the song's `recording.mp3` supplied as the score's backing track and
+its `syncPoints` applied at `scoreLoaded` via
+`Score.applyFlatSyncPoints()` (datamodel.md `FlatSyncPoint`). alphaTab
+then drives an `HTMLAudioElement` itself and keeps `api.tickPosition` and
+every position event working exactly as before — which is why no position
+consumer (cursor, lyrics ticker, lyrics sheet, beat widget, hazard-bar
+progress, the host's tick report) needs to change: they are all clock-
+source agnostic already.
+
+Player mode is fixed at construction, so **switching source tears down
+and rebuilds the engine**, the same trigger shape as a song change —
+not a live mutation on the running instance.
+
+Two existing mechanisms need mode branches:
+
+- **Readiness** currently gates on `scoreLoaded && soundFontLoaded`. A
+  backing-track instance loads no sound font and may never fire
+  `soundFontLoaded` at all, so in recording mode readiness is
+  `scoreLoaded` + backing-track load. This branches on the **local**
+  participant's own source, since readiness is a per-participant fact.
+- **Count-in** scheduling and the count-in cursor guard both key off
+  synth count-in volume and must be bypassed in recording mode — see
+  ui.md for the user-visible stance (the recording's own intro is the
+  count-in).
+
+alphaTab cannot mix synthesized audio with a backing track (upstream
+#1961), which is what forces the mode-scoped carve-out of per-part
+mute/solo and the metronome documented in ui.md — this is a library
+constraint, not a design choice.
+
+**Mixed-source safety.** Because source is per-participant, one session
+can contain both synth and recording listeners. Sync points are a *map*,
+not a time-stretch: they locate a bar within the recording but cannot
+make the recording play at the notated tempo. So where a recording's real
+tempo diverges materially from the notated tempo, the two groups
+genuinely separate in real time, and no correction strategy fixes it —
+correction can only choose between letting them drift or re-seeking the
+recording continuously. The divergence is bounded and **computable ahead
+of time**: `CatalogSong.recordingTempoDivergence` (datamodel.md) is
+derived at catalog load by comparing each sync point's effective
+`syncBpm` against the notated tempo at its tick. Songs above the safe
+margin are guarded in the UI rather than silently allowed
+(`research-recording-mode-drift-2026-07-19-b7c2.md`). For a studio or
+click-track recording with a faithful transcription the divergence is
+≈0 and mixed sessions are a non-issue; live and rubato material is where
+it bites.
 
 ### Audio Engine Warm-Up
 

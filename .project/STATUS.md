@@ -1,5 +1,69 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-19-real-audio (**`sync-tabs-to-real-audio` PLANNED +
+TASKED — 23 tasks across 5 phases, `ready`.** Also: a mid-plan design
+pivot and a research pass that reversed a stated concern.
+
+**The pivot.** The feature was scoped from the vetting doc as a
+session-level host toggle for audio source. Mid-plan the user re-scoped it
+to **per-participant**: one participant hears the mp3 while another in the
+same session hears the synth. The user gated approval on researching the
+drift risk first — "if there are red flags, go back to the session
+setting."
+
+**The research** (`research-recording-mode-drift-2026-07-19-b7c2.md`)
+found two distinct problems that land on opposite sides of that gate, and
+corrected an earlier framing that had conflated them:
+1. **The extrapolation-rate bug is design-independent.** `correctDrift`
+   converts elapsed ms→ticks via `localTempoAtTick`, which walks
+   `masterBar.tempoAutomations`. alphaTab keeps sync points in a
+   *separate* `MasterBar.syncPoints` collection, and `syncBpm` is "the BPM
+   the song will have virtually after this sync point" — so a
+   tempo-automation walk can never observe a recording's effective rate.
+   Error accrues at `elapsed_s × Δbpm × 16` ticks, crossing the 50-tick
+   threshold within one ~1s report interval once **Δbpm > 3.125**. This
+   occurs identically in a *uniform* recording session, so reverting to
+   session-level buys nothing here. Primary-source evidence: the installed
+   1.8.3 `.d.ts`.
+2. **Mixed-mode musical divergence is per-participant-only and
+   unfixable.** Sync points are a *map*, not a time-stretch — they locate
+   a bar in the mp3 but cannot make it play at the notated tempo. Where
+   the recording's real tempo diverges, synth and recording listeners
+   genuinely separate (~26ms/sec at Δbpm=3.1 → ~1 beat after 30s). This
+   *is* the red flag, and session-level would eliminate it by
+   construction.
+
+**Decision:** user chose **per-participant + a Δbpm guard**, knowingly
+accepting the bounded risk. Divergence is computable at catalog load
+(`CatalogSong.recordingTempoDivergence`), so a divergent song is flagged
+rather than discovered mid-performance.
+
+**Artifacts amended** (all four re-stamped `last_updated: 2026-07-19`,
+diagrams → `stale`): `datamodel.md` (`CatalogSong` gains
+`recordingPath`/`syncPoints`/`recordingTempoDivergence`; new
+`FlatSyncPoint` entity — alphaTab's own type re-exported, not redefined,
+per Principles V/VI; `PlaybackState` noted mode-agnostic), `ui.md` (the
+mode-scoped, per-participant carve-out of the "full multi-track mix"
+decision — mute/solo, metronome, count-in disabled in recording mode for
+that participant only), `infrastructure.md` (Recording Playback Mode
+subsection; host-source-keyed extrapolation; `audio/mpeg` + **HTTP Range
+support** in `catalog-static.ts`, which currently pipes a plain 200 and
+would break `<audio>` seeking), `pipeline.md` (optional `recording.mp3` +
+`syncPoints`, authored externally via alphatab.net's Media Sync Editor).
+
+**Bonus find:** `Score.applyFlatSyncPoints()`/`exportFlatSyncPoints()`
+retires the vetting doc's open question 3 — store alphaTab's shape
+verbatim, no adapter, no bespoke type.
+
+**Plan/tasks:** `plan-sync-tabs-to-real-audio-2026-07-19-62cf.md`
+(`approved`), `tasks-sync-tabs-to-real-audio-cb85.md` (`ready`, 23 tasks).
+Phase 1 is deliberately diagnosis-first — a failing CT test against a
+**deliberately skewed fixture** measures whether corrective seeks actually
+stutter before any UI is built on the sync model. Three `[OPEN: ...]`
+markers were introduced (infrastructure, ui, pipeline) and each is bound
+to a specific task that retires it. Feature flipped
+`backlogged → planned → tasked`. Not yet committed. Prior context below.)_
+
 _Updated: 2026-07-18-night-8 (**Lyrics-dispatch fix SHIPPED — all 13 tasks
 completed, merged to `main` (e37437d, fast-forward), worktree reaped.**
 Delivered: shared GP-semantics dispatcher
@@ -648,8 +712,8 @@ check (does muting actually silence audio) still pending** — bundle
 confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
-> **ARDD update available:** installed `a802dbc` (beta channel, v0.10.1),
-> latest release `v0.10.2` — run `/ardd-update`.
+> **ARDD update available:** installed `6e7d3cd` (beta channel), latest
+> release `v1.0.1-beta.1` — run `/ardd-update`.
 
 ## Artifact Status
 
@@ -657,14 +721,32 @@ below.)_
 |---|---|---|
 | constitution.md | stable ✅ (v1.6.0) | 0 |
 | datamodel.md | stable ✅ | 0 |
-| pipeline.md | stable ✅ | 0 |
-| infrastructure.md | stable ✅ | 0 |
-| ui.md | stable ✅ | 0 |
+| pipeline.md | stable ✅ | 1 |
+| infrastructure.md | stable ✅ | 1 |
+| ui.md | stable ✅ | 1 |
 | brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
-None at the artifact level.
+All three were introduced by the `sync-tabs-to-real-audio` plan and each
+is bound to a task that retires it — none is a drifting unknown.
+
+### infrastructure.md
+- [OPEN] Infer the host's effective playback rate from observed tick
+  advance across reports, or put the host's audio source on the wire?
+  Inference preserves the plan's zero-protocol-change property.
+  *(Retired by T004.)*
+
+### ui.md
+- [OPEN] Does a tempo-divergent song disable the recording source
+  outright, or warn only when the session is actually mixed? The latter
+  preserves the "everyone on the recording" case, safe at any divergence.
+  *(Retired by T020.)*
+
+### pipeline.md
+- [OPEN] Is alphatab.net's Media Sync Editor export byte-compatible with
+  the stored `FlatSyncPoint[]`, or is a small adapter needed?
+  *(Retired by T003.)*
 
 ## Cross-Artifact Issues
 
@@ -688,13 +770,17 @@ violations there either.
 
 ## Diagrams
 
-- `datamodel.md` — **current ✅** (regenerated + committed 2026-07-17).
+All three are **stale ⚠️** as of 2026-07-19 — the `sync-tabs-to-real-audio`
+artifact pass touched entities, mechanics, and UI alike.
+
+- `datamodel.md` — **stale ⚠️** (run `/ardd-diagram datamodel`) — gained
+  the `FlatSyncPoint` entity and three `CatalogSong` fields.
 - `infrastructure.md` — **stale ⚠️** (run `/ardd-diagram infrastructure`)
-  — gained the shared `lyrics-walk` module note and the audio-warm-up
-  caveat from `plan-1619`.
-- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the Tracks tab
-  (Phase 4) and the relocated lyrics-toggle/icon-based bar controls
-  (bottom-bar-icons plan).
+  — gained the Recording Playback Mode subsection and host-source-keyed
+  extrapolation, atop the earlier `lyrics-walk`/audio-warm-up additions.
+- `ui.md` — **stale ⚠️** (run `/ardd-diagram ui`) — gained the
+  per-participant recording-mode carve-out, atop the Tracks tab and
+  icon-based bar controls.
 
 ## Code-vs-Artifact Defects
 
@@ -733,11 +819,16 @@ files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
 
 ## Feature Backlog
 
-**2 backlogged** · 0 planned · 0 tasked · **27 implemented** — see
-`.project/features/`. Newly implemented: `explicit-participant-readiness`
-(2026-07-19). Backlogged:
-`sync-tabs-to-real-audio` (substantial, vet with /ardd-research before
-planning) and `host-mandated-bars-per-row-layout`. Implemented
+**1 backlogged** · 0 planned · **1 tasked** · **27 implemented** — see
+`.project/features/`. `sync-tabs-to-real-audio` moved
+`backlogged → tasked` this run (bound to
+`plan-sync-tabs-to-real-audio-2026-07-19-62cf.md` /
+`tasks-sync-tabs-to-real-audio-cb85.md`). The sole remaining backlogged
+entry is `host-mandated-bars-per-row-layout`, which still poses an
+unresolved host-vs-participant-vs-both design fork — target it with
+`/ardd-plan host-mandated-bars-per-row-layout` when that fork is worth
+settling. Newly implemented: `explicit-participant-readiness`
+(2026-07-19). Implemented
 2026-07-19: `lyrics-ticker-position-preference`,
 `mute-all-parts-button`, `count-in-metronome-beat-widget`,
 `gp5-raw-lyric-line-extraction`, `catalogue-co-owner-invite-flow`
@@ -752,6 +843,28 @@ since shipped (`implemented`).
 
 ## Plans & Tasks
 
+- **Sync tabs to real audio** (`sync-tabs-to-real-audio`) —
+  `plan-sync-tabs-to-real-audio-2026-07-19-62cf.md` (`approved`),
+  `tasks-sync-tabs-to-real-audio-cb85.md` (**`ready`**, 23 tasks / 5
+  phases). Per-participant choice between the alphaTab synth and an
+  operator-supplied `recording.mp3`, via alphaTab's native
+  `PlayerMode.EnabledBackingTrack` + sync-point model. **Zero server
+  protocol, `PlaybackState`, or wire-message change** — a deliberate
+  property, since audio source is a client-local preference and the host
+  stays clock authority through the same `tickPosition` surface.
+  Phases: (1) diagnosis & drift foundation — skewed fixture, failing CT
+  test, host-source-keyed `correctDrift`; (2) catalog assets & delivery —
+  loader fields, divergence computation, `audio/mpeg` + HTTP Range;
+  (3) recording playback engine — player-mode option, mode-aware
+  readiness, source preference, engine rebuild on switch; (4) UI —
+  source control, carve-outs, divergence guard; (5) end-to-end
+  verification, including a regression pass proving synth-only sessions
+  are unchanged. Every task carries a test requirement except the two
+  explicitly-scoped verification/documentation tasks (T003, T023), per
+  Principle VII. Backed by two research docs:
+  `research-sync-tabs-to-real-audio-2026-07-19-3394.md` (the original
+  vetting) and `research-recording-mode-drift-2026-07-19-b7c2.md` (the
+  per-participant drift analysis that shaped the final design).
 - **Explicit participant readiness + start negotiation** —
   `plan-explicit-readiness-2026-07-19-841d.md` (`approved`),
   `tasks-explicit-readiness-0580.md` (**`completed`**, 6/6, merged
@@ -985,6 +1098,15 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
   this entry.
 
 ## Recommended next step
+
+**`/ardd-implement`** — `tasks-sync-tabs-to-real-audio-cb85.md` is
+`ready` (23 tasks / 5 phases). Note Phase 1 is diagnosis-first by design:
+T001–T002 build a deliberately-skewed fixture and a *failing* CT test
+that measures whether corrective seeks actually stutter, before any UI is
+built on the sync model. Don't let an eager run skip past that into
+Phase 3.
+
+Then, in rough priority order:
 
 1. **Push** (commits ahead of origin; the push triggers the prod rebuild
    that ships the song-switch fix + beat widget), then **re-upload the

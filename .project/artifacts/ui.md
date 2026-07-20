@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-19
 diagram_type: graph TD
 render_section: UI
-diagram_status: current
+diagram_status: stale
 ---
 
 # UI
@@ -611,6 +611,51 @@ per its own API contract). This is true regardless of whether a
 participant has an instrument or the tab-less lyrics part selected. A
 "Mute parts" preference (below) is the only thing that silences individual
 tracks in that mix, and it is personal — see below.
+
+**Recording-mode carve-out** (`sync-tabs-to-real-audio`). The paragraph
+above describes the **synth** audio source, which stays the default and
+the only source for songs with no recording. Where a song ships an
+operator-supplied recording (`CatalogSong.recordingPath` +
+`syncPoints`, datamodel.md), each participant may personally switch that
+song's audio source to **recording**. This is a scoped carve-out of the
+full-mix decision, not a reversal: the multi-track mix still loads and
+still renders — it simply doesn't *sound*; the recording does.
+
+Audio source is a **per-participant personal preference**, in the same
+family as the metronome and mute-parts preferences: one participant can
+follow the real recording while another in the same session hears the
+synth. It is not a host control and never goes on the wire — the host
+remains the clock authority through the same `tickPosition` surface
+regardless of what anyone is listening to (infrastructure.md).
+
+Because alphaTab cannot mix synthesized audio with a backing track, a
+participant in recording mode loses every synth-channel control, **for
+that participant only** (all three were already per-device, so this
+scopes naturally):
+
+- **Per-part mute/solo** and **"hear only my part"** — disabled, with an
+  explanatory reason rather than a silently inert control.
+- **The personal metronome preference** — disabled, same treatment.
+- **Count-in** — a recording-mode participant locally ignores
+  `Session.countInEnabled`; the recording's own intro *is* the count-in.
+  The host's count-in toggle stays functional for everyone else in the
+  session, and nothing about the session-level setting changes.
+
+The source control itself lives with the personal preferences in the
+settings modal (not in host controls), and appears only for a song that
+is actually recording-capable.
+
+**Mixed-source guard.** On a song whose recording tempo diverges
+materially from the notated tempo
+(`CatalogSong.recordingTempoDivergence`, datamodel.md), a session
+containing both synth and recording listeners will audibly separate —
+this is a real musical limit, not a bug to be corrected away
+(infrastructure.md Recording Playback Mode). Such a song surfaces the
+constraint at the point of choice rather than mid-performance.
+[OPEN: whether a divergent song disables the recording source outright,
+or permits it with a warning only when the session is actually mixed —
+the second preserves the "everyone on the recording" case, which is
+perfectly safe even at high divergence.]
 
 Both renderings share alphaTab's native metronome and count-in
 (`metronomeVolume`, `countInVolume` — both off by default; count-in is

@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-18
+last_updated: 2026-07-19
 ---
 
 # Lyrics Extraction Pipeline
@@ -208,6 +208,31 @@ song is one directory operation, not a cross-reference between separate
 input and output trees. No intermediate/scratch output is written to this
 tree — the prior pipeline's stale leftover `.mid` files (from the
 no-longer-used MIDI approach) are the cautionary example this avoids.
+
+**Optional recording assets** (`sync-tabs-to-real-audio`). A song
+directory may additionally hold a `recording.mp3` — an operator-supplied
+real recording of the song — alongside a `syncPoints` array in the same
+`meta.json`, holding alphaTab's own `FlatSyncPoint` shape verbatim
+(datamodel.md). Both are optional and independent of every existing
+pipeline stage: the pipeline neither generates nor validates them, and a
+song without them behaves exactly as today. A `recording.mp3` present
+*without* `syncPoints` is treated as recording-less by the loader, since
+an unanchored recording can't be aligned to the score at all.
+
+For the MVP, sync points are authored **externally** — alphatab.net hosts
+a Media Sync Editor whose export is the same `FlatSyncPoint` structure
+(`Score.exportFlatSyncPoints()`), so the operator's hand-off is a
+copy-paste into `meta.json` rather than a translation. In-app sync-point
+authoring is deliberately out of scope here and is a natural later
+addition to the phase-2 in-app authoring surface (infrastructure.md).
+[OPEN: confirm the Media Sync Editor's exported JSON is byte-compatible
+with the `FlatSyncPoint[]` we store, rather than a near-miss needing a
+small adapter — verify against a real export during the plan's diagnosis
+phase.]
+
+Licensing of a supplied recording is the operator's responsibility, the
+same posture the project already takes toward song files themselves; the
+existing consent gate (below) governs public serving unchanged.
 
 A song's directory can additionally live one level deeper, under a
 catalogue directory (`catalog/<catalogue-slug>/<song-slug>/`,

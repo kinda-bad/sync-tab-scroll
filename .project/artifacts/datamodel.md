@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-19
 diagram_type: erDiagram
 render_section: Datamodel
-diagram_status: current
+diagram_status: stale
 ---
 
 # Data Model
@@ -114,7 +114,34 @@ no key — so existing local/personal deployments need no migration.
 | lyricsTrackIndex | number \| null | Index into `gpFilePath`'s parsed score identifying which track's beats actually carry the GP-embedded lyrics (`Beat.lyrics`) — the track lyrics were authored on, not necessarily any `CatalogPart.trackIndex` (the lyrics-bearing track may not be offered as a selectable instrument part at all). Null whenever `lyricsLrc` came from the lrclib.net fallback (no GP-embedded lyrics to point at). The client reads this track's beats at render time to derive syllable text + tick position for the in-tab overlay — no separate tick-map artifact is published (see Normalization Rules) |
 | lyricsLineIndex | number \| null | Which index into a beat's `Beat.lyrics` array to read (`Beat.lyrics` is indexed by lyric line/channel — GP supports multiple simultaneous lyric channels, e.g. main vocal vs. a harmony line — not by syllable). Almost always `0`; the pipeline picks the first non-empty channel rather than the client guessing, in case a GP file's primary content isn't at index 0. Same nullability as `lyricsTrackIndex` |
 | lyricsRawLine | string (optional) | The raw, un-dispatched track-level lyric line (`<Lyrics dispatched="true"><Line><Text>` CDATA from `score.gpif`, pipeline.md) for the `lyricsTrackIndex` track — GP hyphen/`+` conventions intact. Present only when the song has a track-level line. Both the pipeline's `.lrc` generation and the client's in-tab overlay re-dispatch it with GP semantics (shared `dispatchLyrics`, feedback F001) instead of trusting alphaTab's divergent `applyLyrics` per-beat placement; absence means fall back to `beat.lyrics`/`walkSyllables`. Companion `lyricsRawLineStartBar` (optional number) carries the line's start-bar `<Offset>` and is omitted when 0 |
+| recordingPath | string \| null | Client-fetchable URL path to the song's operator-supplied `recording.mp3` (same on-disk→URL rewrite as `gpFilePath`, infrastructure.md). Null when the song directory has no recording. Its presence — together with a non-null `syncPoints` — is what makes recording playback mode offerable for this song (ui.md). Licensing is the operator's responsibility, the same posture as the `.gp` file itself |
+| syncPoints | FlatSyncPoint[] \| null | Tick↔recording-time anchors read verbatim from `meta.json` (pipeline.md), applied to the loaded score via alphaTab's own `Score.applyFlatSyncPoints()`. Null when absent. A song with `recordingPath` but no `syncPoints` is **not** recording-capable — the loader logs and treats it as recording-less, the same skip-not-fatal posture it applies to a malformed entry (infrastructure.md) |
+| recordingTempoDivergence | number \| null | Maximum absolute BPM difference between the recording's sync-derived tempo and the score's notated tempo, computed at catalog load by comparing each sync point's effective `syncBpm` against the notated tempo at its tick (`research-recording-mode-drift-2026-07-19-b7c2.md`). Null when the song isn't recording-capable. Drives the mixed-session guard (ui.md): above the safe margin, participants on different audio sources genuinely separate, so mixed sessions are refused/warned for this song. Derived, never authored — it is not a `meta.json` field |
 | lyricLineBreaks | number[] \| null | Syllable count per line, in the order syllables appear across `lyricsTrackIndex`'s beats at `lyricsLineIndex`. The client computes line groups from it (`lyrics-beat-walk.ts`'s `groupIntoLines`), but the current in-tab overlay (`ui.md`'s Playback View) is a single continuous scrolling ticker that flattens the syllable stream and never uses those line boundaries for layout — so this field currently has no visible effect on the rendered UI, though it's still computed and unit-tested. **Resolved as intentionally retained**: it's cheap to compute, already unit-tested, and a plausible input for a future multi-line/paged lyrics view; revisit only if a deliberate simplification pass wants it gone (which would be code work — pipeline extraction, `meta.json`, and `lyrics-beat-walk.ts` — not just an artifact edit). Same nullability as `lyricsTrackIndex` |
+
+### FlatSyncPoint
+
+alphaTab's **own** named type (`@coderline/alphatab`'s `FlatSyncPoint`),
+re-exported rather than redefined — constitution Principle V (check
+library idioms before building a custom mechanism) and Principle VI
+(named types over inline duplication). A bespoke
+`{barIndex, occurence, syncTimeMs}` shape was considered and rejected:
+alphaTab already round-trips this exact structure via
+`Score.applyFlatSyncPoints()` / `exportFlatSyncPoints()`, and it is what
+alphatab.net's Media Sync Editor exports, so storing anything else would
+mean a translation layer on both the authoring and loading sides for no
+gain.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| barIndex | number | Index of the master bar this anchor is valid for |
+| barPosition | number | Relative position (0–1) of the anchor within that bar |
+| barOccurence | number | Which repeat pass this anchor applies to (0 on first play) — alphaTab's spelling, kept as-is |
+| millisecondOffset | number | Position within the recording, in milliseconds, that the above score position corresponds to |
+
+Stored verbatim as a `meta.json` array (pipeline.md) and handed to
+alphaTab unmodified. Two to three anchors suffice for a studio recording;
+live material needs more.
 
 ### Catalogue
 
@@ -141,7 +168,7 @@ every `Catalogue`'s metadata is always sent, but a private one's
 | Field | Type | Notes |
 |-------|------|-------|
 | status | 'stopped' \| 'running' \| 'paused' | |
-| tickPosition | number | MIDI tick position — alphaTab's native score-position unit (`api.tickPosition`), instrument-agnostic and density-agnostic. Host-client-authoritative, not server-computed: the server never parses the GP file, so it has no tempo/PPQ knowledge to derive tick position from elapsed time itself. While playback is `'running'`, the host's client periodically self-reports its own real, continuously-advancing `api.tickPosition` (`playback-tick-report` message, ~1/sec); the server just stores whatever it's told and relays it via the existing periodic broadcast (infrastructure.md) |
+| tickPosition | number | MIDI tick position — alphaTab's native score-position unit (`api.tickPosition`), instrument-agnostic and density-agnostic. Host-client-authoritative, not server-computed: the server never parses the GP file, so it has no tempo/PPQ knowledge to derive tick position from elapsed time itself. While playback is `'running'`, the host's client periodically self-reports its own real, continuously-advancing `api.tickPosition` (`playback-tick-report` message, ~1/sec); the server just stores whatever it's told and relays it via the existing periodic broadcast (infrastructure.md). **Mode-agnostic on the wire**: a host playing a real recording derives its `tickPosition` from recording time via `CatalogSong.syncPoints`, and the protocol cannot tell the difference — which is why per-participant audio source (ui.md) needs no `PlaybackState`, `Session`, or message-shape change at all. What *does* depend on the host's mode is the *rate* a non-host extrapolates at between reports (infrastructure.md Session & Real-Time Sync) |
 | bpm | number | Informational — current tempo for display (e.g. lobby/playback tempo readout). Not used for tick-to-time math; each client's alphaTab instance derives timing from the score's own tempo map |
 | serverTimestamp | number | Wall-clock time the host last reported `tickPosition` (refreshed by the server alongside it on each `playback-tick-report`). Each participant's alphaTab instance (visible or headless, per ui.md) drives its own local clock from playback start and periodically re-syncs `tickPosition`/`timePosition` against this rather than being continuously driven by the server (infrastructure.md). Using `serverTimestamp` to extrapolate/compensate for propagation latency is a deferred future refinement, not implemented yet |
 

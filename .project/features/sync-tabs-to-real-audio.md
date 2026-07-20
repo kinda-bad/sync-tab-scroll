@@ -1,7 +1,9 @@
 ---
 slug: sync-tabs-to-real-audio
-status: backlogged
+status: tasked
 logged: 2026-07-19
+plan: plan-sync-tabs-to-real-audio-2026-07-19-62cf.md
+tasks: tasks-sync-tabs-to-real-audio-cb85.md
 ---
 
 Sync tab playback (cursor, lyrics ticker, session position) to a real
