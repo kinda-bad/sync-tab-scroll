@@ -14,7 +14,7 @@ status: in-progress
 
 - [x] T003 Update the two existing tests in `client/src/playback-sync.test.ts` whose comments hard-code `DRIFT_THRESHOLD_TICKS(=50)` (around lines 205 and 220). These encode the **old units** — re-express their intent in milliseconds at the score's tempo rather than nudging tick numbers until they pass. A test that still reasons in raw ticks will keep passing while silently asserting the wrong invariant, which is exactly the trap this plan exists to remove. Confirm each still tests what its description claims after the rewrite.
 
-- [ ] T004 Update `.project/artifacts/infrastructure.md`'s Session & Real-Time Sync section, where it currently reads "the 50-tick drift threshold and 'correct only if drift exceeds it' behavior are unchanged" (around line 83). Describe the millisecond tolerance instead, why it is tempo-stable, and the 35ms value with its no-song-gets-tighter derivation. Note the correction *mechanism* is unchanged — only the units of the comparison. Documentation-only; no test requirement. [artifacts: infrastructure]
+- [x] T004 Update `.project/artifacts/infrastructure.md`'s Session & Real-Time Sync section, where it currently reads "the 50-tick drift threshold and 'correct only if drift exceeds it' behavior are unchanged" (around line 83). Describe the millisecond tolerance instead, why it is tempo-stable, and the 35ms value with its no-song-gets-tighter derivation. Note the correction *mechanism* is unchanged — only the units of the comparison. Documentation-only; no test requirement. [artifacts: infrastructure]
 
 ## Phase 2: Verify No Regression
 

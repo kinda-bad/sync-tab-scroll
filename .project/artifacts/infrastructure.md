@@ -80,10 +80,27 @@ own already-loaded score — the same tempo-lookup technique
 tick-to-time math (datamodel.md). The host is unaffected — it never
 drift-corrects against `playbackState` at all (the existing `isHost`
 guard above). This replaces the raw-value comparison as a refinement of
-the same periodic-correction mechanism, not a new one: the 50-tick drift
-threshold and "correct only if drift exceeds it" behavior are unchanged,
-just measured against a latency-compensated projection instead of the
-stale broadcast value directly.
+the same periodic-correction mechanism, not a new one: the "correct only
+if drift exceeds a threshold" behavior is unchanged, just measured
+against a latency-compensated projection instead of the stale broadcast
+value directly.
+
+**The drift threshold is an absolute real duration — 35ms — not a tick
+count.** A MIDI tick is a fixed fraction of a beat, so a fixed tick
+threshold means a different real tolerance at every tempo (the former
+50-tick value worked out to `3125 / bpm` ms) and grows *stricter* as
+tempo rises, which is backwards. Sync tolerance is perceptual, so it is
+expressed in perceptual units and is tempo-stable. The comparison
+converts the tick-space drift to milliseconds at the local tempo
+(`ticksToMs`, the same `localTempoAtTick` value the extrapolation above
+already computes) before testing it. 35ms is derived: every catalogue
+song sits between 93 and 130bpm with no mid-song tempo changes, so the
+old effective tolerance spanned 33.6ms (93bpm) to 24.0ms (130bpm) — 35ms
+sits just above the strictest of those, so no song receives *more*
+corrections than before, while leaving 15ms of headroom under the 50ms
+perceptual bar from `research-recording-mode-drift-2026-07-19-b7c2.md`
+(T004b). Only the units of the comparison changed; the correction
+mechanism itself is untouched.
 
 **The extrapolation rate is keyed off the *host's* audio source, not the
 participant's own** (`sync-tabs-to-real-audio`;
