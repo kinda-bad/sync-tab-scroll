@@ -23,9 +23,33 @@ status: in-progress
 
 - [x] T008 [artifacts: ui] In whichever module holds the persistent per-participant alphaTab instance and its `clientStore` subscriptions (`client/src/playback-engine.ts`, following the same pattern as the existing drift-correction subscription that calls `correctDrift`/`applyPlaybackSettings` from `client/src/playback-sync.ts`), add a subscription reacting to `session.lobbyCursorTick` changes: only when `session.spotlightMode === true`, set `api.tickPosition = session.lobbyCursorTick` (skip if `lobbyCursorTick` is `null`). When `spotlightMode` is `false`, the subscription must not touch `api.tickPosition` at all.
 - [x] T009 [artifacts: ui] In `client/src/views/Lobby.svelte`, add a host-only "Spotlight mode" toggle `Button` (reuse the existing `Button` component per `brand.md`'s established patterns) placed next to the existing "Set lobby cursor"/"Clear" controls. Clicking it sends `{ type: 'spotlight-mode-set', enabled: !session.spotlightMode }` over the client's websocket connection (following the same send pattern used by the existing lobby-cursor controls). Only render this toggle when the current participant is the host (mirror the existing host-only conditional already guarding the lobby-cursor controls).
-- [ ] T010 [blocked: browser automation unavailable] Manual browser verification (two tabs/participants, both with a part selected so both have a rendered/persistent alphaTab instance per the existing T011c persistent-engine design): with Spotlight mode **off**, host sets the lobby cursor and confirm the other participant's view does not move. Toggle Spotlight mode **on**, host sets the lobby cursor again, confirm the other participant's view snaps to match. Host clicks Start, then Stop to return to Lobby, and confirm Spotlight mode has auto-reset to off (toggle UI shows off, and setting the lobby cursor again does not force-follow until re-enabled). Report results; do not mark this task complete until verified live, not just code-reviewed. **Blocked during implementation:** the claude-in-chrome browser extension's `type` action failed repeatedly ("Cannot access a chrome-extension:// URL of different extension") across a fresh navigation and multiple retries — clicks/screenshots worked, typing didn't. Deferred at the user's direction (2026-07-02); dev servers were left running (client `:5180` via `pnpm --filter client dev --port 5180 --strictPort`, server `:8080` via `CATALOG_ROOT=<repo>/catalog pnpm --filter server dev`). Steps to verify manually: open `http://localhost:5180` in one tab (host, "Create session"), `http://127.0.0.1:5180` in another (join with the session code, avoids shared localStorage) — then follow the steps above.
+- [ ] T010 [partial: scenario 3 now covered automatically; scenarios 1–2 still unverified] [blocked: browser automation unavailable] Manual browser verification (two tabs/participants, both with a part selected so both have a rendered/persistent alphaTab instance per the existing T011c persistent-engine design): with Spotlight mode **off**, host sets the lobby cursor and confirm the other participant's view does not move. Toggle Spotlight mode **on**, host sets the lobby cursor again, confirm the other participant's view snaps to match. Host clicks Start, then Stop to return to Lobby, and confirm Spotlight mode has auto-reset to off (toggle UI shows off, and setting the lobby cursor again does not force-follow until re-enabled). Report results; do not mark this task complete until verified live, not just code-reviewed. **Blocked during implementation:** the claude-in-chrome browser extension's `type` action failed repeatedly ("Cannot access a chrome-extension:// URL of different extension") across a fresh navigation and multiple retries — clicks/screenshots worked, typing didn't. Deferred at the user's direction (2026-07-02); dev servers were left running (client `:5180` via `pnpm --filter client dev --port 5180 --strictPort`, server `:8080` via `CATALOG_ROOT=<repo>/catalog pnpm --filter server dev`). Steps to verify manually: open `http://localhost:5180` in one tab (host, "Create session"), `http://127.0.0.1:5180` in another (join with the session code, avoids shared localStorage) — then follow the steps above.
 
 ## Phase 4: Remaining artifact revisions
 
 - [x] T011 [artifacts: ui] Revise `ui.md`'s Lobby View section: describe the Spotlight-mode toggle (host-only) and that the lobby cursor only forces participants' views to follow while it's on; otherwise each participant browses independently. Bump `last_updated` to today's date and set `diagram_status: stale` if not already.
 - [x] T012 Revise `features.md`'s "Lobby cursor" entry to describe the conditional (Spotlight-mode-gated) behavior instead of the current "all participants see the same pointer" description — this is the resolution of `feedback-lobby-cursor-mode-e13b.md`'s Reconsidered item. Bump `last_updated` to today's date.
+
+> **T010 reconciled 2026-07-20** (`/ardd-implement --reconcile` equivalent,
+> run as housekeeping). Checked against the codebase rather than re-asked
+> of a human:
+>
+> - **Scenario 3 (Spotlight auto-resets when playback starts) — now
+>   covered automatically.** `server/src/handlers/playback-control.ts:14`
+>   sets `session.spotlightMode = false` on start, asserted by
+>   `playback-control.test.ts:40` ("start sets status running and resets
+>   lobbyCursorTick/spotlightMode"), with a companion test confirming
+>   *resume* does not reset it. This scenario no longer needs a human.
+> - **Scenarios 1–2 (Spotlight off ⇒ participant's view does NOT follow;
+>   Spotlight on ⇒ it snaps) — still genuinely unverified.** No automated
+>   coverage exists: `lobbyCursorTick` appears in
+>   `playback-engine.ct.spec.ts` only as `null` fixture scaffolding
+>   (line 125), never as an assertion, and no CT or e2e spec exercises the
+>   force-follow path at `playback-engine.ts:470-474`.
+>
+> Deliberately **left unchecked**. The 2026-07-02 blocker (the
+> claude-in-chrome `type` action failing) is stale — but the underlying
+> behavior really has never been verified, by human or by test, so
+> checking it off would be a false record. The cheap way to close this is
+> CT coverage of the force-follow path rather than another manual pass;
+> that is real work and belongs in a plan, not in a status edit.

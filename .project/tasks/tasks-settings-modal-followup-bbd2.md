@@ -1,7 +1,17 @@
 ---
 plan: plan-settings-modal-followup-2026-07-04.md
 generated: 2026-07-04
-status: superseded   # plan superseded by plan-worktree-ui-improvements-2026-07-04.md; do not implement
+status: completed
+# Corrected 2026-07-20. This carried the invalid status `superseded`
+# (a *plan* status, not a tasks-file one) with the note "do not
+# implement" — but all 6 tasks are checked and the work is verifiably in
+# the codebase: `SettingsModal.svelte` contains both T003's exact hint
+# text ("Spotlight mode forces every participant's view to follow the
+# lobby cursor") and T002's "Playback audio" section label. The plan was
+# superseded, but this tasks file was implemented anyway before that
+# happened. `completed` is the truthful terminal state; `abandoned`
+# (which the linter suggested) would misrepresent shipped work as
+# dropped.
 ---
 
 # Tasks
