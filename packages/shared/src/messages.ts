@@ -16,6 +16,7 @@ export type ClientMessage =
   | { type: 'lobby-cursor-set'; tickPosition: number | null }
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'count-in-set'; enabled: boolean }
+  | { type: 'playback-source-set'; source: 'synth' | 'recording' }
   | { type: 'song-select'; songId: string }
   | { type: 'catalogue-unlock'; key: string }
   | { type: 'playback-tick-report'; tickPosition: number }

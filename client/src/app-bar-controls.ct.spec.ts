@@ -41,6 +41,7 @@ function instrumentSession(view: 'lobby' | 'playback'): Session {
     hostId: 'p1',
     playbackState: { status: view === 'playback' ? 'running' : 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
     countInEnabled: false,
+    playbackSource: 'synth',
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,

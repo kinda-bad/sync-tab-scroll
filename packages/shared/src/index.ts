@@ -197,6 +197,17 @@ export interface CatalogSong {
   syncPoints: FlatSyncPoint[] | null;
 }
 
+/**
+ * A song is recording-capable — i.e. `Session.playbackSource: 'recording'` is
+ * selectable for it — only when it has both an operator-supplied recording AND
+ * the sync points that anchor it to the score (datamodel.md CatalogSong). Single
+ * source of truth so the server (song-select reset, playback-source-set guard)
+ * and client (T017 render condition) can't drift on the definition.
+ */
+export function isRecordingCapable(song: Pick<CatalogSong, 'recordingPath' | 'syncPoints'> | null | undefined): boolean {
+  return !!song && song.recordingPath !== null && song.syncPoints !== null;
+}
+
 export interface PlaybackState {
   status: 'stopped' | 'running' | 'paused';
   /** MIDI tick position — alphaTab's native score-position unit. */
@@ -217,6 +228,14 @@ export interface Session {
   hostId: string;
   playbackState: PlaybackState;
   countInEnabled: boolean;
+  /**
+   * Which audio every participant plays: the alphaTab synth (default) or the
+   * selected song's operator-supplied recording. Host-only toggle, same pattern
+   * as `countInEnabled`/`spotlightMode`. Session-scoped, deliberately not
+   * per-participant (datamodel.md). Resets to `'synth'` when the selected song
+   * changes or the new song isn't recording-capable.
+   */
+  playbackSource: 'synth' | 'recording';
   /** MIDI tick position the host is pointing at pre-playback; null once playback starts. Only force-follows participants' views while spotlightMode is true. */
   lobbyCursorTick: number | null;
   /** Host-only toggle; while true, lobbyCursorTick force-follows every participant's view. Resets to false when playback starts. */

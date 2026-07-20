@@ -51,6 +51,7 @@ function makeSession(memberReadiness: ReadinessStatus[], selfId = 'p1'): { sessi
       hostId: 'p1',
       playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
       countInEnabled: false,
+      playbackSource: 'synth',
       lobbyCursorTick: null,
       spotlightMode: false,
       pendingHostRequest: null,

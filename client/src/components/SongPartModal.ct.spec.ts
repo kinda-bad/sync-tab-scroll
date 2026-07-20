@@ -14,6 +14,7 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     hostId: 'host-1',
     playbackState: { status: 'stopped', tickPosition: 0, bpm: 120, serverTimestamp: 0 },
     countInEnabled: false,
+    playbackSource: 'synth',
     lobbyCursorTick: null,
     spotlightMode: false,
     pendingHostRequest: null,

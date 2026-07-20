@@ -38,6 +38,13 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
   if (session.selectedSong !== song.id) {
     session.selectedSong = song.id;
     session.availableParts = song.parts;
+    // A different song resets the audio source to synth (datamodel.md
+    // Session.playbackSource): the previous song's recording has no bearing on
+    // the new one, and the new song may not be recording-capable at all. An
+    // unconditional reset subsumes both "song changed" and "new song isn't
+    // recording-capable" — a song can't become non-recording-capable without a
+    // song change.
+    session.playbackSource = 'synth';
     // Selecting a genuinely different song resets every participant's
     // part/readiness — a part id/index from the old song's parts has no
     // guaranteed meaning against the new song's parts.
