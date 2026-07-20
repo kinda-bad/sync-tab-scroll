@@ -16,8 +16,8 @@ afterEach(() => {
   fs.rmSync(catalogRoot, { recursive: true, force: true });
 });
 
-function fakeReq(url: string): IncomingMessage {
-  return { url } as IncomingMessage;
+function fakeReq(url: string, headers: Record<string, string> = {}): IncomingMessage {
+  return { url, headers } as unknown as IncomingMessage;
 }
 
 function fakeRes() {
@@ -63,7 +63,7 @@ describe('createCatalogRequestHandler', () => {
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
-    expect(res.headers).toEqual({ 'Content-Type': 'application/octet-stream' });
+    expect(res.headers).toMatchObject({ 'Content-Type': 'application/octet-stream' });
     expect(Buffer.concat(res.chunks).toString()).toBe('binary-content');
   });
 
@@ -75,7 +75,7 @@ describe('createCatalogRequestHandler', () => {
     handler(fakeReq('/catalog/lyrics.lrc'), res);
     await new Promise((resolve) => setTimeout(resolve, 20));
 
-    expect(res.headers).toEqual({ 'Content-Type': 'text/plain; charset=utf-8' });
+    expect(res.headers).toMatchObject({ 'Content-Type': 'text/plain; charset=utf-8' });
   });
 
   it('serves an .mp3 file with an audio/mpeg content-type (T010)', async () => {
@@ -97,6 +97,79 @@ describe('createCatalogRequestHandler', () => {
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(404);
+  });
+
+  describe('HTTP Range support (T011)', () => {
+    // A 12-byte body so byte offsets are easy to reason about.
+    const body = 'ABCDEFGHIJKL';
+
+    it('advertises Accept-Ranges: bytes and still returns a full 200 when no Range header is sent', async () => {
+      fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), body);
+      const handler = createCatalogRequestHandler(catalogRoot);
+      const res = fakeRes();
+
+      handler(fakeReq('/catalog/recording.mp3'), res);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers).toMatchObject({ 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes' });
+      expect(Buffer.concat(res.chunks).toString()).toBe(body);
+    });
+
+    it('returns 206 with the requested slice and a correct inclusive Content-Range for a valid Range', async () => {
+      fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), body);
+      const handler = createCatalogRequestHandler(catalogRoot);
+      const res = fakeRes();
+
+      handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=3-7' }), res);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(res.statusCode).toBe(206);
+      expect(res.headers).toMatchObject({
+        'Content-Type': 'audio/mpeg',
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes 3-7/${body.length}`,
+        'Content-Length': '5',
+      });
+      expect(Buffer.concat(res.chunks).toString()).toBe('DEFGH');
+    });
+
+    it('treats an open-ended Range (bytes=N-) as running to the last byte', async () => {
+      fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), body);
+      const handler = createCatalogRequestHandler(catalogRoot);
+      const res = fakeRes();
+
+      handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=9-' }), res);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(res.statusCode).toBe(206);
+      expect(res.headers).toMatchObject({ 'Content-Range': `bytes 9-11/${body.length}` });
+      expect(Buffer.concat(res.chunks).toString()).toBe('JKL');
+    });
+
+    it('returns 416 with Content-Range bytes */size for an unsatisfiable Range (start past EOF)', async () => {
+      fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), body);
+      const handler = createCatalogRequestHandler(catalogRoot);
+      const res = fakeRes();
+
+      handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=99-120' }), res);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(res.statusCode).toBe(416);
+      expect(res.headers).toMatchObject({ 'Content-Range': `bytes */${body.length}` });
+    });
+
+    it('ignores an unparseable Range header and serves a full 200', async () => {
+      fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), body);
+      const handler = createCatalogRequestHandler(catalogRoot);
+      const res = fakeRes();
+
+      handler(fakeReq('/catalog/recording.mp3', { range: 'pages=1-2' }), res);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(res.statusCode).toBe(200);
+      expect(Buffer.concat(res.chunks).toString()).toBe(body);
+    });
   });
 
   it('404s a path-traversal attempt rather than escaping catalogRoot', () => {

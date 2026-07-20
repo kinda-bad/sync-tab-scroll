@@ -38,8 +38,65 @@ export function createCatalogRequestHandler(catalogRoot: string) {
     }
 
     const contentType = CONTENT_TYPES[path.extname(resolved)] ?? 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
+    const size = fs.statSync(resolved).size;
+
+    // HTTP Range support (infrastructure.md). An <audio> element seeks by
+    // issuing a `Range` request and requires 206 Partial Content with a correct
+    // Content-Range to honor it. A missing or unparseable Range falls through to
+    // a full 200 (never 416 on garbage). `Accept-Ranges: bytes` is advertised on
+    // both the full and partial responses so the element knows seeking is
+    // available. Byte offsets in Content-Range are inclusive on both ends.
+    const range = parseRange(req.headers.range, size);
+    if (range === 'unsatisfiable') {
+      res.writeHead(416, { 'Content-Range': `bytes */${size}`, 'Accept-Ranges': 'bytes' });
+      res.end();
+      return true;
+    }
+
+    if (range) {
+      const { start, end } = range;
+      res.writeHead(206, {
+        'Content-Type': contentType,
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${size}`,
+        'Content-Length': String(end - start + 1),
+      });
+      fs.createReadStream(resolved, { start, end }).pipe(res);
+      return true;
+    }
+
+    res.writeHead(200, { 'Content-Type': contentType, 'Accept-Ranges': 'bytes' });
     fs.createReadStream(resolved).pipe(res);
     return true;
   };
+}
+
+/**
+ * Parses a single-range `Range: bytes=start-end` header against a known file
+ * `size`. Returns inclusive `{ start, end }` byte offsets for a satisfiable
+ * range, the literal `'unsatisfiable'` when the range is well-formed but starts
+ * at/after EOF (→ 416), or `undefined` when the header is absent or not a form
+ * we honor (→ fall through to a full 200). Only the single-range `bytes=` form
+ * is supported — sufficient for `<audio>` seeking; multi-range is not.
+ */
+function parseRange(
+  header: string | string[] | undefined,
+  size: number,
+): { start: number; end: number } | 'unsatisfiable' | undefined {
+  if (typeof header !== 'string') return undefined;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return undefined;
+
+  const [, rawStart, rawEnd] = match;
+  // A suffix range (`bytes=-N`, empty start) is a valid form but not needed for
+  // seeking; treat it as unhandled and serve the full body.
+  if (rawStart === '') return undefined;
+
+  const start = Number(rawStart);
+  const end = rawEnd === '' ? size - 1 : Number(rawEnd);
+
+  if (start >= size) return 'unsatisfiable';
+  if (end < start) return undefined;
+
+  return { start, end: Math.min(end, size - 1) };
 }
