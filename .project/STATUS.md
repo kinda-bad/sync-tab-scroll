@@ -1,11 +1,19 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-20-phase1-gate (**Recording-drift Phase 1 landed on main
-and PASSED its 50ms gate; Phases 2–5 deliberately held for a go/no-go
-decision.**)_
+_Updated: 2026-07-20-phase2-merged (**Recording-drift Phases 1 & 2 landed
+on main; Phase 3+4 (engine + UI) in flight; Phase 5 e2e is the next
+gate.**)_
+
+**Progress: `tasks-recording-drift-foundation-cc87.md` in-progress
+(11/21).** Phase 1 (T001–T005) and Phase 2 (T006–T011) merged to `main`,
+all signed, worktrees reaped. **Phase 2** added: `FlatSyncPoint`
+re-exported from shared (with a structural type-test pinning it to
+alphaTab), `recordingPath`/`syncPoints` on `CatalogSong`, loader discovery
+of `recording.mp3` (skip-not-fatal when unanchored), `audio/mpeg`
+content-type, and **HTTP Range support** (206/416, path-traversal guard
+preserved) — server vitest 269 green. Phase 3+4 (T012–T018) delegated next.
 
 **Phase 1 gate result — PASS, verified at the code level.**
-`tasks-recording-drift-foundation-cc87.md` is **in-progress (5/21)**:
 T001–T005 merged to `main` (`e8006de..a1af8da`, 5 signed commits, worktree
 reaped). Two backing-track clients on the same recording finish
 **~0.001–0.002 ms apart** on both the `recording-aligned` (Δbpm=0.5) and
@@ -105,6 +113,8 @@ Nothing — the Phase 1 worktree merged and was reaped.
 
 ## Summary
 
-0 consistency issues. Safe to /plan: yes. **Recommended next step: proceed
-to Phase 2 via `/ardd-implement tasks-recording-drift-foundation-cc87.md`**
-(Phase 1 gate passed and verified).
+0 consistency issues. Safe to /plan: yes. **Recommended next step:
+continue `/ardd-implement tasks-recording-drift-foundation-cc87.md`** —
+Phases 3+4 (session source, engine rebuild, mode-aware readiness, UI
+controls) are in flight; Phase 5's cross-device e2e (T019) is the next
+verification gate that stresses Phase 1's disclosed lower-bound caveats.
