@@ -13,6 +13,10 @@
   export let muted: boolean;
   export let onToggleMute: () => void;
   export let onSolo: () => void;
+  // T018: disabled in recording mode — per-part mute/solo have no effect on a
+  // single mixed backing track. The buttons keep their accessible labels so a
+  // screen reader still announces the (disabled) control (Bar accessibility rule).
+  export let disabled = false;
 
   $: fullName = formatPartDisplayName(display);
 
@@ -63,9 +67,10 @@
     icon={muted ? VolumeOff : Volume2}
     variant={muted ? 'riot' : 'ghost'}
     label={muted ? `Unmute ${fullName}` : `Mute ${fullName}`}
+    {disabled}
     onclick={onToggleMute}
   />
-  <Button variant="ghost" label="Solo" onclick={onSolo} />
+  <Button variant="ghost" label="Solo" {disabled} onclick={onSolo} />
 </div>
 
 <style>

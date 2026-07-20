@@ -866,3 +866,50 @@ test('Session tab: host Audio source buttons are disabled while playback is runn
   await expect(component.getByRole('button', { name: 'Recording' })).toBeDisabled();
   await expect(component.getByText('Stop playback to change the audio source.')).toBeVisible();
 });
+
+// --- T018: recording mode disables per-part mute/solo + personal metronome --
+
+const RECORDING_REASON = 'Unavailable while playing the real recording — it is a single mixed track.';
+
+function withParts(overrides: Partial<Session> = {}): Session {
+  return baseSession({
+    availableParts: [
+      { instrumentName: 'Guitar', trackIndex: 0 },
+      { instrumentName: 'Bass', trackIndex: 1 },
+    ],
+    selectedSong: 'creep',
+    ...overrides,
+  });
+}
+
+test('Tracks tab: recording mode disables mute-all, per-part mute, and solo, with an explanatory reason', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
+  });
+  await component.getByRole('button', { name: 'Tracks' }).click();
+
+  await expect(component.getByRole('button', { name: 'Mute all' })).toBeDisabled();
+  await expect(component.getByRole('button', { name: 'Mute Guitar' })).toBeDisabled();
+  await expect(component.getByRole('button', { name: 'Solo' }).first()).toBeDisabled();
+  await expect(component.getByText(RECORDING_REASON)).toBeVisible();
+});
+
+test('Tracks tab: synth mode leaves mute/solo enabled', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: withParts({ playbackSource: 'synth' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
+  });
+  await component.getByRole('button', { name: 'Tracks' }).click();
+
+  await expect(component.getByRole('button', { name: 'Mute all' })).toBeEnabled();
+  await expect(component.getByRole('button', { name: 'Mute Guitar' })).toBeEnabled();
+});
+
+test('Preferences tab: recording mode disables the personal metronome toggle with an explanatory reason', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
+  });
+  await component.getByRole('button', { name: 'Preferences' }).click();
+
+  await expect(component.getByRole('button', { name: /Metronome:/ })).toBeDisabled();
+  await expect(component.getByText(RECORDING_REASON)).toBeVisible();
+});

@@ -80,6 +80,13 @@
   $: recordingCapable = isRecordingCapable(selectedSongData);
   $: playbackRunning = session?.playbackState.status === 'running';
 
+  // T018: in recording mode alphaTab plays a single mixed backing track and
+  // cannot mix synth audio with it (upstream #1961), so per-part mute/solo and
+  // the personal synth metronome have no effect — those controls are disabled
+  // with an explanatory reason rather than left silently inert (ui.md).
+  $: recordingMode = session?.playbackSource === 'recording';
+  const RECORDING_DISABLED_REASON = 'Unavailable while playing the real recording — it is a single mixed track.';
+
   // Instrument-prominent part labels (ui.md part-name display rule) —
   // derived for the whole part list at once, since uniqueness/numbering is
   // a per-song property. Index-aligned with session.availableParts; shared
@@ -124,6 +131,7 @@
   // Personal, this-device-only (ui.md Preferences tab): persists like the
   // theme choice and applies to the live engine immediately; never a WS send.
   function toggleMetronome() {
+    if (recordingMode) return; // T018: no synth metronome against a backing track
     metronome = !metronome;
     persistMetronome(metronome);
     setEngineMetronome(metronome);
@@ -160,6 +168,7 @@
   }
 
   function toggleTrackMute(trackIndex: number) {
+    if (recordingMode) return; // T018: per-part mute has no effect on a mixed backing track
     if (!session?.selectedSong) return;
     const songId = session.selectedSong;
     const muted = !trackMutes[trackIndex];
@@ -173,6 +182,7 @@
   // track-mute-preference.ts mechanism as toggleTrackMute, applied to every
   // other part at once (muted) while the soloed part is left unmuted.
   function soloTrack(soloTrackIndex: number) {
+    if (recordingMode) return; // T018
     if (!session?.selectedSong) return;
     const songId = session.selectedSong;
     const next: Record<number, boolean> = {};
@@ -194,6 +204,7 @@
   $: allMuted = (session?.availableParts ?? []).length > 0 && (session?.availableParts ?? []).every((p) => trackMutes[p.trackIndex]);
 
   function toggleMuteAll() {
+    if (recordingMode) return; // T018
     if (!session?.selectedSong) return;
     const songId = session.selectedSong;
     const muted = !allMuted;
@@ -356,10 +367,15 @@
       <Button
         variant={metronome ? 'riot' : 'ghost'}
         label={metronome ? 'Metronome: On' : 'Metronome: Off'}
+        disabled={recordingMode}
         onclick={toggleMetronome}
       />
     </div>
-    <p class="hint">Only you hear your metronome.</p>
+    {#if recordingMode}
+      <p class="hint">{RECORDING_DISABLED_REASON}</p>
+    {:else}
+      <p class="hint">Only you hear your metronome.</p>
+    {/if}
 
     <span class="section-label">Lyrics ticker font size</span>
     <div class="control-row">
@@ -396,17 +412,22 @@
     {#if session && session.availableParts.length > 0}
       <span class="section-label">Tracks</span>
       <div class="control-row">
-        <Button variant="ghost" label={allMuted ? 'Unmute all' : 'Mute all'} onclick={toggleMuteAll} />
+        <Button variant="ghost" label={allMuted ? 'Unmute all' : 'Mute all'} disabled={recordingMode} onclick={toggleMuteAll} />
       </div>
       {#each session.availableParts as part, i (part.trackIndex)}
         <TrackRow
           display={partNames[i] ?? { instrument: part.instrumentName, detail: null }}
           muted={!!trackMutes[part.trackIndex]}
+          disabled={recordingMode}
           onToggleMute={() => toggleTrackMute(part.trackIndex)}
           onSolo={() => soloTrack(part.trackIndex)}
         />
       {/each}
-      <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
+      {#if recordingMode}
+        <p class="hint">{RECORDING_DISABLED_REASON}</p>
+      {:else}
+        <p class="hint">Only you don't hear muted parts — everyone else still does.</p>
+      {/if}
     {/if}
   {/if}
 </Modal>
