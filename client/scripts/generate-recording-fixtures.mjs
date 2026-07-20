@@ -1,0 +1,151 @@
+/**
+ * Generates the recording-mode test fixtures under
+ * `client/test-fixtures/fixture-catalog/`.
+ *
+ * Two synthetic songs, both notated at 120 bpm, each paired with a click-track
+ * `recording.mp3` rendered at a DIFFERENT tempo, plus a `syncPoints` array in
+ * `meta.json` that anchors the score to that recording:
+ *
+ *   recording-skewed   recording at 130 bpm  -> Δbpm = 10    (high divergence)
+ *   recording-aligned  recording at 120.5 bpm -> Δbpm = 0.5  (control)
+ *
+ * The three representations of the recording's tempo MUST agree or downstream
+ * tasks contradict each other: the rendered audio's real click spacing, the
+ * `millisecondOffset`s in `syncPoints`, and the numbers documented in the
+ * fixture README. They all derive from `RECORDING_BPM` below, so they cannot
+ * drift apart.
+ *
+ * Run: `node scripts/generate-recording-fixtures.mjs` from `client/`.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as at from '@coderline/alphatab';
+import * as lamejs from '@breezystack/lamejs';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const CATALOG = path.join(HERE, '..', 'test-fixtures', 'fixture-catalog');
+
+const NOTATED_BPM = 120;
+const BARS = 16;
+const BEATS_PER_BAR = 4;
+const TICKS_PER_QUARTER_NOTE = 960;
+const BAR_TICKS = BEATS_PER_BAR * TICKS_PER_QUARTER_NOTE;
+const SAMPLE_RATE = 44100;
+
+const FIXTURES = [
+  { dir: 'recording-skewed', name: 'Recording Skewed (Δbpm 10)', recordingBpm: 130 },
+  { dir: 'recording-aligned', name: 'Recording Aligned (Δbpm 0.5)', recordingBpm: 120.5 },
+];
+
+/** alphaTex source: `BARS` bars of quarter notes at the notated tempo. */
+function alphaTexSource() {
+  const bar = '3.3.4 3.3.4 3.3.4 3.3.4';
+  return `\\title "Recording Fixture"\n\\tempo ${NOTATED_BPM}\n.\n${Array(BARS).fill(bar).join(' | ')}`;
+}
+
+function renderGp() {
+  const importer = new at.importer.AlphaTexImporter();
+  importer.initFromString(alphaTexSource(), new at.Settings());
+  const score = importer.readScore();
+  return new at.exporter.Gp7Exporter().export(score, new at.Settings());
+}
+
+/**
+ * A mono click track: a short decaying 1 kHz blip on every beat at
+ * `recordingBpm`, so the recording's real tempo is audible and measurable.
+ */
+function renderClickPcm(recordingBpm) {
+  const beatSeconds = 60 / recordingBpm;
+  const totalBeats = BARS * BEATS_PER_BAR;
+  const totalSamples = Math.round(totalBeats * beatSeconds * SAMPLE_RATE);
+  const pcm = new Int16Array(totalSamples);
+  const blipSamples = Math.round(0.04 * SAMPLE_RATE);
+
+  for (let beat = 0; beat < totalBeats; beat++) {
+    const start = Math.round(beat * beatSeconds * SAMPLE_RATE);
+    // Downbeats get a higher pitch so bar boundaries are distinguishable by ear.
+    const freq = beat % BEATS_PER_BAR === 0 ? 1500 : 1000;
+    for (let i = 0; i < blipSamples && start + i < totalSamples; i++) {
+      const envelope = Math.exp(-6 * (i / blipSamples));
+      pcm[start + i] = Math.round(12000 * envelope * Math.sin((2 * Math.PI * freq * i) / SAMPLE_RATE));
+    }
+  }
+  return pcm;
+}
+
+function encodeMp3(pcm) {
+  const encoder = new lamejs.Mp3Encoder(1, SAMPLE_RATE, 128);
+  const chunks = [];
+  const BLOCK = 1152;
+  for (let i = 0; i < pcm.length; i += BLOCK) {
+    const buf = encoder.encodeBuffer(pcm.subarray(i, i + BLOCK));
+    if (buf.length > 0) chunks.push(Buffer.from(buf));
+  }
+  const flushed = encoder.flush();
+  if (flushed.length > 0) chunks.push(Buffer.from(flushed));
+  return Buffer.concat(chunks);
+}
+
+/**
+ * One sync point per bar start. `millisecondOffset` is the position of that
+ * bar in the RECORDING's time axis, which runs at `recordingBpm` — that offset
+ * diverging from the score's own notated timing is exactly what the fixture
+ * exists to exercise.
+ */
+function buildSyncPoints(recordingBpm) {
+  const barMs = (BAR_TICKS * 60000) / (recordingBpm * TICKS_PER_QUARTER_NOTE);
+  return Array.from({ length: BARS }, (_, barIndex) => ({
+    barIndex,
+    barPosition: 0,
+    barOccurence: 0,
+    millisecondOffset: Number((barIndex * barMs).toFixed(3)),
+  }));
+}
+
+for (const fixture of FIXTURES) {
+  const dir = path.join(CATALOG, fixture.dir);
+  fs.mkdirSync(dir, { recursive: true });
+
+  fs.writeFileSync(path.join(dir, `${fixture.dir}.gp`), Buffer.from(renderGp()));
+  fs.writeFileSync(path.join(dir, 'recording.mp3'), encodeMp3(renderClickPcm(fixture.recordingBpm)));
+  fs.writeFileSync(
+    path.join(dir, 'meta.json'),
+    `${JSON.stringify(
+      {
+        name: fixture.name,
+        artist: 'Test Fixtures',
+        parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+        lyricsTrackIndex: null,
+        lyricsLineIndex: null,
+        lyricLineBreaks: null,
+        syncPoints: buildSyncPoints(fixture.recordingBpm),
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  const deltaBpm = Math.abs(fixture.recordingBpm - NOTATED_BPM);
+  fs.writeFileSync(
+    path.join(dir, 'README.md'),
+    [
+      `# ${fixture.name}`,
+      '',
+      'Generated by `client/scripts/generate-recording-fixtures.mjs` — do not hand-edit.',
+      '',
+      `- Notated tempo: **${NOTATED_BPM} bpm** (${BARS} bars of ${BEATS_PER_BAR}/4)`,
+      `- Recording tempo: **${fixture.recordingBpm} bpm** (click track, downbeat accented)`,
+      `- **Δbpm = ${deltaBpm}**`,
+      `- Notated duration: ${((BARS * BAR_TICKS * 60) / (NOTATED_BPM * TICKS_PER_QUARTER_NOTE)).toFixed(3)} s`,
+      `- Recording duration: ${((BARS * BAR_TICKS * 60) / (fixture.recordingBpm * TICKS_PER_QUARTER_NOTE)).toFixed(3)} s`,
+      '',
+      `\`meta.json\` carries ${BARS} \`FlatSyncPoint\`s, one per bar start, whose`,
+      "`millisecondOffset`s are spaced at the RECORDING's tempo. Downstream tasks",
+      'assert against the Δbpm above.',
+      '',
+    ].join('\n'),
+  );
+
+  console.log(`${fixture.dir}: notated ${NOTATED_BPM} bpm, recording ${fixture.recordingBpm} bpm, Δbpm ${deltaBpm}`);
+}

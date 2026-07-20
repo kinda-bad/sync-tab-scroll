@@ -1,0 +1,111 @@
+{
+  "name": "Recording Aligned (Δbpm 0.5)",
+  "artist": "Test Fixtures",
+  "parts": [
+    {
+      "instrumentName": "Guitar",
+      "trackIndex": 0
+    }
+  ],
+  "lyricsTrackIndex": null,
+  "lyricsLineIndex": null,
+  "lyricLineBreaks": null,
+  "syncPoints": [
+    {
+      "barIndex": 0,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 0
+    },
+    {
+      "barIndex": 1,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 1991.701
+    },
+    {
+      "barIndex": 2,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 3983.402
+    },
+    {
+      "barIndex": 3,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 5975.104
+    },
+    {
+      "barIndex": 4,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 7966.805
+    },
+    {
+      "barIndex": 5,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 9958.506
+    },
+    {
+      "barIndex": 6,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 11950.207
+    },
+    {
+      "barIndex": 7,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 13941.909
+    },
+    {
+      "barIndex": 8,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 15933.61
+    },
+    {
+      "barIndex": 9,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 17925.311
+    },
+    {
+      "barIndex": 10,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 19917.012
+    },
+    {
+      "barIndex": 11,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 21908.714
+    },
+    {
+      "barIndex": 12,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 23900.415
+    },
+    {
+      "barIndex": 13,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 25892.116
+    },
+    {
+      "barIndex": 14,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 27883.817
+    },
+    {
+      "barIndex": 15,
+      "barPosition": 0,
+      "barOccurence": 0,
+      "millisecondOffset": 29875.519
+    }
+  ]
+}
