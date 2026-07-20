@@ -215,108 +215,114 @@ tradeoffs this config makes.
 
 ```mermaid
 erDiagram
-    SESSION ||--o{ PARTICIPANT : "has"
-    SESSION ||--|| PLAYBACK_STATE : "has"
-    SESSION }o--o| CATALOG_SONG : "selectedSong"
-    SESSION }o--o{ CATALOGUE : "unlockedCatalogueIds"
-    PARTICIPANT }o--o| USER : "userId (optional)"
-    CATALOGUE ||--o{ CATALOG_SONG : "contains"
-    CATALOG_SONG ||--o{ CATALOG_PART : "parts"
-    CATALOGUE ||--o| CATALOGUE_ACTIVATION_KEY : "gated by (private only)"
-    CATALOG_SONG ||--o| CONSENT_RECORD : "gated by (public deploy only)"
-    USER ||--o{ AUTH_SESSION : "has"
-    USER ||--o{ CATALOGUE_MEMBERSHIP : "has (unlocked catalogues)"
-    USER ||--o{ CATALOGUE_OWNERSHIP : "owns (Phase 2)"
-    CATALOGUE_MEMBERSHIP }o..|| CATALOGUE : "catalogueId (no FK, filesystem-derived)"
-    CATALOGUE_OWNERSHIP }o..|| CATALOGUE : "catalogueId (no FK, filesystem-derived)"
+    %% In-memory realtime state (server memory only)
+    SESSION ||--o{ PARTICIPANT : "participants"
+    SESSION ||--|| PLAYBACKSTATE : "playbackState"
+    SESSION }o--o| CATALOGSONG : "selectedSong"
+    SESSION ||--o{ CATALOGPART : "availableParts"
+    PARTICIPANT }o--o| USER : "userId (optional, anon default)"
+
+    %% Filesystem-derived catalog (loaded/re-scanned at runtime, not durable rows)
+    CATALOGUE ||--o{ CATALOGSONG : "contains"
+    CATALOGUE ||--o| ACTIVATIONKEY : "private gate (on-disk)"
+    CATALOGSONG ||--o{ CATALOGPART : "parts"
+    CATALOGSONG ||--o| CONSENTRECORD : "consent gate (on-disk)"
+    CATALOGSONG ||--o{ FLATSYNCPOINT : "syncPoints (recording)"
+
+    %% Durable account layer (Postgres, optional)
+    USER ||--o{ AUTHSESSION : "sessions"
+    USER ||--o{ CATALOGUEMEMBERSHIP : "memberships"
+    USER ||--o{ CATALOGUEOWNERSHIP : "ownerships"
+    CATALOGUEMEMBERSHIP }o..o| CATALOGUE : "catalogueId (string, no cross-store FK)"
+    CATALOGUEOWNERSHIP }o..o| CATALOGUE : "catalogueId (string, no cross-store FK)"
 
     SESSION {
-        string code
-        string selectedSong
-        PlaybackState playbackState
+        string code "4-char join code"
+        string selectedSong "CatalogSong.id or null"
         string hostId
-        boolean countInEnabled
-        number lobbyCursorTick
+        string playbackSource "synth | recording"
+        number lobbyCursorTick "null once playing"
         boolean spotlightMode
+        boolean countInEnabled
         string pendingHostRequest
         string_array unlockedCatalogueIds
     }
     PARTICIPANT {
         string id
-        string userId
+        string userId "null = anonymous"
         string displayName
-        string role
+        string role "host | member"
         string connectionStatus
-        string selectedPart
-        string readiness
-        number joinedAt
+        string selectedPart "trackIndex | lyrics | null"
+        string readiness "no-part|loading|loaded|ready"
+        number joinedAt "tenure for succession"
     }
-    CATALOG_SONG {
-        string id
+    PLAYBACKSTATE {
+        string status "stopped|running|paused"
+        number tickPosition "host-authoritative"
+        number bpm "display only"
+        number serverTimestamp
+    }
+    CATALOGSONG {
+        string id "song slug"
         string catalogueId
         string name
         string artist
-        string gpFilePath
-        string lyricsLrc
+        string gpFilePath "URL"
+        string lyricsLrc "URL or null"
         number lyricsTrackIndex
-        number lyricsLineIndex
-        number_array lyricLineBreaks
-        string lyricsRawLine
-        number lyricsRawLineStartBar
+        string lyricsRawLine "optional"
+        string recordingPath "URL or null"
+    }
+    CATALOGPART {
+        string instrumentName
+        number trackIndex "stable id"
     }
     CATALOGUE {
-        string id
+        string id "slug or default"
         string name
         boolean public
     }
-    CATALOG_PART {
-        string instrumentName
-        number trackIndex
+    FLATSYNCPOINT {
+        number barIndex
+        number barPosition
+        number barOccurence
+        number millisecondOffset
     }
-    PLAYBACK_STATE {
-        string status
-        number tickPosition
-        number bpm
-        number serverTimestamp
-    }
-    CONSENT_RECORD {
+    CONSENTRECORD {
         string submitterName
         string tosVersion
         number acceptedAt
     }
-    CATALOGUE_ACTIVATION_KEY {
+    ACTIVATIONKEY {
         string salt
-        string hash
-        number epoch
+        string hash "scrypt"
+        number epoch "rotation"
     }
     USER {
-        string id
-        string oauthProvider
+        string id "uuid"
+        string oauthProvider "google | github"
         string oauthSubject
         string displayName
         string email
-        number createdAt
     }
-    CATALOGUE_MEMBERSHIP {
-        string id
-        string userId
-        string catalogueId
-        string grantedVia
+    CATALOGUEMEMBERSHIP {
+        string id "uuid"
+        string userId "FK User"
+        string catalogueId "plain string"
+        string grantedVia "owner|key|invite"
         number keyEpoch
-        number grantedAt
     }
-    CATALOGUE_OWNERSHIP {
-        string id
-        string catalogueId
-        string ownerId
-        number createdAt
+    CATALOGUEOWNERSHIP {
+        string id "uuid"
+        string catalogueId "plain string"
+        string ownerId "FK User"
     }
-    AUTH_SESSION {
-        string id
-        string userId
-        number createdAt
+    AUTHSESSION {
+        string id "opaque cookie value"
+        string userId "FK User"
         number expiresAt
-        number revokedAt
+        number revokedAt "null = active"
     }
 ```
 
@@ -324,124 +330,108 @@ erDiagram
 
 ```mermaid
 graph TD
-    subgraph Client["Client (Svelte + Vite)"]
-        WSC["ws-client.ts<br/>(ConnectionStatus, reconnect-by-identity)"]
-        AT["@coderline/alphatab<br/>(tab render + audio + shared clock,<br/>engine rebuilt per song)"]
-        LO["In-tab Lyrics Overlay<br/>(GP-semantics dispatch of meta's raw<br/>lyric line; beat.lyrics fallback)"]
-        BW["Beat widget<br/>(count-in countdown / metronome,<br/>beat-clock from tick + local tempo)"]
-        AM["Account Menu / Authoring Modal<br/>(optional)"]
+    subgraph Client["Client (Svelte + Vite SPA)"]
+        WS["ws-client.ts<br/>reconnect-by-identity + retry"]
+        AT["@coderline/alphatab<br/>live tab render + audio + shared clock"]
+        DRIFT["latency-compensated drift correction<br/>35ms tempo-stable threshold"]
+        AT --> DRIFT
     end
 
-    subgraph Server["Single Node process (http.Server)"]
-        WS["WebSocket upgrade<br/>(session-create/join, playback-control,<br/>ready-set + start negotiation,<br/>host-transfer, catalogue-unlock, ...)"]
-        SS["Session Store (in-memory only)<br/>Session / Participant / PlaybackState<br/>empty-session TTL: SESSION_EMPTY_TTL_MS<br/>(default 12h; pause-on-empty)"]
-        CL["catalog-loader.ts<br/>(server-global catalog, mutable at runtime<br/>as of Phase 2)"]
-        STATIC["/catalog static file route"]
-        AUTH["OAuth routes<br/>/auth/&lt;provider&gt;/login,callback,logout · /me"]
-        UPLOAD["Upload trust surface<br/>(size limit, parse timeout, staging,<br/>SONG_UPLOAD_ENABLED gate)"]
+    subgraph Server["Server — single http.Server, one process"]
+        WSS["WebSocket server (ws)<br/>authoritative session store (in-memory)"]
+        DISPATCH["message dispatch<br/>host-only handlers"]
+        STATIC["catalog-static.ts<br/>static /catalog + Range support"]
+        SPA["client SPA fallback (client/dist)"]
+        OAUTH["OAuth routes<br/>/auth/*/login /callback /logout /me"]
+        LOADER["catalog-loader.ts<br/>scan + re-scan, visibleCatalog()"]
+        SUCC["host succession + transfer<br/>grace timer, tenure promote"]
+        TTL["empty-session idle TTL (12h)"]
+        WSS --> DISPATCH
+        DISPATCH --> SUCC
+        WSS --> TTL
+        DISPATCH --> LOADER
     end
 
-    subgraph Disk["Filesystem / Volume"]
-        CATFS["catalog/&lt;catalogue&gt;/&lt;song&gt;/<br/>*.gp, lyrics.lrc, meta.json<br/>(incl. lyricsRawLine),<br/>catalogue.json, consent.json"]
+    subgraph Durable["Durable / out-of-band (optional)"]
+        PG[("Postgres<br/>User / AuthSession / Membership / Ownership")]
+        VOL[["Railway volume<br/>catalog/ (gitignored)"]]
+        OP["1Password → Railway sealed vars<br/>OAuth + session secrets"]
     end
 
-    subgraph DB["Postgres (optional, DB-optional boot)"]
-        PG["User / CatalogueMembership /<br/>CatalogueOwnership / AuthSession"]
+    subgraph Pipeline["Offline pipeline (lyrics only)"]
+        GP[".gp source"] --> EXTRACT["extract lyrics → .lrc + meta.json"]
+        LRCLIB(("lrclib.net")) -.-> EXTRACT
     end
 
-    subgraph Pipeline["Offline pipeline (pipeline.md)"]
-        PL["create-catalogue / extract-lyrics /<br/>record-consent CLI<br/>(raw lyric line: gpif XML for GP7/8,<br/>GP5 lyrics block for legacy)"]
-        LRCLIB["lrclib.net<br/>(line-break ref / fallback source)"]
+    WS <-->|"WebSocket: session-state, playback-tick-report, PlaybackState broadcast"| WSS
+    WS -->|"tick reports (host)"| WSS
+    AT -->|"HTTP GET .gp / .lrc / recording.mp3 (Range)"| STATIC
+    WS -->|"Origin-checked WS upgrade + cookie"| OAUTH
+    OAUTH --> PG
+    OAUTH -.->|"cookie → AuthSession → userId"| WSS
+    LOADER --> VOL
+    STATIC --> VOL
+    EXTRACT --> VOL
+    OAUTH -.->|"DATABASE_URL reference var"| OP
+
+    subgraph CI["GitHub Actions CI (push/PR to main)"]
+        CHECK["typecheck + server/client/CT/pipeline vitest"]
     end
-
-    WSC <-->|WebSocket, host is clock authority<br/>periodic playback-tick-report| WS
-    AT --> LO
-    AT --> BW
-    WS --> SS
-    WS --> CL
-    CL -->|reads/re-scans| CATFS
-    STATIC -->|serves| CATFS
-    Client -->|fetch .gp/.lrc| STATIC
-    AM -->|create catalogue, add song| UPLOAD
-    UPLOAD -->|validated write, triggers re-scan| CATFS
-    UPLOAD -->|runs pipeline server-side| PL
-    AM <--> AUTH
-    AUTH <--> PG
-    UPLOAD -.->|writes CatalogueOwnership on first grant| PG
-    WS -.->|catalogue-unlock persists membership<br/>when host is signed in| PG
-    PL --> CATFS
-    PL -.->|line-break ref / fallback .lrc| LRCLIB
-
-    subgraph Deploy["Railway (Terraform-provisioned)"]
-        RVOL["Railway volume<br/>(catalog content, operator-seeded)"]
-        RPG["Postgres service<br/>(hand-created, out-of-band)"]
-    end
-
-    CATFS -.->|deployed as| RVOL
-    PG -.->|deployed as| RPG
 ```
 
 ## UI
 
 ```mermaid
 graph TD
-    Landing["Landing View<br/>Create / Join session<br/>+ optional Account menu"]
-    Lobby["Lobby View<br/>persistent Bar: join code, Song &amp; part,<br/>Toggle lyrics (disabled w/ reason when n/a),<br/>Ready control (clock/check), Beat widget,<br/>Settings, transport, Leave session<br/>(all tooltipped + aria-labeled)"]
-    Playback["Playback View<br/>instrument tab + optional lyrics ticker,<br/>OR headless + full lyric sheet"]
+    START(("App load")) --> LANDING
 
-    Landing -->|create/join succeeds| Lobby
-    Lobby -->|host clicks Start| Playback
-    Playback -.->|Leave session| Landing
-    Lobby -.->|Leave session| Landing
-
-    subgraph BarWidgets["Bar widgets"]
-        BeatW["Beat widget:<br/>count-in countdown (session-wide) /<br/>beat + measure count (personal,<br/>Metronome-gated)"]
+    subgraph LANDING["Landing View"]
+        CHOOSER["Chooser: Create / Join"]
+        CREATE["Create form (name)"]
+        JOIN["Join form (name + code)"]
+        CHOOSER --> CREATE
+        CHOOSER --> JOIN
+        ACCT1["AccountMenu (optional)<br/>Sign in / Sign out / My catalogues"]
     end
-    Lobby --- BarWidgets
-    Playback --- BarWidgets
+    LANDING -.->|"stored session → silent rejoin"| LOBBY
 
-    subgraph LobbyModals["Lobby modals"]
-        SongPart["Song &amp; Part modal<br/>(auto-opens, dismissible)<br/>catalog picker, activation key,<br/>part picker incl. Lyrics"]
-        Settings["Settings modal<br/>Participants / Session /<br/>Preferences / Tracks tabs"]
-        Authoring["Authoring modal (Phase 2, owner-only)<br/>My catalogues, Create catalogue,<br/>Add song, Co-owners/invite"]
-        StartNeg["Start-negotiation modals:<br/>host 'N not ready, start anyway?' /<br/>participant 'are you ready?'<br/>(auto-dismissed on host answer)"]
-    end
+    CREATE -->|"session-create"| LOBBY
+    JOIN -->|"session-join"| LOBBY
 
-    Lobby --> SongPart
-    Lobby --> Settings
-    Lobby -.->|My catalogues (signed-in owner)| Authoring
-
-    subgraph SettingsTabs["Settings tabs"]
-        Participants["Participants:<br/>readiness, Make host, Remove,<br/>Request to become host"]
-        Session["Session:<br/>Lobby cursor + Spotlight,<br/>Count-in toggle (host-only)"]
-        Preferences["Preferences (personal, client-local):<br/>Theme, Metronome, ticker font size,<br/>ticker position (top/bottom),<br/>measure markers"]
-        Tracks["Tracks (personal):<br/>per-part mute + Solo + Mute all<br/>(count-in/metronome stay audible)"]
+    subgraph LOBBY["Lobby View — persistent Bar (code, account, leave, cog)"]
+        HINT["state-dependent hint line"]
+        SONGMODAL["Song & Part modal (auto-opens once)<br/>catalog picker grouped by Catalogue<br/>+ host Enter-activation-key"]
+        SETTINGS["Settings modal — 4 tabs"]
+        PART["pick part (incl. Lyrics) → readiness"]
+        SONGMODAL --> PART
     end
 
-    Settings --> Participants
-    Settings --> Session
-    Settings --> Preferences
-    Settings --> Tracks
+    subgraph TABS["Settings tabs"]
+        T1["Participants<br/>readiness, Make host, Remove, Request host"]
+        T2["Session (host)<br/>Lobby cursor + Spotlight, Count-in"]
+        T3["Preferences (personal)<br/>theme, metronome, ticker size/position, measure markers"]
+        T4["Tracks (personal)<br/>per-part mute, Solo, Mute all"]
+    end
+    SETTINGS --> T1 & T2 & T3 & T4
 
-    subgraph PlaybackRender["Playback rendering, per participant"]
-        Instrument["Instrument part:<br/>visible alphaTab tab + cursor<br/>+ optional lyrics ticker overlay<br/>(GP-semantics dispatched syllables)"]
-        LyricsPart["Lyrics part:<br/>headless alphaTab (audio/clock only)<br/>+ full scrolling lyric sheet<br/>+ gap-timing indicator"]
+    LOBBY -->|"host Start (ready or start-negotiation)"| PLAYBACK
+
+    subgraph PLAYBACK["Playback View"]
+        INSTR["Instrument part<br/>live alphaTab tab + native cursor<br/>optional lyrics ticker overlay"]
+        LYRICS["Lyrics part (headless)<br/>full scrolling lyric sheet + gap timing"]
+        WIDGET["Count-in / Metronome beat widget (Bar)"]
+        SRC["host: synth ⇄ recording source<br/>(session-wide, recording-capable songs)"]
     end
 
-    Playback --> Instrument
-    Playback --> LyricsPart
+    PLAYBACK -->|"Leave session"| LANDING
 
-    subgraph States["Cross-cutting States"]
-        Loading["Loading (per participant)"]
-        ErrState["Error (toast)"]
-        ConnLost["Connection lost (banner)"]
-        Removed["Removed from session"]
-        Stale["Stale session"]
+    subgraph ST["Cross-cutting States"]
+        S1["Error toasts (join, key, not-host, stale target)"]
+        S2["Removed from session → Landing"]
+        S3["Stale session → clears identity, stops reconnect"]
+        S4["Connection lost → persistent banner"]
+        S5["Accounts unavailable → menu absent"]
     end
-
-    Landing -.-> ConnLost
-    Lobby -.-> States
-    Playback -.-> States
 ```
 
 ## Acknowledgements
