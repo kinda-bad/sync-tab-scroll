@@ -16,7 +16,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@coderline/alphatab": "^1.8.0",
+    "@coderline/alphatab": "^1.8.4",
     "@sync-tab-scroll/shared": "workspace:*",
     "lucide-svelte": "^1.0.1"
   },
