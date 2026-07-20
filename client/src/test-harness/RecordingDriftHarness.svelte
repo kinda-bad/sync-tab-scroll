@@ -9,6 +9,8 @@
   export let syncPoints: at.model.FlatSyncPoint[] = [];
   /** Control mode: run the "participant" on plain synth instead of the backing track. */
   export let participantSynth = false;
+  /** Diagnosis mode: put the HOST on the backing track (the inverse of the default config). */
+  export let hostBacking = false;
 
   let hostContainer: HTMLDivElement;
   let participantContainer: HTMLDivElement;
@@ -46,11 +48,23 @@
 
     // Host: plain synth, exactly the shipped default path.
     const hostSettings = baseSettings();
-    hostSettings.player.soundFont = '/soundfont/sonivox.sf2';
+    if (hostBacking) {
+      hostSettings.player.playerMode = at.PlayerMode.EnabledBackingTrack;
+    } else {
+      hostSettings.player.soundFont = '/soundfont/sonivox.sf2';
+    }
     const host = new at.AlphaTabApi(hostContainer, hostSettings);
     const errors: string[] = [];
     host.error.on((e) => errors.push('host:' + String((e as unknown as Error)?.message ?? e)));
-    host.load(gpBytes, [0]);
+    if (hostBacking) {
+      const hostScore = at.importer.ScoreLoader.loadScoreFromBytes(gpBytes, hostSettings);
+      hostScore.backingTrack = new at.model.BackingTrack();
+      hostScore.backingTrack.rawAudioFile = mp3Bytes;
+      if (syncPoints.length > 0) hostScore.applyFlatSyncPoints(syncPoints);
+      host.renderScore(hostScore, [0]);
+    } else {
+      host.load(gpBytes, [0]);
+    }
 
     // Participant: backing track, anchored to the recording by sync points.
     const partSettings = baseSettings();

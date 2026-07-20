@@ -185,3 +185,90 @@ not to prevent it.
    correction threshold, but the *musical* tolerance is likely tighter.
 3. Should a Δbpm-unsafe song disable recording mode entirely, or only
    warn when the session is actually mixed?
+
+---
+
+## Resolved (T002 / T003, tasks-sync-tabs-to-real-audio-cb85.md)
+
+### T003 — `FlatSyncPoint` persistence compatibility
+
+**Finding: byte-compatible in substance; store verbatim, no adapter needed.**
+
+Determined from alphaTab's own round-trip API rather than the alphatab.net
+Media Sync Editor GUI — this run had no interactive browser to click the
+editor through, so the GUI export was *not* exercised. What was verified,
+against alphaTab 1.8.3 in-process:
+
+```
+score.applyFlatSyncPoints(meta.syncPoints)
+score.exportFlatSyncPoints()  ->  value-identical to the input
+```
+
+for all 16 sync points of both T001 fixtures. The only difference is JSON
+**key order** (`applyFlatSyncPoints` re-emits `barIndex, barOccurence,
+barPosition, millisecondOffset`; the authored file uses `barIndex,
+barPosition, barOccurence, millisecondOffset`). Field names, types and
+values all match exactly, so a strict `JSON.stringify` comparison differs
+while a structural comparison does not. Since the Media Sync Editor is
+itself built on `exportFlatSyncPoints`, its export is the same shape.
+
+*Caveat for a human follow-up:* confirm against a real editor export
+before relying on this for externally-authored content (T023).
+
+### T002 — measured drift/seek behaviour, before any fix
+
+Real alphaTab under Playwright CT, 20 s runs, headless Chromium. Two
+instances, host tick reported at the production ~1/s cadence, real
+`correctDrift` sampled at 10 Hz (mirroring the store subscription).
+`PlayerMode.EnabledBackingTrack` **does load and play an mp3 backing track
+under CT** — the primitive the whole plan rests on is confirmed working.
+
+| host / participant | Δbpm=10 | Δbpm=0.5 |
+|---|---|---|
+| synth / synth *(control)* | 12 seeks, all during the first ~1.3 s, then **0** | — |
+| synth / **backing** | **200** seeks (every sample) | **200** |
+| **backing** / synth | 29 | 13 |
+| **backing** / **backing** | **200** | **200** |
+
+200 seeks in 20 s = a corrective seek on *every* store update, forever.
+Peak divergence ranged 1129–1875 ticks across configs.
+
+**Two independent causes, isolated by re-running with correction disabled:**
+
+1. **A constant ~160-tick (~83 ms at 120 bpm) offset** on any
+   backing-track *participant*: its reported `tickPosition` sits
+   persistently behind the other instance. Identical at Δbpm=0.5 and
+   Δbpm=10, so it is playback/reporting latency, **not** tempo
+   divergence. It alone exceeds `DRIFT_THRESHOLD_TICKS` (50)
+   permanently — sufficient to explain every one of the 200 seeks. No
+   projection fix can beat it, because the seek *is* the latency source.
+
+2. **Genuine accumulating drift at exactly `Δbpm × 16` ticks/s**, as the
+   plan predicted, confirmed empirically:
+   - Δbpm=10 → offset ran −200 → +2514 ticks over 17 s (≈160/s)
+   - Δbpm=0.5 → offset ran −520 → −387 ticks over 17 s (≈8/s)
+
+   So alphaTab's sync points do **not** rate-normalise tick advance: a
+   backing-track instance advances at the **recording's** tempo.
+
+**Consequence for T004 — the task's (a)/(b) menu is incomplete.**
+
+The premise ("`localTempoAtTick` can never observe the recording's rate")
+is *real but not dominant*, and it only bites in the **backing-host /
+synth-participant** direction — there the participant projects the host at
+notated 120 while the host actually advances at 130, and the Δbpm
+sensitivity shows up plainly (29 seeks at Δbpm=10 vs 13 at Δbpm=0.5).
+Option (a) (infer the host's rate from observed tick advance) is the right
+fix *for that direction*.
+
+But it does nothing for the 200-seek configs, which are the common case.
+Those need a different change: **a backing-track participant should not be
+drift-extrapolated at all** — the recording is its clock, and seek-chasing
+a synth host is itself the stutter. That is a third option the task does
+not list, and T002 cannot go green without it.
+
+**Also note (feeds T020):** at Δbpm=10 the two clocks genuinely run
+160 ticks/s apart. No projection fix holds a mixed synth+recording pair
+inside a 50-tick threshold — seeks are unavoidable *if you insist on
+syncing them*. "Everyone on the recording" is safe at any Δbpm; the mixed
+case is what T020's guard must refuse or warn about.

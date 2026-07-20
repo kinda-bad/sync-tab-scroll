@@ -225,10 +225,19 @@ a Media Sync Editor whose export is the same `FlatSyncPoint` structure
 copy-paste into `meta.json` rather than a translation. In-app sync-point
 authoring is deliberately out of scope here and is a natural later
 addition to the phase-2 in-app authoring surface (infrastructure.md).
-[OPEN: confirm the Media Sync Editor's exported JSON is byte-compatible
-with the `FlatSyncPoint[]` we store, rather than a near-miss needing a
-small adapter — verify against a real export during the plan's diagnosis
-phase.]
+Resolved (T003): the export is **structurally identical** to the
+`FlatSyncPoint[]` we store, so it is a verbatim copy-paste with no
+adapter. Verified via alphaTab 1.8.3's own round-trip —
+`applyFlatSyncPoints()` followed by `exportFlatSyncPoints()` returns
+value-identical points for all 16 sync points of both diagnosis fixtures —
+which is the same code path the Media Sync Editor exports through. The
+only difference is JSON *key order* (`barOccurence` and `barPosition`
+swap), so compare structurally, never by `JSON.stringify`. Caveat: this
+was established from the API, not by driving the editor GUI, which the
+diagnosis run had no interactive browser for — worth one confirmation
+against a real editor export when the first externally-authored recording
+lands (T023). See
+`.project/plans/research-recording-mode-drift-2026-07-19-b7c2.md`.
 
 Licensing of a supplied recording is the operator's responsibility, the
 same posture the project already takes toward song files themselves; the
