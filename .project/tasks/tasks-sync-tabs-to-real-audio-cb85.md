@@ -16,31 +16,38 @@ status: in-progress
 
 - [ ] T004 Make `correctDrift`'s extrapolation rate host-source-keyed in `client/src/playback-sync.ts`, turning T002 green. Currently `elapsedTicks` is derived from `localTempoAtTick(api.score, ...)`, which walks `masterBar.tempoAutomations` and can never observe a backing track's `syncBpm` (a separate `MasterBar.syncPoints` collection). Choose between (a) inferring the host's effective rate from observed tick advance across consecutive `playback-tick-report` broadcasts, or (b) adding the host's source to the wire — (a) preserves this plan's zero-protocol-change property and is preferred unless T002's data shows it is too noisy to be stable. Extend `client/src/playback-sync.test.ts` with unit coverage of the chosen rate derivation before implementing. Then replace the `[OPEN: ...]` marker in `infrastructure.md`'s Session & Real-Time Sync section with the decision and its rationale. [artifacts: infrastructure]
 
-> **BLOCKED (T004) — needs a coordinator decision before implementation.**
-> T002's measurements show the task's (a)/(b) menu is incomplete: neither
-> option turns T002 green on its own.
+> **T004 — STOPPED, work reverted, disposition deferred to the re-plan.**
+> Left unchecked deliberately. The diagnosis phase found the drift seam to be
+> materially different from what this plan assumed, and the plan is being
+> revised rather than extended.
 >
-> - The `localTempoAtTick` premise is **real but not dominant**, and only
->   bites in the **backing-host / synth-participant** direction (29 seeks
->   at Δbpm=10 vs 13 at Δbpm=0.5). Option (a) is the right fix *there*, and
->   the observed tick advance was stable enough to derive a rate from.
-> - The dominant failure is a **constant ~160-tick (~83 ms) latency offset**
->   on any backing-track *participant*, identical at Δbpm=0.5 and Δbpm=10.
->   It exceeds `DRIFT_THRESHOLD_TICKS` (50) permanently and alone accounts
->   for all 200 seeks/20 s. No rate fix touches it — the seek *is* the
->   latency source.
+> What was established (full detail in
+> `.project/plans/research-recording-mode-drift-2026-07-19-b7c2.md`):
 >
-> The change T002 actually needs is a **third option not listed**: skip
-> continuous drift-*extrapolation* entirely for a backing-track participant
-> (the recording is its clock), keeping the status start/pause/stop and
-> explicit-host-seek branches, mirroring the existing `if (isHost) return null`
-> guard. Recommended decision: that third option **plus** option (a) for the
-> backing-host direction.
+> - **T004a — offset root cause.** `correctDrift`'s arithmetic is exact
+>   (host deviation from its own projection is 0 ticks). The dominant fault
+>   is a **per-`play()` start skew of ~275 ms** (not the ~83 ms first
+>   reported — that was an artifact of measuring while correcting). It is
+>   invariant under `bufferTimeInMilliseconds`, and re-rolled on every start
+>   (275 ms → 342 ms across a seek), so **no compensation constant exists**.
+>   A backing-track participant's reported position tracks its own
+>   `HTMLAudioElement.currentTime` to ±5 ms, so the *recording* side is the
+>   accurate one.
+> - **T004b — acceptance criteria.** Defines the ~50 ms bar and, critically,
+>   finds that reported-position alignment **cannot bound audible separation
+>   for a mixed synth/recording pair** (the synth's output latency is
+>   unmeasurable via alphaTab 1.8.3 and absent from the wire) — it may even
+>   *create* a ~275 ms offset. Also records that **T004 is two phenomena**,
+>   the per-start skew AND the unimplemented backing-host rate-keying, so the
+>   task as written was never the whole job.
 >
-> Full data and derivation:
-> `.project/plans/research-recording-mode-drift-2026-07-19-b7c2.md`
-> ("Resolved (T002 / T003)"). Halted here rather than silently expanding the
-> task's scope or editing `infrastructure.md` on an unapproved decision.
+> A calibration mechanism was implemented and then **reverted** under
+> constitution Principle II: it ratcheted (post-seek recalibration re-absorbed
+> accumulated drift as skew), so its low seek count came from correction
+> effectively stopping while participants ended ~900 ms apart.
+> `client/src/playback-sync.ts` is byte-identical to the merge-base; the
+> measurement rig (`client/src/test-harness/RecordingDriftHarness.svelte`)
+> and the T001 fixtures are retained.
 
 - [ ] T005 Using T002's measured seek frequency and peak position divergence at known Δbpm, derive the empirical safe margin for `recordingTempoDivergence` — the Δbpm above which a mixed synth/recording session separates unacceptably. Note that 3.125 BPM is the *correction* threshold (`50 ticks = Δbpm × 16 × 1s`), but the *musical* tolerance is likely tighter, since even uncorrected divergence accumulates ~26ms/sec at that value. Record the chosen margin and its derivation as a named exported constant with an explanatory comment in a new `client/src/recording-divergence-margin.ts`, with unit tests covering the boundary. Note the division of labour: T012 *measures* divergence server-side (a raw number published on `CatalogSong`), and T020 is the **only** consumer that applies this threshold to that number — the server never guards, it only publishes. So the margin is client-only; do not push it into `packages/shared` for a server consumer that does not exist.
 

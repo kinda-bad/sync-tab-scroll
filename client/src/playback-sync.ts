@@ -2,7 +2,6 @@ import * as at from '@coderline/alphatab';
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { PlaybackState, Session } from '@sync-tab-scroll/shared';
 import { TICKS_PER_QUARTER_NOTE, localTempoAtTick } from './tempo-lookup';
-import { MAX_CALIBRATION_SKEW_TICKS, type PositionCalibrator } from './backing-track-calibration';
 
 /** MIDI ticks — small relative to a beat (division is typically 960 ticks/quarter note). */
 const DRIFT_THRESHOLD_TICKS = 50;
@@ -51,24 +50,7 @@ const DRIFT_THRESHOLD_TICKS = 50;
  * round-tripping back as a `status` change, not from a tick-value
  * comparison, so they're safe.
  */
-/**
- * `calibrator`: supplied only for a participant whose local audio source is a
- * backing-track recording (T004). Such an instance reports the position of
- * audio actually *emitted*, while a synth host reports audio it has
- * *scheduled* — a measured ~275 ms disagreement, re-rolled on every `play()`.
- * The calibrator absorbs that per-playback skew at the position-reporting
- * boundary so the comparison below stays in one consistent clock; see
- * `backing-track-calibration.ts` for the measurements and rationale. Omitted
- * (undefined) for a synth participant, which leaves every path below
- * byte-for-byte equivalent to its previous behaviour.
- */
-export function correctDrift(
-  api: AlphaTabApi,
-  playbackState: PlaybackState,
-  isHost: boolean,
-  onApply?: (tick: number) => void,
-  calibrator?: PositionCalibrator,
-): number | null {
+export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void): number | null {
   if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
@@ -80,9 +62,6 @@ export function correctDrift(
     // is one of the triggers for the count-in cursor slide that
     // installCountInCursorGuard guards against (and it feeds the
     // lastProgrammaticTick bookkeeping for no reason).
-    // Each play() re-rolls the backing-track start skew, so any calibration
-    // captured during the previous playback is stale from here on.
-    calibrator?.reset();
     if (api.tickPosition !== playbackState.tickPosition) {
       onApply?.(playbackState.tickPosition);
       api.tickPosition = playbackState.tickPosition;
@@ -92,7 +71,6 @@ export function correctDrift(
     api.play();
     return null;
   } else if (playbackState.status !== 'running' && isPlaying) {
-    calibrator?.reset();
     api.pause();
   }
 
@@ -104,7 +82,6 @@ export function correctDrift(
   // tickPosition already being 0 rather than the isPlaying transition above,
   // since Stop can arrive from either Playing or already-Paused.
   if (playbackState.status === 'stopped' && api.tickPosition !== 0) {
-    calibrator?.reset();
     onApply?.(0);
     api.tickPosition = 0;
     return 0;
@@ -146,48 +123,11 @@ export function correctDrift(
   const elapsedTicks = (elapsedMs * TICKS_PER_QUARTER_NOTE * tempo) / 60000;
   const projectedTickPosition = playbackState.tickPosition + elapsedTicks;
 
-  // Calibrate once per playback, and only once the local backing track is
-  // genuinely under way: at the instant play() is issued both clocks read 0,
-  // so calibrating there would capture a zero skew and miss the real one,
-  // which only emerges as the audio element's asynchronous start completes.
-  if (calibrator && isRunning && api.tickPosition > 0) {
-    calibrator.observe(api.tickPosition, projectedTickPosition);
-  }
-
-  // The comparison happens in the reference (host) clock; the correction is
-  // mapped back into local terms before it is applied, so `api.tickPosition`
-  // and this function's return value stay in the units every caller expects.
-  const localTickInReference = calibrator ? calibrator.toReference(api.tickPosition) : api.tickPosition;
-  const drift = Math.abs(localTickInReference - projectedTickPosition);
-
-  // Until the skew has been captured, the participant must be allowed to
-  // free-run: correcting it would drag its position into agreement with the
-  // projection and so erase the very quantity calibration needs to observe.
-  // (Measured: with correction active throughout, the captured skew came out
-  // at ~150 of ~530 ticks — just the re-drift accumulated since the previous
-  // seek — and the seek storm was completely unfixed.)
-  //
-  // Seek-following is preserved regardless: a real host seek is far larger
-  // than any plausible start skew, so anything of that size is still applied
-  // during the settle window. Only skew-sized differences are tolerated here.
-  if (calibrator && !calibrator.isCalibrated && drift <= MAX_CALIBRATION_SKEW_TICKS) {
-    return null;
-  }
-
+  const drift = Math.abs(api.tickPosition - projectedTickPosition);
   if (drift > DRIFT_THRESHOLD_TICKS) {
-    const target = calibrator ? calibrator.fromReference(projectedTickPosition) : projectedTickPosition;
-    onApply?.(target);
-    api.tickPosition = target;
-    // A seek re-rolls the start skew — T004a measured it moving 275 ms ->
-    // 342 ms across a single pause/seek/replay — and in backing-track mode
-    // the seek also sends the audio element back through decode/re-buffer,
-    // during which its reported position is transiently meaningless.
-    // Dropping the calibration here does both jobs at once: it forces a
-    // fresh measurement of the new skew, and (because an uncalibrated
-    // participant free-runs) it stops the re-buffer transient from being
-    // read as drift and cascading into a burst of further seeks.
-    calibrator?.reset();
-    return target;
+    onApply?.(projectedTickPosition);
+    api.tickPosition = projectedTickPosition;
+    return projectedTickPosition;
   }
   return null;
 }
