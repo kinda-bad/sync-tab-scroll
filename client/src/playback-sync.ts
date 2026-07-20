@@ -266,7 +266,11 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
  * playback-engine at engine creation and via setEngineMetronome().
  */
 export function applyPlaybackSettings(api: AlphaTabApi, session: Session): void {
-  api.countInVolume = session.countInEnabled ? 1 : 0;
+  // Recording mode forces the synth count-in off regardless of
+  // Session.countInEnabled (T016, ui.md): the recording's own intro is the
+  // count-in, and alphaTab cannot sound a synth count-in against a backing
+  // track. The host's toggle stays live for when the session returns to synth.
+  api.countInVolume = session.playbackSource !== 'recording' && session.countInEnabled ? 1 : 0;
 }
 
 /**

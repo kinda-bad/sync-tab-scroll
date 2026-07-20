@@ -468,4 +468,23 @@ describe('applyPlaybackSettings', () => {
     expect(api.countInVolume).toBe(0);
     expect(api.metronomeVolume).toBe(before);
   });
+
+  // T016: recording mode forces the synth count-in off regardless of the host's
+  // countInEnabled toggle — the recording's own intro is the count-in.
+  it('forces countInVolume to 0 in recording mode even when countInEnabled is true', () => {
+    const api = fakeApi();
+    applyPlaybackSettings(api, fakeSession({ countInEnabled: true, playbackSource: 'recording' }));
+    expect(api.countInVolume).toBe(0);
+  });
+
+  // The host's toggle must remain live for the synth source.
+  it('still honors the count-in toggle for the synth source', () => {
+    const enabled = fakeApi();
+    applyPlaybackSettings(enabled, fakeSession({ countInEnabled: true, playbackSource: 'synth' }));
+    expect(enabled.countInVolume).toBe(1);
+
+    const disabled = fakeApi();
+    applyPlaybackSettings(disabled, fakeSession({ countInEnabled: false, playbackSource: 'synth' }));
+    expect(disabled.countInVolume).toBe(0);
+  });
 });

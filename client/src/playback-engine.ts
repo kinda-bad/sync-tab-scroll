@@ -135,7 +135,8 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // Recording mode plays the song's operator-supplied backing track instead of
   // the synth (datamodel.md Session.playbackSource); playerMode is fixed at
   // construction, which is why a source change rebuilds the engine (above).
-  const recording = playbackSource === 'recording'
+  const isRecording = playbackSource === 'recording';
+  const recording = isRecording
     ? { playerMode: PlayerMode.EnabledBackingTrack, recordingPath: song.recordingPath ?? undefined, syncPoints: song.syncPoints ?? undefined }
     : undefined;
   const api = isLyricsPart
@@ -149,8 +150,10 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
 
   // Keeps the beat cursor still while the count-in bar plays (see the
   // guard's own doc comment). Installed for the headless engine too — it has
-  // no cursor DOM, so the handler simply never gets invoked there.
-  installCountInCursorGuard(api);
+  // no cursor DOM, so the handler simply never gets invoked there. Skipped in
+  // recording mode (T016): there is no synth count-in against a backing track,
+  // so the guard has nothing to protect against.
+  if (!isRecording) installCountInCursorGuard(api);
 
   state = { api, songId: song.id, playbackSource, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
   // A fresh engine always starts with the overlay shown (matches
@@ -405,7 +408,9 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     countInTimers = [];
   };
   api.playerStateChanged.on((e) => {
-    if (e.state === atLib.synth.PlayerState.Playing && api.countInVolume > 0 && api.score) {
+    // Count-in scheduling is bypassed in recording mode (T016) — the recording's
+    // own intro is the count-in, and countInVolume is forced to 0 there anyway.
+    if (!isRecording && e.state === atLib.synth.PlayerState.Playing && api.countInVolume > 0 && api.score) {
       const startTick = api.tickPosition;
       const pos = beatAtTick(api.score, startTick);
       const stepMs = beatDurationMs(api.score, startTick);
