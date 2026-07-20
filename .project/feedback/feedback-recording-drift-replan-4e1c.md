@@ -1,5 +1,5 @@
 ---
-status: open
+status: planned
 created: 2026-07-19
 ---
 
@@ -26,7 +26,7 @@ exposed by alphaTab 1.8.3's public API.
 
 ## Bugs
 
-- [ ] F001 `DRIFT_THRESHOLD_TICKS = 50` is a fixed *tick* count, so the
+- [x] F001 `DRIFT_THRESHOLD_TICKS = 50` is a fixed *tick* count, so the
   real tolerance it enforces varies with tempo: 52ms at 60bpm, 26ms at
   120bpm, 13ms at 240bpm. It gets **stricter as tempo rises**, which is
   backwards, and above ~58bpm it is tighter than the ~50ms separation a
