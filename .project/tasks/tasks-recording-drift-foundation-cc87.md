@@ -27,7 +27,7 @@ status: in-progress
 
 ## Phase 2: Catalog Assets & Delivery
 
-- [ ] T006 [parallel] Re-export alphaTab's `FlatSyncPoint` type from `packages/shared/src/index.ts` rather than redefining it (constitution Principles V and VI — a bespoke shape was rejected in datamodel.md because alphaTab already round-trips this structure via `Score.applyFlatSyncPoints()`/`exportFlatSyncPoints()`). Add a `*.type-test.ts` assertion that the re-export stays structurally identical to alphaTab's own declaration, so an upstream shape change fails loudly. [artifacts: datamodel]
+- [x] T006 [parallel] Re-export alphaTab's `FlatSyncPoint` type from `packages/shared/src/index.ts` rather than redefining it (constitution Principles V and VI — a bespoke shape was rejected in datamodel.md because alphaTab already round-trips this structure via `Score.applyFlatSyncPoints()`/`exportFlatSyncPoints()`). Add a `*.type-test.ts` assertion that the re-export stays structurally identical to alphaTab's own declaration, so an upstream shape change fails loudly. [artifacts: datamodel]
 
 - [ ] T007 [parallel] Add `recordingPath: string | null` and `syncPoints: FlatSyncPoint[] | null` to the `CatalogSong` interface in `packages/shared/src/index.ts`. Both are nullable and absent for a non-recording song, so no existing consumer changes. Note `recordingTempoDivergence` from the superseded plan is deliberately NOT added — with session-wide source, participants always hear identical audio, so tempo divergence cannot separate them and the field would be dead weight (Principle II). Update existing `CatalogSong` fixtures/builders to satisfy the new fields. [artifacts: datamodel]
 
