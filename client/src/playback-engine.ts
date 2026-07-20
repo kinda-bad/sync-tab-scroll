@@ -1,5 +1,6 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
+import { PlayerMode } from '@coderline/alphatab';
 import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { loadStoredMetronome } from './metronome-preference';
@@ -59,6 +60,14 @@ interface EngineState {
    * kind-change path.
    */
   songId: string;
+  /**
+   * The session audio source this engine was built for (datamodel.md
+   * Session.playbackSource). alphaTab fixes `playerMode` at construction, so a
+   * source switch needs a full teardown/rebuild — the same trigger shape as a
+   * song change (infrastructure.md), reusing that path rather than a parallel
+   * one (T015).
+   */
+  playbackSource: Session['playbackSource'];
   overlay?: LyricsOverlay;
   isLyricsPart: boolean;
   trackIndex: number;
@@ -95,12 +104,14 @@ let state: EngineState | undefined;
  * 'lyrics' part changes engine kind entirely (visible renderer vs. headless
  * player), so that case tears down and recreates from scratch instead.
  */
-export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsClient, song: CatalogSong, trackIndex: number, isLyricsPart: boolean): void {
+export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsClient, song: CatalogSong, trackIndex: number, isLyricsPart: boolean, playbackSource: Session['playbackSource'] = 'synth'): void {
   if (state) {
-    if (state.songId !== song.id || state.isLyricsPart !== isLyricsPart) {
-      // Song changed (or engine kind changed): the loaded score, lyrics
-      // overlay/lrc DOM, and synth state all belong to the old song — tear
-      // down and rebuild rather than trying to reload in place (F001).
+    if (state.songId !== song.id || state.isLyricsPart !== isLyricsPart || state.playbackSource !== playbackSource) {
+      // Song changed, engine kind changed, or the session's audio source
+      // changed: the loaded score, lyrics overlay/lrc DOM, and synth/backing
+      // state all belong to the old configuration — and alphaTab fixes
+      // playerMode at construction, so a source switch can't be mutated live.
+      // Tear down and rebuild rather than reloading in place (F001, T015).
       destroyEngine();
     } else if (!isLyricsPart && state.trackIndex !== trackIndex) {
       if (state.score) switchTrack(state.api, state.score, trackIndex);
@@ -121,7 +132,15 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   const theme: Theme =
     datasetTheme === 'light' || datasetTheme === 'cyberpunk-dark' || datasetTheme === 'cyberpunk-light' ? datasetTheme : 'dark';
 
-  const api = isLyricsPart ? createHeadlessPlayer(song.gpFilePath, trackIndex) : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme });
+  // Recording mode plays the song's operator-supplied backing track instead of
+  // the synth (datamodel.md Session.playbackSource); playerMode is fixed at
+  // construction, which is why a source change rebuilds the engine (above).
+  const recording = playbackSource === 'recording'
+    ? { playerMode: PlayerMode.EnabledBackingTrack, recordingPath: song.recordingPath ?? undefined, syncPoints: song.syncPoints ?? undefined }
+    : undefined;
+  const api = isLyricsPart
+    ? createHeadlessPlayer(song.gpFilePath, trackIndex, recording)
+    : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme, ...recording });
 
   // Metronome is a client-local personal preference (ui.md Preferences
   // tab), not session state — applied once at creation and thereafter via
@@ -133,7 +152,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   // no cursor DOM, so the handler simply never gets invoked there.
   installCountInCursorGuard(api);
 
-  state = { api, songId: song.id, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
+  state = { api, songId: song.id, playbackSource, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
   // A fresh engine always starts with the overlay shown (matches
   // `showOverlay: true` above) — resets any stale `false` left over from a
   // previous song/session (T004).
@@ -150,7 +169,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
   warmUpAudioOutput(api);
   api.playerReady.on(() => warmUpAudioOutput(api));
 
-  reportAssetReadiness(wsClient, api);
+  reportAssetReadiness(wsClient, api, { recording: playbackSource === 'recording' });
 
   // The engine is created (and its first render fires) while still in the
   // Lobby, with the tab container hidden via `display:none` (T011c) —

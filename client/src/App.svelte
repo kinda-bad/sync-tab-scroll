@@ -69,7 +69,7 @@
     if (song) {
       const part = session!.availableParts.find((p) => p.trackIndex === participant!.selectedPart);
       const trackIndex = isLyricsPart ? (song.lyricsTrackIndex ?? 0) : (part?.trackIndex ?? 0);
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart);
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource);
     }
   }
 

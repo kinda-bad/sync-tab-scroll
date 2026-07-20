@@ -547,3 +547,43 @@ test('a song switch with the same track index loads the new song (not the stale 
   await page.waitForTimeout(500);
   expect(pageErrors).toEqual([]);
 });
+
+/**
+ * T015: alphaTab fixes playerMode at construction, so a Session.playbackSource
+ * change (synth -> recording) must tear down and rebuild the engine — reusing
+ * the same rebuild path as a song change. Asserts the rebuild happened (a fresh
+ * api instance) and that the new engine is a backing-track player (playerMode
+ * EnabledBackingTrack), not the synth.
+ */
+test('a session audio-source switch rebuilds the engine as a backing-track player', async ({ mount, page }) => {
+  const recordingRoot = path.resolve(__dirname, '../test-fixtures/fixture-catalog/recording-aligned');
+  const recMp3 = fs.readFileSync(path.join(recordingRoot, 'recording.mp3'));
+  const recSyncPoints = JSON.parse(fs.readFileSync(path.join(recordingRoot, 'meta.json'), 'utf8')).syncPoints;
+  // The recording engine reuses the same fixture.gp already routed in beforeEach
+  // for its notation; only the mp3 needs its own route.
+  await page.route('**/recording.mp3', (route) => route.fulfill({ body: recMp3, contentType: 'audio/mpeg' }));
+
+  const component = await mount(PlaybackEngineHarness, {
+    props: { gpFilePath: '/fixture.gp', trackIndex: 0, recordingPath: '/recording.mp3', syncPoints: recSyncPoints },
+  });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  const before = await page.evaluate(() => {
+    const api = (window as unknown as { __getApi: () => { settings: { player: { playerMode: number } } } }).__getApi();
+    return { playerMode: api.settings.player.playerMode };
+  });
+  // Synth engine: playerMode is the default (not EnabledBackingTrack === 3).
+  expect(before.playerMode).not.toBe(3);
+
+  await page.evaluate(() => (window as unknown as { __switchSource: (s: string) => void }).__switchSource('recording'));
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  const after = await page.evaluate(async () => {
+    const api = (window as unknown as { __getApi: () => { settings: { player: { playerMode: number } } } }).__getApi();
+    return { playerMode: api.settings.player.playerMode };
+  });
+  expect(after.playerMode).toBe(3);
+
+  await page.waitForTimeout(300);
+  expect(pageErrors).toEqual([]);
+});

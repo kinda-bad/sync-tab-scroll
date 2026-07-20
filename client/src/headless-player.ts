@@ -1,3 +1,5 @@
+import type * as at from '@coderline/alphatab';
+import type { FlatSyncPoint } from '@sync-tab-scroll/shared';
 import { createTabRenderer } from './tab-renderer';
 
 /**
@@ -8,12 +10,16 @@ import { createTabRenderer } from './tab-renderer';
  * real element (alphaTab's browser facade requires one) kept out of the
  * visible layout rather than appended to it.
  */
-export function createHeadlessPlayer(gpFilePath: string, trackIndex: number) {
+export function createHeadlessPlayer(
+  gpFilePath: string,
+  trackIndex: number,
+  recording?: { playerMode: at.PlayerMode; recordingPath?: string; syncPoints?: FlatSyncPoint[] },
+) {
   const container = document.createElement('div');
   container.style.display = 'none';
   document.body.appendChild(container);
 
-  const api = createTabRenderer({ container, gpFilePath, trackIndex });
+  const api = createTabRenderer({ container, gpFilePath, trackIndex, ...recording });
 
   const originalDestroy = api.destroy.bind(api);
   api.destroy = () => {

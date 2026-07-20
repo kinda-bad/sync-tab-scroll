@@ -14,6 +14,11 @@
   // reimplementing that logic in the harness itself.
   export let isLyricsPart = false;
   export let lyricsLrc: string | null = null;
+  // T015: lets a CT test drive a session audio-source switch (synth ->
+  // recording) through the real ensurePlaybackEngine rebuild path. The
+  // recording-capable song variant carries these when switching to recording.
+  export let recordingPath: string | null = null;
+  export let syncPoints: import('@sync-tab-scroll/shared').FlatSyncPoint[] | null = null;
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -95,6 +100,15 @@
     ) => {
       const newSong: CatalogSong = { ...song, id: newSongId, name: newSongId, gpFilePath: newGpFilePath };
       ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, newSong, newTrackIndex, isLyricsPart);
+    };
+
+    // Test-only (T015): mirrors App.svelte re-invoking ensurePlaybackEngine
+    // when the session's playbackSource changes. Switching to recording feeds
+    // the recording-capable variant (recordingPath + syncPoints) so the rebuilt
+    // engine can attach the backing track.
+    (window as unknown as { __switchSource: (source: 'synth' | 'recording') => void }).__switchSource = (source) => {
+      const nextSong: CatalogSong = source === 'recording' ? { ...song, recordingPath, syncPoints } : song;
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, nextSong, trackIndex, isLyricsPart, source);
     };
   });
 </script>
