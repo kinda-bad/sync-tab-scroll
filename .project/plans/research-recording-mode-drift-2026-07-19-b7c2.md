@@ -272,3 +272,147 @@ not list, and T002 cannot go green without it.
 inside a 50-tick threshold — seeks are unavoidable *if you insist on
 syncing them*. "Everyone on the recording" is safe at any Δbpm; the mixed
 case is what T020's guard must refuse or warn about.
+
+---
+
+## Resolved (T004a — offset root cause)
+
+Investigation of the constant offset that dominates T002's seek storm,
+ordered by the coordinator before any correction strategy is chosen. All
+numbers are from real alphaTab 1.8.3 under Playwright CT, headless
+Chromium, against the `recording-aligned` fixture (Δbpm = 0.5, so tempo
+divergence contributes ≈8 ticks/s and cannot account for anything below).
+
+### First, a correction to the T002 write-up
+
+T002 reported the offset as "~160 ticks (~83 ms)". **That number was an
+artifact of the measurement**: it was taken from *corrected* runs, where
+`correctDrift` was re-seeking every 100 ms and continuously suppressing
+the very quantity being measured. The honest free-running figure is
+**≈ −452 ticks ≈ −235 ms**, and measured directly against real audio
+output (below) it is **≈ 275 ms**. The two-cause structure of the T002
+finding is unaffected; only the magnitude was wrong.
+
+### What was measured
+
+**1. The projection is not at fault.** Instrumenting `correctDrift`'s own
+internals at each sample and recording the host's *own* deviation from the
+projection it produces:
+
+| config | participant drift | host drift |
+|---|---|---|
+| synth host / synth participant | −0 ticks | −0 ticks |
+| synth host / **backing** participant | **−452 ticks (−235 ms)** | **0 ticks** |
+
+`hostDrift ≈ 0` exactly, and flat across the whole 0–1000 ms broadcast
+window (−454 ticks at 0–250 ms, −449 at 750–1000 ms). So
+`localTempoAtTick`, the extrapolation and the 1 Hz broadcast cadence are
+all doing their job perfectly. The displacement is entirely in the
+backing-track participant's reported position.
+
+**2. The backing-track side is the ACCURATE one.** Reading the
+`HTMLAudioElement` alphaTab creates (one element, `blob:` src) alongside
+both instances:
+
+```
+wall=4268   hostTimeMs=3373   partTimeMs=3090   audio.currentTime=3095
+wall=10286  hostTimeMs=9387   partTimeMs=9115   audio.currentTime=9113
+wall=12293  hostTimeMs=11395  partTimeMs=11124  audio.currentTime=11120
+```
+
+`partTimeMs` tracks `audio.currentTime` **to within ~5 ms at every
+sample**. `currentTime` is the browser's report of actually-emitted audio,
+so alphaTab's backing-track position reporting is faithful to real output.
+The synth instance reads ~275 ms *ahead* of that. This is the direction
+the coordinator flagged as likely — the recording is not "late", the two
+clocks simply disagree — and it is measured, not inferred.
+
+**3. It is NOT the configurable output buffer.** `bufferTimeInMilliseconds`
+(default 500) was varied across an order of magnitude:
+
+| `bufferTimeInMilliseconds` | synth lead over real audio output |
+|---|---|
+| 250 | 280 ms |
+| 500 | 281 ms |
+| 1000 | 275 ms |
+| 2000 | 275 ms |
+
+Completely invariant. This **falsifies** the obvious hypothesis (that the
+lead is half the 500 ms synth buffer — 250 ms is temptingly close to the
+observed value, and alphaTab's core does contain a `halfBufferCount`
+term). It is a coincidence. `BufferSize = 4096` / `BufferCount = 32` do
+not map to it either. alphaTab 1.8.3 still exposes no `outputLatency` or
+`AudioContext` on its public API, so the dead end recorded in
+`feedback-audio-output-latency-t014-dfa8.md` and plan-1619 Phase 3 **still
+holds** and was not re-derived further.
+
+**4. It is a per-playback START SKEW, not a fixed constant.** The decisive
+test — measure the offset, then pause, seek both instances to tick 20000,
+replay, and measure again:
+
+```
+PHASE 1 (from tick 0)     mean=275 ms   min=272  max=277
+PHASE 2 (after seek)      mean=342 ms   min=339  max=344
+```
+
+Within a playback the offset is rock-stable (±3 ms spread over ~4 s of
+sampling — both clocks run at exactly real time). Across playback starts
+it **changes by 67 ms**. Four independent mounts in test 3 gave
+275/275/280/281 ms, so it is reproducible for a given start but not a
+constant of the system.
+
+### Conclusion: what the offset is
+
+**A start-alignment skew between the synth clock and the
+`HTMLAudioElement`.** alphaTab does not tightly co-schedule the audio
+element's start with the synth's tick clock: `HTMLAudioElement.play()`
+completes asynchronously after decode/buffer, and whatever delay that
+takes on a given start becomes a fixed offset for the whole of that
+playback. Both clocks then advance at exactly real time, which is why the
+offset is flat within a phase and why no amount of tempo/rate correction
+touches it.
+
+**Is it eliminable at source? Partly, and not by a constant.** Because the
+value is re-rolled on every start/seek, no named compensation constant can
+exist — that route is closed, which is precisely the "unexplained number
+calcifying into a workaround" outcome the coordinator wanted to avoid.
+The two real options are (a) measure the skew once per playback start and
+apply a single correction, rather than seek-chasing it continuously at
+10 Hz, or (b) stop comparing the two clocks at all for a backing-track
+participant, since the recording is provably ground truth for what that
+participant hears.
+
+**If compensation is needed, it belongs at the position-reporting
+boundary, not in `correctDrift`.** `correctDrift`'s arithmetic is
+demonstrably correct (`hostDrift = 0`); adding an offset term there would
+be compensating in the wrong place, and would not generalise to the other
+consumers of position (lyrics ticker, beat widget, cursor) that read
+`playerPositionChanged` directly.
+
+### What this does NOT establish (explicitly)
+
+**The incidental lyrics-ticker connection is NOT supported by this data.**
+Hypothesis 1 in the brief — that the synth reports ahead of its own
+audible output, which would explain the existing synth-only ticker lead
+(`feedback-audio-output-latency-t014-dfa8.md`, `feedback-lyrics-timing-tiro-c741.md`
+F001) — would require an independent ground truth for the *synth's* real
+output, which this run never obtained. Everything above is synth-relative-
+to-recording. Worse for that hypothesis, the 67 ms shift across starts
+points at the variable-latency component being on the **audio element**
+side, not the synth side. So this investigation neither confirms nor
+refutes the ticker-lead theory, and should not be cited as evidence for
+it. Establishing it would need a genuine external reference (e.g. loopback
+capture, or a patched `AudioContext` with a start anchor) — not attempted.
+
+### Recommendation for T004 (not implemented — awaiting decision)
+
+Option (b): a backing-track participant should not be time-extrapolated
+against another clock at all. Per the coordinator's correction, this must
+**keep** the drift-comparison block so host seeks are still followed
+(non-hosts follow seeks through that block, and seek-while-paused relies
+on it with `elapsedTicks = 0`) — the change is to drop the *time-based
+extrapolation term*, not to `return null`. Note that this alone is still
+insufficient with the current 50-tick threshold: a 275–342 ms start skew
+is 528–657 ticks, so the comparison would still trip every sample. The
+threshold, or the position the comparison is made against, has to absorb
+the start skew too. That is the open design question T004 now turns on.

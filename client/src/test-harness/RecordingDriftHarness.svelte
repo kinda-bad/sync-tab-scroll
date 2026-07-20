@@ -11,6 +11,8 @@
   export let participantSynth = false;
   /** Diagnosis mode: put the HOST on the backing track (the inverse of the default config). */
   export let hostBacking = false;
+  /** T004a: vary the synth output buffer to test whether the position lead scales with it. */
+  export let synthBufferMs: number | null = null;
 
   let hostContainer: HTMLDivElement;
   let participantContainer: HTMLDivElement;
@@ -52,6 +54,7 @@
       hostSettings.player.playerMode = at.PlayerMode.EnabledBackingTrack;
     } else {
       hostSettings.player.soundFont = '/soundfont/sonivox.sf2';
+      if (synthBufferMs !== null) hostSettings.player.bufferTimeInMilliseconds = synthBufferMs;
     }
     const host = new at.AlphaTabApi(hostContainer, hostSettings);
     const errors: string[] = [];
@@ -125,14 +128,36 @@
 
       // Sample much faster than the broadcast, mirroring the store
       // subscription that re-runs correctDrift on every store update.
-      const samples: { atMs: number; before: number; after: number; hostTick: number; applied: number | null }[] = [];
+      const samples: {
+        atMs: number;
+        before: number;
+        after: number;
+        hostTick: number;
+        applied: number | null;
+        // Observation copies of correctDrift's own internal quantities, so
+        // the ROOT CAUSE of a seek is visible rather than just its fact.
+        elapsedMs: number;
+        projected: number;
+        drift: number;
+        hostDrift: number;
+      }[] = [];
       const sampler = setInterval(() => {
         const atMs = Date.now() - startedAt;
         const before = participant.tickPosition;
         divergences.push({ atMs, ticks: Math.abs(before - host.tickPosition) });
+
+        // Mirror of correctDrift's extrapolation, computed BEFORE calling it
+        // so the numbers describe the same instant the real decision uses.
+        const elapsedMs = Date.now() - broadcast.serverTimestamp;
+        const projected = broadcast.tickPosition + (elapsedMs * 960 * 120) / 60000;
+        const drift = before - projected;
+        // The host's OWN deviation from the same projection: if this is ~0 the
+        // projection faithfully tracks the host, so any participant drift is real.
+        const hostDrift = host.tickPosition - projected;
+
         const applied = correct ? correctDrift(participant, broadcast, false, undefined) : null;
         if (applied !== null) seekTicks.push({ atMs, tick: applied });
-        samples.push({ atMs, before, after: participant.tickPosition, hostTick: host.tickPosition, applied });
+        samples.push({ atMs, before, after: participant.tickPosition, hostTick: host.tickPosition, applied, elapsedMs, projected, drift, hostDrift });
       }, 100);
 
       await new Promise((r) => setTimeout(r, durationMs));
