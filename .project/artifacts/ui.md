@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-19
+last_updated: 2026-07-20
 diagram_type: graph TD
 render_section: UI
 diagram_status: stale
@@ -615,47 +615,41 @@ tracks in that mix, and it is personal — see below.
 **Recording-mode carve-out** (`sync-tabs-to-real-audio`). The paragraph
 above describes the **synth** audio source, which stays the default and
 the only source for songs with no recording. Where a song ships an
-operator-supplied recording (`CatalogSong.recordingPath` +
-`syncPoints`, datamodel.md), each participant may personally switch that
-song's audio source to **recording**. This is a scoped carve-out of the
-full-mix decision, not a reversal: the multi-track mix still loads and
-still renders — it simply doesn't *sound*; the recording does.
+operator-supplied recording (`CatalogSong.recordingPath` + `syncPoints`,
+datamodel.md), the host may switch the session to the **recording**
+source. This is a scoped carve-out of the full-mix decision, not a
+reversal: the multi-track mix still loads and still renders — it simply
+doesn't *sound*; the recording does.
 
-Audio source is a **per-participant personal preference**, in the same
-family as the metronome and mute-parts preferences: one participant can
-follow the real recording while another in the same session hears the
-synth. It is not a host control and never goes on the wire — the host
-remains the clock authority through the same `tickPosition` surface
-regardless of what anyone is listening to (infrastructure.md).
+Audio source is a **session-wide, host-controlled setting**
+(`Session.playbackSource`), in the same family as `countInEnabled` —
+**deliberately not a per-participant preference.** A per-participant
+version was designed, then rejected on measurement
+(`research-recording-mode-drift-2026-07-19-b7c2.md`): a session mixing
+synth and recording listeners cannot be held in audible sync, because
+forcing two clients' *reported* positions to agree produces audible
+separation equal to the difference in their reported-vs-real-audio
+latencies — ~0 for a recording client but unknown and plausibly ~275ms
+for a synth one. Aligning them would *create* an offset rather than
+remove one. Everyone-on-the-same-source removes that failure mode by
+construction, and is why no mixed-session warning UI is needed: the
+state it would warn about cannot arise.
 
 Because alphaTab cannot mix synthesized audio with a backing track, a
-participant in recording mode loses every synth-channel control, **for
-that participant only** (all three were already per-device, so this
-scopes naturally):
+session in recording mode suspends every synth-channel control for all
+participants:
 
 - **Per-part mute/solo** and **"hear only my part"** — disabled, with an
   explanatory reason rather than a silently inert control.
 - **The personal metronome preference** — disabled, same treatment.
-- **Count-in** — a recording-mode participant locally ignores
-  `Session.countInEnabled`; the recording's own intro *is* the count-in.
-  The host's count-in toggle stays functional for everyone else in the
-  session, and nothing about the session-level setting changes.
+- **Count-in** — ignored in recording mode; the recording's own intro
+  *is* the count-in. The host's count-in toggle stays meaningful for
+  when the session returns to the synth source.
 
-The source control itself lives with the personal preferences in the
-settings modal (not in host controls), and appears only for a song that
-is actually recording-capable.
-
-**Mixed-source guard.** On a song whose recording tempo diverges
-materially from the notated tempo
-(`CatalogSong.recordingTempoDivergence`, datamodel.md), a session
-containing both synth and recording listeners will audibly separate —
-this is a real musical limit, not a bug to be corrected away
-(infrastructure.md Recording Playback Mode). Such a song surfaces the
-constraint at the point of choice rather than mid-performance.
-[OPEN: whether a divergent song disables the recording source outright,
-or permits it with a warning only when the session is actually mixed —
-the second preserves the "everyone on the recording" case, which is
-perfectly safe even at high divergence.]
+The source control is host-only and lives with the other host playback
+controls, appearing only for a song that is actually recording-capable.
+Participants see the current source but cannot change it — the same
+read-only-for-non-hosts shape the existing host playback controls use.
 
 Both renderings share alphaTab's native metronome and count-in
 (`metronomeVolume`, `countInVolume` — both off by default; count-in is

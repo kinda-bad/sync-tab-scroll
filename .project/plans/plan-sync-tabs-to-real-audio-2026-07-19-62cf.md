@@ -1,5 +1,5 @@
 ---
-status: approved
+status: superseded
 branch: sync-tabs-to-real-audio
 created: 2026-07-19
 features: [sync-tabs-to-real-audio]

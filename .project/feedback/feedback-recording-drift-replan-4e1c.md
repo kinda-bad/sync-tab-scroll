@@ -42,7 +42,7 @@ exposed by alphaTab 1.8.3's public API.
   50ms bar preserves today's 120bpm behavior while making it
   tempo-stable. `[artifacts: infrastructure]`
 
-- [ ] F002 A backing-track participant carries a **per-`play()` start
+- [x] F002 A backing-track participant carries a **per-`play()` start
   skew of ~275ms** against the host's reported position. It is invariant
   under `bufferTimeInMilliseconds` (250→2000ms gave 280/281/275/275, so
   the "half the buffer" explanation is a coincidence), stable to ±3ms
@@ -60,7 +60,7 @@ exposed by alphaTab 1.8.3's public API.
 
 ## Reconsidered
 
-- [ ] F003 The plan's T004 was written as a single bounded fix with an
+- [x] F003 The plan's T004 was written as a single bounded fix with an
   (a)/(b) menu. It is actually **two independent phenomena**, and the
   revised plan must treat them as separate work: (i) the per-start skew
   above, and (ii) the original backing-*host* notated-vs-recording rate
@@ -70,7 +70,7 @@ exposed by alphaTab 1.8.3's public API.
   notated while the host advances at the recording's tempo). A working
   fix for (i) does not complete T004. `[artifacts: infrastructure]`
 
-- [ ] F004 **Compensation belongs at the host's reporting boundary, not
+- [x] F004 **Compensation belongs at the host's reporting boundary, not
   in `correctDrift`.** `correctDrift`'s arithmetic was instrumented and
   is exact — the host's deviation from its own projection is 0 ticks,
   flat across the whole broadcast window — so a correction term added
@@ -85,7 +85,7 @@ exposed by alphaTab 1.8.3's public API.
   it (loopback capture or an external reference), or an explicit decision
   to proceed without it. `[artifacts: infrastructure]`
 
-- [ ] F005 **Mixed-source sessions are materially worse than assumed when
+- [x] F005 **Mixed-source sessions are materially worse than assumed when
   per-participant audio source was chosen.** Forcing two clients'
   *reported* positions to agree yields audible separation equal to the
   difference in their reported-vs-real-audio latencies. For a recording
@@ -103,14 +103,14 @@ exposed by alphaTab 1.8.3's public API.
   which was given on the basis that mixing was safe at low Δbpm.
   `[artifacts: ui, infrastructure]`
 
-- [ ] F006 The `recordingTempoDivergence` safe margin derives to
+- [x] F006 The `recordingTempoDivergence` safe margin derives to
   **Δbpm ≈ 6** at the ~1s broadcast cadence (where a mixed pair drifts a
   full 50ms between corrections) — notably *looser* than the 3.125 the
   original plan started from, which was the *correction* threshold rather
   than a perceptual one. Supersedes the plan's T005 derivation.
   `[artifacts: datamodel]`
 
-- [ ] F007 **Seek count is the wrong acceptance criterion** and must not
+- [x] F007 **Seek count is the wrong acceptance criterion** and must not
   be the primary gate in the revised plan. A low seek count is trivially
   achievable by ceasing to correct: the reverted calibration scored
   200:2 seeks while leaving participants **~900ms apart**. The gate must

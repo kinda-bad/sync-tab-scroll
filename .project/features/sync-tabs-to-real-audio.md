@@ -2,8 +2,8 @@
 slug: sync-tabs-to-real-audio
 status: tasked
 logged: 2026-07-19
-plan: plan-sync-tabs-to-real-audio-2026-07-19-62cf.md
-tasks: tasks-sync-tabs-to-real-audio-cb85.md
+plan: plan-recording-drift-foundation-2026-07-20-9ca3.md
+tasks: tasks-recording-drift-foundation-cc87.md
 ---
 
 Sync tab playback (cursor, lyrics ticker, session position) to a real

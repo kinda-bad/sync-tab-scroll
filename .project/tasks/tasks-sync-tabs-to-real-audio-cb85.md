@@ -1,7 +1,7 @@
 ---
 plan: plan-sync-tabs-to-real-audio-2026-07-19-62cf.md
 generated: 2026-07-19
-status: in-progress
+status: abandoned
 ---
 
 # Tasks

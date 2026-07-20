@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-19
+last_updated: 2026-07-20
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: stale
@@ -93,26 +93,44 @@ rate the host's clock advances at: a synth-source host advances at the
 score's notated tempo (the `tempoAutomations` walk above), while a
 recording-source host advances at the sync-point-derived tempo. These are
 different collections in alphaTab's model — `MasterBar.syncPoints` is
-separate from `MasterBar.tempoAutomations`, and `syncBpm` is expressly
-"the BPM the song will have virtually after this sync point" — so a
-tempo-automation walk **never** sees the recording's effective rate. Using
-the notated rate against a recording-driven clock accumulates error at
-`elapsed_s × Δbpm × 16` ticks, crossing the 50-tick threshold within one
-report interval once Δbpm exceeds ~3.1 — producing a corrective seek
-roughly every second, which in backing-track mode re-seeks the audio
-element. This is a property of the *source mismatch*, not of
-per-participant mode: it would occur identically in a
-uniform-recording-mode session, so the rate must be host-keyed regardless
-of how audio source is scoped.
+separate from `MasterBar.tempoAutomations` — so a tempo-automation walk
+**never** sees the recording's effective rate. Confirmed empirically:
+drift accumulates at exactly `elapsed_s × Δbpm × 16` ticks.
 
-Because the host's source is not on the wire (datamodel.md
-`PlaybackState`), it is inferred from the same information every client
-already has: the selected song's `syncPoints` plus the host's reported
-tick advance. [OPEN: whether to infer the host's effective rate from
-observed tick advance across consecutive reports, or to put the host's
-source on the wire after all — the former keeps the zero-protocol-change
-property, the latter is simpler to reason about. Retire with the Phase 1
-skewed-recording test.]
+**Two further findings from the Phase 1 diagnosis materially constrain
+this section, and are open work rather than settled design:**
+
+1. **`correctDrift`'s arithmetic is exact and must not be adjusted.**
+   Instrumented, the host's deviation from its own projection is 0 ticks,
+   flat across the broadcast window. Any compensation term added there
+   would corrupt a correct function.
+2. **A backing-track client carries a per-`play()` start skew of ~275ms**
+   against a synth host's reported position — invariant under buffer
+   size, stable within a playback, and **re-rolled on every start**
+   (275ms → 342ms across a seek), because `HTMLAudioElement.play()`
+   completes asynchronously after decode/buffer. **No compensation
+   constant can exist.** The skew alone exceeds the drift threshold
+   permanently.
+
+The root cause is that `PlaybackState.tickPosition` does not mean the
+same thing for every host: a synth host reports *scheduled* position
+(ahead of audible output by an amount alphaTab 1.8.3 does not expose),
+while a backing-track host's reported position tracks its own
+`HTMLAudioElement.currentTime` to ±5ms. **Compensation therefore belongs
+at the host's reporting boundary** — broadcast emitted position, not
+scheduled — which is one change in one place and would benefit the
+synth-only path too.
+
+[OPEN: establishing the synth path's own output latency, which alphaTab
+1.8.3 does not expose and which the host-reporting-boundary fix needs.
+Requires an external reference (loopback capture or an instrumented
+`AudioContext` anchor), or an explicit decision to proceed without it.]
+
+**Acceptance criterion.** Participant separation is measured against a
+**~50ms** bar, with **end-state separation as the gate — never corrective
+seek count**, which is trivially minimised by ceasing to correct (a
+rejected calibration scored 2 seeks while leaving participants ~900ms
+apart).
 
 Realtime session state is server-memory-only: an idle-TTL timer destroys
 empty sessions, and a server restart drops active ones. The empty-session
@@ -536,9 +554,9 @@ classes, which would let this be revisited if it lands upstream.
 
 ### Recording Playback Mode
 
-`sync-tabs-to-real-audio`. When a participant selects the **recording**
-audio source for a recording-capable song (ui.md — a per-participant
-personal preference, not a session setting), that participant's alphaTab
+`sync-tabs-to-real-audio`. When the host switches the session to the **recording**
+audio source for a recording-capable song (ui.md — a host-controlled
+session setting), every participant's alphaTab
 instance is built with `settings.player.playerMode =
 PlayerMode.EnabledBackingTrack` instead of the default synthesizer mode,
 with the song's `recording.mp3` supplied as the score's backing track and
@@ -559,8 +577,8 @@ Two existing mechanisms need mode branches:
 - **Readiness** currently gates on `scoreLoaded && soundFontLoaded`. A
   backing-track instance loads no sound font and may never fire
   `soundFontLoaded` at all, so in recording mode readiness is
-  `scoreLoaded` + backing-track load. This branches on the **local**
-  participant's own source, since readiness is a per-participant fact.
+  `scoreLoaded` + backing-track load, for every participant in a
+  recording-mode session.
 - **Count-in** scheduling and the count-in cursor guard both key off
   synth count-in volume and must be bypassed in recording mode — see
   ui.md for the user-visible stance (the recording's own intro is the
@@ -571,22 +589,18 @@ alphaTab cannot mix synthesized audio with a backing track (upstream
 mute/solo and the metronome documented in ui.md — this is a library
 constraint, not a design choice.
 
-**Mixed-source safety.** Because source is per-participant, one session
-can contain both synth and recording listeners. Sync points are a *map*,
-not a time-stretch: they locate a bar within the recording but cannot
-make the recording play at the notated tempo. So where a recording's real
-tempo diverges materially from the notated tempo, the two groups
-genuinely separate in real time, and no correction strategy fixes it —
-correction can only choose between letting them drift or re-seeking the
-recording continuously. The divergence is bounded and **computable ahead
-of time**: `CatalogSong.recordingTempoDivergence` (datamodel.md) is
-derived at catalog load by comparing each sync point's effective
-`syncBpm` against the notated tempo at its tick. Songs above the safe
-margin are guarded in the UI rather than silently allowed
-(`research-recording-mode-drift-2026-07-19-b7c2.md`). For a studio or
-click-track recording with a faithful transcription the divergence is
-≈0 and mixed sessions are a non-issue; live and rubato material is where
-it bites.
+**Session-scoped, not per-participant.** `Session.playbackSource`
+(datamodel.md) applies to every participant at once. A per-participant
+design was measured and rejected: mixed synth/recording sessions cannot
+be held in audible sync while the synth path's output latency remains
+unmeasurable (ui.md records the user-facing consequence). Since alphaTab
+fixes `playerMode` at construction, a host's source change tears down and
+rebuilds every participant's engine — the same trigger shape as a song
+change.
+
+A `playback-source-set` message carries the host's toggle, following the
+same host-authorization check as `playback-control`, and is rejected
+while playback is `running`.
 
 ### Audio Engine Warm-Up
 
