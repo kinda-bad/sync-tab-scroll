@@ -481,3 +481,275 @@ measurement. Not implemented; needs a decision.
 **Current test state:** `recording-drift.ct.spec.ts`'s low-divergence case is
 marked `test.fail()` and genuinely fails on the separation assertion. The
 seek-rate assertion passes. Nothing here should be read as T004 complete.
+
+---
+
+# Sync acceptance criteria (T004b)
+
+Specification only — no implementation. Defines what "in sync" means before
+any further T004 work, because the ratchet round failed partly against an
+implicit target of zero separation, which may not be achievable over this
+protocol.
+
+**Target: ~50 ms separation between two participants.**
+
+## 1. Ticks are tempo-relative; the tolerance is absolute
+
+50 ms is perceptual and therefore absolute. `DRIFT_THRESHOLD_TICKS` is a
+fixed tick count, and ticks are tempo-relative (`TICKS_PER_QUARTER_NOTE`
+= 960, so ticks/s = 16 × bpm). The existing 50-tick threshold therefore
+means a *different* real tolerance at every tempo:
+
+| tempo | ticks/s | 50 ticks = | 50 ms = |
+|---|---|---|---|
+| 60 bpm | 960 | 52.1 ms | 48 ticks |
+| 87 bpm | 1392 | 35.9 ms | 70 ticks |
+| 120 bpm | 1920 | **26.0 ms** | 96 ticks |
+| 180 bpm | 2880 | 17.4 ms | 144 ticks |
+| 240 bpm | 3840 | 13.0 ms | 192 ticks |
+
+Two consequences:
+
+- The current threshold is **tighter than the new target** everywhere above
+  ~58 bpm — 26 ms at 120 bpm, half the 50 ms bar. So the pre-T004 seek storm
+  was partly self-inflicted: the system was chasing a tolerance twice as
+  strict as anyone can hear.
+- The tick threshold gets *stricter as tempo rises*, which is backwards.
+  Perceptual tolerance does not shrink at fast tempos; if anything a listener
+  is more forgiving of absolute offsets in dense fast material.
+
+**Recommendation: express both the acceptance bar and the correction
+threshold in milliseconds, and convert to ticks at the local tempo at the
+point of comparison.** `localTempoAtTick` already exists and is already
+called on this path, and `ticksToMs` already exists in `tempo-lookup.ts`, so
+this is a conversion at the comparison site, not new machinery. Concretely:
+replace `DRIFT_THRESHOLD_TICKS = 50` with a `DRIFT_THRESHOLD_MS` and derive
+ticks per comparison. A tempo-varying score gets the correct tolerance in
+every section for free, which a fixed tick count cannot deliver at all.
+
+Note this interacts with the acceptance bar: a 50 ms *correction* threshold
+with a 50 ms *acceptance* bar leaves no headroom, since correction only fires
+once the bar is already reached. The correction threshold should sit below
+the acceptance bar — a threshold around 25–30 ms preserves roughly the
+current 120 bpm behaviour while making it tempo-stable, and leaves margin.
+
+## 2. What is measurable versus what must be assumed
+
+This is the substantive finding of this spec, and it is a limit of the
+protocol rather than of the implementation.
+
+### Measured
+
+- **A recording participant's reported position is a faithful proxy for its
+  own real audio output.** Its `timePosition` tracks the underlying
+  `HTMLAudioElement.currentTime` to within ~5 ms at every sample (T004a).
+  `currentTime` is the browser's account of audio actually emitted.
+- **A synth instance reports ~275 ms ahead of a recording instance** playing
+  the same passage, varying by ~67 ms across playback starts.
+
+### NOT measured, and not measurable over the existing protocol
+
+- **A synth participant's reported-vs-real-audio offset (call it
+  `L_synth`).** T004a never obtained an independent ground truth for the
+  synth's real output; everything measured was synth-relative-to-recording.
+  alphaTab 1.8.3 exposes no `outputLatency` and no `AudioContext` on its
+  public API (re-verified against the 1.8.3 `.d.ts`; the dead end recorded in
+  `feedback-audio-output-latency-t014-dfa8.md` still holds), so a client
+  cannot measure its own `L_synth`, let alone publish it.
+- **Any remote client's skew.** Nothing on the wire carries it, and adding it
+  would be the protocol change this plan was explicitly shaped to avoid.
+
+### The consequence
+
+Write `reported` for a client's broadcast position and `real` for the audio a
+listener actually hears. Forcing `reported_A == reported_B` gives:
+
+```
+audible separation = (reported_A − L_A) − (reported_B − L_B) = L_B − L_A
+```
+
+So **reported-position alignment bounds audible separation only when the two
+clients' latencies are equal or both known.**
+
+- **Uniform-source pairs (backing/backing, or synth/synth):** `L_A ≈ L_B` by
+  construction — same engine, same code path. Audible separation ≈ reported
+  separation, plus the ±5 ms proxy error at each end. Reported-position
+  alignment is a **sound proxy**, and the 50 ms bar is assertable.
+- **Mixed pairs (synth ↔ recording):** `L_recording ≈ 0` (measured), while
+  `L_synth` is unknown and plausibly of order 275 ms given what was observed.
+  `L_B − L_A` is therefore an unknown constant of roughly that magnitude.
+
+**Stated plainly: reported-position alignment provably cannot bound audible
+separation to 50 ms for a mixed synth/recording pair over the existing
+protocol.** Aligning reported positions in that case may well be *creating*
+an audible offset of order 275 ms rather than removing one — the correction
+is confidently aligning two numbers that mean different things.
+
+This is a second, independent reason to be wary of mixed sessions, distinct
+from the rate divergence in §3. It is worth surfacing now because it bears
+directly on T020: the guard's rationale is no longer only "high-Δbpm songs
+separate", it is also "mixed-source sessions have an unmeasurable constant
+offset at any Δbpm."
+
+### The assumption to state explicitly
+
+> **Assumption A1.** For uniform-source pairs, both clients' reported-vs-real
+> audio offsets are equal, so reported-position separation is a faithful
+> proxy for audible separation. Untested across *devices* — all T004a
+> measurements ran two instances in a single page sharing one audio stack.
+> Real sessions add per-device audio hardware, buffer sizes and OS mixing.
+> A1 is plausible for identical engines but should be labelled an assumption
+> until a two-device measurement exists (T023 is the natural place).
+
+> **Assumption A2 (mixed pairs only).** No assumption available that gets
+> from reported alignment to audible alignment. This case should be governed
+> by a warning (T020), not by an acceptance threshold.
+
+**A further measurement caveat applying to every number in this document:**
+the CT harness runs both instances in one page, started from one `play()`
+call, with no network in between. Real sessions add WebSocket latency, clock
+offset between devices, and independent `play()` timing. **All separations
+measured here are lower bounds on real-world separation.** The 50 ms bar
+should be validated end-to-end (T021/T023) before it is trusted.
+
+## 3. Three distinct phenomena, held apart
+
+These have been blending together; the bar applies to only one of them.
+
+| # | Phenomenon | Magnitude | Scope | Governed by |
+|---|---|---|---|---|
+| 1 | Rate divergence | `Δbpm × 16` ticks/s = `Δbpm × 8.33` ms/s at 120 bpm | mixed sessions only | **T020 warning** — not the 50 ms bar |
+| 2 | Backing-*host* notated-vs-recording rate | same arithmetic, applied to the projection | any session with a backing-track host | **T004 option (a) rate-keying — unimplemented** |
+| 3 | Per-start `play()` skew | 275–342 ms, re-rolled per start | **all** recording sessions | **T004 calibration — attempted, ratcheted** |
+
+**(1) Rate divergence** is real physics and unfixable by correction. Time to
+exceed the 50 ms bar, uncorrected:
+
+| Δbpm | separation rate | exceeds 50 ms after |
+|---|---|---|
+| 0.5 | 4.2 ms/s | 12.0 s |
+| 1 | 8.3 ms/s | 6.0 s |
+| 2 | 16.7 ms/s | 3.0 s |
+| 3.125 | 26.0 ms/s | 1.9 s |
+| 6 | 50.0 ms/s | 1.0 s |
+| 10 | 83.3 ms/s | 0.6 s |
+
+A high-Δbpm mixed pair will exceed *any* tolerance; that is the guard's job.
+(This table is also the natural input to **T005**: with a ~1 s broadcast
+cadence, Δbpm ≈ 6 is where a mixed pair drifts a full 50 ms between
+corrections — a defensible upper bound for the margin, and notably looser
+than the 3.125 correction threshold the plan started from.)
+
+**(2) Backing-host rate** is the plan's original premise and is **still
+unimplemented**. Evidence it is real and separate: backing-host /
+backing-participant at Δbpm = 10 produced 21 seeks over 20 s, where the
+relative drift between two clients playing *the same recording* should be
+exactly zero. The projection advances at the notated tempo while both real
+clocks advance at the recording's tempo.
+
+> **Therefore: T004 is (2) AND (3).** The calibration brief covered only the
+> per-start skew. A working calibration alone does not complete T004; option
+> (a) rate-keying is still required, and no test currently covers it.
+
+**(3) Per-start skew** is the irreducible one. It affects uniform
+backing/backing sessions at Δbpm = 0.5 — the 200-seek row in the T002 table —
+so it is not a mixed-mode artifact and no scoping decision avoids it. Any
+recording support at all must address it.
+
+## 4. Pass/fail criteria per fixture and direction
+
+Criterion, unless stated otherwise: **end-state reported-position separation
+< 50 ms** (≈96 ticks at 120 bpm), sustained over a ≥20 s run. Seek count is a
+**secondary** signal only — the ratchet round proved a low seek count is
+achievable by simply ceasing to correct, so separation is the gate.
+
+| # | Fixture | Host / participant | Expected | Why |
+|---|---|---|---|---|
+| C1 | aligned (Δbpm 0.5) | backing / backing | **PASS** | Uniform source, A1 applies. Rate divergence cancels (same recording). Only per-start skew. Already 0 seeks; needs the separation gate added. |
+| C2 | aligned (Δbpm 0.5) | synth / backing | **PASS on reported position; audible NOT asserted** | Mixed, so A2: reported separation is assertable and should hold, but per §2 it does not bound audible separation. Assert the number; do not claim audible sync. |
+| C3 | skewed (Δbpm 10) | backing / backing | **PASS — but FAILS today** | Both on the same recording, so true relative drift is zero and the bar should be met easily. It currently fails (21 seeks) purely from the unimplemented phenomenon (2). **This is the cleanest regression test for rate-keying**, since it isolates (2) from (1) entirely. |
+| C4 | skewed (Δbpm 10) | synth / backing | **EXPECTED FAIL — assert the failure** | 83 ms/s divergence blows the bar in 0.6 s. Unfixable. The test should assert that separation *does* grow at ≈`Δbpm × 16` ticks/s, confirming the predicted physics and that T020's guard is warranted. A test expecting this to pass would be wrong. |
+
+C3 is the most valuable case in the matrix and does not exist yet: it is the
+only combination that isolates the backing-host rate problem from every other
+phenomenon.
+
+C4's assertion should be *directional* (separation grows at the predicted
+rate) rather than a pass/fail threshold, so it documents a physical limit
+rather than encoding a tolerance nobody should rely on.
+
+## 5. Evaluation: calibrating against the local audio reference
+
+**Hypothesis.** The ratchet forms because the skew estimate is
+`host_projection − participant_position`, while the correction sets
+`participant_position` from `host_projection` — a closed loop, so drift is
+re-absorbed as skew. Calibrating instead against the participant's own
+`audio.currentTime` never references the host projection, so drift cannot
+feed back.
+
+**Assessment: the ratchet claim holds; the hypothesis does not solve the
+problem.**
+
+It is correct that this removes the ratchet *by construction* — a purely
+local quantity cannot close a loop with a remote correction. That part is
+sound, and structurally different from attempt 2 (free-run-until-calibrated),
+which only delayed the loop rather than opening it.
+
+But T004a measured that exact local quantity: the participant's reported
+position tracks its own `audio.currentTime` to **±5 ms**. So calibrating
+against it would yield a skew of approximately **zero**, and compensate for
+nothing. It removes the ratchet by removing the calibration.
+
+**What this reveals is more useful than the hypothesis itself.** The
+participant's reporting is already accurate to its own output. The quantity
+that is wrong is the **synth host's** reported position, which leads its own
+real output. So the compensation belongs at the *host's* reporting boundary —
+the host should broadcast the position of audio it has **emitted**, not
+scheduled — and the participant needs no calibration at all.
+
+That reframing is attractive for three reasons: it is one correction at one
+place rather than per-participant; it makes `PlaybackState.tickPosition` mean
+the same thing regardless of the host's source, which is what the field
+already implies; and it would benefit the synth-only path generally — plausibly
+including the never-root-caused lyrics-ticker lead
+(`feedback-audio-output-latency-t014-dfa8.md`), though **that connection
+remains unestablished and must not be assumed**.
+
+**The blocker: it requires `L_synth`, which is currently unmeasurable** (§2).
+So this is the right shape but not currently actionable through alphaTab's
+public API. Options, in preference order, all needing a decision:
+1. Find a supported way to obtain the synth's output latency in 1.8.3
+   (re-examine `api.player`; consider whether a patched/observed
+   `AudioContext` is acceptable) — makes the clean fix available.
+2. Accept mixed-source sessions as best-effort and unwarranted for audible
+   alignment (§2, A2), correcting only reported position, with T020 warning.
+3. Restrict sessions to uniform source, where A1 makes the whole problem
+   tractable and phenomena (1) and (3)'s cross-source components vanish.
+
+**What would falsify this assessment:** if the participant's reported
+position turns out *not* to track its own `audio.currentTime` under real
+conditions — across devices, under CPU load, or after seeks — then a local
+reference would carry real signal and the hypothesis would become viable. The
+±5 ms figure comes from a single-page CT harness on an idle machine and
+should be re-measured across devices before being relied on.
+
+## 6. Recorded: T002's deliberate retargeting
+
+T002 as written asserted no more than one corrective seek per 10 s of
+playback against the **high-divergence** (Δbpm = 10) fixture. That bar is
+**physically unreachable** on that fixture and no correction strategy can
+reach it: the two clocks genuinely separate at 160 ticks/s, crossing any
+sane threshold several times a second through real divergence, not artifact.
+
+The spec was therefore split deliberately:
+
+- the **low-divergence** fixture carries the seek-rate bar, being the case
+  where sync is achievable (200 seeks → 2 after calibration); and
+- the **high-divergence** fixture asserts only that the *artifact* is gone
+  (seek rate bounded by physics rather than by every sampled update),
+  documenting the limit instead of encoding an unreachable tolerance.
+
+This is a reasoned change to what the plan specified, recorded here so the
+file stays an honest record rather than reading as a quietly relaxed
+assertion. Per §4 it should be revised again: the seek-rate assertions become
+secondary to the separation gate (C1–C4).
