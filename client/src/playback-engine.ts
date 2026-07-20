@@ -481,9 +481,20 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
       lastAppliedInteraction = canSeek;
     }
 
+    // Key the backing-participant free-run off ENGINE TRUTH — the score the
+    // live api actually holds (T013's recording path sets score.backingTrack)
+    // — not session.playbackSource. This reflects what the engine IS, killing
+    // the "a caller forgot the flag / session-vs-engine disagreement during
+    // the rebuild window" class (the T019-surfaced wiring gap).
+    const isBackingParticipant = api.score?.backingTrack != null;
+    // projectionBpm intentionally left unwired: correctDrift reads it only
+    // when isBackingParticipant is false AND the host source is a recording —
+    // a mixed-source session the server rejects (session-wide source), so that
+    // path is unreachable in production. Wiring a value only a dead path reads
+    // would be dead weight (Principle II).
     correctDrift(api, s.session.playbackState, isHost, (tick) => {
       lastProgrammaticTick = tick;
-    });
+    }, undefined, isBackingParticipant);
     applyPlaybackSettings(api, s.session);
 
     // Spotlight mode (ui.md "lobby cursor"): force this participant's view

@@ -615,3 +615,119 @@ test('a session audio-source switch rebuilds the engine as a backing-track playe
 
   expect(pageErrors).toEqual([]);
 });
+
+/**
+ * T022 (regression guard for the T019-surfaced wiring gap): the recording-
+ * mode free-run in `correctDrift` (T004) is reached from production only if
+ * `ensurePlaybackEngine`'s real clientStore subscription passes
+ * `isBackingParticipant`. Before the fix, `playback-engine.ts` called
+ * `correctDrift` with 4 args, so `isBackingParticipant` was always undefined
+ * in production and a recording-mode participant seek-chased the notated-tempo
+ * projection — the exact 60–80ms behaviour T004 exists to prevent.
+ *
+ * This test deliberately does NOT call `correctDrift` directly — a direct call
+ * is precisely the blind spot that let the missing argument ship. It drives
+ * the real subscription via `__clientStore`, and switches synth -> recording
+ * (the rebuild window where a stale-subscription/proxy bug would live), rather
+ * than mounting straight into recording mode.
+ *
+ * Setup: a NON-HOST participant (correctDrift's isHost guard early-returns for
+ * the host, so the host could never exercise this branch), running playback on
+ * its own backing audio, then a host tick-report placed far ahead — far enough
+ * that the notated-tempo projection would seek if the free-run branch were not
+ * entered. Assertion: `api.tickPosition` is NOT repositioned to that far-ahead
+ * target (delta stays small; the participant free-runs its own audio).
+ *
+ * NOTE: a green result here proves only that the mechanism is wired through the
+ * production call path. It does NOT prove host-seek-following for backing
+ * participants (T019, env-blocked) nor real cross-device sync (T021, manual).
+ */
+test('a recording-mode non-host participant does not seek-chase a far-ahead host tick (production subscription wiring)', async ({ mount, page }) => {
+  const recordingRoot = path.resolve(__dirname, '../test-fixtures/fixture-catalog/recording-aligned');
+  const recMp3 = fs.readFileSync(path.join(recordingRoot, 'recording.mp3'));
+  const recSyncPoints = JSON.parse(fs.readFileSync(path.join(recordingRoot, 'meta.json'), 'utf8')).syncPoints;
+  await page.route('**/recording.mp3', (route) => route.fulfill({ body: recMp3, contentType: 'audio/mpeg' }));
+
+  // Mount as a synth participant, then switch to recording through the real
+  // ensurePlaybackEngine rebuild path (T015's plumbing) — NOT born in recording.
+  const component = await mount(PlaybackEngineHarness, {
+    props: { gpFilePath: '/fixture.gp', trackIndex: 0, recordingPath: '/recording.mp3', syncPoints: recSyncPoints },
+  });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await page.evaluate(() => (window as unknown as { __switchSource: (s: string) => void }).__switchSource('recording'));
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  // Confirm the rebuilt engine really is a backing-track player (the engine
+  // truth the production wiring keys `isBackingParticipant` off of) and is
+  // ready to play.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const api = (window as unknown as { __getApi: () => { isReadyForPlayback: boolean; score?: { backingTrack?: unknown } } }).__getApi();
+          return api.isReadyForPlayback && api.score?.backingTrack != null;
+        }),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+
+  // Drive the real subscription: a NON-HOST (selfParticipantId !== hostId),
+  // status running. correctDrift's running-not-playing branch starts this
+  // participant's own backing audio.
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'member-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', status: 'running' }));
+
+  // The far-ahead extrapolation gate is only reached once the participant is
+  // actually Playing (otherwise the running-not-playing branch — which the fix
+  // does NOT gate — would itself reposition, robbing the test of teeth).
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { playerState: number } }).__getApi().playerState), { timeout: 10_000 })
+    .toBe(1);
+
+  // Score length is 7680 ticks (measured). Place the host report at 6000 —
+  // comfortably below the end tick (so an assignment can't be masked by
+  // alphaTab clamping to the end), yet far above the participant's own
+  // free-run position, so the notated-tempo projection would drift-correct by
+  // thousands of ticks if the backing free-run branch were not entered.
+  const FAR_AHEAD_TICK = 6000;
+
+  const before = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+
+  // Fresh serverTimestamp so the latency extrapolation adds ~0 ticks (the seek
+  // target, if it ran, is ~FAR_AHEAD_TICK — not pushed past the end tick).
+  await page.evaluate(
+    (target) => {
+      (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => {
+        const state = s as { session: { playbackState: { tickPosition: number; serverTimestamp: number } } };
+        return {
+          ...state,
+          session: {
+            ...state.session,
+            playbackState: { ...state.session.playbackState, tickPosition: target, serverTimestamp: Date.now() },
+          },
+        };
+      });
+    },
+    FAR_AHEAD_TICK,
+  );
+
+  // Give any (erroneous) seek a moment to land, plus a little natural free-run.
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+
+  // Delta-based, baseline-independent: with the fix the participant free-runs
+  // (delta is just a few hundred ticks of natural audio advance); without it
+  // the extrapolation seek snaps tickPosition to ~FAR_AHEAD_TICK, a jump of
+  // thousands. 3000 sits well clear of both bands.
+  expect(after - before).toBeLessThan(3000);
+  // And it did not land at the far-ahead target itself.
+  expect(after).toBeLessThan(FAR_AHEAD_TICK - 1500);
+
+  expect(pageErrors).toEqual([]);
+});
