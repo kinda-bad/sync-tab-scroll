@@ -66,3 +66,38 @@ test('a backing-track host and participant finish within 50ms on the aligned rec
   expect(reportedSepMs).toBeLessThanOrEqual(SEPARATION_BAR_MS);
   if (audioSepMs !== null) expect(audioSepMs).toBeLessThanOrEqual(SEPARATION_BAR_MS);
 });
+
+/**
+ * T005 — the same 50ms gate on the `recording-skewed` fixture (Δbpm = 10).
+ *
+ * Both clients play the *identical* recording, so a 10-BPM divergence
+ * between the recording and the notated score cannot separate them — a
+ * failure here would mean the notated-vs-recording rate error is leaking
+ * into correction (T003 incomplete), not that the bar is wrong. This is the
+ * case (research §4 C3) that isolates the projection-rate problem from the
+ * start-skew problem: it is the cleanest regression test that the pair stays
+ * locked at high Δbpm.
+ */
+test('a backing-track host and participant finish within 50ms on the skewed recording', async ({ mount, page }) => {
+  const { gp, mp3, meta } = loadFixture('recording-skewed');
+  await page.route('**/fixture.gp', (r) => r.fulfill({ body: gp, contentType: 'application/octet-stream' }));
+  await page.route('**/recording.mp3', (r) => r.fulfill({ body: mp3, contentType: 'audio/mpeg' }));
+
+  const component = await mount(RecordingDriftHarness, {
+    props: { gpFilePath: '/fixture.gp', recordingPath: '/recording.mp3', syncPoints: meta.syncPoints, hostBacking: true },
+  });
+  await expect(component.getByTestId('status')).toHaveText('ready', { timeout: 40_000 });
+
+  const result = (await page.evaluate(
+    () => (window as unknown as { __measureUniform: (o: unknown) => Promise<Record<string, unknown>> }).__measureUniform({ sustainMs: 20_000, resumeMs: 8_000, seekTick: 20_000, correct: true }),
+  )) as Record<string, unknown>;
+
+  const { samples: _samples, ...summary } = result;
+  console.log('[T005] uniform backing/backing (skewed) summary', JSON.stringify(summary));
+
+  expect(summary.errors).toEqual([]);
+  const reportedSepMs = summary.endReportedSepMs as number;
+  const audioSepMs = summary.endAudioSepMs as number | null;
+  expect(reportedSepMs).toBeLessThanOrEqual(SEPARATION_BAR_MS);
+  if (audioSepMs !== null) expect(audioSepMs).toBeLessThanOrEqual(SEPARATION_BAR_MS);
+});
