@@ -575,6 +575,15 @@ test('a session audio-source switch rebuilds the engine as a backing-track playe
   // Synth engine: playerMode is the default (not EnabledBackingTrack === 3).
   expect(before.playerMode).not.toBe(3);
 
+  // Snapshot the readiness sends already emitted by the synth mount so we can
+  // assert the recording engine emits a NEW 'loaded' after the switch.
+  const loadedBefore = await page.evaluate(
+    () =>
+      (window as unknown as { __sentMessages: { type: string; readiness?: string }[] }).__sentMessages.filter(
+        (m) => m.type === 'readiness-update' && m.readiness === 'loaded',
+      ).length,
+  );
+
   await page.evaluate(() => (window as unknown as { __switchSource: (s: string) => void }).__switchSource('recording'));
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
 
@@ -584,6 +593,25 @@ test('a session audio-source switch rebuilds the engine as a backing-track playe
   });
   expect(after.playerMode).toBe(3);
 
-  await page.waitForTimeout(300);
+  // T014 integration guard: the recording engine must actually reach readiness.
+  // A backing-track instance loads no sound font, so waitUntilReady keys off
+  // midiLoaded instead of soundFontLoaded — if that event never fired for a
+  // real EnabledBackingTrack instance, this participant would hang in 'loading'
+  // forever. Assert a NEW readiness-update:loaded lands after the switch,
+  // exercising reportAssetReadiness -> waitUntilReady({recording:true}) ->
+  // midiLoaded against real alphaTab.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            (window as unknown as { __sentMessages: { type: string; readiness?: string }[] }).__sentMessages.filter(
+              (m) => m.type === 'readiness-update' && m.readiness === 'loaded',
+            ).length,
+        ),
+      { timeout: 20_000 },
+    )
+    .toBeGreaterThan(loadedBefore);
+
   expect(pageErrors).toEqual([]);
 });
