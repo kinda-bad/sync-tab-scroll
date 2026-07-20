@@ -16,6 +16,32 @@ status: in-progress
 
 - [ ] T004 Make `correctDrift`'s extrapolation rate host-source-keyed in `client/src/playback-sync.ts`, turning T002 green. Currently `elapsedTicks` is derived from `localTempoAtTick(api.score, ...)`, which walks `masterBar.tempoAutomations` and can never observe a backing track's `syncBpm` (a separate `MasterBar.syncPoints` collection). Choose between (a) inferring the host's effective rate from observed tick advance across consecutive `playback-tick-report` broadcasts, or (b) adding the host's source to the wire — (a) preserves this plan's zero-protocol-change property and is preferred unless T002's data shows it is too noisy to be stable. Extend `client/src/playback-sync.test.ts` with unit coverage of the chosen rate derivation before implementing. Then replace the `[OPEN: ...]` marker in `infrastructure.md`'s Session & Real-Time Sync section with the decision and its rationale. [artifacts: infrastructure]
 
+> **BLOCKED (T004) — needs a coordinator decision before implementation.**
+> T002's measurements show the task's (a)/(b) menu is incomplete: neither
+> option turns T002 green on its own.
+>
+> - The `localTempoAtTick` premise is **real but not dominant**, and only
+>   bites in the **backing-host / synth-participant** direction (29 seeks
+>   at Δbpm=10 vs 13 at Δbpm=0.5). Option (a) is the right fix *there*, and
+>   the observed tick advance was stable enough to derive a rate from.
+> - The dominant failure is a **constant ~160-tick (~83 ms) latency offset**
+>   on any backing-track *participant*, identical at Δbpm=0.5 and Δbpm=10.
+>   It exceeds `DRIFT_THRESHOLD_TICKS` (50) permanently and alone accounts
+>   for all 200 seeks/20 s. No rate fix touches it — the seek *is* the
+>   latency source.
+>
+> The change T002 actually needs is a **third option not listed**: skip
+> continuous drift-*extrapolation* entirely for a backing-track participant
+> (the recording is its clock), keeping the status start/pause/stop and
+> explicit-host-seek branches, mirroring the existing `if (isHost) return null`
+> guard. Recommended decision: that third option **plus** option (a) for the
+> backing-host direction.
+>
+> Full data and derivation:
+> `.project/plans/research-recording-mode-drift-2026-07-19-b7c2.md`
+> ("Resolved (T002 / T003)"). Halted here rather than silently expanding the
+> task's scope or editing `infrastructure.md` on an unapproved decision.
+
 - [ ] T005 Using T002's measured seek frequency and peak position divergence at known Δbpm, derive the empirical safe margin for `recordingTempoDivergence` — the Δbpm above which a mixed synth/recording session separates unacceptably. Note that 3.125 BPM is the *correction* threshold (`50 ticks = Δbpm × 16 × 1s`), but the *musical* tolerance is likely tighter, since even uncorrected divergence accumulates ~26ms/sec at that value. Record the chosen margin and its derivation as a named exported constant with an explanatory comment in a new `client/src/recording-divergence-margin.ts`, with unit tests covering the boundary. Note the division of labour: T012 *measures* divergence server-side (a raw number published on `CatalogSong`), and T020 is the **only** consumer that applies this threshold to that number — the server never guards, it only publishes. So the margin is client-only; do not push it into `packages/shared` for a server consumer that does not exist.
 
 ## Phase 2: Catalog Assets & Delivery
