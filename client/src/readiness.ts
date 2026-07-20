@@ -2,25 +2,32 @@ import type { AlphaTabApi } from '@coderline/alphatab';
 import type { WsClient } from './ws-client';
 
 /**
- * Resolves once both the score has parsed/rendered and the SoundFont has
- * loaded — whichever finishes last (infrastructure.md, ui.md Loading
- * state). Applies identically to a visible or headless alphaTab instance.
+ * Resolves once both required assets have loaded — whichever finishes last
+ * (infrastructure.md, ui.md Loading state). Applies identically to a visible or
+ * headless alphaTab instance.
+ *
+ * Mode-aware (T014): in synth mode the assets are the score plus the SoundFont.
+ * A backing-track instance loads no SoundFont and may never fire
+ * `soundFontLoaded`, so in recording mode readiness is the score plus the
+ * backing-track/player timeline load (`midiLoaded`) — waiting on
+ * `soundFontLoaded` there would hang forever.
  */
-export function waitUntilReady(api: AlphaTabApi): Promise<void> {
+export function waitUntilReady(api: AlphaTabApi, options: { recording?: boolean } = {}): Promise<void> {
   return new Promise((resolve) => {
     let scoreLoaded = false;
-    let soundFontLoaded = false;
+    let audioLoaded = false;
 
     const checkDone = () => {
-      if (scoreLoaded && soundFontLoaded) resolve();
+      if (scoreLoaded && audioLoaded) resolve();
     };
 
     api.scoreLoaded.on(() => {
       scoreLoaded = true;
       checkDone();
     });
-    api.soundFontLoaded.on(() => {
-      soundFontLoaded = true;
+    const audioEvent = options.recording ? api.midiLoaded : api.soundFontLoaded;
+    audioEvent.on(() => {
+      audioLoaded = true;
       checkDone();
     });
   });
@@ -33,8 +40,8 @@ export function waitUntilReady(api: AlphaTabApi): Promise<void> {
  * human-confirmed state flipped only by the Bar's ready control
  * (`ready-set`). Asset loading never implies human readiness.
  */
-export function reportAssetReadiness(wsClient: WsClient, api: AlphaTabApi): void {
-  void waitUntilReady(api).then(() => wsClient.send({ type: 'readiness-update', readiness: 'loaded' }));
+export function reportAssetReadiness(wsClient: WsClient, api: AlphaTabApi, options: { recording?: boolean } = {}): void {
+  void waitUntilReady(api, options).then(() => wsClient.send({ type: 'readiness-update', readiness: 'loaded' }));
 }
 
 /**

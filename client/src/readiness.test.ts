@@ -15,8 +15,9 @@ function fakeEvent() {
 function fakeApi() {
   const scoreLoaded = fakeEvent();
   const soundFontLoaded = fakeEvent();
-  const api = { scoreLoaded, soundFontLoaded } as unknown as AlphaTabApi;
-  return { api, scoreLoaded, soundFontLoaded };
+  const midiLoaded = fakeEvent();
+  const api = { scoreLoaded, soundFontLoaded, midiLoaded } as unknown as AlphaTabApi;
+  return { api, scoreLoaded, soundFontLoaded, midiLoaded };
 }
 
 describe('waitUntilReady', () => {
@@ -50,6 +51,45 @@ describe('waitUntilReady', () => {
     scoreLoaded.fire();
 
     await expect(promise).resolves.toBeUndefined();
+  });
+
+  // T014: a backing-track instance loads no sound font, so soundFontLoaded may
+  // never fire — recording-mode readiness is scoreLoaded + backing-track load
+  // (midiLoaded), and must NOT wait on soundFontLoaded.
+  it('recording mode does not wait for soundFontLoaded', async () => {
+    const { api, scoreLoaded, midiLoaded } = fakeApi();
+    const promise = waitUntilReady(api, { recording: true });
+
+    scoreLoaded.fire();
+    midiLoaded.fire();
+
+    await expect(promise).resolves.toBeUndefined();
+  });
+
+  it('recording mode does not resolve after only scoreLoaded fires', async () => {
+    const { api, scoreLoaded } = fakeApi();
+    let resolved = false;
+    waitUntilReady(api, { recording: true }).then(() => {
+      resolved = true;
+    });
+
+    scoreLoaded.fire();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+  });
+
+  it('recording mode does not resolve when only the sound font fires', async () => {
+    const { api, soundFontLoaded, scoreLoaded } = fakeApi();
+    let resolved = false;
+    waitUntilReady(api, { recording: true }).then(() => {
+      resolved = true;
+    });
+
+    // The synth-only signals must not satisfy recording readiness.
+    scoreLoaded.fire();
+    soundFontLoaded.fire();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
   });
 });
 
