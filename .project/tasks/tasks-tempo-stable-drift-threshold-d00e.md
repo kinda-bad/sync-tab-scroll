@@ -1,7 +1,7 @@
 ---
 plan: plan-tempo-stable-drift-threshold-2026-07-20-5d9f.md
 generated: 2026-07-20
-status: ready
+status: in-progress
 ---
 
 # Tasks

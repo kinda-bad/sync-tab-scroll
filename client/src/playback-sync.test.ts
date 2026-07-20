@@ -171,6 +171,41 @@ describe('correctDrift', () => {
     expect(result).toBeNull();
   });
 
+  describe('tempo-invariant drift tolerance', () => {
+    // The drift tolerance is a *perceptual* quantity, so it must be an
+    // absolute real duration — the same millisecond budget at every tempo.
+    // A fixed tick count is a fixed fraction of a beat, so its real
+    // tolerance is 3125/bpm ms: 33.6ms at 93bpm vs 24.0ms at 130bpm across
+    // the real catalogue's tempo range alone. These tests express drift in
+    // milliseconds converted at the *score's own* tempo (the tempo
+    // localTempoAtTick reads, not the display-only playbackState.bpm) and
+    // assert the same real drift produces the same decision at both ends.
+    const msToTicks = (ms: number, bpm: number) => (ms * bpm * 960) / 60000;
+
+    // Paused non-host: extrapolation contributes 0 ticks, so the comparison
+    // is drift = |api.tickPosition - playbackState.tickPosition| exactly.
+    function driftByMs(ms: number, bpm: number) {
+      const base = 10_000;
+      const api = fakeApi({ playerState: at.synth.PlayerState.Paused, tickPosition: base + msToTicks(ms, bpm), score: fakeScore(bpm) });
+      return correctDrift(api, fakePlaybackState({ status: 'paused', tickPosition: base, serverTimestamp: Date.now() }), false);
+    }
+
+    it.fails('leaves a 30ms drift uncorrected at both 93bpm and 130bpm', () => {
+      // 30ms is inside the new 35ms tolerance at every tempo. Under the old
+      // fixed 50-tick threshold it was 44.6 ticks at 93bpm (uncorrected) but
+      // 62.4 ticks at 130bpm (corrected) — the same real error treated
+      // differently purely because of tempo.
+      expect(driftByMs(30, 93)).toBeNull();
+      expect(driftByMs(30, 130)).toBeNull();
+    });
+
+    it('corrects a 45ms drift at both 93bpm and 130bpm', () => {
+      // 45ms is outside the 35ms tolerance at every tempo.
+      expect(driftByMs(45, 93)).not.toBeNull();
+      expect(driftByMs(45, 130)).not.toBeNull();
+    });
+  });
+
   describe('latency-compensated extrapolation', () => {
     const NOW = 1_000_000;
 
