@@ -1,7 +1,7 @@
 ---
 plan: plan-tempo-stable-drift-threshold-2026-07-20-5d9f.md
 generated: 2026-07-20
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -20,4 +20,28 @@ status: in-progress
 
 - [x] T005 Run the full suite — `pnpm -r test`, client CT, and e2e — plus `pnpm check`. Confirm green with no behavioral change beyond the intended threshold conversion. Any drift-correction test that needed its *expectations* changed (as opposed to its units re-expressed per T003) is a signal that behavior moved further than intended: investigate rather than accept it.
 
-- [ ] T006 Live browser check on the two ends of the real tempo range — Radiohead "Creep" (93bpm, the song whose tolerance loosens most: 33.6 → 35ms) and Silversun Pickups "Lazy Eye" (130bpm, which loosens most in relative terms: 24.0 → 35ms). Run a two-participant session on each and confirm cursor, lyrics ticker, and beat widget still track correctly with no visible drift or stutter. This is the check that matters most: T005 proves the tests agree, this proves a human does. Known environment quirks: Chrome blocks port 6000; automation audio can race or wedge. Verification task — no new automated test required.
+- [x] T006 Live browser check on the two ends of the real tempo range — Radiohead "Creep" (93bpm, the song whose tolerance loosens most: 33.6 → 35ms) and Silversun Pickups "Lazy Eye" (130bpm, which loosens most in relative terms: 24.0 → 35ms). Run a two-participant session on each and confirm cursor, lyrics ticker, and beat widget still track correctly with no visible drift or stutter. This is the check that matters most: T005 proves the tests agree, this proves a human does. Known environment quirks: Chrome blocks port 6000; automation audio can race or wedge. Verification task — no new automated test required.
+
+> **T006 closed on test evidence, not a live check — 2026-07-20.**
+> Recorded explicitly so the record is not misread later: **no
+> two-participant browser session on Creep (93bpm) or Lazy Eye (130bpm)
+> was ever run.** The task was closed at the user's decision on the
+> strength of the automated evidence instead:
+>
+> - 141 client unit tests, 257 server, 190 CT, and `pnpm check` all green.
+> - **No test expectation value changed anywhere** in the conversion —
+>   only comment units were re-expressed (T003). A units change that
+>   moves no expected value is strong evidence behavior did not move.
+> - The change is a single constant swap plus a conversion using helpers
+>   already on the code path (`localTempoAtTick`, `ticksToMs`); no new
+>   mechanism, no new module.
+> - The chosen 35ms is above the strictest tolerance any catalogue song
+>   currently receives (33.6ms at 93bpm), so every song is
+>   loosening-or-neutral — there is no tightening for a live check to
+>   catch.
+>
+> Residual risk accepted: a *loosened* threshold's failure mode is
+> visible drift rather than a failing test, and that is exactly what a
+> live check would have caught. If drift is observed on slow songs, this
+> change is the first suspect — file it via `/ardd-feedback`, do not
+> reopen this file (`completed` is terminal).
