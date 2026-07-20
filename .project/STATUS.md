@@ -1,6 +1,6 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-20-phase34-merged (**Recording-drift Phases 1–4 landed
+_Updated: 2026-07-20-phase5-finding (**Phases 1–4 landed (18/21); Phase 5 honest gate found recording-mode sync is NOT wired into production — stop-and-decide.**)_
 on main (18/21); only Phase 5 verification remains — T019 e2e is the honest
 gate, T021 is manual.**)_
 
@@ -21,14 +21,32 @@ gate, T021 is manual.**)_
   green (tab-renderer, playback-engine, SettingsModal, a11y). Shared
   `isRecordingCapable()` predicate is the single source of truth.
 
-**Phase 5 remaining (T019–T021):** T019 two-participant e2e is the FIRST
-honest test — independent `play()` calls, real transport, no shared audio
-stack — so it stresses Phase 1's disclosed lower-bound caveats; **a failure
-is a real design finding, not a flake.** T020 is a full-suite regression
-(synth path must be bit-for-bit unchanged). **T021 is manual** — needs a
-real `recording.mp3` + sync points authored in alphatab.net's Media Sync
-Editor and a live two-browser check (headless automation can't; Chrome
-blocks port 6000, audio races/wedges).
+**⚠️ PHASE 5 FINDING — recording-mode sync is NOT wired into production
+(confirmed, environment-independent).** The T003/T004 mechanism
+(`isBackingParticipant` free-run + `projectionBpm` rate-keying) lives in
+`correctDrift` (`playback-sync.ts:161`) but its **only production caller**,
+`playback-engine.ts:484`, passes just 4 of 6 args — `isBackingParticipant`
+and `projectionBpm` are always `undefined` in the real app. So a real
+recording-mode participant seek-chases the notated-tempo projection (the
+60–80 ms+ behavior T004 exists to prevent); the free-run is exercised
+**only by the CT harness**, which passes the args explicitly. Phase 1's
+green was real *in the harness* but the mechanism was never connected. T019
+surfaced this by code inspection; it would be RED by construction.
+**Nothing was committed** — the fix reopens the T003/T004 integration and is
+a stop-and-decide finding.
+
+Secondary: (b) the headless e2e **wedges** on the live synth→recording
+switch (~90 s unresponsive; matches the known "automation audio races/
+wedges" quirk), so T019 can't auto-validate even once (a) is fixed — which
+is why **T021's live two-browser check carries the verification weight.**
+
+**Phase 5 status:** T019 `[ ]`, T020 `[ ]`, T021 `[ ]` — none marked. T020's
+synth-path-unchanged claim is nonetheless *proven* (zero production diff vs
+`540caa3`; server vitest 274, client vitest 153, client CT 201 all green;
+the e2e-cluster failures are pre-existing machine-saturation noise on
+unchanged code, not a regression). **T021 is manual regardless** — real
+`recording.mp3` + Media Sync Editor sync points + a live two-browser check
+(Chrome blocks port 6000; audio races/wedges under automation).
 
 **Phase 1 gate result — PASS, verified at the code level.**
 T001–T005 merged to `main` (`e8006de..a1af8da`, 5 signed commits, worktree
@@ -130,8 +148,11 @@ Nothing — the Phase 1 worktree merged and was reaped.
 
 ## Summary
 
-0 consistency issues. Safe to /plan: yes. **Recommended next step:
-continue `/ardd-implement tasks-recording-drift-foundation-cc87.md`** —
-Phases 3+4 (session source, engine rebuild, mode-aware readiness, UI
-controls) are in flight; Phase 5's cross-device e2e (T019) is the next
-verification gate that stresses Phase 1's disclosed lower-bound caveats.
+Phases 1–4 landed (18/21). **Phase 5's honest gate found a real
+production-integration defect (above): the recording-mode drift mechanism
+is never passed to `correctDrift` at `playback-engine.ts:484`.** Feature is
+NOT usable in production until this one-site wiring is fixed and
+regression-tested at the production-caller level (no existing test covers
+that call). **Recommended next step: wire the fix as an added integration
+task in this in-progress file (TDD), then T021 live-verify.** The feature
+stays `tasked`/`in-progress` until then.
