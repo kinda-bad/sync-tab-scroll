@@ -28,6 +28,7 @@
   } from '../lyrics-ticker-font-size-preference';
   import { loadStoredMeasureMarkers, persistMeasureMarkers } from '../lyrics-measure-markers-preference';
   import { partDisplayNames, formatPartDisplayName } from '../part-display-name';
+  import { isRecordingCapable } from '@sync-tab-scroll/shared';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
@@ -69,6 +70,15 @@
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
   $: isHost = session?.hostId === $clientStore.selfParticipantId;
+
+  // T017: the "Audio source" control is offered only for a recording-capable
+  // selected song (non-null recordingPath AND syncPoints — isRecordingCapable,
+  // datamodel.md), and is disabled while playback is running, mirroring the
+  // server's own playback-source-set rejection so the UI never offers an action
+  // the server will refuse.
+  $: selectedSongData = $clientStore.catalog.find((s) => s.id === session?.selectedSong) ?? null;
+  $: recordingCapable = isRecordingCapable(selectedSongData);
+  $: playbackRunning = session?.playbackState.status === 'running';
 
   // Instrument-prominent part labels (ui.md part-name display rule) —
   // derived for the whole part list at once, since uniqueness/numbering is
@@ -200,6 +210,14 @@
     wsClient?.send({ type: 'count-in-set', enabled: !session?.countInEnabled });
   }
 
+  // T017: host-only session-wide audio-source switch (datamodel.md
+  // Session.playbackSource). Guarded against sending while playback runs — the
+  // control is also disabled in that state, but the guard keeps the send honest.
+  function setPlaybackSource(source: 'synth' | 'recording') {
+    if (playbackRunning) return;
+    wsClient?.send({ type: 'playback-source-set', source });
+  }
+
   function delegateHost(targetParticipantId: string) {
     wsClient?.send({ type: 'host-delegate', targetParticipantId });
   }
@@ -293,6 +311,35 @@
             onclick={toggleCountIn}
           />
         </div>
+      {/if}
+
+      {#if recordingCapable}
+        <span class="section-label">Audio source</span>
+        {#if isHost}
+          <div class="control-row">
+            <Button
+              variant={session.playbackSource === 'synth' ? 'riot' : 'ghost'}
+              label="Synth"
+              disabled={playbackRunning}
+              onclick={() => setPlaybackSource('synth')}
+            />
+            <Button
+              variant={session.playbackSource === 'recording' ? 'riot' : 'ghost'}
+              label="Recording"
+              disabled={playbackRunning}
+              onclick={() => setPlaybackSource('recording')}
+            />
+          </div>
+          <p class="hint">
+            {#if playbackRunning}
+              Stop playback to change the audio source.
+            {:else}
+              Everyone hears the {session.playbackSource === 'recording' ? 'real recording' : 'synthesizer'}.
+            {/if}
+          </p>
+        {:else}
+          <p class="hint">Audio source: {session.playbackSource === 'recording' ? 'Recording' : 'Synth'} (set by host).</p>
+        {/if}
       {/if}
     {:else}
       <p class="hint">Connecting…</p>

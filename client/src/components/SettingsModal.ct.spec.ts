@@ -803,3 +803,66 @@ test.describe('Tracks tab redesign (T004)', () => {
     expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:metronome'))).toBe('on');
   });
 });
+
+// --- Session tab: T017 host-only "Audio source" control --------------------
+
+import type { CatalogSong } from '@sync-tab-scroll/shared';
+
+function recordingSong(): CatalogSong {
+  return {
+    id: 'creep', catalogueId: 'default', name: 'Creep', artist: 'Radiohead',
+    gpFilePath: '/creep.gp', parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+    lyricsLrc: null, lyricsTrackIndex: null, lyricsLineIndex: null, lyricLineBreaks: null,
+    recordingPath: '/creep/recording.mp3', syncPoints: [],
+  };
+}
+
+function synthOnlySong(): CatalogSong {
+  return { ...recordingSong(), recordingPath: null, syncPoints: null };
+}
+
+test('Session tab: host sees the Audio source control for a recording-capable song and switching sends playback-source-set', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: baseSession({ selectedSong: 'creep', playbackSource: 'synth' }), selfParticipantId: 'host-1', catalog: [recordingSong()] },
+  });
+  await component.getByRole('button', { name: 'Session' }).click();
+
+  await expect(component.getByText('Audio source')).toBeVisible();
+  await component.getByRole('button', { name: 'Recording' }).click();
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toContainEqual({ type: 'playback-source-set', source: 'recording' });
+});
+
+test('Session tab: the Audio source control is absent for a non-recording song', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: baseSession({ selectedSong: 'creep' }), selfParticipantId: 'host-1', catalog: [synthOnlySong()] },
+  });
+  await component.getByRole('button', { name: 'Session' }).click();
+
+  await expect(component.getByText('Audio source')).toHaveCount(0);
+});
+
+test('Session tab: a non-host sees the current audio source read-only (no switch buttons)', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: baseSession({ selectedSong: 'creep', playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
+  });
+  await component.getByRole('button', { name: 'Session' }).click();
+
+  await expect(component.getByText('Audio source: Recording (set by host).')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Synth' })).toHaveCount(0);
+  await expect(component.getByRole('button', { name: 'Recording' })).toHaveCount(0);
+});
+
+test('Session tab: host Audio source buttons are disabled while playback is running', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: {
+      session: baseSession({ selectedSong: 'creep', playbackSource: 'synth', playbackState: { status: 'running', tickPosition: 0, bpm: 120, serverTimestamp: 0 } }),
+      selfParticipantId: 'host-1', catalog: [recordingSong()],
+    },
+  });
+  await component.getByRole('button', { name: 'Session' }).click();
+
+  await expect(component.getByRole('button', { name: 'Recording' })).toBeDisabled();
+  await expect(component.getByText('Stop playback to change the audio source.')).toBeVisible();
+});

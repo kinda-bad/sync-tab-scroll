@@ -3,10 +3,11 @@
   import SettingsModal from '../components/SettingsModal.svelte';
   import { clientStore } from '../store';
   import type { WsClient } from '../ws-client';
-  import type { Session } from '@sync-tab-scroll/shared';
+  import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
 
   export let session: Session;
   export let selfParticipantId: string;
+  export let catalog: CatalogSong[] = [];
 
   onMount(() => {
     const sent: unknown[] = [];
@@ -18,7 +19,7 @@
       view: 'lobby',
       session,
       selfParticipantId,
-      catalog: [], catalogues: [],
+      catalog, catalogues: [],
       wsClient,
       playbackProgress: 0,
       engineReady: false,
