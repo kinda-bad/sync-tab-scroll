@@ -1,4 +1,5 @@
 import * as at from '@coderline/alphatab';
+import type { FlatSyncPoint } from '@sync-tab-scroll/shared';
 import { darkTabColors, lightTabColors, cyberpunkDarkTabColors, cyberpunkLightTabColors } from './brand-colors';
 import { tabScaleForViewportWidth } from './tab-scale';
 
@@ -9,6 +10,18 @@ export interface TabRendererOptions {
   gpFilePath: string;
   trackIndex: number;
   theme?: Theme;
+  /**
+   * Selects the audio engine (infrastructure.md, datamodel.md
+   * Session.playbackSource). Omitted → the shipped synth path, byte-for-byte
+   * unchanged. `PlayerMode.EnabledBackingTrack` → recording mode, which loads no
+   * sound font and instead plays `recordingPath` as the score's backing track,
+   * anchored to the notation by `syncPoints` (both required in that mode).
+   */
+  playerMode?: at.PlayerMode;
+  /** Client-fetchable URL of the recording mp3; used only in backing-track mode. */
+  recordingPath?: string;
+  /** Tick↔recording-time anchors applied via `Score.applyFlatSyncPoints()`; used only in backing-track mode. */
+  syncPoints?: FlatSyncPoint[];
 }
 
 function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
@@ -45,7 +58,8 @@ function applyThemeColors(resources: at.RenderingResources, theme: Theme): void 
  * Light-mode values (brand.md) are a first pass, not production-validated
  * like dark mode's harvested values — expect a future visual QA pass.
  */
-export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark' }: TabRendererOptions): at.AlphaTabApi {
+export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints }: TabRendererOptions): at.AlphaTabApi {
+  const recording = playerMode === at.PlayerMode.EnabledBackingTrack;
   const settings = new at.Settings();
   settings.core.engine = 'svg';
   settings.core.fontDirectory = '/font/';
@@ -76,7 +90,14 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // Apache-2.0-licensed Sonivox soundfont alphaTab ships, rather than
   // sourcing/licensing a separate one.
   settings.player.enablePlayer = true;
-  settings.player.soundFont = '/soundfont/sonivox.sf2';
+  if (recording) {
+    // Recording mode plays the operator's mp3 as a backing track — alphaTab
+    // cannot mix synth with a backing track (upstream #1961), so no sound font
+    // is loaded here (readiness.ts keys mode-aware off this, T014).
+    settings.player.playerMode = at.PlayerMode.EnabledBackingTrack;
+  } else {
+    settings.player.soundFont = '/soundfont/sonivox.sf2';
+  }
 
   // Hide score header fields — the app renders title/artist/part in HTML.
   // Keep EffectMarker (section labels); suppress free text annotations and
@@ -107,6 +128,10 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   api.error.on((e) => console.error('[tab-renderer] error', e));
 
   api.scoreLoaded.on((score) => {
+    // In recording mode, anchor the score to the recording's timeline via
+    // alphaTab's own applyFlatSyncPoints (datamodel.md, infrastructure.md) —
+    // applied here at scoreLoaded, before playback can begin.
+    if (recording && syncPoints && syncPoints.length > 0) score.applyFlatSyncPoints(syncPoints);
     const track = score.tracks[trackIndex];
     const isPercussion = track.isPercussion;
     api.settings.display.staveProfile = isPercussion ? at.StaveProfile.Score : at.StaveProfile.TabMixed;
@@ -116,9 +141,24 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
     api.render();
   });
 
-  fetch(gpFilePath)
-    .then((res) => res.arrayBuffer())
-    .then((buffer) => api.load(new Uint8Array(buffer), [trackIndex]));
+  if (recording) {
+    // Load the score ourselves so the mp3 can be attached as the backing track
+    // before it reaches the player (mirrors RecordingDriftHarness's proven
+    // idiom): api.load() offers no hook to set score.backingTrack pre-load.
+    Promise.all([
+      fetch(gpFilePath).then((res) => res.arrayBuffer()),
+      fetch(recordingPath!).then((res) => res.arrayBuffer()),
+    ]).then(([gpBuffer, mp3Buffer]) => {
+      const score = at.importer.ScoreLoader.loadScoreFromBytes(new Uint8Array(gpBuffer), settings);
+      score.backingTrack = new at.model.BackingTrack();
+      score.backingTrack.rawAudioFile = new Uint8Array(mp3Buffer);
+      api.renderScore(score, [trackIndex]);
+    });
+  } else {
+    fetch(gpFilePath)
+      .then((res) => res.arrayBuffer())
+      .then((buffer) => api.load(new Uint8Array(buffer), [trackIndex]));
+  }
 
   return api;
 }

@@ -8,6 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
 const gpBuffer = fs.readFileSync(GP_PATH);
 
+const RECORDING_ROOT = path.resolve(__dirname, '../test-fixtures/fixture-catalog/recording-aligned');
+const recordingGpBuffer = fs.readFileSync(path.join(RECORDING_ROOT, 'recording-aligned.gp'));
+const recordingMp3Buffer = fs.readFileSync(path.join(RECORDING_ROOT, 'recording.mp3'));
+const recordingSyncPoints = JSON.parse(fs.readFileSync(path.join(RECORDING_ROOT, 'meta.json'), 'utf8')).syncPoints;
+
 test.beforeEach(async ({ page }) => {
   await page.route('**/fixture.gp', (route) => route.fulfill({ body: gpBuffer, contentType: 'application/octet-stream' }));
 });
@@ -41,4 +46,36 @@ test('the playback cursor is actually colored, not fully transparent', async ({ 
     const backgroundColor = await component.locator(selector).evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(backgroundColor, `${selector} should not be fully transparent`).not.toBe('rgba(0, 0, 0, 0)');
   }
+});
+
+test('recording mode renders the tab and attaches the backing track + sync points, without loading a sound font', async ({ mount, page }) => {
+  await page.route('**/recording.gp', (route) => route.fulfill({ body: recordingGpBuffer, contentType: 'application/octet-stream' }));
+  await page.route('**/recording.mp3', (route) => route.fulfill({ body: recordingMp3Buffer, contentType: 'audio/mpeg' }));
+
+  const component = await mount(TabRendererHarness, {
+    props: { gpFilePath: '/recording.gp', trackIndex: 0, recording: true, recordingPath: '/recording.mp3', syncPoints: recordingSyncPoints },
+  });
+
+  // Real notation still renders from the same GP file.
+  await expect(component.locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  // The api is in backing-track mode, the mp3 is attached as the score's
+  // backing track, and the sync points were applied to the master bars.
+  const state = await page.evaluate(async () => {
+    const api = (window as unknown as { __api: { settings: { player: { playerMode: number } }; score: { backingTrack?: { rawAudioFile?: Uint8Array }; masterBars: { syncPoints?: unknown[] }[] } | null } }).__api;
+    // Poll briefly for the async score load to settle.
+    for (let i = 0; i < 200 && !api.score; i++) await new Promise((r) => setTimeout(r, 50));
+    const score = api.score!;
+    const anchored = score.masterBars.some((mb) => (mb.syncPoints?.length ?? 0) > 0);
+    return {
+      playerMode: api.settings.player.playerMode,
+      hasBackingAudio: (score.backingTrack?.rawAudioFile?.length ?? 0) > 0,
+      anchored,
+    };
+  });
+
+  // 3 === PlayerMode.EnabledBackingTrack in alphaTab 1.8.3.
+  expect(state.playerMode).toBe(3);
+  expect(state.hasBackingAudio).toBe(true);
+  expect(state.anchored).toBe(true);
 });
