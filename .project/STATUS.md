@@ -1,5 +1,65 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-20-threshold-shipped (**Tempo-stable drift threshold
+SHIPPED; ArDD updated to v1.0.2; two stale tasks files reconciled.**)
+
+**Shipped** — `tasks-tempo-stable-drift-threshold-d00e.md` **completed**
+(6/6), merged `3bff286` + `635e7ca`, worktree reaped.
+`DRIFT_THRESHOLD_TICKS = 50` → `DRIFT_THRESHOLD_MS = 35`, converting at
+the local tempo via helpers already on the path (`localTempoAtTick`,
+`ticksToMs` — no new module). A fixed tick count is a fixed fraction of a
+beat, so it silently tightened as tempo rose; sync tolerance is
+perceptual and therefore absolute.
+
+**The value was measured, not assumed** — every catalogue song sits at
+93–130bpm with no mid-song tempo changes, so the old effective tolerance
+spanned 24.0ms (130bpm) to 33.6ms (93bpm). 35ms sits just above the
+strictest, so **no song receives more corrections than before**
+(loosening-or-neutral everywhere, no regression surface), with 15ms of
+headroom under the 50ms perceptual bar.
+
+**Verification, stated honestly.** Client 141 unit, server 257, CT 190,
+`pnpm check` — green, and **no test expectation value changed anywhere**;
+only comment units were re-expressed. **T006's live two-participant
+browser check on Creep (93bpm) and Lazy Eye (130bpm) was NEVER RUN** — it
+was closed on that automated evidence at the user's decision, recorded
+explicitly in the tasks file. Residual risk accepted: a *loosened*
+threshold fails as visible drift rather than a failing test, which is
+exactly what the live check would have caught. If drift appears on slow
+songs, this change is the first suspect — file via `/ardd-feedback`,
+never reopen (`completed` is terminal).
+
+**New feedback — the e2e suite is red on `main`.**
+`feedback-e2e-suite-red-on-main-7b3f.md`. `client/e2e/host-controls.spec.ts`
+fails identically on baseline `cc23caa`, so it predates the threshold
+work; timeout-shaped, likely harness rather than product. Flagged as a
+**verification blind spot**, not one broken spec: it is the closest
+automated proxy for "does a host action reach a participant", and two
+plans lean on e2e for end-to-end evidence. Window is narrow — the suite
+passed 2026-07-19. F002 additionally asks for a convention so a "full
+suite green" claim cannot quietly exclude a known-red tier.
+
+**Housekeeping** (`eb8ae3d`) — both stale tasks files were checked
+against the codebase rather than re-labelled:
+- `tasks-settings-modal-followup-bbd2.md`: carried the invalid status
+  `superseded` plus "do not implement", but all 6 tasks are checked AND
+  the work is verifiably shipped (`SettingsModal.svelte` has T003's exact
+  hint text and T002's "Playback audio" label). Corrected to
+  **`completed`** — the linter's suggested `abandoned` would have
+  recorded shipped work as dropped.
+- `tasks-lobby-cursor-modes-0bea.md` T010: annotated `[partial]` and
+  **deliberately left unchecked**. Scenario 3 (Spotlight resets on
+  playback start) is now covered by `playback-control.test.ts`, but the
+  client force-follow path (scenarios 1–2) has no coverage anywhere —
+  `lobbyCursorTick` appears in `playback-engine.ct.spec.ts` only as
+  `null` fixture scaffolding. Closing it wants CT coverage, not another
+  manual pass.
+
+**ArDD updated** `6e7d3cd` (v0.10.3-beta.3) → **`33ac9ae` (v1.0.2)**,
+channel stays `beta` (a newer stable outranks an older prerelease). All 8
+migrations already applied, none pending; no new install suggestions.
+Prior context below.)_
+
 _Updated: 2026-07-20-replan (**Recording playback RE-PLANNED as
 session-scoped; old plan superseded, its tasks file abandoned.** New:
 `plan-recording-drift-foundation-2026-07-20-9ca3.md` (`approved`),
@@ -834,9 +894,6 @@ check (does muting actually silence audio) still pending** — bundle
 confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
-> **ARDD update available:** installed `6e7d3cd` (beta channel), latest
-> release `v1.0.1` — run `/ardd-update`.
-
 ## Artifact Status
 
 | Artifact | Status | Open questions |
@@ -914,14 +971,17 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**1 open feedback file** — `feedback-recording-drift-replan-4e1c.md`.
-**6 of its 7 items are incorporated** into
-`plan-recording-drift-foundation-2026-07-20-9ca3.md`; the file stays
-`open` because **F001 is deliberately unresolved**, awaiting its own
-plan. F001 is the global `DRIFT_THRESHOLD_TICKS` → milliseconds
-conversion — a latent bug in the *shipped synth path* that the recording
-work merely exposed, independently shippable, and approved for a global
-fix. Target it with a fresh `/ardd-plan` run.
+**1 open feedback file** — `feedback-e2e-suite-red-on-main-7b3f.md`
+(2 items). F001: `client/e2e/host-controls.spec.ts` fails on `main`
+independent of any recent change (verified identical on baseline
+`cc23caa`); timeout-shaped, likely harness. F002: asks for a convention
+so a "full suite green" claim states which tiers ran and which are
+known-red. Will be picked up by the next `/ardd-plan`.
+
+Previously: `feedback-recording-drift-replan-4e1c.md` flipped to
+`planned` — F002–F007 bound to
+`plan-recording-drift-foundation-2026-07-20-9ca3.md`, F001 to
+`plan-tempo-stable-drift-threshold-2026-07-20-5d9f.md` (now shipped).
 
 ## Feature Backlog
 
@@ -946,6 +1006,23 @@ widget for count-in/metronome, design detailed in the 2026-07-18-night
 entry above). `latency-compensated-position-extrapolation`,
 `hover-long-press-tooltip-for-i`, and `solo-mute-button-per-part` have
 since shipped (`implemented`).
+
+## Work Queue
+
+- **`tasks-recording-drift-foundation-cc87.md`** — `ready`, 0/21; plan
+  `plan-recording-drift-foundation-2026-07-20-9ca3.md`; features
+  `sync-tabs-to-real-audio`.
+  - No pair verdicts: it is the only `ready` tasks file and nothing is in
+    flight, so `parallel-matrix.sh` is silent by design (fewer than two
+    participants).
+
+*(Note for when a second `ready` file appears: `independent` from
+`parallel-matrix.sh` means **no declared overlap only** — no shared
+feature slug, no shared `[artifacts: ...]` tag. It is not a claim of
+conflict-freedom; `merge_policy` still governs at merge time.)*
+
+Also open but not `ready`: `tasks-lobby-cursor-modes-0bea.md`
+(`in-progress`, 11/12 — T010 partial, see the dated entry above).
 
 ## Plans & Tasks
 
@@ -1210,24 +1287,27 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 ## Recommended next step
 
 **`/ardd-implement`** — `tasks-recording-drift-foundation-cc87.md` is
-`ready` (21 tasks / 5 phases).
+`ready` (21 tasks / 5 phases), and it now measures against a
+tempo-stable threshold, which was the reason for landing the threshold
+work first.
 
-**Phase 1 is a gate, and the tasks file says so explicitly.** T002
-asserts ≤50ms end-state separation between two backing-track clients;
-T004 must achieve it *without* touching `correctDrift`'s arithmetic
-(instrumented and exact) and *without* any mechanism that re-measures
-skew after the participant has drifted (that ratchets — it is how the
-prior attempt failed). **If T004 cannot meet T002, the correct outcome is
-to stop and report, not to widen the threshold.** A negative answer after
-one phase is worth far more than five phases built on an unproven sync
-model.
+**Phase 1 is a gate.** T002 asserts ≤50ms end-state separation between
+two backing-track clients; T004 must reach it *without* touching
+`correctDrift`'s arithmetic (instrumented, exact) and *without* any
+mechanism that re-measures skew after the participant has drifted (that
+ratchets — how the prior attempt failed). **If T004 cannot meet T002, the
+right outcome is to stop and report, not to widen the threshold.**
 
-Also live, independent of the above:
+Worth weighing first, though:
 
-- **`/ardd-plan`** for **feedback F001** — the global
-  `DRIFT_THRESHOLD_TICKS` → ms conversion. A latent bug in shipped synth
-  behavior, needs no recording work, and is probably the highest
-  value-per-effort item currently open.
+- **The red e2e suite** (`feedback-e2e-suite-red-on-main-7b3f.md`). The
+  recording plan's Phase 5 *is* a two-participant e2e — building toward a
+  verification tier that currently doesn't run is a poor sequence. Either
+  fix it first or decide knowingly to proceed without it.
+- **Two live-verification debts** now sit unpaid: this plan's T006 (never
+  run) and `lobby-cursor-modes` T010 (open since 2026-07-02). Both are
+  browser checks. A single session with a real browser could clear both
+  and de-risk the recording work's own verification story.
 
 Then, in rough priority order:
 
