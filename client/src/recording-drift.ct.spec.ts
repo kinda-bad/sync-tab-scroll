@@ -36,8 +36,12 @@ import RecordingDriftHarness from './test-harness/RecordingDriftHarness.svelte';
  *     `tickPosition` sits persistently behind the synth host's. It is
  *     present at Δbpm = 0.5 just as much as at Δbpm = 10, so it is
  *     playback latency, NOT tempo divergence. On its own it exceeds
- *     `DRIFT_THRESHOLD_TICKS` (50) permanently, which is sufficient to
- *     explain a seek on every single update.
+ *     `DRIFT_THRESHOLD_MS` (35) permanently, which is sufficient to
+ *     explain a seek on every single update. (This referred to the
+ *     former `DRIFT_THRESHOLD_TICKS` (50) until the threshold was made
+ *     tempo-stable in plan-tempo-stable-drift-threshold-2026-07-20-5d9f;
+ *     the conclusion is unchanged — a ~275 ms offset exceeds a 35 ms
+ *     tolerance just as decisively as it exceeded 50 ticks.)
  *
  *     NOTE: an earlier revision of this comment put the offset at
  *     ~160 ticks (~83 ms). That figure was an artifact of measuring it
