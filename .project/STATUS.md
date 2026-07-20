@@ -1,8 +1,6 @@
 # sync-tab-scroll — Project Status
 
 _Updated: 2026-07-20-phase5-finding (**Phases 1–4 landed (18/21); Phase 5 honest gate found recording-mode sync is NOT wired into production — stop-and-decide.**)_
-on main (18/21); only Phase 5 verification remains — T019 e2e is the honest
-gate, T021 is manual.**)_
 
 **Progress: `tasks-recording-drift-foundation-cc87.md` in-progress
 (18/21).** Phases 1–4 merged to `main`, all signed, worktrees reaped.
