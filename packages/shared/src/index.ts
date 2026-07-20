@@ -2,6 +2,18 @@ export * from './messages.js';
 export * from './lyrics-walk.js';
 export * from './lyrics-dispatch.js';
 
+// --- Recording sync anchors (datamodel.md FlatSyncPoint) ---
+// alphaTab's OWN named type, re-exported rather than redefined (constitution
+// Principle V — check library idioms before building a custom mechanism — and
+// Principle VI — named types over inline duplication). A bespoke shape was
+// rejected: alphaTab already round-trips this exact structure via
+// `Score.applyFlatSyncPoints()` / `exportFlatSyncPoints()`, and it is what
+// alphatab.net's Media Sync Editor exports. `import type` keeps alphaTab out of
+// this package's emitted JS — the re-export is type-only. The paired
+// `flat-sync-point.type-test.ts` fails compilation if alphaTab's shape drifts.
+import type { model } from '@coderline/alphatab';
+export type FlatSyncPoint = model.FlatSyncPoint;
+
 // --- Durable Account Layer (datamodel.md Account Layer; constitution v1.5.0) ---
 // Optional OAuth accounts backed by an optional Postgres store. These three
 // entities are the ONLY persisted records anywhere; realtime Session/
