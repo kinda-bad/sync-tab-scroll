@@ -78,6 +78,17 @@ describe('createCatalogRequestHandler', () => {
     expect(res.headers).toEqual({ 'Content-Type': 'text/plain; charset=utf-8' });
   });
 
+  it('serves an .mp3 file with an audio/mpeg content-type (T010)', async () => {
+    fs.writeFileSync(path.join(catalogRoot, 'recording.mp3'), 'id3-bytes');
+    const handler = createCatalogRequestHandler(catalogRoot);
+    const res = fakeRes();
+
+    handler(fakeReq('/catalog/recording.mp3'), res);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(res.headers).toMatchObject({ 'Content-Type': 'audio/mpeg' });
+  });
+
   it('404s a nonexistent file', () => {
     const handler = createCatalogRequestHandler(catalogRoot);
     const res = fakeRes();

@@ -35,7 +35,7 @@ status: in-progress
 
 - [x] T009 In `server/src/catalog-loader.ts`, treat a song with a `recording.mp3` but no `syncPoints` as recording-less: set `recordingPath` to null and log a warning naming the song. An unanchored recording cannot be aligned to the score at all, so publishing it would offer a mode that cannot work. Follows the loader's existing skip-not-fatal posture. Test-first, extending T008's file.
 
-- [ ] T010 [parallel] Add `audio/mpeg` to the `CONTENT_TYPES` map in `server/src/catalog-static.ts` (currently only `.gp` and `.lrc`; everything else falls back to `application/octet-stream`). Failing test in `server/src/catalog-static.test.ts` first. [artifacts: infrastructure]
+- [x] T010 [parallel] Add `audio/mpeg` to the `CONTENT_TYPES` map in `server/src/catalog-static.ts` (currently only `.gp` and `.lrc`; everything else falls back to `application/octet-stream`). Failing test in `server/src/catalog-static.test.ts` first. [artifacts: infrastructure]
 
 - [ ] T011 Implement HTTP Range request support in `server/src/catalog-static.ts`. The handler currently pipes a plain `200` via `createReadStream().pipe(res)`; an `HTMLAudioElement` requires `206 Partial Content` with `Accept-Ranges`/`Content-Range` to seek, and every host seek lands on the audio element as a range request. Failing tests first: full request still returns 200, valid `Range` returns 206 with correct `Content-Range`, unsatisfiable range returns 416. Preserve the existing path-traversal guard. [artifacts: infrastructure]
 

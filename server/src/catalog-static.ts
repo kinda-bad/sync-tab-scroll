@@ -7,6 +7,7 @@ const URL_PREFIX = '/catalog/';
 const CONTENT_TYPES: Record<string, string> = {
   '.gp': 'application/octet-stream',
   '.lrc': 'text/plain; charset=utf-8',
+  '.mp3': 'audio/mpeg',
 };
 
 /**
