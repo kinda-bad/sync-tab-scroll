@@ -1,17 +1,34 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-20-phase2-merged (**Recording-drift Phases 1 & 2 landed
-on main; Phase 3+4 (engine + UI) in flight; Phase 5 e2e is the next
-gate.**)_
+_Updated: 2026-07-20-phase34-merged (**Recording-drift Phases 1–4 landed
+on main (18/21); only Phase 5 verification remains — T019 e2e is the honest
+gate, T021 is manual.**)_
 
 **Progress: `tasks-recording-drift-foundation-cc87.md` in-progress
-(11/21).** Phase 1 (T001–T005) and Phase 2 (T006–T011) merged to `main`,
-all signed, worktrees reaped. **Phase 2** added: `FlatSyncPoint`
-re-exported from shared (with a structural type-test pinning it to
-alphaTab), `recordingPath`/`syncPoints` on `CatalogSong`, loader discovery
-of `recording.mp3` (skip-not-fatal when unanchored), `audio/mpeg`
-content-type, and **HTTP Range support** (206/416, path-traversal guard
-preserved) — server vitest 269 green. Phase 3+4 (T012–T018) delegated next.
+(18/21).** Phases 1–4 merged to `main`, all signed, worktrees reaped.
+- **Phase 2** (T006–T011): `FlatSyncPoint` re-exported from shared (with a
+  structural type-test), `recordingPath`/`syncPoints` on `CatalogSong`,
+  loader discovery of `recording.mp3` (skip-not-fatal when unanchored),
+  `audio/mpeg`, and **HTTP Range support** (206/416, traversal guard kept).
+- **Phase 3+4** (T012–T018): `Session.playbackSource` + host-only
+  `playback-source-set` handler (rejected while running; song-change resets
+  to synth), `EnabledBackingTrack` renderer path (synth path byte-for-byte
+  unchanged when `playerMode` omitted), mode-aware readiness (validated
+  empirically that `midiLoaded` fires with no soundfont), engine rebuild on
+  source change, recording-mode count-in bypass (host synth toggle stays
+  live), host source control + recording-mode carve-outs for
+  mute/solo/metronome. Server vitest 274, client vitest 153, CT specs run
+  green (tab-renderer, playback-engine, SettingsModal, a11y). Shared
+  `isRecordingCapable()` predicate is the single source of truth.
+
+**Phase 5 remaining (T019–T021):** T019 two-participant e2e is the FIRST
+honest test — independent `play()` calls, real transport, no shared audio
+stack — so it stresses Phase 1's disclosed lower-bound caveats; **a failure
+is a real design finding, not a flake.** T020 is a full-suite regression
+(synth path must be bit-for-bit unchanged). **T021 is manual** — needs a
+real `recording.mp3` + sync points authored in alphatab.net's Media Sync
+Editor and a live two-browser check (headless automation can't; Chrome
+blocks port 6000, audio races/wedges).
 
 **Phase 1 gate result — PASS, verified at the code level.**
 T001–T005 merged to `main` (`e8006de..a1af8da`, 5 signed commits, worktree
