@@ -137,8 +137,28 @@ export function syncPointRateAtTick(
  * instead. This changes only *which rate value* the projection reads — never
  * the arithmetic below. Omitted / `undefined` keeps the notated-tempo path
  * byte-for-byte, so a synth-host participant is unaffected.
+ *
+ * `isBackingParticipant` (T004, recording-drift-foundation): a backing-track
+ * participant's clock *is* its `HTMLAudioElement`, and in a uniform-source
+ * session every client plays the identical recording, so the pair is locked
+ * together by construction — measured free-running separation is ~0ms,
+ * sustained through a seek→resume cycle. Periodic time-extrapolation drift
+ * correction is therefore not merely unnecessary here but actively harmful:
+ * during the host's per-`play()` start-skew window (~300ms, re-rolled every
+ * start — T004a) the rate-keyed projection transiently over-projects past
+ * where the host's audio has actually reached, and each corrective seek
+ * re-buffers the participant's audio, shoving it *ahead* of the host and
+ * injecting the 60–80ms separation the ensuing seek storm perpetuates
+ * (measured: correction on turns a 0ms free-run into 60–80ms). The
+ * participant's own `audio.currentTime` — the one uncontaminated local
+ * reference (T004a, ±5ms) — confirms the skew to compensate is ~0
+ * (research §5), so the correct action is to *stop chasing*, not to add a
+ * compensation term. This suppresses only the periodic extrapolation seek;
+ * the start/pause/stop status transitions above still run (a host seek is a
+ * discrete reposition event, not drift), and `correctDrift`'s projection
+ * arithmetic is left entirely untouched — the block is simply not entered.
  */
-export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void, projectionBpm?: number): number | null {
+export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void, projectionBpm?: number, isBackingParticipant?: boolean): number | null {
   if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
@@ -176,6 +196,13 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   }
 
   if (isHost) return null;
+
+  // A backing-track participant is slaved to its own ground-truth audio and
+  // needs no periodic drift correction in a uniform-source session (see the
+  // doc comment): skip the extrapolation seek entirely. The status
+  // transitions above (start/pause/stop, and a host seek that arrives as a
+  // discrete reposition) have already been applied.
+  if (isBackingParticipant) return null;
 
   // Extrapolation only makes sense while playback is actually running: once
   // paused/stopped, playbackState.serverTimestamp stops advancing but

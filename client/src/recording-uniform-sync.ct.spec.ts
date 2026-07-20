@@ -21,10 +21,13 @@ import RecordingDriftHarness from './test-harness/RecordingDriftHarness.svelte';
  * Separation is asserted in MILLISECONDS (ticks mislead across tempos);
  * seek count is recorded only as a secondary observation (feedback F007).
  *
- * RED FIRST (constitution Principle VII): committed `test.fail()` because
- * the per-play() start skew and/or the notated-vs-recording projection rate
- * are unaddressed until T003/T004. The `test.fail()` marker is removed on
- * T004's commit once the pair holds the bar.
+ * Held RED first (constitution Principle VII) with a `test.fail()` marker
+ * while the per-play() start skew and notated-vs-recording projection rate
+ * were unaddressed (measured audible separation 82ms). T004 removed the
+ * marker: a backing-track participant now free-runs its own ground-truth
+ * audio instead of seek-chasing the host's projection (which injected the
+ * separation during the host's start-skew window), so the uniform pair holds
+ * the bar with ~0ms separation.
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,7 +43,6 @@ function loadFixture(dir: string) {
 
 const SEPARATION_BAR_MS = 50;
 
-test.fail();
 test('a backing-track host and participant finish within 50ms on the aligned recording', async ({ mount, page }) => {
   const { gp, mp3, meta } = loadFixture('recording-aligned');
   await page.route('**/fixture.gp', (r) => r.fulfill({ body: gp, contentType: 'application/octet-stream' }));

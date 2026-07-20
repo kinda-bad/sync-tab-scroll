@@ -254,8 +254,10 @@
           (participant.score
             ? syncPointRateAtTick(participant.score, syncPoints, broadcast.tickPosition) ?? undefined
             : undefined);
+        // T004: the participant is on a backing track (uniform host/participant
+        // config), so it free-runs its own audio rather than seek-chasing.
         const applied = correct
-          ? correctDrift(participant, broadcast, false, undefined, projectionBpm)
+          ? correctDrift(participant, broadcast, false, undefined, projectionBpm, !participantSynth)
           : null;
         if (applied !== null) seekCount++;
 
