@@ -1,7 +1,7 @@
 ---
 plan: plan-recording-drift-foundation-2026-07-20-9ca3.md
 generated: 2026-07-20
-status: ready
+status: in-progress
 ---
 
 # Tasks
@@ -15,7 +15,7 @@ status: ready
 > scored an excellent seek count while leaving participants ~900ms apart;
 > seek count is not evidence of sync.
 
-- [ ] T001 Extend `client/src/test-harness/RecordingDriftHarness.svelte` (already merged, with `hostBacking` / `participantSynth` / correction-off modes) to drive a backing-track **host** against a backing-track **participant**. This backing/backing direction has never been exercised — the prior run only measured synth-host directions plus a partial backing-host case — and it is the exact configuration this plan depends on. The harness must expose, per sample: each side's `tickPosition`, each side's own `HTMLAudioElement.currentTime`, and the resulting separation in both ticks and milliseconds. Milliseconds is the reporting unit that matters; ticks are tempo-relative and mislead across tempos. No test requirement — this is harness capability that T002 immediately exercises.
+- [x] T001 Extend `client/src/test-harness/RecordingDriftHarness.svelte` (already merged, with `hostBacking` / `participantSynth` / correction-off modes) to drive a backing-track **host** against a backing-track **participant**. This backing/backing direction has never been exercised — the prior run only measured synth-host directions plus a partial backing-host case — and it is the exact configuration this plan depends on. The harness must expose, per sample: each side's `tickPosition`, each side's own `HTMLAudioElement.currentTime`, and the resulting separation in both ticks and milliseconds. Milliseconds is the reporting unit that matters; ticks are tempo-relative and mislead across tempos. No test requirement — this is harness capability that T002 immediately exercises.
 
 - [ ] T002 Write a failing Playwright CT spec `client/src/recording-uniform-sync.ct.spec.ts` asserting **end-state separation ≤50ms** between a backing-track host and a backing-track participant on the `recording-aligned` fixture (Δbpm=0.5), across a full play → sustain (≥20s) → seek → resume cycle. This MUST fail first (constitution Principle VII): the per-`play()` start skew of ~275ms is unaddressed, so the pair will finish far outside the bar. **Assert separation, not seek count** — record seek count as a secondary observation in the test output only, and do not gate on it (feedback F007). Apply `test.fail()` on the red commit so it passes the pre-commit hook; remove it on T004's commit. [artifacts: infrastructure]
 

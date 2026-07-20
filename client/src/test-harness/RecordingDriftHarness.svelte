@@ -180,6 +180,147 @@
       };
     };
 
+    /**
+     * T001/T002 (recording-drift-foundation): the UNIFORM backing/backing
+     * measurement. Both host and participant are on the same recording
+     * (mount with `hostBacking` and default participant backing), so each
+     * side's reported `tickPosition` tracks its own `HTMLAudioElement.
+     * currentTime` to ±5ms (T004a). Aligning the two reported positions is
+     * therefore the same as aligning the two audios — the property the
+     * synth-host direction lacks. This driver runs a full
+     * play -> sustain(>=20s) -> seek -> resume cycle and reports the
+     * end-state separation in BOTH ticks and milliseconds, plus each side's
+     * own audio.currentTime, so the millisecond gate (the reporting unit
+     * that matters) can be asserted directly.
+     *
+     * `opts.recordingBpm`, when supplied, is fed to `correctDrift` as the
+     * projection *rate input* for the backing-track host (T003 rate-keying):
+     * the host advances at the recording's sync-point-derived rate, not the
+     * notated tempo, and the extrapolation must match or it accumulates
+     * `Δbpm × 16` ticks/s of phantom drift. It changes only which rate value
+     * correctDrift reads — never its arithmetic.
+     */
+    const audioEl = (api: at.AlphaTabApi): HTMLAudioElement | undefined =>
+      (api.player?.output as unknown as { audioElement?: HTMLAudioElement } | undefined)?.audioElement;
+
+    w.__measureUniform = async (opts: {
+      sustainMs?: number;
+      resumeMs?: number;
+      seekTick?: number;
+      correct?: boolean;
+      recordingBpm?: number;
+    } = {}) => {
+      const sustainMs = opts.sustainMs ?? 20_000;
+      const resumeMs = opts.resumeMs ?? 8_000;
+      const seekTick = opts.seekTick ?? 20_000;
+      const correct = opts.correct ?? true;
+      const recordingBpm = opts.recordingBpm;
+
+      const samples: {
+        atMs: number;
+        phase: string;
+        hostTick: number;
+        partTick: number;
+        hostAudioMs: number | null;
+        partAudioMs: number | null;
+        sepTicks: number;
+        sepAudioMs: number | null;
+      }[] = [];
+      let seekCount = 0;
+      const startedAt = Date.now();
+
+      // Broadcast mirrors the production host tick-report at the ~1/s cadence.
+      let broadcast: PlaybackState = {
+        status: 'running',
+        tickPosition: host.tickPosition,
+        serverTimestamp: Date.now(),
+        bpm: 120,
+      } as PlaybackState;
+      const reporter = setInterval(() => {
+        broadcast = { status: 'running', tickPosition: host.tickPosition, serverTimestamp: Date.now(), bpm: 120 } as PlaybackState;
+      }, 1000);
+
+      const sampleOnce = (phase: string) => {
+        const atMs = Date.now() - startedAt;
+        const hostAudio = audioEl(host);
+        const partAudio = audioEl(participant);
+        const hostAudioMs = hostAudio ? hostAudio.currentTime * 1000 : null;
+        const partAudioMs = partAudio ? partAudio.currentTime * 1000 : null;
+
+        // T003 rewires this call to pass `recordingBpm` through to
+        // correctDrift as the backing-host projection rate input.
+        const applied = correct
+          ? correctDrift(participant, broadcast, false, undefined)
+          : null;
+        if (applied !== null) seekCount++;
+
+        samples.push({
+          atMs,
+          phase,
+          hostTick: host.tickPosition,
+          partTick: participant.tickPosition,
+          hostAudioMs,
+          partAudioMs,
+          sepTicks: Math.abs(host.tickPosition - participant.tickPosition),
+          sepAudioMs: hostAudioMs !== null && partAudioMs !== null ? Math.abs(hostAudioMs - partAudioMs) : null,
+        });
+      };
+
+      const runFor = async (ms: number, phase: string) => {
+        const until = Date.now() + ms;
+        while (Date.now() < until) {
+          sampleOnce(phase);
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      };
+
+      // play -> sustain
+      host.play();
+      participant.play();
+      await runFor(sustainMs, 'sustain');
+
+      // seek (host-driven): both instances re-seek, re-rolling their
+      // per-play start skew, then resume.
+      host.pause();
+      participant.pause();
+      host.tickPosition = seekTick;
+      participant.tickPosition = seekTick;
+      broadcast = { status: 'running', tickPosition: seekTick, serverTimestamp: Date.now(), bpm: 120 } as PlaybackState;
+      host.play();
+      participant.play();
+      await runFor(resumeMs, 'resume');
+
+      clearInterval(reporter);
+      host.pause();
+      participant.pause();
+
+      // End state = the tail of the resume phase while still running, so a
+      // brief post-seek re-buffer transient can't masquerade as the result.
+      const resumeSamples = samples.filter((s) => s.phase === 'resume');
+      const tail = resumeSamples.slice(-10);
+      const median = (xs: number[]) => {
+        const s = [...xs].sort((a, b) => a - b);
+        return s.length ? s[Math.floor(s.length / 2)] : NaN;
+      };
+      const endTickSep = median(tail.map((s) => s.sepTicks));
+      const endAudioSepMs = median(tail.filter((s) => s.sepAudioMs !== null).map((s) => s.sepAudioMs as number));
+      const bpmForMs = recordingBpm ?? 120;
+      const endReportedSepMs = (endTickSep * 60000) / (bpmForMs * 960);
+
+      return {
+        elapsedSeconds: (Date.now() - startedAt) / 1000,
+        seekCount,
+        endTickSep,
+        // Reported-position separation converted to ms at the recording rate.
+        endReportedSepMs,
+        // The true audible separation: difference of the two audios'
+        // own currentTime (ground truth, uncontaminated by the projection).
+        endAudioSepMs,
+        errors,
+        samples,
+      };
+    };
+
     status = status === 'ready' ? 'ready' : status;
   });
 </script>
