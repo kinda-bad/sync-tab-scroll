@@ -1,10 +1,27 @@
 import * as at from '@coderline/alphatab';
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { PlaybackState, Session } from '@sync-tab-scroll/shared';
-import { TICKS_PER_QUARTER_NOTE, localTempoAtTick } from './tempo-lookup';
+import { TICKS_PER_QUARTER_NOTE, localTempoAtTick, ticksToMs } from './tempo-lookup';
 
-/** MIDI ticks — small relative to a beat (division is typically 960 ticks/quarter note). */
-const DRIFT_THRESHOLD_TICKS = 50;
+/**
+ * Drift tolerance as an absolute real duration, in milliseconds.
+ *
+ * Deliberately *not* a tick count. A MIDI tick is a fixed fraction of a
+ * beat, so a fixed tick threshold means a different real tolerance at every
+ * tempo — `3125 / bpm` ms for the old 50-tick value — and it gets *stricter*
+ * as tempo rises, which is backwards: a faster song is no more forgiving of
+ * a 30ms offset than a slow one. Sync tolerance is a perceptual quantity, so
+ * it belongs in perceptual units and must be tempo-stable.
+ *
+ * 35ms is derived, not arbitrary. Every song in the current catalogue sits
+ * between 93 and 130bpm with no mid-song tempo changes, so the old effective
+ * tolerance spanned 33.6ms (93bpm) down to 24.0ms (130bpm). 35ms sits just
+ * above the strictest of those, so no catalogue song receives *more*
+ * corrections than it did before — the change is loosening-or-neutral
+ * everywhere — while leaving 15ms of headroom under the 50ms perceptual bar
+ * established in research-recording-mode-drift-2026-07-19-b7c2.md (T004b).
+ */
+const DRIFT_THRESHOLD_MS = 35;
 
 /**
  * Periodic drift correction (infrastructure.md Session & Real-Time Sync):
@@ -124,7 +141,13 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   const projectedTickPosition = playbackState.tickPosition + elapsedTicks;
 
   const drift = Math.abs(api.tickPosition - projectedTickPosition);
-  if (drift > DRIFT_THRESHOLD_TICKS) {
+  // Convert the tick-space drift to real time at the local tempo before
+  // comparing, so the tolerance means the same thing at every tempo. In the
+  // defensive no-score case above (tempo 0) there's no meaningful
+  // conversion — treat the drift as unbounded so a genuine position change
+  // still propagates rather than being silently swallowed.
+  const driftMs = tempo > 0 ? ticksToMs(drift, tempo) : Infinity;
+  if (driftMs > DRIFT_THRESHOLD_MS) {
     onApply?.(projectedTickPosition);
     api.tickPosition = projectedTickPosition;
     return projectedTickPosition;

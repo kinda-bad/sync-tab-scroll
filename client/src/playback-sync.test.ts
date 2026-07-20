@@ -190,7 +190,7 @@ describe('correctDrift', () => {
       return correctDrift(api, fakePlaybackState({ status: 'paused', tickPosition: base, serverTimestamp: Date.now() }), false);
     }
 
-    it.fails('leaves a 30ms drift uncorrected at both 93bpm and 130bpm', () => {
+    it('leaves a 30ms drift uncorrected at both 93bpm and 130bpm', () => {
       // 30ms is inside the new 35ms tolerance at every tempo. Under the old
       // fixed 50-tick threshold it was 44.6 ticks at 93bpm (uncorrected) but
       // 62.4 ticks at 130bpm (corrected) — the same real error treated
