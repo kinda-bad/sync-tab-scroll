@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { CatalogPart, CatalogSong, Catalogue, Session } from '@sync-tab-scroll/shared';
+import type { CatalogPart, CatalogSong, Catalogue, FlatSyncPoint, Session } from '@sync-tab-scroll/shared';
 import { hasConsent } from './consent.js';
 
 const DEFAULT_CATALOGUE_ID = 'default';
@@ -14,6 +14,13 @@ interface SongMeta {
   lyricLineBreaks: number[] | null;
   lyricsRawLine?: string;
   lyricsRawLineStartBar?: number;
+  /**
+   * Tick↔recording-time anchors authored in alphatab.net's Media Sync Editor,
+   * stored verbatim in `meta.json` (datamodel.md FlatSyncPoint, pipeline.md).
+   * Absent for a non-recording song; required alongside a `recording.mp3` for the
+   * song to be recording-capable (T009).
+   */
+  syncPoints?: FlatSyncPoint[];
 }
 
 /** On-disk `catalogue.json` shape (datamodel.md Catalogue Activation Key) — the raw key material for a private catalogue. */
@@ -68,6 +75,27 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
   const lrcPath = path.join(songDir, 'lyrics.lrc');
   const urlPrefix = `/catalog/${relPath}`;
 
+  // Recording discovery (T008/T009). The recording is a fixed `recording.mp3`
+  // filename — an exact-name lookup inherently excludes a `._recording.mp3`
+  // AppleDouble sidecar. A recording is only usable if it is also anchored to
+  // the score by `syncPoints`; without anchors it cannot be aligned to the tab
+  // at all, so (T009) we treat it as recording-less and warn, naming the song —
+  // the same skip-not-fatal posture the loader applies elsewhere.
+  const syncPoints = meta.syncPoints ?? null;
+  const hasRecording = fs.existsSync(path.join(songDir, 'recording.mp3'));
+  let recordingPath: string | null = null;
+  if (hasRecording) {
+    if (syncPoints) {
+      recordingPath = `${urlPrefix}/recording.mp3`;
+    } else {
+      // T009: an unanchored recording cannot be aligned to the score, so it is
+      // treated as recording-less — logged (naming the song), not fatal.
+      console.warn(
+        `[catalog-loader] song "${path.basename(relPath)}" has a recording.mp3 but no syncPoints in meta.json; treating it as recording-less (an unanchored recording cannot be aligned to the score)`,
+      );
+    }
+  }
+
   return {
     id: path.basename(relPath),
     catalogueId,
@@ -81,9 +109,8 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
     lyricLineBreaks: meta.lyricLineBreaks,
     lyricsRawLine: meta.lyricsRawLine,
     lyricsRawLineStartBar: meta.lyricsRawLineStartBar,
-    // Recording discovery is added in T008/T009; a non-recording song keeps both null.
-    recordingPath: null,
-    syncPoints: null,
+    recordingPath,
+    syncPoints,
   };
 }
 

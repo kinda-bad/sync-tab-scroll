@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -16,7 +16,7 @@ afterEach(() => {
   fs.rmSync(catalogRoot, { recursive: true, force: true });
 });
 
-function writeSong(dirName: string, opts: { meta?: object; gpFile?: boolean; lrc?: boolean } = {}) {
+function writeSong(dirName: string, opts: { meta?: object; gpFile?: boolean; lrc?: boolean; recording?: boolean | string } = {}) {
   const songDir = path.join(catalogRoot, dirName);
   fs.mkdirSync(songDir, { recursive: true });
   if (opts.meta !== null) {
@@ -36,7 +36,29 @@ function writeSong(dirName: string, opts: { meta?: object; gpFile?: boolean; lrc
   }
   if (opts.gpFile !== false) fs.writeFileSync(path.join(songDir, 'song.gp'), '');
   if (opts.lrc) fs.writeFileSync(path.join(songDir, 'lyrics.lrc'), '');
+  if (opts.recording) {
+    const fileName = typeof opts.recording === 'string' ? opts.recording : 'recording.mp3';
+    fs.writeFileSync(path.join(songDir, fileName), 'id3-bytes');
+  }
   return songDir;
+}
+
+/** A minimal valid FlatSyncPoint[] (alphaTab's shape) for meta.json fixtures. */
+const SYNC_POINTS = [
+  { barIndex: 0, barPosition: 0, barOccurence: 0, millisecondOffset: 0 },
+  { barIndex: 8, barPosition: 0, barOccurence: 0, millisecondOffset: 12000 },
+];
+
+function metaWith(extra: object) {
+  return {
+    name: 'Creep',
+    artist: 'Radiohead',
+    parts: [{ instrumentName: 'Guitar', trackIndex: 0 }],
+    lyricsTrackIndex: 0,
+    lyricsLineIndex: 0,
+    lyricLineBreaks: [4],
+    ...extra,
+  };
 }
 
 describe('loadCatalog', () => {
@@ -172,6 +194,73 @@ describe('loadCatalog', () => {
     const { songs } = loadCatalog(catalogRoot, true);
 
     expect(songs.map((s) => s.id)).toEqual(['creep']);
+  });
+});
+
+describe('loadCatalog recording discovery (T008/T009)', () => {
+  it('exposes recordingPath (as a URL) and syncPoints when recording.mp3 and meta.syncPoints are both present', () => {
+    writeSong('creep', { recording: true, meta: metaWith({ syncPoints: SYNC_POINTS }) });
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs[0].recordingPath).toBe('/catalog/creep/recording.mp3');
+    expect(songs[0].syncPoints).toEqual(SYNC_POINTS);
+  });
+
+  it('leaves recordingPath null when no recording.mp3 is present (sync points in meta notwithstanding)', () => {
+    writeSong('creep', { meta: metaWith({ syncPoints: SYNC_POINTS }) });
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs[0].recordingPath).toBeNull();
+  });
+
+  it('leaves syncPoints null when meta.json omits them', () => {
+    writeSong('creep', { recording: true });
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    expect(songs[0].syncPoints).toBeNull();
+  });
+
+  it('ignores a macOS AppleDouble (._recording.mp3) sidecar and only anchors on the real recording.mp3', () => {
+    const songDir = writeSong('creep', { meta: metaWith({ syncPoints: SYNC_POINTS }) });
+    // AppleDouble xattr blob left by a tar transfer; must not be treated as the recording.
+    fs.writeFileSync(path.join(songDir, '._recording.mp3'), 'xattr-blob');
+
+    const { songs } = loadCatalog(catalogRoot);
+
+    // No real recording.mp3 written, so despite the sidecar the song is recording-less.
+    expect(songs[0].recordingPath).toBeNull();
+  });
+
+  it('T009: treats a recording.mp3 with no sync points as recording-less (recordingPath null) and warns naming the song', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      writeSong('creep', { recording: true }); // recording present, no syncPoints in meta
+
+      const { songs } = loadCatalog(catalogRoot);
+
+      expect(songs[0].recordingPath).toBeNull();
+      expect(songs[0].syncPoints).toBeNull();
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0].join(' ')).toContain('creep');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('T009: does NOT warn for an ordinary song with neither a recording nor sync points', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      writeSong('creep');
+
+      loadCatalog(catalogRoot);
+
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
 
