@@ -1,5 +1,74 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-20-drift-diagnosis (**`sync-tabs-to-real-audio` Phase 1
+diagnosis RAN and invalidated its own plan's premises — feature PAUSED for
+re-plan, diagnostic work merged, calibration reverted.** Delegated worktree
+merged `097e8a2` and reaped; branch state clean.
+
+**The run stopped three times, each productively**, and each stop produced a
+root cause rather than a workaround. The "stop rather than tune the
+threshold green" instruction is what caught an illusory fix before it
+shipped.
+
+**What was measured** (full detail in
+`research-recording-mode-drift-2026-07-19-b7c2.md`, sections T002/T003/
+T004a/T004b — all from a real backing-track instance under Playwright CT
+on the retained fixtures):
+
+1. **`PlayerMode.EnabledBackingTrack` works** — loads and plays a real mp3
+   under CT. The primitive the feature rests on is confirmed, not assumed.
+2. **The predicted mechanism was confirmed exactly** — drift accumulates at
+   `Δbpm × 16` ticks/sec (160/s at Δbpm=10, 8/s at Δbpm=0.5). alphaTab's
+   sync points do not rate-normalise tick advance.
+3. **But a second, dominant cause was found that no static analysis could
+   surface**: a **per-`play()` start skew of ~275ms** on backing-track
+   participants. Invariant under `bufferTimeInMilliseconds` (250→2000ms
+   gave 280/281/275/275 — the "half the buffer" match is coincidence),
+   stable to ±3ms within a playback, **re-rolled every start** (275→342ms
+   across a seek). Cause: `HTMLAudioElement.play()` completes
+   asynchronously after decode/buffer. **No compensation constant can
+   exist.** Fires in uniform backing/backing at Δbpm=0.5, so it is not a
+   mixed-mode artifact and no scoping choice avoids it.
+4. **`correctDrift`'s arithmetic is exact** — instrumented host deviation
+   from its own projection is 0 ticks, flat. The projection was never at
+   fault; the **host's reported position** is what's wrong. A participant's
+   reported position tracks its own `audio.currentTime` to ±5ms.
+5. **`DRIFT_THRESHOLD_TICKS = 50` is a latent pre-existing bug in the
+   shipped synth path** — a fixed tick count means 52ms at 60bpm, 26ms at
+   120, 13ms at 240: stricter as tempo rises (backwards), and tighter than
+   audible above ~58bpm. User approved fixing this **globally**.
+6. **Mixed-source sessions are worse than assumed**: aligning two clients'
+   *reported* positions yields audible separation equal to the difference
+   in their reported-vs-real-audio latencies (~0 for recording, unknown and
+   plausibly ~275ms for synth). Reported alignment **cannot** bound audible
+   separation to 50ms for a mixed pair, **at any Δbpm** — and may *create* a
+   ~275ms offset. This reopens the per-participant mixing decision, which
+   was made on the now-false premise that mixing was safe at low Δbpm.
+
+**Two standing caveats on all of the above**, raised by the run itself: every
+number is a **lower bound** (one machine, one page, one shared audio stack,
+no network, single `play()`); and **`L_synth` was never measured** — alphaTab
+1.8.3 doesn't expose it, so several conclusions hinge on an unmeasured
+quantity.
+
+**Acceptance bar set**: ~50ms separation between participants, with
+**end-state separation as the gate, not seek count** — a low seek count is
+trivially achievable by ceasing to correct (the reverted calibration scored
+200:2 seeks while leaving participants ~900ms apart).
+
+**Merged**: T001 fixtures + generator (`recording-skewed` Δbpm=10,
+`recording-aligned` Δbpm=0.5), `RecordingDriftHarness.svelte` (the
+measurement rig), the research doc, T003's `pipeline.md` retirement,
+`@breezystack/lamejs` devDep. **Reverted** under Principle II: the
+backing-track calibration (it ratcheted — post-seek recalibration
+re-absorbed drift as skew). `playback-sync.ts` is byte-identical to the
+merge-base; the whole source diff is two test files.
+
+**Feedback filed**: `feedback-recording-drift-replan-4e1c.md` (7 items) —
+the re-plan input. Tasks file left `in-progress` 2/23, T004 unchecked with
+an inline stop note; disposition deferred to the re-plan. Feature stays
+`tasked`. Prior context below.)_
+
 _Updated: 2026-07-19-real-audio (**`sync-tabs-to-real-audio` PLANNED +
 TASKED — 23 tasks across 5 phases, `ready`.** Also: a mid-plan design
 pivot and a research pass that reversed a stated concern.
@@ -713,7 +782,7 @@ confirmed deployed, functional click-through not yet done. Prior context
 below.)_
 
 > **ARDD update available:** installed `6e7d3cd` (beta channel), latest
-> release `v1.0.1-beta.1` — run `/ardd-update`.
+> release `v1.0.1` — run `/ardd-update`.
 
 ## Artifact Status
 
@@ -721,32 +790,35 @@ below.)_
 |---|---|---|
 | constitution.md | stable ✅ (v1.6.0) | 0 |
 | datamodel.md | stable ✅ | 0 |
-| pipeline.md | stable ✅ | 1 |
+| pipeline.md | stable ✅ | 0 |
 | infrastructure.md | stable ✅ | 1 |
 | ui.md | stable ✅ | 1 |
 | brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
-All three were introduced by the `sync-tabs-to-real-audio` plan and each
-is bound to a task that retires it — none is a drifting unknown.
+Two remain, both from the `sync-tabs-to-real-audio` plan. **Both are now
+superseded by the diagnosis findings** and should be rewritten by the
+re-plan rather than answered as originally framed.
 
 ### infrastructure.md
-- [OPEN] Infer the host's effective playback rate from observed tick
-  advance across reports, or put the host's audio source on the wire?
-  Inference preserves the plan's zero-protocol-change property.
-  *(Retired by T004.)*
+- [OPEN] Infer the host's effective playback rate, or put the host's
+  source on the wire? **Superseded** — T004a showed the dominant fault is
+  a per-`play()` skew admitting no constant, and T004b showed compensation
+  belongs at the *host's reporting boundary*. The original (a)/(b) menu no
+  longer describes the real choice (feedback F003/F004).
 
 ### ui.md
 - [OPEN] Does a tempo-divergent song disable the recording source
-  outright, or warn only when the session is actually mixed? The latter
-  preserves the "everyone on the recording" case, safe at any divergence.
-  *(Retired by T020.)*
+  outright, or warn only when mixed? **Materially reframed** — mixed pairs
+  now carry an unmeasurable constant offset at *any* Δbpm, not just
+  divergent songs, so this is no longer only a Δbpm question (feedback
+  F005). Needs a fresh user decision.
 
-### pipeline.md
-- [OPEN] Is alphatab.net's Media Sync Editor export byte-compatible with
-  the stored `FlatSyncPoint[]`, or is a small adapter needed?
-  *(Retired by T003.)*
+*(pipeline.md's marker was **retired by T003** — sync points round-trip
+value-identically, store verbatim, no adapter. Caveat: established from
+alphaTab's API, not by driving the real editor GUI; still owed one
+confirmation against a real export.)*
 
 ## Cross-Artifact Issues
 
@@ -792,7 +864,11 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**0 open feedback files.** Most recently:
+**1 open feedback file** — `feedback-recording-drift-replan-4e1c.md`
+(7 items), the re-plan input for `sync-tabs-to-real-audio`. **F005 needs a
+fresh user decision**: it reopens the per-participant mixing choice, which
+was made on the now-false premise that mixing is safe at low Δbpm. Will be
+picked up by the next `/ardd-plan`. Previously:
 `feedback-icon-refresh-a11y-39d8.md` (7 items) flipped to `planned`,
 bound to `plan-icons-a11y-ticker-2026-07-19-2584.md`. Previously: all
 three earlier 2026-07-19 UX files
@@ -845,8 +921,12 @@ since shipped (`implemented`).
 
 - **Sync tabs to real audio** (`sync-tabs-to-real-audio`) —
   `plan-sync-tabs-to-real-audio-2026-07-19-62cf.md` (`approved`),
-  `tasks-sync-tabs-to-real-audio-cb85.md` (**`ready`**, 23 tasks / 5
-  phases). Per-participant choice between the alphaTab synth and an
+  `tasks-sync-tabs-to-real-audio-cb85.md` (**`in-progress` 2/23 —
+  PAUSED for re-plan**, see the dated entry above). T001/T003 done,
+  T002 deliberately red, T004 stopped and reverted. Its T002/T004/T005
+  acceptance criteria are all superseded by the diagnosis; disposition
+  (most likely `abandoned`) is the re-plan's call. Original scope
+  below, for reference: Per-participant choice between the alphaTab synth and an
   operator-supplied `recording.mp3`, via alphaTab's native
   `PlayerMode.EnabledBackingTrack` + sync-point model. **Zero server
   protocol, `PlaybackState`, or wire-message change** — a deliberate
@@ -1099,12 +1179,21 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-**`/ardd-implement`** — `tasks-sync-tabs-to-real-audio-cb85.md` is
-`ready` (23 tasks / 5 phases). Note Phase 1 is diagnosis-first by design:
-T001–T002 build a deliberately-skewed fixture and a *failing* CT test
-that measures whether corrective seeks actually stutter, before any UI is
-built on the sync model. Don't let an eager run skip past that into
-Phase 3.
+**`/ardd-plan`** — consume `feedback-recording-drift-replan-4e1c.md` and
+re-plan `sync-tabs-to-real-audio` with accurate premises. Two things that
+run must handle rather than inherit:
+
+- **F005 needs a fresh user decision** on whether per-participant mixing is
+  offered, warned against, or prevented. The earlier "yes, with a Δbpm
+  guard" answer was given on a premise the diagnosis falsified.
+- **Decide `tasks-sync-tabs-to-real-audio-cb85.md`'s disposition** — it sits
+  `in-progress` 2/23 and its T002/T004/T005 criteria are all superseded.
+  Most likely `abandoned` in favour of a fresh tasks file, but that's the
+  re-plan's call, not a default.
+
+Also note the **global `DRIFT_THRESHOLD_TICKS` fix (F001) is arguably its
+own plan** — it's a latent bug in the shipped synth path that this feature
+merely exposed, and it's independently shippable without any recording work.
 
 Then, in rough priority order:
 
