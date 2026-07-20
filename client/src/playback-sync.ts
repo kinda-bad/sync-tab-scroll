@@ -24,6 +24,66 @@ import { TICKS_PER_QUARTER_NOTE, localTempoAtTick, ticksToMs } from './tempo-loo
 const DRIFT_THRESHOLD_MS = 35;
 
 /**
+ * The recording's effective playback rate (BPM) at a given tick, derived
+ * from the stored `FlatSyncPoint[]` rather than the notated tempo
+ * (infrastructure.md: a backing-track host advances at the sync-point rate,
+ * and alphaTab keeps these in `MasterBar.syncPoints`, a collection
+ * `localTempoAtTick`'s `tempoAutomations` walk never sees).
+ *
+ * Each `FlatSyncPoint` pins a bar to a millisecond offset in the recording.
+ * Mapping its `barIndex`/`barPosition` to a synth tick (via the same bar-
+ * duration walk `localTempoAtTick` uses) yields (tick, ms) anchors; the
+ * slope between two adjacent anchors is the effective BPM over that span:
+ *
+ *   bpm = (Δticks / TICKS_PER_QUARTER_NOTE) / (Δms / 60000)
+ *
+ * Returns the rate of the segment containing `tick` (the last segment for a
+ * tick past the final anchor), or `null` when there are fewer than two sync
+ * points — with no segment there is no derivable rate, and the caller should
+ * fall back to the notated tempo.
+ */
+export function syncPointRateAtTick(
+  score: at.model.Score,
+  syncPoints: at.model.FlatSyncPoint[],
+  tick: number,
+): number | null {
+  if (!syncPoints || syncPoints.length < 2) return null;
+
+  // Cumulative tick at the start of each master bar.
+  const barStartTicks: number[] = [];
+  let cumulative = 0;
+  for (const masterBar of score.masterBars) {
+    barStartTicks.push(cumulative);
+    cumulative += masterBar.calculateDuration();
+  }
+
+  const anchorTick = (p: at.model.FlatSyncPoint): number => {
+    const start = barStartTicks[p.barIndex] ?? cumulative;
+    const duration = score.masterBars[p.barIndex]?.calculateDuration() ?? 0;
+    return start + p.barPosition * duration;
+  };
+
+  const anchors = syncPoints
+    .map((p) => ({ tick: anchorTick(p), ms: p.millisecondOffset }))
+    .sort((a, b) => a.tick - b.tick);
+
+  const bpmOfSegment = (a: { tick: number; ms: number }, b: { tick: number; ms: number }): number => {
+    const dTicks = b.tick - a.tick;
+    const dMs = b.ms - a.ms;
+    if (dMs <= 0) return score.tempo;
+    return (dTicks * 60000) / (TICKS_PER_QUARTER_NOTE * dMs);
+  };
+
+  // The segment whose tick span contains `tick`; clamp to the first/last.
+  for (let i = 0; i < anchors.length - 1; i++) {
+    if (tick < anchors[i + 1].tick || i === anchors.length - 2) {
+      return bpmOfSegment(anchors[i], anchors[i + 1]);
+    }
+  }
+  return bpmOfSegment(anchors[0], anchors[1]);
+}
+
+/**
  * Periodic drift correction (infrastructure.md Session & Real-Time Sync):
  * each participant's alphaTab instance drives its own local clock from
  * playback start; on each PlaybackState broadcast, correct only if drift
@@ -67,7 +127,18 @@ const DRIFT_THRESHOLD_MS = 35;
  * round-tripping back as a `status` change, not from a tick-value
  * comparison, so they're safe.
  */
-export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void): number | null {
+/**
+ * `projectionBpm` (T003 rate-keying, infrastructure.md): when the host is on
+ * a backing track, the rate its clock advances at is the recording's
+ * sync-point-derived rate, not the notated tempo `localTempoAtTick` returns.
+ * A caller that knows the host is backing supplies that rate here and the
+ * extrapolation (and the tick↔ms threshold conversion, which must use the
+ * same rate the participant's own backing clock advances at) projects at it
+ * instead. This changes only *which rate value* the projection reads — never
+ * the arithmetic below. Omitted / `undefined` keeps the notated-tempo path
+ * byte-for-byte, so a synth-host participant is unaffected.
+ */
+export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void, projectionBpm?: number): number | null {
   if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
@@ -136,7 +207,12 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   // isReadyForPlayback (checked above) implies a score is loaded in
   // practice, but the type is nullable — fall back to no extrapolation
   // (raw comparison) in the defensive null case rather than throwing.
-  const tempo = api.score ? localTempoAtTick(api.score, playbackState.tickPosition) : 0;
+  const tempo =
+    projectionBpm !== undefined && projectionBpm > 0
+      ? projectionBpm
+      : api.score
+        ? localTempoAtTick(api.score, playbackState.tickPosition)
+        : 0;
   const elapsedTicks = (elapsedMs * TICKS_PER_QUARTER_NOTE * tempo) / 60000;
   const projectedTickPosition = playbackState.tickPosition + elapsedTicks;
 

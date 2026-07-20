@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as at from '@coderline/alphatab';
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type { PlaybackState, Session } from '@sync-tab-scroll/shared';
-import { applyPlaybackSettings, correctDrift, installCountInCursorGuard } from './playback-sync';
+import { applyPlaybackSettings, correctDrift, installCountInCursorGuard, syncPointRateAtTick } from './playback-sync';
 
 /**
  * Fixture masterbar/score carrying only the fields tempo-lookup.ts reads —
@@ -343,7 +343,101 @@ describe('installCountInCursorGuard', () => {
   });
 });
 
+/**
+ * T003 (recording-drift-foundation) — the backing-host projection *rate*.
+ *
+ * alphaTab keeps sync points in `MasterBar.syncPoints`, separate from
+ * `tempoAutomations`, so `localTempoAtTick` can never observe the effective
+ * recording rate. `syncPointRateAtTick` derives that rate directly from the
+ * stored `FlatSyncPoint[]` (bar index -> synth tick via bar durations; the
+ * slope between adjacent points is the effective BPM), so the drift
+ * projection advances at the rate the backing-track host's clock actually
+ * advances at rather than the notated tempo.
+ */
+describe('syncPointRateAtTick', () => {
+  // A score of `barCount` 4/4 bars, each 3840 ticks (960 * 4) long.
+  function barScore(barCount: number, tempo = 120): at.model.Score {
+    const masterBars = Array.from({ length: barCount }, () => ({
+      tempoAutomations: [{ type: 0, value: tempo }],
+      calculateDuration: () => 3840,
+    }));
+    return { tempo, masterBars } as unknown as at.model.Score;
+  }
+  function sp(barIndex: number, millisecondOffset: number): at.model.FlatSyncPoint {
+    return { barIndex, barPosition: 0, barOccurence: 0, millisecondOffset } as at.model.FlatSyncPoint;
+  }
+
+  it('derives the effective BPM from the slope between adjacent sync points', () => {
+    // 3840 ticks (one bar) per 2000ms => 4 quarters / 2s => 120 BPM.
+    const score = barScore(3);
+    const points = [sp(0, 0), sp(1, 2000), sp(2, 4000)];
+    expect(syncPointRateAtTick(score, points, 1000)).toBeCloseTo(120, 3);
+    expect(syncPointRateAtTick(score, points, 5000)).toBeCloseTo(120, 3);
+  });
+
+  it('reports a faster effective rate when the recording is ahead of the notated tempo', () => {
+    // 3840 ticks per 1000ms => 4 quarters / 1s => 240 BPM.
+    const score = barScore(3);
+    const points = [sp(0, 0), sp(1, 1000), sp(2, 2000)];
+    expect(syncPointRateAtTick(score, points, 500)).toBeCloseTo(240, 3);
+  });
+
+  it('resolves the Δbpm=0.5 aligned-fixture geometry to ~120.5 BPM', () => {
+    // 3840 ticks per 1991.701ms — the recording-aligned fixture's cadence.
+    const score = barScore(3);
+    const points = [sp(0, 0), sp(1, 1991.701), sp(2, 3983.402)];
+    expect(syncPointRateAtTick(score, points, 1000)).toBeCloseTo(120.5, 1);
+  });
+
+  it('falls back to the last segment rate past the final sync point', () => {
+    const score = barScore(3);
+    const points = [sp(0, 0), sp(1, 2000)];
+    expect(syncPointRateAtTick(score, points, 100000)).toBeCloseTo(120, 3);
+  });
+
+  it('returns null when there are fewer than two sync points to form a segment', () => {
+    const score = barScore(3);
+    expect(syncPointRateAtTick(score, [sp(0, 0)], 1000)).toBeNull();
+    expect(syncPointRateAtTick(score, [], 1000)).toBeNull();
+  });
+});
+
+describe('correctDrift rate input (T003)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // Participant advanced 1s at the recording rate of 130 BPM from tick 0:
+  // 1000ms * 960 * 130 / 60000 = 2080 ticks.
+  function runningState() {
+    return fakePlaybackState({ status: 'running', tickPosition: 0, serverTimestamp: 1_000_000 - 1000 });
+  }
+
+  it('without a rate input, projects at the notated tempo and seeks (false drift)', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 2080, score: fakeScore(120) });
+    // projected at 120 = 1920; drift 160 ticks ≈ 83ms > 35ms threshold.
+    const result = correctDrift(api, runningState(), false, undefined);
+    expect(result).not.toBeNull();
+  });
+
+  it('with the recording rate supplied, the projection matches and no seek fires', () => {
+    const api = fakeApi({ playerState: at.synth.PlayerState.Playing, tickPosition: 2080, score: fakeScore(120) });
+    // projected at 130 = 2080; drift 0 => no correction.
+    const result = correctDrift(api, runningState(), false, undefined, 130);
+    expect(result).toBeNull();
+    expect(api.tickPosition).toBe(2080);
+  });
+});
+
 describe('applyPlaybackSettings', () => {
+  function fakeApi2() {
+    return { countInVolume: 0, metronomeVolume: 0.5 } as unknown as AlphaTabApi;
+  }
+  const fakeApi = fakeApi2;
   function fakeSession(overrides: Partial<Session> = {}): Session {
     return {
       code: 'ABCD',
@@ -358,7 +452,7 @@ describe('applyPlaybackSettings', () => {
       pendingHostRequest: null,
       unlockedCatalogueIds: [],
       ...overrides,
-    };
+    } as unknown as Session;
   }
 
   it('sets countInVolume from the session flag when enabled', () => {

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import * as at from '@coderline/alphatab';
   import type { PlaybackState } from '@sync-tab-scroll/shared';
-  import { correctDrift } from '../playback-sync';
+  import { correctDrift, syncPointRateAtTick } from '../playback-sync';
 
   export let gpFilePath: string;
   export let recordingPath: string;
@@ -247,10 +247,15 @@
         const hostAudioMs = hostAudio ? hostAudio.currentTime * 1000 : null;
         const partAudioMs = partAudio ? partAudio.currentTime * 1000 : null;
 
-        // T003 rewires this call to pass `recordingBpm` through to
-        // correctDrift as the backing-host projection rate input.
+        // T003 rate-keying: feed the backing host's sync-point-derived rate
+        // at the broadcast tick to correctDrift as its projection rate input.
+        const projectionBpm =
+          recordingBpm ??
+          (participant.score
+            ? syncPointRateAtTick(participant.score, syncPoints, broadcast.tickPosition) ?? undefined
+            : undefined);
         const applied = correct
-          ? correctDrift(participant, broadcast, false, undefined)
+          ? correctDrift(participant, broadcast, false, undefined, projectionBpm)
           : null;
         if (applied !== null) seekCount++;
 
