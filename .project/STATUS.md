@@ -1,5 +1,58 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-20-replan (**Recording playback RE-PLANNED as
+session-scoped; old plan superseded, its tasks file abandoned.** New:
+`plan-recording-drift-foundation-2026-07-20-9ca3.md` (`approved`),
+`tasks-recording-drift-foundation-cc87.md` (**`ready`, 21 tasks / 5
+phases**). Committed `d12dc9b`.
+
+**The design reversal, driven by measurement.** Audio source is now a
+**session-wide host setting** (`Session.playbackSource`), not a
+per-participant preference. Aligning two clients' *reported* positions
+yields audible separation equal to the difference in their
+reported-vs-real-audio latencies: ~0 between two recording clients
+(measured, ±5ms against their own `audio.currentTime`) but unknown and
+plausibly ~275ms across a recording/synth pair, since alphaTab 1.8.3
+does not expose the synth path's latency. A mixed session therefore
+cannot be held in audible sync, and aligning it would *create* an offset
+rather than remove one. Uniform sessions remove that failure mode by
+construction — and, critically, **need no unmeasured quantity**, which is
+what makes the revised plan tractable.
+
+**The feature got smaller, twice, by narrowing on evidence.** With
+everyone on the same recording, tempo divergence from the notated score
+can no longer separate participants — so `CatalogSong.
+recordingTempoDivergence`, its catalog-load computation, its margin
+(feedback F006) and its UI guard are **removed from the design** rather
+than carried forward unused (Principle II). Net: 23 tasks → 21, despite
+*adding* server-side session state and a new wire message.
+
+**Phase 1 is now an explicit gate, not groundwork.** It must prove two
+backing-track clients can hold **≤50ms end-state separation** before
+anything is built on it. Acceptance is **separation, never corrective
+seek count** (F007) — the prior run's rejected calibration scored 200:2
+seeks while leaving participants ~900ms apart. If Phase 1 cannot be met,
+the tasks file says to stop and report rather than widen the threshold.
+Open Question 1 is genuinely open: nobody has yet held two backing-track
+clients within 50ms, and the one attempt at the underlying mechanism
+ratcheted.
+
+**Artifacts reverted to session scope** (datamodel/infrastructure/ui
+re-stamped `last_updated: 2026-07-20`): `Session.playbackSource` added;
+`recordingTempoDivergence` removed; `ui.md`'s per-participant carve-out
+rewritten as session-wide with its mixed-source guard deleted (the state
+it would warn about can no longer arise); `infrastructure.md` records the
+measured findings and a new `[OPEN: ...]` for the unmeasured `L_synth`.
+
+**Feedback**: `feedback-recording-drift-replan-4e1c.md` F002–F007
+incorporated; **F001 left deliberately unresolved** — the global
+`DRIFT_THRESHOLD_TICKS` → milliseconds conversion is a latent bug in the
+*shipped synth path* (a fixed tick count means 52ms at 60bpm, 26ms at
+120, 13ms at 240 — stricter as tempo rises, and tighter than audible
+above ~58bpm). It is independently shippable and should not be gated
+behind this feature, so the file stays `open` for its own `/ardd-plan`
+run. Prior context below.)_
+
 _Updated: 2026-07-20-drift-diagnosis (**`sync-tabs-to-real-audio` Phase 1
 diagnosis RAN and invalidated its own plan's premises — feature PAUSED for
 re-plan, diagnostic work merged, calibration reverted.** Delegated worktree
@@ -792,33 +845,30 @@ below.)_
 | datamodel.md | stable ✅ | 0 |
 | pipeline.md | stable ✅ | 0 |
 | infrastructure.md | stable ✅ | 1 |
-| ui.md | stable ✅ | 1 |
+| ui.md | stable ✅ | 0 |
 | brand.md | stable ✅ | 0 |
 
 ## Open Questions
 
-Two remain, both from the `sync-tabs-to-real-audio` plan. **Both are now
-superseded by the diagnosis findings** and should be rewritten by the
-re-plan rather than answered as originally framed.
+One remains, and it is a *newly recorded* unknown rather than an
+undecided design question — the two markers the superseded plan left
+behind are both resolved.
 
 ### infrastructure.md
-- [OPEN] Infer the host's effective playback rate, or put the host's
-  source on the wire? **Superseded** — T004a showed the dominant fault is
-  a per-`play()` skew admitting no constant, and T004b showed compensation
-  belongs at the *host's reporting boundary*. The original (a)/(b) menu no
-  longer describes the real choice (feedback F003/F004).
+- [OPEN] **`L_synth` — the synth path's own reported-vs-real-audio
+  latency.** Not exposed by alphaTab 1.8.3; needs an external reference
+  (loopback capture or an instrumented `AudioContext` anchor). **Not
+  needed for the current plan's uniform-only scope**, but it blocks two
+  things: the host-reporting-boundary fix that would make
+  `PlaybackState.tickPosition` mean one thing regardless of host source
+  (feedback F004), and mixed-source sessions permanently until answered.
 
-### ui.md
-- [OPEN] Does a tempo-divergent song disable the recording source
-  outright, or warn only when mixed? **Materially reframed** — mixed pairs
-  now carry an unmeasurable constant offset at *any* Δbpm, not just
-  divergent songs, so this is no longer only a Δbpm question (feedback
-  F005). Needs a fresh user decision.
-
-*(pipeline.md's marker was **retired by T003** — sync points round-trip
-value-identically, store verbatim, no adapter. Caveat: established from
-alphaTab's API, not by driving the real editor GUI; still owed one
-confirmation against a real export.)*
+*(The prior `infrastructure.md` marker — infer host rate vs. put it on
+the wire — is resolved: the diagnosis showed the dominant fault admits no
+constant and compensation belongs at the host's reporting boundary, so
+that menu never described the real choice. The `ui.md` marker is resolved
+by session-scoping: the mixed-session state it asked about can no longer
+arise. `pipeline.md`'s was retired by T003.)*
 
 ## Cross-Artifact Issues
 
@@ -864,42 +914,22 @@ comment) were fixed in the same session.
 
 ## Feedback
 
-**1 open feedback file** — `feedback-recording-drift-replan-4e1c.md`
-(7 items), the re-plan input for `sync-tabs-to-real-audio`. **F005 needs a
-fresh user decision**: it reopens the per-participant mixing choice, which
-was made on the now-false premise that mixing is safe at low Δbpm. Will be
-picked up by the next `/ardd-plan`. Previously:
-`feedback-icon-refresh-a11y-39d8.md` (7 items) flipped to `planned`,
-bound to `plan-icons-a11y-ticker-2026-07-19-2584.md`. Previously: all
-three earlier 2026-07-19 UX files
-(`feedback-settings-tracks-rows-0501.md`,
-`feedback-beat-widget-layout-362c.md`,
-`feedback-part-name-instrument-ux-7b1a.md`) flipped to `planned`, bound
-to `plan-settings-ux-bundle-2026-07-19-d27d.md`. Previously:
-`feedback-song-switch-stale-score-e030.md` flipped to `planned`, bound to
-`plan-widgets-gp5-songswitch-2026-07-18-8bee.md`, and:
-`feedback-song-switch-stale-score-e030.md`
-(2026-07-18) — switching songs left both the tab view and playback audio
-on the previous song until a browser refresh; possibly a regression from
-the same-day `playback-engine.ts` raw-line wiring, possibly a latent
-song-switch race. Will be picked up by the next `/ardd-plan`.
-
-Previously: `feedback-lyrics-dispatch-root-cause-f0f6.md`
-flipped to `planned` (both items incorporated), bound to
-`plan-lyrics-dispatch-2026-07-18-8090.md`. Previously:
-`feedback-audio-output-latency-t014-dfa8.md`
-and `feedback-lyrics-ticker-tiro-measure8-9310.md` were the last two open
-files — both flipped to `planned`, bound to `plan-99e6-2026-07-18-6d2b.md`
-(see Plans & Tasks). All other feedback files are `planned` or `split`
-(superseded by their group files, each independently `planned`).
+**1 open feedback file** — `feedback-recording-drift-replan-4e1c.md`.
+**6 of its 7 items are incorporated** into
+`plan-recording-drift-foundation-2026-07-20-9ca3.md`; the file stays
+`open` because **F001 is deliberately unresolved**, awaiting its own
+plan. F001 is the global `DRIFT_THRESHOLD_TICKS` → milliseconds
+conversion — a latent bug in the *shipped synth path* that the recording
+work merely exposed, independently shippable, and approved for a global
+fix. Target it with a fresh `/ardd-plan` run.
 
 ## Feature Backlog
 
 **1 backlogged** · 0 planned · **1 tasked** · **27 implemented** — see
-`.project/features/`. `sync-tabs-to-real-audio` moved
-`backlogged → tasked` this run (bound to
-`plan-sync-tabs-to-real-audio-2026-07-19-62cf.md` /
-`tasks-sync-tabs-to-real-audio-cb85.md`). The sole remaining backlogged
+`.project/features/`. `sync-tabs-to-real-audio` is `tasked`, now rebound
+to `plan-recording-drift-foundation-2026-07-20-9ca3.md` /
+`tasks-recording-drift-foundation-cc87.md` (its previous plan is
+`superseded` and that tasks file `abandoned`). The sole remaining backlogged
 entry is `host-mandated-bars-per-row-layout`, which still poses an
 unresolved host-vs-participant-vs-both design fork — target it with
 `/ardd-plan host-mandated-bars-per-row-layout` when that fork is worth
@@ -1179,21 +1209,25 @@ Railway-assigned `sync-tab-scroll.up.railway.app` also resolves).
 
 ## Recommended next step
 
-**`/ardd-plan`** — consume `feedback-recording-drift-replan-4e1c.md` and
-re-plan `sync-tabs-to-real-audio` with accurate premises. Two things that
-run must handle rather than inherit:
+**`/ardd-implement`** — `tasks-recording-drift-foundation-cc87.md` is
+`ready` (21 tasks / 5 phases).
 
-- **F005 needs a fresh user decision** on whether per-participant mixing is
-  offered, warned against, or prevented. The earlier "yes, with a Δbpm
-  guard" answer was given on a premise the diagnosis falsified.
-- **Decide `tasks-sync-tabs-to-real-audio-cb85.md`'s disposition** — it sits
-  `in-progress` 2/23 and its T002/T004/T005 criteria are all superseded.
-  Most likely `abandoned` in favour of a fresh tasks file, but that's the
-  re-plan's call, not a default.
+**Phase 1 is a gate, and the tasks file says so explicitly.** T002
+asserts ≤50ms end-state separation between two backing-track clients;
+T004 must achieve it *without* touching `correctDrift`'s arithmetic
+(instrumented and exact) and *without* any mechanism that re-measures
+skew after the participant has drifted (that ratchets — it is how the
+prior attempt failed). **If T004 cannot meet T002, the correct outcome is
+to stop and report, not to widen the threshold.** A negative answer after
+one phase is worth far more than five phases built on an unproven sync
+model.
 
-Also note the **global `DRIFT_THRESHOLD_TICKS` fix (F001) is arguably its
-own plan** — it's a latent bug in the shipped synth path that this feature
-merely exposed, and it's independently shippable without any recording work.
+Also live, independent of the above:
+
+- **`/ardd-plan`** for **feedback F001** — the global
+  `DRIFT_THRESHOLD_TICKS` → ms conversion. A latent bug in shipped synth
+  behavior, needs no recording work, and is probably the highest
+  value-per-effort item currently open.
 
 Then, in rough priority order:
 
