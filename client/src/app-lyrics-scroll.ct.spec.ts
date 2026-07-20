@@ -37,6 +37,8 @@ test('only one scrollable container is present, and app-content is collapsed, on
     lyricsTrackIndex: 0,
     lyricsLineIndex: 0,
     lyricLineBreaks: [2],
+    recordingPath: null,
+    syncPoints: null,
   };
 
   const session: Session = {

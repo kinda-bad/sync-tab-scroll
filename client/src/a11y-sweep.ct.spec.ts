@@ -43,6 +43,8 @@ const song: CatalogSong = {
   lyricsTrackIndex: 0,
   lyricsLineIndex: 0,
   lyricLineBreaks: [2],
+  recordingPath: null,
+  syncPoints: null,
 };
 
 const session: Session = {

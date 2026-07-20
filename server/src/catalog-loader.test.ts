@@ -279,6 +279,8 @@ function song(id: string, catalogueId: string): CatalogSong {
     lyricsTrackIndex: null,
     lyricsLineIndex: null,
     lyricLineBreaks: null,
+    recordingPath: null,
+    syncPoints: null,
   };
 }
 

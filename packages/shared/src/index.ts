@@ -175,6 +175,26 @@ export interface CatalogSong {
   lyricsRawLine?: string;
   /** The raw line's start-bar offset (GPIF `<Offset>`); omitted when 0. */
   lyricsRawLineStartBar?: number;
+  /**
+   * Client-fetchable URL path to the song's operator-supplied `recording.mp3`
+   * (same on-disk→URL rewrite as `gpFilePath`). Null when the song directory has
+   * no usable recording. Its presence *together with* a non-null `syncPoints` is
+   * what makes `Session.playbackSource: 'recording'` selectable for this song
+   * (datamodel.md CatalogSong). Nullable and absent for a non-recording song, so
+   * no existing consumer changes. `recordingTempoDivergence` from the superseded
+   * plan is deliberately NOT added: with session-wide source every participant
+   * hears identical audio, so notated tempo divergence cannot separate them and
+   * the field would be dead weight (Principle II, datamodel.md).
+   */
+  recordingPath: string | null;
+  /**
+   * Tick↔recording-time anchors read verbatim from `meta.json` (pipeline.md),
+   * applied to the loaded score via alphaTab's own `Score.applyFlatSyncPoints()`.
+   * Null when absent. A song with `recordingPath` but no `syncPoints` is NOT
+   * recording-capable — the loader logs and treats it as recording-less
+   * (datamodel.md CatalogSong; T009).
+   */
+  syncPoints: FlatSyncPoint[] | null;
 }
 
 export interface PlaybackState {

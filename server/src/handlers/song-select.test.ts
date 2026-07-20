@@ -23,6 +23,8 @@ function fakeSong(id: string, catalogueId = 'default'): CatalogSong {
     lyricsTrackIndex: null,
     lyricsLineIndex: null,
     lyricLineBreaks: null,
+    recordingPath: null,
+    syncPoints: null,
   };
 }
 

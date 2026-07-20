@@ -24,6 +24,8 @@ const song: CatalogSong = {
   lyricsTrackIndex: null,
   lyricsLineIndex: null,
   lyricLineBreaks: [],
+  recordingPath: null,
+  syncPoints: null,
 };
 
 function makeSession(selfReadiness: ReadinessStatus, memberReadiness: ReadinessStatus = 'loaded'): Session {

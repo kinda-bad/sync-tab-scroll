@@ -81,6 +81,9 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
     lyricLineBreaks: meta.lyricLineBreaks,
     lyricsRawLine: meta.lyricsRawLine,
     lyricsRawLineStartBar: meta.lyricsRawLineStartBar,
+    // Recording discovery is added in T008/T009; a non-recording song keeps both null.
+    recordingPath: null,
+    syncPoints: null,
   };
 }
 

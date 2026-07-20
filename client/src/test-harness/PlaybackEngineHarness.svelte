@@ -52,6 +52,8 @@
       lyricsTrackIndex: 0,
       lyricsLineIndex: 0,
       lyricLineBreaks: [6, 7, 6],
+      recordingPath: null,
+      syncPoints: null,
     };
 
     ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);
