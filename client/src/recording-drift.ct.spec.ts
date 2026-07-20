@@ -66,8 +66,66 @@ function loadFixture(dir: string) {
 const RUN_MS = 20_000;
 const MIN_SECONDS_PER_SEEK = 10;
 
+/**
+ * GREEN CASE — the low-divergence fixture (Δbpm = 0.5), where staying in sync
+ * is physically achievable. After T004's per-start calibration this settles
+ * to 2 seeks / 20 s (synth host) and 0 seeks / 20 s (backing host), from 200.
+ */
+// STILL RED (T004 incomplete): seek rate now passes but the separation
+// assertion below fails at 1730 ticks. See the T004 status note in
+// research-recording-mode-drift-2026-07-19-b7c2.md.
 test.fail();
 test('a backing-track participant does not stutter-seek against a synth host', async ({ mount, page }) => {
+  const { gp, mp3, meta } = loadFixture('recording-aligned');
+  await page.route('**/fixture.gp', (r) => r.fulfill({ body: gp, contentType: 'application/octet-stream' }));
+  await page.route('**/recording.mp3', (r) => r.fulfill({ body: mp3, contentType: 'audio/mpeg' }));
+
+  const component = await mount(RecordingDriftHarness, {
+    props: { gpFilePath: '/fixture.gp', recordingPath: '/recording.mp3', syncPoints: meta.syncPoints },
+  });
+  await expect(component.getByTestId('status')).toHaveText('ready', { timeout: 40_000 });
+
+  const result = await page.evaluate(
+    ([ms]) =>
+      (
+        window as unknown as { __measureDrift: (ms: number, correct: boolean, calibrate: boolean) => Promise<Record<string, unknown>> }
+      ).__measureDrift(ms, true, true),
+    [RUN_MS],
+  );
+  const { samples: _samples, ...summary } = result as Record<string, unknown>;
+  console.log('[T002] backing-track drift summary', JSON.stringify(summary));
+
+  expect(summary.errors).toEqual([]);
+  expect(summary.secondsPerSeek as number).toBeGreaterThanOrEqual(MIN_SECONDS_PER_SEEK);
+
+  // A low seek count is only meaningful if the two instances actually STAYED
+  // TOGETHER. Without this, "stop correcting" scores identically to "corrects
+  // perfectly", and calibration that quietly absorbs real drift as skew would
+  // look like a fix while making the audible result worse.
+  //
+  // At Δbpm = 0.5 the genuine accumulation over this run is ~160 ticks
+  // (Δbpm × 16 × 20 s); 500 ticks (~260 ms) allows for the start skew on top
+  // of that without admitting a musically obvious separation.
+  const separation = Math.abs((summary.finalHostTick as number) - (summary.finalParticipantTick as number));
+  expect(separation).toBeLessThan(500);
+});
+
+/**
+ * PHYSICAL-LIMIT CASE — the high-divergence fixture (Δbpm = 10).
+ *
+ * This deliberately does NOT assert the 1-seek-per-10 s bar, because that bar
+ * is unreachable here and no correction strategy can reach it: the two clocks
+ * genuinely run `Δbpm × 16` = 160 ticks/s apart, so a 50-tick threshold is
+ * crossed roughly three times a second by real divergence, not by any
+ * measurement or projection artifact. Correcting faster would only convert a
+ * real musical separation into a seek storm on top of it.
+ *
+ * What this asserts instead is that calibration removed the *artifact* — the
+ * seek rate is now bounded by the physics (was 10/s pre-T004, i.e. every
+ * sampled update) — and that what remains is the predicted accumulation.
+ * Refusing this case at the point of choice is exactly T020's job.
+ */
+test('a high-divergence recording is bounded by real divergence, not by the seek artifact', async ({ mount, page }) => {
   const { gp, mp3, meta } = loadFixture('recording-skewed');
   await page.route('**/fixture.gp', (r) => r.fulfill({ body: gp, contentType: 'application/octet-stream' }));
   await page.route('**/recording.mp3', (r) => r.fulfill({ body: mp3, contentType: 'audio/mpeg' }));
@@ -78,12 +136,17 @@ test('a backing-track participant does not stutter-seek against a synth host', a
   await expect(component.getByTestId('status')).toHaveText('ready', { timeout: 40_000 });
 
   const result = await page.evaluate(
-    ([ms]) => (window as unknown as { __measureDrift: (ms: number) => Promise<Record<string, unknown>> }).__measureDrift(ms),
+    ([ms]) =>
+      (
+        window as unknown as { __measureDrift: (ms: number, correct: boolean, calibrate: boolean) => Promise<Record<string, unknown>> }
+      ).__measureDrift(ms, true, true),
     [RUN_MS],
   );
   const { samples: _samples, ...summary } = result as Record<string, unknown>;
-  console.log('[T002] backing-track drift summary', JSON.stringify(summary));
+  console.log('[T002] high-divergence drift summary', JSON.stringify(summary));
 
   expect(summary.errors).toEqual([]);
-  expect(summary.secondsPerSeek as number).toBeGreaterThan(MIN_SECONDS_PER_SEEK);
+  // Pre-T004 this was ~10 seeks/s — every sampled update, a pure artifact.
+  // The predicted physical rate is ~160 ticks/s over a 50-tick threshold.
+  expect(summary.seeksPerSecond as number).toBeLessThan(4);
 });

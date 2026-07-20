@@ -3,6 +3,7 @@
   import * as at from '@coderline/alphatab';
   import type { PlaybackState } from '@sync-tab-scroll/shared';
   import { correctDrift } from '../playback-sync';
+import { createPositionCalibrator } from '../backing-track-calibration';
 
   export let gpFilePath: string;
   export let recordingPath: string;
@@ -104,7 +105,8 @@
      * reports how often a corrective seek actually fired plus how far the
      * two instances diverged in between.
      */
-    w.__measureDrift = async (durationMs: number, correct = true) => {
+    w.__measureDrift = async (durationMs: number, correct = true, calibrate = false) => {
+      const calibrator = calibrate ? createPositionCalibrator() : undefined;
       const seekTicks: { atMs: number; tick: number }[] = [];
       const divergences: { atMs: number; ticks: number }[] = [];
       const startedAt = Date.now();
@@ -155,7 +157,7 @@
         // projection faithfully tracks the host, so any participant drift is real.
         const hostDrift = host.tickPosition - projected;
 
-        const applied = correct ? correctDrift(participant, broadcast, false, undefined) : null;
+        const applied = correct ? correctDrift(participant, broadcast, false, undefined, calibrator) : null;
         if (applied !== null) seekTicks.push({ atMs, tick: applied });
         samples.push({ atMs, before, after: participant.tickPosition, hostTick: host.tickPosition, applied, elapsedMs, projected, drift, hostDrift });
       }, 100);
@@ -176,6 +178,7 @@
         finalHostTick: host.tickPosition,
         finalParticipantTick: participant.tickPosition,
         errors,
+        skewTicks: calibrator?.skewTicks ?? null,
         samples,
       };
     };

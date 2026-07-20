@@ -416,3 +416,68 @@ insufficient with the current 50-tick threshold: a 275–342 ms start skew
 is 528–657 ticks, so the comparison would still trip every sample. The
 threshold, or the position the comparison is made against, has to absorb
 the start skew too. That is the open design question T004 now turns on.
+
+---
+
+## T004 status — calibration implemented, NOT yet correct (STOP POINT)
+
+Per the coordinator's decision, calibration is measured once per playback and
+applied at the position-reporting boundary (`backing-track-calibration.ts`,
+wired into `correctDrift` via an optional `calibrator` argument; a synth
+participant passes `undefined` and is byte-for-byte unaffected).
+
+### What worked
+
+Three refinements were each forced by measurement, not guessed:
+
+1. **A settle gate** (`CALIBRATION_SETTLE_TICKS`). The skew is not present at
+   `play()`; it develops over the audio element's spin-up (within 8 ticks at
+   250 ms, steady ~530 by 2.3 s). Calibrating immediately captured ~195 of
+   ~530 ticks and fixed nothing.
+2. **Free-run until calibrated.** With correction active from the start, the
+   corrections drag the participant into agreement and *erase the very skew
+   being measured* — captured values collapsed to ~150 ticks. Seek-following
+   is preserved throughout by still applying any difference larger than
+   `MAX_CALIBRATION_SKEW_TICKS`.
+3. **Median of a sample pool** (`CALIBRATION_SAMPLE_COUNT`). Single-sample
+   capture was wildly noisy across identical runs (420, 227, −96, −5 ticks);
+   the median recovered the true value (519 vs the ~530 measured
+   independently).
+
+Seek counts over 20 s, Δbpm = 0.5: synth host 200 → **2**; backing host
+200 → **0**. Δbpm = 10: 200 → 18, i.e. now bounded by the genuine
+`Δbpm × 16` physics rather than by the artifact.
+
+### Why this is NOT done
+
+**The seek reduction is partly illusory, and a seek-count-only test hides
+that.** Adding an end-state separation assertion exposed it: on the
+Δbpm = 0.5 fixture the participant finishes **1730 ticks (~900 ms) behind
+the host**, where genuine accumulation over that run is only ~160 ticks.
+The captured `skewTicks` had ratcheted to ~1735, close to the
+`MAX_CALIBRATION_SKEW_TICKS` guard of 1920.
+
+The mechanism is a **ratchet**: `correctDrift` resets the calibrator after
+each applied seek (justified — T004a measured a seek re-rolling the skew, and
+the audio element's re-buffer transient must not be read as drift). But each
+*re*-calibration then happens at a moment when the participant has already
+drifted, so the accumulated drift is re-absorbed as "skew". Calibration
+progressively redefines what counts as in sync, the participant is allowed to
+fall ever further behind, and the seek count drops **because correction has
+effectively stopped** — not because sync improved.
+
+This is precisely the failure the coordinator's criterion 3 was written to
+catch, so it is being reported rather than tuned around. The 1920-tick guard
+is far too permissive to act as a backstop (the real skew is ~530), but
+merely tightening it would be threshold-tuning against a symptom.
+
+The likely correct shape: recalibration after a seek must re-measure the skew
+against a reference that is itself known-good, rather than against a
+projection the participant has already drifted from — e.g. calibrate only
+from the *first* playback of a phase and treat post-seek recalibration as a
+bounded adjustment to the existing skew rather than a fresh unconstrained
+measurement. Not implemented; needs a decision.
+
+**Current test state:** `recording-drift.ct.spec.ts`'s low-divergence case is
+marked `test.fail()` and genuinely fails on the separation assertion. The
+seek-rate assertion passes. Nothing here should be read as T004 complete.
