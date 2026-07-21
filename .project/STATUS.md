@@ -1,8 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-20-wiring-fixed (**Phases 1–4 + the T019-surfaced
-production-wiring fix landed (19/21); recording mode is code-complete but
-UNVERIFIED live — T021 (manual) is the remaining gate.**)_
+_Updated: 2026-07-21-ardd-1.0.3 (**Phases 1–4 + the T019-surfaced
+production-wiring fix landed (19/22); recording mode is code-complete but
+UNVERIFIED live — T021 (manual) is the remaining gate. ArDD updated to
+v1.0.3.**)_
 
 **✅ The Phase 5 wiring defect is FIXED and merged (T022, `1e7a0d6`).** The
 production `correctDrift` caller (`playback-engine.ts`) now passes
@@ -17,7 +18,7 @@ before the fix, GREEN after**. `projectionBpm` deliberately left unwired
 wired — NOT that recording mode works end-to-end** (see T019/T021 below).
 
 **Progress: `tasks-recording-drift-foundation-cc87.md` in-progress
-(19/21).** Phases 1–4 + T022 merged to `main`, all signed, worktrees reaped.
+(19/22).** Phases 1–4 + T022 merged to `main`, all signed, worktrees reaped.
 - **Phase 2** (T006–T011): `FlatSyncPoint` re-exported from shared (with a
   structural type-test), `recordingPath`/`syncPoints` on `CatalogSong`,
   loader discovery of `recording.mp3` (skip-not-fatal when unanchored),
@@ -140,8 +141,9 @@ stress the disclosed caveats above. Continue with
 
 ## Housekeeping
 
-- **ArDD update available:** installed `33ac9ae`, source at `v1.0.3-beta.1`
-  — run `/ardd-update`.
+- **ArDD is up to date** — v1.0.3 (`0fc43f6`), beta channel. (Source-Path
+  rewritten to the portable `~/.ardd/source` form; the old absolute path
+  remains in git history — repair before sharing or accept it.)
 - `tasks-lobby-cursor-modes-0bea.md` remains **in-progress (11/12)** since
   2026-07-02 — only T010's manual two-browser verification is left
   (scenario 3 auto-covered 2026-07-20). Reconcile to done/abandoned to
