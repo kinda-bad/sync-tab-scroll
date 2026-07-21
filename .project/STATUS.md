@@ -1,9 +1,23 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-20-phase5-finding (**Phases 1–4 landed (18/21); Phase 5 honest gate found recording-mode sync is NOT wired into production — stop-and-decide.**)_
+_Updated: 2026-07-20-wiring-fixed (**Phases 1–4 + the T019-surfaced
+production-wiring fix landed (19/21); recording mode is code-complete but
+UNVERIFIED live — T021 (manual) is the remaining gate.**)_
+
+**✅ The Phase 5 wiring defect is FIXED and merged (T022, `1e7a0d6`).** The
+production `correctDrift` caller (`playback-engine.ts`) now passes
+`isBackingParticipant`, keyed off **engine truth** (`api.score?.backingTrack
+!= null`) rather than session state — so a recording-mode participant
+free-runs its own audio instead of seek-chasing. The gap the T019 gate
+found (no test over the production call path) is closed by a CT regression
+test that drives the real `ensurePlaybackEngine` subscription across a
+synth→recording switch, verified **RED (participant jumped 6496 ticks)
+before the fix, GREEN after**. `projectionBpm` deliberately left unwired
+(unreachable under session-wide source). **This proves the mechanism is
+wired — NOT that recording mode works end-to-end** (see T019/T021 below).
 
 **Progress: `tasks-recording-drift-foundation-cc87.md` in-progress
-(18/21).** Phases 1–4 merged to `main`, all signed, worktrees reaped.
+(19/21).** Phases 1–4 + T022 merged to `main`, all signed, worktrees reaped.
 - **Phase 2** (T006–T011): `FlatSyncPoint` re-exported from shared (with a
   structural type-test), `recordingPath`/`syncPoints` on `CatalogSong`,
   loader discovery of `recording.mp3` (skip-not-fatal when unanchored),
@@ -19,32 +33,25 @@ _Updated: 2026-07-20-phase5-finding (**Phases 1–4 landed (18/21); Phase 5 hone
   green (tab-renderer, playback-engine, SettingsModal, a11y). Shared
   `isRecordingCapable()` predicate is the single source of truth.
 
-**⚠️ PHASE 5 FINDING — recording-mode sync is NOT wired into production
-(confirmed, environment-independent).** The T003/T004 mechanism
-(`isBackingParticipant` free-run + `projectionBpm` rate-keying) lives in
-`correctDrift` (`playback-sync.ts:161`) but its **only production caller**,
-`playback-engine.ts:484`, passes just 4 of 6 args — `isBackingParticipant`
-and `projectionBpm` are always `undefined` in the real app. So a real
-recording-mode participant seek-chases the notated-tempo projection (the
-60–80 ms+ behavior T004 exists to prevent); the free-run is exercised
-**only by the CT harness**, which passes the args explicitly. Phase 1's
-green was real *in the harness* but the mechanism was never connected. T019
-surfaced this by code inspection; it would be RED by construction.
-**Nothing was committed** — the fix reopens the T003/T004 integration and is
-a stop-and-decide finding.
-
-Secondary: (b) the headless e2e **wedges** on the live synth→recording
-switch (~90 s unresponsive; matches the known "automation audio races/
-wedges" quirk), so T019 can't auto-validate even once (a) is fixed — which
-is why **T021's live two-browser check carries the verification weight.**
-
-**Phase 5 status:** T019 `[ ]`, T020 `[ ]`, T021 `[ ]` — none marked. T020's
-synth-path-unchanged claim is nonetheless *proven* (zero production diff vs
-`540caa3`; server vitest 274, client vitest 153, client CT 201 all green;
-the e2e-cluster failures are pre-existing machine-saturation noise on
-unchanged code, not a regression). **T021 is manual regardless** — real
-`recording.mp3` + Media Sync Editor sync points + a live two-browser check
-(Chrome blocks port 6000; audio races/wedges under automation).
+**Phase 5 remaining — T019 `[ ]`, T020 `[ ]`, T021 `[ ]`.**
+- **T019 (two-participant e2e)** is **environment-blocked here**: the
+  headless e2e **wedges** on the live synth→recording switch (~90 s
+  unresponsive; matches the known "automation audio races/wedges" quirk),
+  so it can't produce a clean automated measurement in this environment.
+  The T022 CT regression above covers the specific wiring it was meant to
+  catch; a true independent-`play()`, real-transport measurement still
+  awaits a working e2e environment or the manual T021.
+- **T020 (synth regression)** — synth path is *proven unchanged* (the
+  wiring fix touches only the recording branch; server vitest 274, client
+  vitest 153, client CT green), but a clean full-suite e2e green wasn't
+  obtained here (pre-existing machine-saturation noise on unchanged code,
+  not a regression).
+- **T021 is manual and carries the real verification weight** — a real
+  `recording.mp3` + sync points authored in alphatab.net's Media Sync
+  Editor dropped into a catalog song, then a live two-participant browser
+  session confirming cursor/lyrics/beat-widget track the recording with no
+  audible stutter (and that the editor's export imports directly). Headless
+  automation can't do this (Chrome blocks port 6000; audio races/wedges).
 
 **Phase 1 gate result — PASS, verified at the code level.**
 T001–T005 merged to `main` (`e8006de..a1af8da`, 5 signed commits, worktree
@@ -146,11 +153,12 @@ Nothing — the Phase 1 worktree merged and was reaped.
 
 ## Summary
 
-Phases 1–4 landed (18/21). **Phase 5's honest gate found a real
-production-integration defect (above): the recording-mode drift mechanism
-is never passed to `correctDrift` at `playback-engine.ts:484`.** Feature is
-NOT usable in production until this one-site wiring is fixed and
-regression-tested at the production-caller level (no existing test covers
-that call). **Recommended next step: wire the fix as an added integration
-task in this in-progress file (TDD), then T021 live-verify.** The feature
-stays `tasked`/`in-progress` until then.
+Phases 1–4 + the T019-surfaced wiring fix landed (19/21); synth path
+unchanged and safe on `main`. Recording mode is now **code-complete and
+correctly wired**, but **unverified in a real browser**. **Recommended next
+step: T021 — a manual live two-participant recording session with a real
+`recording.mp3` + Media Sync Editor sync points** (headless automation
+can't; T019's e2e is env-blocked). The feature stays `tasked`/`in-progress`
+until that live verification passes; do NOT flip it to `implemented` on the
+strength of the CT/unit suites alone. T020's synth-regression can also be
+re-confirmed once a clean e2e environment is available.
