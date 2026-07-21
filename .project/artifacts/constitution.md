@@ -101,7 +101,7 @@ yet; this records the intended design ahead of building it.
 name: constitution
 status: stable
 last_updated: 2026-07-19
-next_step_prompt: true
+next_step_prompt: auto
 delegation: eager
 merge_policy: auto
 ---
