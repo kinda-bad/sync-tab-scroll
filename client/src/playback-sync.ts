@@ -24,6 +24,16 @@ import { TICKS_PER_QUARTER_NOTE, localTempoAtTick, ticksToMs } from './tempo-loo
 const DRIFT_THRESHOLD_MS = 35;
 
 /**
+ * Tolerance for correctDrift's Stop-reset guard (`playbackState.status ===
+ * 'stopped'`): a backing-track participant's tick↔recording-time conversion
+ * never round-trips a seek back to the exact integer 0, so an exact `!== 0`
+ * comparison there re-fires forever. A couple of ticks is well under a
+ * millisecond at any real tempo — far below anything perceptible — while
+ * still breaking the infinite reset loop.
+ */
+const STOPPED_RESET_TOLERANCE_TICKS = 2;
+
+/**
  * The recording's effective playback rate (BPM) at a given tick, derived
  * from the stored `FlatSyncPoint[]` rather than the notated tempo
  * (infrastructure.md: a backing-track host advances at the sync-point rate,
@@ -187,9 +197,16 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   // reaction to an explicit status transition, not a continuous tick-drift
   // comparison against a stale self-report, so it doesn't reintroduce the
   // host-echo bug the isHost guard below exists to prevent. Guarded on
-  // tickPosition already being 0 rather than the isPlaying transition above,
-  // since Stop can arrive from either Playing or already-Paused.
-  if (playbackState.status === 'stopped' && api.tickPosition !== 0) {
+  // tickPosition already being ~0 (a small tolerance, not exact equality)
+  // rather than the isPlaying transition above, since Stop can arrive from
+  // either Playing or already-Paused. The tolerance matters specifically for
+  // a backing-track participant: alphaTab's tick↔recording-time conversion
+  // for a backing track never round-trips a seek back to the exact integer
+  // 0, so an exact `!== 0` check here re-fires forever — seek to 0, read
+  // back a near-zero (non-zero) tick, seek to 0 again — a real, observed
+  // infinite loop (freeze investigation, recording-drift-foundation T021).
+  // Harmless for synth mode too, where the assignment already lands exactly.
+  if (playbackState.status === 'stopped' && Math.abs(api.tickPosition) > STOPPED_RESET_TOLERANCE_TICKS) {
     onApply?.(0);
     api.tickPosition = 0;
     return 0;
