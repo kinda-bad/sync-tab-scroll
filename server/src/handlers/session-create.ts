@@ -9,6 +9,13 @@ import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-create' }>): void {
   const hostId = crypto.randomUUID();
   const session = ctx.sessionStore.create(hostId);
+
+  // Dev convenience only (ServerConfig.devUnlockAllCatalogues) — skips the
+  // activation-key prompt entirely for local development.
+  if (ctx.devUnlockAllCatalogues) {
+    session.unlockedCatalogueIds = ctx.catalog.catalogues.filter((c) => !c.public).map((c) => c.id);
+  }
+
   session.participants.push({
     id: hostId,
     displayName: message.displayName,

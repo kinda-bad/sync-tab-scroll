@@ -23,4 +23,6 @@ export interface HandlerContext {
    * makes it cheap enough to call directly at each site.
    */
   accountStore: AccountStore;
+  /** Dev convenience only (ServerConfig.devUnlockAllCatalogues) — see its doc comment. Optional/absent means off, same as every existing test fixture that constructs HandlerContext without it. */
+  devUnlockAllCatalogues?: boolean;
 }

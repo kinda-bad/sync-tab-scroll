@@ -45,6 +45,13 @@ export interface ServerConfig {
   songUploadEnabled: boolean;
   /** Built client SPA root served as a static fallback (infrastructure.md "Deployment (Railway + Terraform)"). Unused in local dev, where the client runs its own Vite dev server instead — a missing/nonexistent path here just means every request 404s through client-static.ts, harmlessly. */
   clientRoot: string;
+  /**
+   * Dev convenience only: pre-unlocks every private catalogue for every
+   * session at creation, skipping the activation-key prompt. Off by default
+   * — never set this on a public/shared deployment, since it defeats the
+   * catalogue activation-key gate entirely.
+   */
+  devUnlockAllCatalogues: boolean;
   /** Optional OAuth account layer (infrastructure.md User Accounts). */
   account: AccountConfig;
 }
@@ -58,6 +65,7 @@ export function loadConfig(): ServerConfig {
     requireSongConsent: process.env.REQUIRE_SONG_CONSENT === 'true',
     songUploadEnabled: process.env.SONG_UPLOAD_ENABLED !== 'false',
     clientRoot: process.env.CLIENT_ROOT ?? '../client/dist',
+    devUnlockAllCatalogues: process.env.DEV_UNLOCK_ALL_CATALOGUES === 'true',
     account: {
       // Empty string is treated as unset (accounts disabled) — the factory's
       // `!databaseUrl` selects the null store either way (design §2).

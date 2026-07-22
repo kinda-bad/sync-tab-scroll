@@ -9,6 +9,7 @@ const ENV_KEYS = [
   'REQUIRE_SONG_CONSENT',
   'SONG_UPLOAD_ENABLED',
   'CLIENT_ROOT',
+  'DEV_UNLOCK_ALL_CATALOGUES',
   'DATABASE_URL',
   'SESSION_COOKIE_SECRET',
   'PUBLIC_BASE_URL',
@@ -56,6 +57,7 @@ describe('loadConfig', () => {
       requireSongConsent: false,
       songUploadEnabled: true,
       clientRoot: '/tmp/my-client-dist',
+      devUnlockAllCatalogues: false,
       account: DEFAULT_ACCOUNT,
     });
   });
@@ -69,8 +71,14 @@ describe('loadConfig', () => {
       requireSongConsent: false,
       songUploadEnabled: true,
       clientRoot: '../client/dist',
+      devUnlockAllCatalogues: false,
       account: DEFAULT_ACCOUNT,
     });
+  });
+
+  it('sets devUnlockAllCatalogues to true when DEV_UNLOCK_ALL_CATALOGUES=true', () => {
+    process.env.DEV_UNLOCK_ALL_CATALOGUES = 'true';
+    expect(loadConfig().devUnlockAllCatalogues).toBe(true);
   });
 
   it('reads the account layer from env (databaseUrl, cookie secret, OAuth creds)', () => {

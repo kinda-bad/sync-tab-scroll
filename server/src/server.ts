@@ -34,6 +34,7 @@ export function createServer(config: ServerConfig): http.Server {
     connections: new ConnectionRegistry(),
     catalog: loadCatalog(config.catalogRoot, config.requireSongConsent),
     accountStore,
+    devUnlockAllCatalogues: config.devUnlockAllCatalogues,
   };
 
   // WS upgrade, the catalog's static-file serving, and (in production) the

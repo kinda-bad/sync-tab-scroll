@@ -19,6 +19,7 @@ function testConfig(): ServerConfig {
     requireSongConsent: false,
     songUploadEnabled: true,
     clientRoot: './__no_such_client__',
+    devUnlockAllCatalogues: false,
     account: {
       databaseUrl: undefined,
       sessionCookieSecret: 'test',
