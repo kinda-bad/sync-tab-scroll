@@ -23,7 +23,7 @@
   "devDependencies": {
     "@breezystack/lamejs": "^1.2.7",
     "@playwright/experimental-ct-svelte": "^1.58.2",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "^1.61.1",
     "@storybook/addon-svelte-csf": "^5.1.2",
     "@storybook/addon-themes": "^10.4.6",
     "@storybook/svelte-vite": "^10.4.6",
