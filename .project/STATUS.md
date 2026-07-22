@@ -1,9 +1,9 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-21-ardd-1.0.3 (**Phases 1–4 + the T019-surfaced
-production-wiring fix landed (19/22); recording mode is code-complete but
-UNVERIFIED live — T021 (manual) is the remaining gate. ArDD updated to
-v1.0.3.**)_
+_Updated: 2026-07-21 (**Phases 1–4 + the T019-surfaced production-wiring
+fix landed (19/22); recording mode is code-complete but UNVERIFIED live —
+T021 (manual) is the remaining gate. New feature backlogged this pass:
+`help-info-about-panel-in-nav-b`. ArDD has an update available (v1.0.4).**)_
 
 **✅ The Phase 5 wiring defect is FIXED and merged (T022, `1e7a0d6`).** The
 production `correctDrift` caller (`playback-engine.ts`) now passes
@@ -134,33 +134,32 @@ stress the disclosed caveats above. Continue with
 
 ## Feature Backlog
 
-- 1 backlogged · 0 planned · 1 tasked · 27 implemented — see
-  `.project/features/`. The tasked slug is `sync-tabs-to-real-audio`
-  (Phase 1 of 5 landed; stays `tasked` until the tasks file completes). The
-  backlogged slug is `host-mandated-bars-per-row-layout`.
+- 2 backlogged · 0 planned · 1 tasked · 27 implemented — see
+  `.project/features/`. Newly backlogged this pass: `help-info-about-panel-in-nav-b`
+  (About/Info/Help nav panel). Also backlogged:
+  `host-mandated-bars-per-row-layout`. The tasked slug is
+  `sync-tabs-to-real-audio` (Phase 1 of 5 landed; stays `tasked` until the
+  tasks file completes). Target a backlogged slug with `/ardd-plan <slug>`.
 
 ## Housekeeping
 
-- **ArDD is up to date** — v1.0.3 (`0fc43f6`), beta channel. (Source-Path
-  rewritten to the portable `~/.ardd/source` form; the old absolute path
-  remains in git history — repair before sharing or accept it.)
+- **ArDD update available** — installed `0fc43f6`, latest release `v1.0.4`
+  (beta channel). Run `/ardd-update`.
 - `tasks-lobby-cursor-modes-0bea.md` remains **in-progress (11/12)** since
   2026-07-02 — only T010's manual two-browser verification is left
   (scenario 3 auto-covered 2026-07-20). Reconcile to done/abandoned to
   clear the last stale tasks file.
 
-## In Flight
-
-Nothing — the Phase 1 worktree merged and was reaped.
-
 ## Summary
 
-Phases 1–4 + the T019-surfaced wiring fix landed (19/21); synth path
+Phases 1–4 + the T019-surfaced wiring fix landed (19/22); synth path
 unchanged and safe on `main`. Recording mode is now **code-complete and
-correctly wired**, but **unverified in a real browser**. **Recommended next
-step: T021 — a manual live two-participant recording session with a real
-`recording.mp3` + Media Sync Editor sync points** (headless automation
-can't; T019's e2e is env-blocked). The feature stays `tasked`/`in-progress`
-until that live verification passes; do NOT flip it to `implemented` on the
-strength of the CT/unit suites alone. T020's synth-regression can also be
-re-confirmed once a clean e2e environment is available.
+correctly wired**, but **unverified in a real browser**. `help-info-about-panel-in-nav-b`
+was newly backlogged this pass but does not change the active priority.
+**Recommended next step: T021 — a manual live two-participant recording
+session with a real `recording.mp3` + Media Sync Editor sync points**
+(headless automation can't; T019's e2e is env-blocked). The feature stays
+`tasked`/`in-progress` until that live verification passes; do NOT flip it
+to `implemented` on the strength of the CT/unit suites alone. T020's
+synth-regression can also be re-confirmed once a clean e2e environment is
+available.
