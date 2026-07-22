@@ -15,7 +15,7 @@
     "@sync-tab-scroll/pipeline": "workspace:*",
     "@sync-tab-scroll/shared": "workspace:*",
     "pg": "^8.13.0",
-    "ws": "^8.18.0"
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
