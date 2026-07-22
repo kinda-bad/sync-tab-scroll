@@ -11,8 +11,8 @@ importers:
   client:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.0
-        version: 1.8.3
+        specifier: ^1.8.4
+        version: 1.8.4
       '@sync-tab-scroll/shared':
         specifier: workspace:*
         version: link:../packages/shared
@@ -66,8 +66,8 @@ importers:
   packages/pipeline:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.0
-        version: 1.8.3
+        specifier: ^1.8.4
+        version: 1.8.4
       '@sync-tab-scroll/shared':
         specifier: workspace:*
         version: link:../shared
@@ -97,8 +97,8 @@ importers:
   packages/shared:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.0
-        version: 1.8.3
+        specifier: ^1.8.4
+        version: 1.8.4
     devDependencies:
       '@types/adm-zip':
         specifier: ^0.5.8
@@ -167,8 +167,8 @@ packages:
   '@breezystack/lamejs@1.2.7':
     resolution: {integrity: sha512-6wc7ck65ctA75Hq7FYHTtTvGnYs6msgdxiSUICQ+A01nVOWg6rqouZB8IdyteRlfpYYiFovkf67dIeOgWIUzTA==}
 
-  '@coderline/alphatab@1.8.3':
-    resolution: {integrity: sha512-gauoZMBL3yzCNn4jz5qhKSmwnlwFpBG+W+HPowiBmPiD6kTH5Ntk3mCUItGqETN7Vl97REXJK6efGKOa13B4Ng==}
+  '@coderline/alphatab@1.8.4':
+    resolution: {integrity: sha512-VN5rfTZZWgA63Ny1aDKCp02k3Qm9CHhg4Q9AnK0kHm7G+fNDNZo36TeToPDFoJ6VpB9+AHcCrHwHFUP1tKqdsw==}
     engines: {node: '>=6.0.0'}
 
   '@emnapi/core@1.11.1':
@@ -1887,7 +1887,7 @@ snapshots:
 
   '@breezystack/lamejs@1.2.7': {}
 
-  '@coderline/alphatab@1.8.3': {}
+  '@coderline/alphatab@1.8.4': {}
 
   '@emnapi/core@1.11.1':
     dependencies:
