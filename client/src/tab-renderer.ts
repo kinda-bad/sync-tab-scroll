@@ -70,11 +70,17 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   const settings = new at.Settings();
   settings.core.engine = 'svg';
   settings.core.fontDirectory = '/font/';
-  // alphaTab's audio player spawns its own worker independent of
-  // core.useWorkers (which only controls the render worker) and needs a
-  // classic (non-ESM) script it can load — auto-detection fails under
-  // Vite's ESM dev/build output, same root cause as the render-worker
-  // issue. A classic build copy is served as a static asset for this.
+  // NOT the mechanism that keeps the audio player worker alive (defect
+  // bf07f912 — a previous version of this comment claimed it was; corrected
+  // per infrastructure.md's Font & Worker Setup section). alphaTab's ESM
+  // build always attempts `new Worker(new URL('./alphaTab.worker.mjs',
+  // import.meta.url), {type: 'module'})` first, in every environment; that
+  // request resolves via Vite's dev-time `/@fs/` passthrough or, in a
+  // production build, the `alphaTabWorkerAssets()` vite plugin emitting the
+  // asset (see vite.config.ts). This `core.scriptFile` line is only a
+  // fallback reached inside a `catch` for a *synchronous* Worker-construction
+  // error — a Worker pointed at a hanging or 404ing URL never throws
+  // synchronously, so this line does nothing to rescue that failure mode.
   settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href;
   // Web workers fail to initialize under Vite's ESM dev/build output
   // (alphaTab's worker-script auto-detection assumes a single bundled

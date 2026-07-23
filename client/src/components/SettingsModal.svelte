@@ -469,7 +469,13 @@
     {#if session && session.availableParts.length > 0}
       <span class="section-label">Tracks</span>
       <div class="control-row">
-        <Button variant="ghost" label={allMuted ? 'Unmute all' : 'Mute all'} disabled={recordingMode} onclick={toggleMuteAll} />
+        <Button
+          variant="ghost"
+          label={allMuted ? 'Unmute all' : 'Mute all'}
+          disabled={recordingMode}
+          onclick={toggleMuteAll}
+          testId="mute-all-parts-button"
+        />
       </div>
       {#each session.availableParts as part, i (part.trackIndex)}
         <TrackRow
