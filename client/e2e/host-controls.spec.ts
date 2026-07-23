@@ -3,7 +3,16 @@ import { createSessionAsHost, joinSessionAsMember, readStoredSession, sendAsPart
 
 test('host Start/Pause/Resume/Stop transitions are reflected for a joined member', async ({ page, browser }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click();
+  // T023/T024 (feedback-e2e-suite-red-on-main-7b3f F001): this used to be
+  // `.first()` on the assumption of a single-song fixture catalog. The
+  // recording-drift-foundation work added two more fixture songs
+  // (recording-aligned, recording-skewed, both lyrics-less) that
+  // `readdirSync` now lists alphabetically ahead of "Synthetic Test Song" —
+  // `.first()` started selecting a lyrics-less song, permanently disabling
+  // the Lyrics "Select" button below and timing out. Select the specific
+  // song this test actually needs (it has both an instrument part and a
+  // lyrics track) instead of relying on catalog order.
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — selecting a part auto-closes the modal
   const hostSession = await readStoredSession(page);
 

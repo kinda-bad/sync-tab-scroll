@@ -69,6 +69,8 @@ function baseSession(participants: Session['participants']): Session {
     spotlightMode: false,
     pendingHostRequest: null,
     unlockedCatalogueIds: [],
+    hostBarsPerRow: null,
+    earlyStopTick: null,
   };
 }
 

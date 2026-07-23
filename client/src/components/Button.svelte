@@ -14,6 +14,12 @@
   // screen-reader- and hover-tooltip-accessible despite showing no text.
   export let icon: ComponentType | undefined = undefined;
   export let iconOnly = false;
+  // Optional queryable identifier (defect b16e2ab1): most controls are
+  // located by accessible name in tests; this exists for the rare control
+  // an artifact documents by a literal id (e.g. ui.md's
+  // `mute-all-parts-button`) so that identifier is genuinely queryable on
+  // the DOM element, not just a feature-tag string in comments.
+  export let testId: string | undefined = undefined;
 
   // tasks-hover-long-press-tooltip-for-i-9124.md T002: the native `title`
   // attribute above is an unreliable *visible* hover cue (inconsistent
@@ -64,6 +70,7 @@
     {type}
     {disabled}
     {onclick}
+    data-testid={testId}
     aria-label={iconOnly ? label : undefined}
     title={iconOnly ? label : undefined}
     onpointerenter={iconOnly ? handlePointerEnter : undefined}

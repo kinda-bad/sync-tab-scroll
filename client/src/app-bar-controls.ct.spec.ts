@@ -46,6 +46,8 @@ function instrumentSession(view: 'lobby' | 'playback'): Session {
     spotlightMode: false,
     pendingHostRequest: null,
     unlockedCatalogueIds: [],
+    hostBarsPerRow: null,
+    earlyStopTick: null,
   };
 }
 

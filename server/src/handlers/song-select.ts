@@ -45,6 +45,10 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     // recording-capable" — a song can't become non-recording-capable without a
     // song change.
     session.playbackSource = 'synth';
+    // Host-mandated bars-per-row pin and early-stop point are per-song
+    // settings (datamodel.md), same reset-on-song-change pattern.
+    session.hostBarsPerRow = null;
+    session.earlyStopTick = null;
     // Selecting a genuinely different song resets every participant's
     // part/readiness — a part id/index from the old song's parts has no
     // guaranteed meaning against the new song's parts.

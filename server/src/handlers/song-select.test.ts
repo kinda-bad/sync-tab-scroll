@@ -96,6 +96,41 @@ describe('song-select', () => {
     expect(session.participants[0].selectedPart).toBe(0);
     expect(session.participants[0].readiness).toBe('ready');
   });
+
+  // T010: Session.hostBarsPerRow defaults to null and resets to null on song
+  // change (following the existing spotlightMode/lobbyCursorTick reset
+  // pattern above).
+  it('T010: hostBarsPerRow defaults to null and resets to null on a genuine song change', () => {
+    const ctx = makeCtx([fakeSong('creep'), fakeSong('bonus')]);
+    const session = ctx.sessionStore.create('host-1');
+    expect(session.hostBarsPerRow).toBeNull();
+    session.selectedSong = 'bonus';
+    session.hostBarsPerRow = 4;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+    expect(session.hostBarsPerRow).toBeNull();
+  });
+
+  // T015: Session.earlyStopTick mirrors the same default-null/reset-on-
+  // song-change pattern.
+  it('T015: earlyStopTick defaults to null and resets to null on a genuine song change', () => {
+    const ctx = makeCtx([fakeSong('creep'), fakeSong('bonus')]);
+    const session = ctx.sessionStore.create('host-1');
+    expect(session.earlyStopTick).toBeNull();
+    session.selectedSong = 'bonus';
+    session.earlyStopTick = 1000;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+    expect(session.earlyStopTick).toBeNull();
+  });
 });
 
 describe('song-select catalogue-unlock guard', () => {

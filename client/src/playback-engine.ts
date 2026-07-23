@@ -104,7 +104,15 @@ let state: EngineState | undefined;
  * 'lyrics' part changes engine kind entirely (visible renderer vs. headless
  * player), so that case tears down and recreates from scratch instead.
  */
-export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsClient, song: CatalogSong, trackIndex: number, isLyricsPart: boolean, playbackSource: Session['playbackSource'] = 'synth'): void {
+export function ensurePlaybackEngine(
+  containers: EngineContainers,
+  wsClient: WsClient,
+  song: CatalogSong,
+  trackIndex: number,
+  isLyricsPart: boolean,
+  playbackSource: Session['playbackSource'] = 'synth',
+  barsPerRow: number | null = null,
+): void {
   if (state) {
     if (state.songId !== song.id || state.isLyricsPart !== isLyricsPart || state.playbackSource !== playbackSource) {
       // Song changed, engine kind changed, or the session's audio source
@@ -141,7 +149,7 @@ export function ensurePlaybackEngine(containers: EngineContainers, wsClient: WsC
     : undefined;
   const api = isLyricsPart
     ? createHeadlessPlayer(song.gpFilePath, trackIndex, recording)
-    : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme, ...recording });
+    : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme, barsPerRow, ...recording });
 
   // Metronome is a client-local personal preference (ui.md Preferences
   // tab), not session state — applied once at creation and thereafter via

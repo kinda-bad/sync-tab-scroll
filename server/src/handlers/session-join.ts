@@ -6,8 +6,10 @@ import { visibleCatalog } from '../catalog-loader.js';
 import { seedHostMembershipUnlocks } from '../membership-unlock.js';
 import { promoteNextHost } from '../host-succession.js';
 import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
+import { validateDisplayName } from '../input-validation.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
+  const displayName = validateDisplayName(message.displayName);
   const session = ctx.sessionStore.get(message.code);
   if (!session) {
     // Typed terminal signal (F001) rather than a stringly-typed `error`: the
@@ -32,7 +34,7 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
   let participantId: string;
   if (existing) {
     participantId = existing.id;
-    existing.displayName = message.displayName;
+    existing.displayName = displayName;
     existing.connectionStatus = 'connected';
     // The participant's own renderer/headless instance is gone after a
     // refresh (fresh page load) — their part choice is kept, but readiness
@@ -53,7 +55,7 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
     participantId = crypto.randomUUID();
     session.participants.push({
       id: participantId,
-      displayName: message.displayName,
+      displayName,
       role: 'member',
       connectionStatus: 'connected',
       selectedPart: null,

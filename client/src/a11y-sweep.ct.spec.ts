@@ -63,6 +63,8 @@ const session: Session = {
   spotlightMode: false,
   pendingHostRequest: null,
   unlockedCatalogueIds: [],
+  hostBarsPerRow: null,
+  earlyStopTick: null,
 };
 
 async function setStore(page: import('@playwright/test').Page) {

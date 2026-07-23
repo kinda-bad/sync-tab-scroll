@@ -15,6 +15,8 @@ export type ClientMessage =
   | { type: 'playback-control'; action: 'start' | 'pause' | 'resume' | 'stop' | 'seek'; tickPosition?: number }
   | { type: 'lobby-cursor-set'; tickPosition: number | null }
   | { type: 'spotlight-mode-set'; enabled: boolean }
+  | { type: 'bars-per-row-set'; barsPerRow: number | null }
+  | { type: 'early-stop-set'; tickPosition: number | null }
   | { type: 'count-in-set'; enabled: boolean }
   | { type: 'playback-source-set'; source: 'synth' | 'recording' }
   | { type: 'song-select'; songId: string }

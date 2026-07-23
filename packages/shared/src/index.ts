@@ -244,4 +244,8 @@ export interface Session {
   pendingHostRequest: string | null;
   /** `Catalogue.id` values this session's host has successfully unlocked (`catalogue-unlock`, infrastructure.md). Only ever private catalogue ids; public catalogues need no entry. Starts empty; per-session, never persisted. */
   unlockedCatalogueIds: string[];
+  /** Host-mandated bars-per-row layout pin; `null` means no pin (each participant's own personal preference applies instead). Host-only, same pattern as `countInEnabled`/`spotlightMode`. Resets to `null` when the selected song changes. */
+  hostBarsPerRow: number | null;
+  /** Host-set tick position past which playback auto-stops for everyone; `null` means no early-stop point is set. Host-only, same pattern as `countInEnabled`/`spotlightMode`. Resets to `null` when the selected song changes. */
+  earlyStopTick: number | null;
 }

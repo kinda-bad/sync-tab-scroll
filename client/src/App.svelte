@@ -3,6 +3,7 @@
   import { clientStore } from './store';
   import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged, beatWidgetState } from './playback-engine';
   import { metronomeStore } from './metronome-preference';
+  import { loadStoredBarsPerRow } from './bars-per-row-preference';
   import BeatWidget from './components/BeatWidget.svelte';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
@@ -14,6 +15,7 @@
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
+  import HelpAboutModal from './components/HelpAboutModal.svelte';
   import StartNegotiationModals from './components/StartNegotiationModals.svelte';
   import AccountMenu from './components/AccountMenu.svelte';
   import AuthoringModal from './components/AuthoringModal.svelte';
@@ -35,14 +37,30 @@
   import ListMusic from 'lucide-svelte/icons/list-music';
   import Clock from 'lucide-svelte/icons/clock';
   import Check from 'lucide-svelte/icons/check';
+  import CircleHelp from 'lucide-svelte/icons/circle-help';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
+
+  // Join-code click-to-copy (feedback-join-code-click-to-copy-4971 F001):
+  // clicking the Bar identity area's join-code chip copies Session.code to
+  // the clipboard and shows a transient inline "Copied!" confirmation.
+  let joinCodeCopied = false;
+  let joinCodeCopiedTimeout: ReturnType<typeof setTimeout> | undefined;
+  async function copyJoinCode(code: string) {
+    await navigator.clipboard.writeText(code);
+    joinCodeCopied = true;
+    clearTimeout(joinCodeCopiedTimeout);
+    joinCodeCopiedTimeout = setTimeout(() => {
+      joinCodeCopied = false;
+    }, 1500);
+  }
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
   let songPartModalOpen = false;
   let songPartDismissed = false;
   let settingsModalOpen = false;
+  let helpAboutModalOpen = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -69,7 +87,12 @@
     if (song) {
       const part = session!.availableParts.find((p) => p.trackIndex === participant!.selectedPart);
       const trackIndex = isLyricsPart ? (song.lyricsTrackIndex ?? 0) : (part?.trackIndex ?? 0);
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource);
+      // Host-mandated bars-per-row layout (host-mandated-bars-per-row-layout):
+      // the host's pin shadows this participant's own personal preference,
+      // same override-shadows-preference pattern as the metronome/recording
+      // carve-out.
+      const effectiveBarsPerRow = session!.hostBarsPerRow ?? loadStoredBarsPerRow();
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource, effectiveBarsPerRow);
     }
   }
 
@@ -173,6 +196,10 @@
     settingsModalOpen = !settingsModalOpen;
   }
 
+  function toggleHelpAboutModal() {
+    helpAboutModalOpen = !helpAboutModalOpen;
+  }
+
   function startPlayback() {
     songPartModalOpen = false;
     settingsModalOpen = false;
@@ -210,6 +237,22 @@
 
 <div class="engine-containers" class:visible={hasPart && !isLyricsPart} class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}>
   <div bind:this={tabContainer} class="tab-container"></div>
+  {#if session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
+    <!-- Host early-stop point (host-set-early-stop-point-for): a visual cue,
+         for every participant, that an early-stop point IS set — the exact
+         enforcement (auto-stop once tickPosition passes earlyStopTick) is
+         server-side (playback-tick-report.ts) and fully correct regardless
+         of this element.
+         KNOWN LIMITATION: this scrim is a fixed bottom-third gradient, not
+         positioned at the actual stop tick's row — alphaTab's tick→pixel
+         mapping wasn't wired up for this pass (a real "de-emphasize past
+         THIS bar" treatment needs that mapping). It currently under-dims
+         an early stop point and over-dims a late one. Tracked as a
+         follow-up (log via /ardd-feedback) rather than blocking this task
+         — ui.md leaves the exact visual treatment to implementation-time
+         judgment. -->
+    <div class="early-stop-dimmed" aria-hidden="true"></div>
+  {/if}
   <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
@@ -217,7 +260,15 @@
 {#if showBar && session}
   <Bar progress={barProgress}>
     {#snippet identity()}
-      <span class="bar-artist bar-code">Join code: {session.code}</span>
+      <button
+        type="button"
+        class="bar-artist bar-code bar-code-copy"
+        aria-label="Copy join code {session.code}"
+        title="Copy join code"
+        onclick={() => copyJoinCode(session.code)}
+      >
+        Join code: {session.code}{#if joinCodeCopied}<span class="bar-code-copied">Copied!</span>{/if}
+      </button>
       {#if catalogSong}
         <strong class="bar-title glitch-text">{catalogSong.name}</strong>
         <span class="bar-artist"> — {catalogSong.artist}</span>
@@ -254,6 +305,7 @@
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
         <Button variant="ghost" label="Settings" iconOnly icon={Settings} onclick={toggleSettingsModal} />
       {/if}
+      <Button variant="ghost" label="Help & About" iconOnly icon={CircleHelp} onclick={toggleHelpAboutModal} />
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
           <Button variant="riot" label="Start" iconOnly icon={Play} disabled={!session.selectedSong} onclick={startPlayback} />
@@ -293,6 +345,7 @@
 
 <SongPartModal open={songPartModalOpen} dismissible={true} onClose={closeSongPartModal} />
 <SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
+<HelpAboutModal open={helpAboutModalOpen} onClose={() => (helpAboutModalOpen = false)} />
 <!-- In-app authoring (T011-T018, ui.md In-App Authoring) — a single instance
      shared by both AccountMenu entry points (Landing and Bar) via
      authoringModalOpen (Principle I). -->
@@ -387,6 +440,21 @@
     min-height: 400px;
   }
 
+  /* Host early-stop point (host-set-early-stop-point-for): a translucent
+     scrim over the lower portion of the tab view, indicating content past
+     the host-set stop tick is de-emphasized. Purely visual — the actual
+     enforcement is server-side (playback-tick-report.ts). */
+  .early-stop-dimmed {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 33%;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--bg, #0a0a0a) 90%);
+    opacity: 0.85;
+  }
+
   .bar-title {
     font-family: var(--font-display);
     letter-spacing: 0.02em;
@@ -409,5 +477,18 @@
      short and fixed-length; let the song title/artist give way instead. */
   .bar-code {
     flex-shrink: 0;
+  }
+  .bar-code-copy {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  .bar-code-copied {
+    margin-left: 0.4em;
+    color: var(--accent, #6cf);
+    font-weight: 600;
   }
 </style>

@@ -5,6 +5,7 @@ import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
 import { seedHostMembershipUnlocks } from '../membership-unlock.js';
 import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
+import { validateDisplayName } from '../input-validation.js';
 
 export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-create' }>): void {
   const hostId = crypto.randomUUID();
@@ -18,7 +19,7 @@ export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, mess
 
   session.participants.push({
     id: hostId,
-    displayName: message.displayName,
+    displayName: validateDisplayName(message.displayName),
     role: 'host',
     connectionStatus: 'connected',
     selectedPart: null,

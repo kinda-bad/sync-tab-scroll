@@ -45,6 +45,8 @@ function makeSession(selfReadiness: ReadinessStatus, memberReadiness: ReadinessS
     spotlightMode: false,
     pendingHostRequest: null,
     unlockedCatalogueIds: [],
+    hostBarsPerRow: null,
+    earlyStopTick: null,
   };
 }
 

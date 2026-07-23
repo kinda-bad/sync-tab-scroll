@@ -15,6 +15,17 @@ export function handlePlaybackTickReport(ctx: HandlerContext, socket: WebSocket,
   }
 
   session.playbackState.tickPosition = message.tickPosition;
+
+  // Host early-stop point (host-set-early-stop-point-for): once the
+  // host-reported tick passes the threshold, auto-trigger the same Stop
+  // transition playback-control.ts's 'stop' action uses — full stop, not
+  // pause-in-place, resetting tickPosition to 0 and sending everyone back
+  // to the Lobby (ws-client.ts keys the view transition off this status).
+  if (session.earlyStopTick !== null && session.playbackState.status === 'running' && session.playbackState.tickPosition >= session.earlyStopTick) {
+    session.playbackState.status = 'stopped';
+    session.playbackState.tickPosition = 0;
+  }
+
   session.playbackState.serverTimestamp = Date.now();
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
 }

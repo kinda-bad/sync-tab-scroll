@@ -22,6 +22,13 @@ export interface TabRendererOptions {
   recordingPath?: string;
   /** Tick↔recording-time anchors applied via `Score.applyFlatSyncPoints()`; used only in backing-track mode. */
   syncPoints?: FlatSyncPoint[];
+  /**
+   * Effective bars-per-row pin at construction (host-mandated-bars-per-row-
+   * layout): `Session.hostBarsPerRow` when the host has pinned a layout,
+   * falling back to the participant's own personal preference otherwise;
+   * `null`/omitted means alphaTab's native auto-wrap.
+   */
+  barsPerRow?: number | null;
 }
 
 function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
@@ -58,16 +65,22 @@ function applyThemeColors(resources: at.RenderingResources, theme: Theme): void 
  * Light-mode values (brand.md) are a first pass, not production-validated
  * like dark mode's harvested values — expect a future visual QA pass.
  */
-export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints }: TabRendererOptions): at.AlphaTabApi {
+export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints, barsPerRow }: TabRendererOptions): at.AlphaTabApi {
   const recording = playerMode === at.PlayerMode.EnabledBackingTrack;
   const settings = new at.Settings();
   settings.core.engine = 'svg';
   settings.core.fontDirectory = '/font/';
-  // alphaTab's audio player spawns its own worker independent of
-  // core.useWorkers (which only controls the render worker) and needs a
-  // classic (non-ESM) script it can load — auto-detection fails under
-  // Vite's ESM dev/build output, same root cause as the render-worker
-  // issue. A classic build copy is served as a static asset for this.
+  // NOT the mechanism that keeps the audio player worker alive (defect
+  // bf07f912 — a previous version of this comment claimed it was; corrected
+  // per infrastructure.md's Font & Worker Setup section). alphaTab's ESM
+  // build always attempts `new Worker(new URL('./alphaTab.worker.mjs',
+  // import.meta.url), {type: 'module'})` first, in every environment; that
+  // request resolves via Vite's dev-time `/@fs/` passthrough or, in a
+  // production build, the `alphaTabWorkerAssets()` vite plugin emitting the
+  // asset (see vite.config.ts). This `core.scriptFile` line is only a
+  // fallback reached inside a `catch` for a *synchronous* Worker-construction
+  // error — a Worker pointed at a hanging or 404ing URL never throws
+  // synchronously, so this line does nothing to rescue that failure mode.
   settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href;
   // Web workers fail to initialize under Vite's ESM dev/build output
   // (alphaTab's worker-script auto-detection assumes a single bundled
@@ -79,9 +92,11 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // pinch-zoom (see tab-scale.ts) — Page layout re-wraps bars to the
   // container, so this can't introduce horizontal overflow.
   settings.display.scale = tabScaleForViewportWidth(window.innerWidth);
-  // No settings.display.barsPerRow pin — auto-wrap by default (someday:
-  // host-mandated bars-per-row and participant-preferred horizontal layout
-  // are deferred future direction, not built now).
+  // Host-mandated bars-per-row layout (host-mandated-bars-per-row-layout):
+  // pins alphaTab's native display.barsPerRow when set (host pin or the
+  // participant's own personal preference, resolved by the caller);
+  // omitted/null leaves alphaTab's own auto-wrap behavior unchanged.
+  if (barsPerRow != null) settings.display.barsPerRow = barsPerRow;
 
   applyThemeColors(settings.display.resources, theme);
 
