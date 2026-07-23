@@ -1,7 +1,7 @@
 ---
 plan: plan-c75f-2026-07-23-5638.md
 generated: 2026-07-23
-status: in-progress
+status: completed
 ---
 
 # Tasks
@@ -37,8 +37,8 @@ status: in-progress
 
 ## Phase 6: Host Early-Stop Point
 
-- [ ] T015 [artifacts: datamodel] Write a failing server test asserting `Session.earlyStopTick` defaults to `null` and resets to `null` on song change, mirroring T010's pattern. Confirm it fails.
-- [ ] T016 [artifacts: datamodel, infrastructure] Add `Session.earlyStopTick: number | null` to the server-side session model and wire its song-change reset to make T015 pass.
+- [x] T015 [artifacts: datamodel] Write a failing server test asserting `Session.earlyStopTick` defaults to `null` and resets to `null` on song change, mirroring T010's pattern. Confirm it fails.
+- [x] T016 [artifacts: datamodel, infrastructure] Add `Session.earlyStopTick: number | null` to the server-side session model and wire its song-change reset to make T015 pass.
 - [x] T017 [artifacts: infrastructure] Write a failing server test asserting a new host-only `early-stop-set` WS message updates `Session.earlyStopTick` and broadcasts `session-state`, rejected for non-host senders. Confirm it fails, then implement the handler to make it pass.
 - [x] T018 [artifacts: infrastructure] Write a failing server test asserting that once the host-reported `tickPosition` passes `Session.earlyStopTick`, the server auto-triggers the existing host-Stop transition (`playbackState.status` flip) for the session. Confirm it fails, then implement the enforcement (reusing the existing Stop transition path) to make it pass.
 - [x] T019 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/early-stop-point.ct.spec.ts`) asserting the Session tab's host-only "Early stop point" control sends `early-stop-set`, and the Playback View visually de-emphasizes tab content past the stop tick for every participant. Confirm it fails.

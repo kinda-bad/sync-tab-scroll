@@ -1,6 +1,6 @@
 ---
 slug: host-mandated-bars-per-row-layout
-status: backlogged
+status: implemented
 logged: 2026-07-15
 ---
 

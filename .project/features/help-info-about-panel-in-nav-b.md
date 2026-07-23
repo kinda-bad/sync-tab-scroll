@@ -1,6 +1,6 @@
 ---
 slug: help-info-about-panel-in-nav-b
-status: backlogged
+status: implemented
 logged: 2026-07-21
 ---
 
