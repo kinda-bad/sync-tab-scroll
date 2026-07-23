@@ -906,12 +906,16 @@ test('Tracks tab: synth mode leaves mute/solo enabled', async ({ mount }) => {
   await expect(component.getByRole('button', { name: 'Mute Guitar' })).toBeEnabled();
 });
 
-test('Preferences tab: recording mode disables the personal metronome toggle with an explanatory reason', async ({ mount }) => {
+// Reversed by feedback-recording-mode-metronome-lock-reconsidered-c415 F001
+// (see recording-metronome-unlock.ct.spec.ts, T021/T022): the toggle stays
+// enabled in recording mode — it still drives the beat widget visually, even
+// though alphaTab can't mix an audible click over a playing recording.
+test('Preferences tab: the metronome toggle stays enabled in recording mode, with an inline note about the audio limitation', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
   await component.getByRole('button', { name: 'Preferences' }).click();
 
-  await expect(component.getByRole('button', { name: /Metronome:/ })).toBeDisabled();
-  await expect(component.getByText(RECORDING_REASON)).toBeVisible();
+  await expect(component.getByRole('button', { name: /Metronome:/ })).toBeEnabled();
+  await expect(component.getByText(/can't mix an audible click/)).toBeVisible();
 });

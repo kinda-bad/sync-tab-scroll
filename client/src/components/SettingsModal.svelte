@@ -153,8 +153,13 @@
 
   // Personal, this-device-only (ui.md Preferences tab): persists like the
   // theme choice and applies to the live engine immediately; never a WS send.
+  // feedback-recording-mode-metronome-lock-reconsidered-c415 F001: no longer
+  // force-disabled in recording mode — the toggle still drives the beat
+  // widget's visual component (metronomeStore, App.svelte's BeatWidget) even
+  // though alphaTab can't layer an audible synth click over a playing
+  // backing track (upstream #1961) — setEngineMetronome below is a harmless
+  // no-op in that mode (no synth is loaded for a backing-track player).
   function toggleMetronome() {
-    if (recordingMode) return; // T018: no synth metronome against a backing track
     metronome = !metronome;
     persistMetronome(metronome);
     setEngineMetronome(metronome);
@@ -420,12 +425,11 @@
       <Button
         variant={metronome ? 'riot' : 'ghost'}
         label={metronome ? 'Metronome: On' : 'Metronome: Off'}
-        disabled={recordingMode}
         onclick={toggleMetronome}
       />
     </div>
     {#if recordingMode}
-      <p class="hint">{RECORDING_DISABLED_REASON}</p>
+      <p class="hint">Only you see your beat widget — recording mode can't mix an audible click over the real recording (alphaTab limitation).</p>
     {:else}
       <p class="hint">Only you hear your metronome.</p>
     {/if}

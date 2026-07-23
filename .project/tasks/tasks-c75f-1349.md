@@ -46,8 +46,8 @@ status: in-progress
 
 ## Phase 7: Recording-Mode Metronome Unlock
 
-- [ ] T021 [artifacts: ui] [parallel] Write a failing Playwright CT spec (extend `client/src/recording-uniform-sync.ct.spec.ts` or add a sibling spec) asserting the personal Metronome preference toggle is no longer force-disabled while `Session.playbackSource === 'recording'`, and still drives the beat widget's visual component. Confirm it fails.
-- [ ] T022 [artifacts: ui] Remove the force-disable of the Metronome toggle in recording mode and wire it to the beat widget's visual-only path to make T021 pass. Investigate whether alphaTab (given upstream #1961) can layer an audible click over a playing recording; if feasible, implement it under this same toggle; if not, document the audio limitation inline in the UI (e.g. a hint near the toggle) and leave ui.md's existing open-question note as the record of the constraint. Addresses feedback-recording-mode-metronome-lock-reconsidered-c415 F001.
+- [x] T021 [artifacts: ui] [parallel] Write a failing Playwright CT spec (extend `client/src/recording-uniform-sync.ct.spec.ts` or add a sibling spec) asserting the personal Metronome preference toggle is no longer force-disabled while `Session.playbackSource === 'recording'`, and still drives the beat widget's visual component. Confirm it fails.
+- [x] T022 [artifacts: ui] Remove the force-disable of the Metronome toggle in recording mode and wire it to the beat widget's visual-only path to make T021 pass. Investigate whether alphaTab (given upstream #1961) can layer an audible click over a playing recording; if feasible, implement it under this same toggle; if not, document the audio limitation inline in the UI (e.g. a hint near the toggle) and leave ui.md's existing open-question note as the record of the constraint. Addresses feedback-recording-mode-metronome-lock-reconsidered-c415 F001.
 
 ## Phase 8: e2e Suite Diagnosis
 
