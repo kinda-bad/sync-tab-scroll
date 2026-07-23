@@ -407,14 +407,14 @@ above) — a host-authorization-checked message sets the field, the normal
 `session-state` broadcast carries it to everyone, no dedicated result
 message:
 
-- **`host-mandated-bars-per-row-layout`**: `bars-per-row-set { value:
+- **`host-mandated-bars-per-row-layout`**: `bars-per-row-set { barsPerRow:
   number | null }` sets `Session.hostBarsPerRow` (datamodel.md), host-only
   (same authorization check as `playback-control`). `null` clears the pin.
   Every participant's client re-applies `settings.display.barsPerRow` (Tab
   Rendering, above) on change — a renderer rebuild, the same trigger shape
   a song change already uses.
-- **`host-set-early-stop-point-for`**: `early-stop-set { tick: number |
-  null }` sets `Session.earlyStopTick` (datamodel.md), host-only. The
+- **`host-set-early-stop-point-for`**: `early-stop-set { tickPosition:
+  number | null }` sets `Session.earlyStopTick` (datamodel.md), host-only. The
   server enforces the stop the same way it already enforces a host Stop —
   once the host-reported `tickPosition` (Session & Real-Time Sync, above)
   reaches or passes `earlyStopTick` while `playbackState.status ===
@@ -713,7 +713,7 @@ block above might suggest at a glance:
   which doesn't hold under Vite's ESM module output. Main-thread
   rendering works without issue at the scale this app needs.
 - `settings.core.scriptFile = new URL('/alphaTab.worker.js', location.origin).href`
-  (`client/src/tab-renderer.ts:51`) — a distinct setting from
+  (`client/src/tab-renderer.ts:84`, `createTabRenderer`) — a distinct setting from
   `core.useWorkers` above, but **not** the mechanism that actually keeps
   the audio player worker alive in every environment (a previous version
   of this section claimed it was; corrected 2026-07-04 after a real-browser
