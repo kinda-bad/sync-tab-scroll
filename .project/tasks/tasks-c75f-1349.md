@@ -51,8 +51,8 @@ status: in-progress
 
 ## Phase 8: e2e Suite Diagnosis
 
-- [ ] T023 [parallel] Bisect `client/e2e/host-controls.spec.ts`'s timeout-shaped failure between the 2026-07-19 known-good commit and current `main` to determine whether the red state is environmental (harness/config drift) or a genuine product regression. No new test required for this diagnostic task — record findings in the task's completion notes.
-- [ ] T024 If T023 found a genuine regression: write a failing test isolating it (if not already covered by `host-controls.spec.ts` itself), confirm it fails, then fix the regression. If T023 found an environmental cause: fix the harness/config issue directly and confirm `host-controls.spec.ts` passes locally under the same conditions CI uses. Addresses feedback-e2e-suite-red-on-main-7b3f F001.
+- [x] T023 [parallel] Bisect `client/e2e/host-controls.spec.ts`'s timeout-shaped failure between the 2026-07-19 known-good commit and current `main` to determine whether the red state is environmental (harness/config drift) or a genuine product regression. No new test required for this diagnostic task — record findings in the task's completion notes.
+- [x] T024 If T023 found a genuine regression: write a failing test isolating it (if not already covered by `host-controls.spec.ts` itself), confirm it fails, then fix the regression. If T023 found an environmental cause: fix the harness/config issue directly and confirm `host-controls.spec.ts` passes locally under the same conditions CI uses. Addresses feedback-e2e-suite-red-on-main-7b3f F001.
 
 ## Phase 9: Defect Fixes
 
