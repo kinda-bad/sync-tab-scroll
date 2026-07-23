@@ -1,5 +1,93 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**`tasks-c75f-1349.md` completed and merged (all 26
+tasks, 9 phases).** Delivered: input-validation hardening, join-code
+click-to-copy, remembered display name, Help/Info/About nav panel, host
+bars-per-row layout, host early-stop point, recording-mode metronome
+unlock, and 2 defect fixes (bf07f912, b16e2ab1). e2e diagnosis (T023/T024)
+found `host-controls.spec.ts`'s red state was environmental — new fixture
+catalog songs shifted `.first()`-based song selection — fixed by selecting
+by name. Test suites: server 297/297, client vitest 153/153, client CT
+217/218 (1 pre-existing unrelated flake in `recording-drift.ct.spec.ts`).
+Merged `worktree-agent-acb70fee47e94e45b` into `main` at `501f735` — 2
+conflicts in `.project/features/*.md` (stale-side register status,
+resolved by taking the worktree's newer `implemented` value; `packages/
+shared`'s dist was stale post-merge, causing a pre-commit typecheck
+failure for the new `hostBarsPerRow`/`earlyStopTick` `Session` fields —
+rebuilt via `pnpm --filter @sync-tab-scroll/shared run build` before
+retrying the commit). Worktree reaped. Flipped the remaining 2 of 4 bound
+features (`host-set-early-stop-point-for`, `remember-logged-in-display-nam`)
+to `implemented` in a follow-up commit (`654a26c`) — the worktree could
+only flip the other 2 itself, since these two feature-register files were
+still untracked in the primary checkout at delegation time and
+`worktree-align` only pulls committed commits (same class of gap as the
+prior entry below). Feature backlog now 0 backlogged · 0 planned · 1
+tasked (`sync-tabs-to-real-audio`, pre-existing, unrelated) · 31
+implemented.
+
+**Second process bug found and fixed this pass**: `ardd-state.sh stamp`
+only accepts one `<key> <value>` pair per invocation — the earlier
+`stamp <file> last_updated <date> diagram_status stale` calls (both
+plan runs this session) silently applied only `last_updated`, leaving
+`diagram_status` at its prior `current` value despite real content
+changes to `datamodel.md`/`infrastructure.md`/`ui.md`. Corrected now
+(`e98fad7`) — all three flip to `stale`; run `/ardd-diagram <name>` for
+each to regenerate.
+
+Filed one new feedback item: `feedback-e2e-fixture-song-selection-drift-60d7.md`
+F001 (Bug) — the same `.first()`-based song-selection assumption that
+caused `host-controls.spec.ts`'s failure likely affects ~6 other e2e specs
+(`host-transfer`, `multi-participant`, `single-participant`,
+`small-screen`, `song-part-modal`, `lyrics-only-view`), out of this task's
+scope. Open feedback count now 1.
+
+Also noted (not yet actioned): T020's early-stop visual de-emphasis is a
+fixed bottom-third gradient placeholder, not positioned at the actual stop
+tick — disclosed in a code comment; server-side enforcement is fully
+correct, only the visual cue is approximate.
+
+Zero in-flight worktrees now. `tasks-recording-drift-foundation-cc87.md`
+unchanged at 20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12 (in-progress). ArDD up to date at `9bc9b38` (beta).
+Recommended next step: target `feedback-e2e-fixture-song-selection-drift-60d7.md`
+with `/ardd-plan`, or run `/ardd-diagram` for the 3 stale diagrams — neither
+urgent.**)_
+
+_Updated: 2026-07-23 (**`tasks-host-start-modal-fix-8603.md` completed and
+merged.** Its delegated worktree fixed `server/src/handlers/ready-set.ts`'s
+`handleReadySet`: it now auto-resolves a pending Start Negotiation
+(`resolvePendingStart` + `runStartFlow`) when the last not-ready participant
+readies up, instead of leaving the host's confirmation modal open showing a
+stale count. Server test suite: 276/277 (the one failure,
+`client-static.test.ts`, is pre-existing and unrelated). Merged
+`worktree-agent-a1166fe513aad148f` into `main` at `24703d1` (clean, no
+conflicts) and reaped the worktree.
+
+**Process gap found and fixed this pass**: the artifact/feature/feedback
+edits `/ardd-plan` made earlier for both this fix and the prior
+`c75f` bundle were never committed to `main` — only their plan/tasks files
+were, via the pre-delegation auto-commit step. Both delegated worktrees
+therefore branched without seeing those doc updates (confirmed by
+inspecting the worktree's copy of `infrastructure.md` directly — it lacked
+the new "Auto-resolve on zero" section). Committed the missing artifact/
+feature/feedback changes to `main` now (`a16a541`) before merging. Impact
+assessed as low: the host-start-modal-fix tasks fully specified the code
+change inline (no artifact lookup needed for correctness) and its tests
+passed; the still-in-flight `tasks-c75f-1349.md` worktree's own tasks also
+embed concrete field/message names inline, and since it's instructed never
+to edit artifacts itself, merging it later won't conflict with `main`'s
+now-committed artifact docs. **Lesson for future `/ardd-plan` runs**:
+commit artifact/feature/feedback edits immediately after applying them,
+not just at the pre-delegation gate, so a worktree spawned any time after
+drafting sees current docs.
+
+No open feedback, no backlogged features. `tasks-c75f-1349.md` continuing
+in its worktree, now at 9/26. `tasks-recording-drift-foundation-cc87.md`
+unchanged at 20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12. ArDD up to date at `9bc9b38` (beta). Recommended next
+step: none actionable right now — wait for `tasks-c75f-1349.md` to
+complete and merge.**)_
+
 _Updated: 2026-07-23 (**Ran `/ardd-plan` scoped to the single open feedback
 file `feedback-host-start-modal-stale-count-bc66.md` (F001, now `[x]`
 incorporated, file flipped to `status: planned`). Updated `infrastructure.md`
@@ -118,31 +206,20 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 2 known defects (both cosmetic) — see DEFECTS.md, last checked 2026-07-23. Both are now fix tasks (T025/T026) in `tasks-c75f-1349.md`, not yet resolved in code.
+- 2 known defects (both cosmetic) — see DEFECTS.md, last checked 2026-07-23. Both were fixed in code by tasks-c75f-1349.md's T025/T026 (merged). DEFECTS.md itself is unchanged on disk — run `/ardd-defects` to confirm they're closed and refresh the count.
+
+## Feedback
+- 1 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
 
 ## Feature Backlog
-- 0 backlogged · 0 planned · 5 tasked · 27 implemented — see `.project/features/`.
-
-## Work Queue
-- `tasks-c75f-1349.md` — plan `plan-c75f-2026-07-23-5638.md`, features `help-info-about-panel-in-nav-b, host-mandated-bars-per-row-layout, host-set-early-stop-point-for, remember-logged-in-display-nam`:
-  - vs `tasks-host-start-modal-fix-8603.md`: shared-artifact (`infrastructure, ui`) — declared-tag overlap only; the two plans' actual work (recording/layout/stop-point features vs. Start Negotiation) doesn't touch the same code paths, but worth a skim before running both concurrently.
-  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
-  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
-  - vs in-flight worktree claim: claimed (same tasks file, ready in the primary checkout, in-progress 5/26 in worktree `agent-acb70fee47e94e45b`)
-- `tasks-host-start-modal-fix-8603.md` — plan `plan-host-start-modal-fix-2026-07-23-0a6a.md`, no bound features:
-  - vs `tasks-c75f-1349.md`: shared-artifact (`infrastructure, ui`) — see above.
-  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
-  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
-
-  (`independent` means no declared shared feature slug or `[artifacts: ...]` tag only — not conflict-free; `shared-artifact` is a declared-tag match, also not necessarily a real conflict; `merge_policy: auto` still governs at merge time either way.)
+- 0 backlogged · 0 planned · 1 tasked · 31 implemented — see `.project/features/`.
 
 ## In Flight
-- Worktree `.claude/worktrees/agent-acb70fee47e94e45b` (branch `worktree-agent-acb70fee47e94e45b`) — `tasks-c75f-1349.md` in-progress, 5/26.
 - `tasks-recording-drift-foundation-cc87.md` — in-progress, 20/22 (on main).
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement` to execute `tasks-host-start-modal-fix-8603.md` (4 tasks, 2 phases, ready).
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: run `/ardd-defects` to confirm the 2 fixed defects are closed and refresh DEFECTS.md, or `/ardd-diagram` for the 3 stale diagrams, or target `feedback-e2e-fixture-song-selection-drift-60d7.md` with `/ardd-plan` — none urgent.
 
 ---
 
