@@ -22,6 +22,13 @@ export interface TabRendererOptions {
   recordingPath?: string;
   /** Tick↔recording-time anchors applied via `Score.applyFlatSyncPoints()`; used only in backing-track mode. */
   syncPoints?: FlatSyncPoint[];
+  /**
+   * Effective bars-per-row pin at construction (host-mandated-bars-per-row-
+   * layout): `Session.hostBarsPerRow` when the host has pinned a layout,
+   * falling back to the participant's own personal preference otherwise;
+   * `null`/omitted means alphaTab's native auto-wrap.
+   */
+  barsPerRow?: number | null;
 }
 
 function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
@@ -58,7 +65,7 @@ function applyThemeColors(resources: at.RenderingResources, theme: Theme): void 
  * Light-mode values (brand.md) are a first pass, not production-validated
  * like dark mode's harvested values — expect a future visual QA pass.
  */
-export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints }: TabRendererOptions): at.AlphaTabApi {
+export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints, barsPerRow }: TabRendererOptions): at.AlphaTabApi {
   const recording = playerMode === at.PlayerMode.EnabledBackingTrack;
   const settings = new at.Settings();
   settings.core.engine = 'svg';
@@ -79,9 +86,11 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // pinch-zoom (see tab-scale.ts) — Page layout re-wraps bars to the
   // container, so this can't introduce horizontal overflow.
   settings.display.scale = tabScaleForViewportWidth(window.innerWidth);
-  // No settings.display.barsPerRow pin — auto-wrap by default (someday:
-  // host-mandated bars-per-row and participant-preferred horizontal layout
-  // are deferred future direction, not built now).
+  // Host-mandated bars-per-row layout (host-mandated-bars-per-row-layout):
+  // pins alphaTab's native display.barsPerRow when set (host pin or the
+  // participant's own personal preference, resolved by the caller);
+  // omitted/null leaves alphaTab's own auto-wrap behavior unchanged.
+  if (barsPerRow != null) settings.display.barsPerRow = barsPerRow;
 
   applyThemeColors(settings.display.resources, theme);
 

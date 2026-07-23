@@ -150,7 +150,7 @@ test('Session tab: the host sees lobby-cursor, Spotlight, and Count-in controls 
 
   await component.getByRole('button', { name: 'Session' }).click();
   await expect(component.getByText('Set lobby cursor')).toBeVisible();
-  await expect(component.getByText('Clear')).toBeVisible();
+  await expect(component.getByText('Clear', { exact: true })).toBeVisible();
   await expect(component.getByText(/Spotlight mode:/)).toBeVisible();
   await expect(component.getByText(/Count-in:/)).toBeVisible();
   await expect(component.getByText(/Metronome:/)).toHaveCount(0);

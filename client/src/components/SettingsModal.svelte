@@ -8,6 +8,7 @@
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
+  import { loadStoredBarsPerRow, persistBarsPerRow } from '../bars-per-row-preference';
   import { loadStoredTrackMute, persistTrackMute } from '../track-mute-preference';
   import {
     setEngineMetronome,
@@ -49,6 +50,11 @@
   $: themeMode = theme.endsWith('dark') ? 'dark' : 'light';
 
   let metronome = loadStoredMetronome();
+  let barsPerRow: number | null = loadStoredBarsPerRow();
+  function setBarsPerRow(n: number | null) {
+    barsPerRow = n;
+    persistBarsPerRow(n);
+  }
   let lyricsTickerFontSize: LyricsTickerFontSize = loadStoredLyricsTickerFontSize();
   let measureMarkers = loadStoredMeasureMarkers();
   let lyricsTickerPosition: LyricsTickerPosition = loadStoredLyricsTickerPosition();
@@ -126,6 +132,23 @@
 
   function toggleSpotlightMode() {
     wsClient?.send({ type: 'spotlight-mode-set', enabled: !session?.spotlightMode });
+  }
+
+  // Host-mandated bars-per-row layout (host-mandated-bars-per-row-layout):
+  // same host-only WS-set pattern as spotlightMode/countInEnabled above.
+  const BARS_PER_ROW_OPTIONS = [3, 4, 5, 6];
+  function setHostBarsPerRow(barsPerRow: number | null) {
+    wsClient?.send({ type: 'bars-per-row-set', barsPerRow });
+  }
+
+  // Host early-stop point (host-set-early-stop-point-for): same host-only
+  // WS-set pattern, mirroring lobby cursor's debounced-input/set/clear shape.
+  let earlyStopInput = 0;
+  function setEarlyStop() {
+    wsClient?.send({ type: 'early-stop-set', tickPosition: earlyStopInput });
+  }
+  function clearEarlyStop() {
+    wsClient?.send({ type: 'early-stop-set', tickPosition: null });
   }
 
   // Personal, this-device-only (ui.md Preferences tab): persists like the
@@ -314,6 +337,27 @@
           Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.
         </p>
 
+        <span class="section-label">Layout</span>
+        <div class="control-row">
+          <Button variant={session.hostBarsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setHostBarsPerRow(null)} />
+          {#each BARS_PER_ROW_OPTIONS as n (n)}
+            <Button variant={session.hostBarsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setHostBarsPerRow(n)} />
+          {/each}
+        </div>
+        <p class="hint">Pins every participant's tab layout to a fixed number of bars per row, overriding each participant's own preference. "Auto" lets alphaTab wrap naturally.</p>
+
+        <span class="section-label">Early stop point</span>
+        {#if session.earlyStopTick !== null}
+          <p class="hint">Playback will auto-stop at tick {session.earlyStopTick}.</p>
+        {:else}
+          <p class="hint">No early-stop point set.</p>
+        {/if}
+        <div class="control-row">
+          <input type="number" bind:value={earlyStopInput} class="early-stop-input" />
+          <Button variant="ghost" label="Set early-stop point" onclick={setEarlyStop} />
+          <Button variant="ghost" label="Clear early-stop point" onclick={clearEarlyStop} />
+        </div>
+
         <span class="section-label">Playback audio</span>
         <div class="control-row">
           <Button
@@ -361,6 +405,15 @@
       <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
       <Button variant="ghost" label={themeMode === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleThemeMode} />
     </div>
+
+    <span class="section-label">Bars per row</span>
+    <div class="control-row">
+      <Button variant={barsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setBarsPerRow(null)} />
+      {#each BARS_PER_ROW_OPTIONS as n (n)}
+        <Button variant={barsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setBarsPerRow(n)} />
+      {/each}
+    </div>
+    <p class="hint">Your personal layout preference — overridden while the host has pinned a layout (Session tab).</p>
 
     <span class="section-label">Playback audio</span>
     <div class="control-row">
@@ -489,7 +542,8 @@
     align-items: center;
   }
 
-  .cursor-input {
+  .cursor-input,
+  .early-stop-input {
     font-family: var(--font-mono);
     background: var(--surface);
     border: 1px solid var(--border);

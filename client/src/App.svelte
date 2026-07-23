@@ -3,6 +3,7 @@
   import { clientStore } from './store';
   import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged, beatWidgetState } from './playback-engine';
   import { metronomeStore } from './metronome-preference';
+  import { loadStoredBarsPerRow } from './bars-per-row-preference';
   import BeatWidget from './components/BeatWidget.svelte';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
@@ -86,7 +87,12 @@
     if (song) {
       const part = session!.availableParts.find((p) => p.trackIndex === participant!.selectedPart);
       const trackIndex = isLyricsPart ? (song.lyricsTrackIndex ?? 0) : (part?.trackIndex ?? 0);
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource);
+      // Host-mandated bars-per-row layout (host-mandated-bars-per-row-layout):
+      // the host's pin shadows this participant's own personal preference,
+      // same override-shadows-preference pattern as the metronome/recording
+      // carve-out.
+      const effectiveBarsPerRow = session!.hostBarsPerRow ?? loadStoredBarsPerRow();
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource, effectiveBarsPerRow);
     }
   }
 
@@ -231,6 +237,13 @@
 
 <div class="engine-containers" class:visible={hasPart && !isLyricsPart} class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}>
   <div bind:this={tabContainer} class="tab-container"></div>
+  {#if session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
+    <!-- Host early-stop point (host-set-early-stop-point-for): a visual cue,
+         for every participant, that tab content past the host-set stop tick
+         is de-emphasized — the exact stop point is enforced server-side
+         (playback-tick-report.ts), this is purely visual. -->
+    <div class="early-stop-dimmed" aria-hidden="true"></div>
+  {/if}
   <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
@@ -416,6 +429,21 @@
   .tab-container {
     background: var(--canvas-bg, #0a0a0a);
     min-height: 400px;
+  }
+
+  /* Host early-stop point (host-set-early-stop-point-for): a translucent
+     scrim over the lower portion of the tab view, indicating content past
+     the host-set stop tick is de-emphasized. Purely visual — the actual
+     enforcement is server-side (playback-tick-report.ts). */
+  .early-stop-dimmed {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 33%;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--bg, #0a0a0a) 90%);
+    opacity: 0.85;
   }
 
   .bar-title {
