@@ -1,6 +1,16 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 1.6.1 → 1.6.2
+Amended: Quality Standards — added a requirement that any report
+describing test results as "green"/"passing" must name which tiers
+actually ran and flag any known-red tier, so the phrase can't silently
+overstate coverage. Driver: feedback-e2e-suite-red-on-main-7b3f F002
+(the e2e suite was red on `main` for an unknown period while prior
+sessions still reported "tests pass"). Clarification/addition to Quality
+Standards, not a Core Principle add/redefine (PATCH).
+
+Previous report (1.6.0 → 1.6.1):
 Version change: 1.6.0 → 1.6.1
 Amended: Development Workflow — wording fixes only (PATCH): the stale
 `/ardd-analyze` skill name updated to its current name `/ardd-status`
@@ -100,7 +110,7 @@ yet; this records the intended design ahead of building it.
 ---
 name: constitution
 status: stable
-last_updated: 2026-07-19
+last_updated: 2026-07-23
 next_step_prompt: auto
 delegation: eager
 merge_policy: auto
@@ -310,6 +320,10 @@ source-of-state requirement.
 
 ## Quality Standards
 
+- A report of test-suite results that describes them as "green"/"passing"
+  must state which tiers actually ran and name any tier that is currently
+  known-red — a claim of overall success while a whole tier is silently
+  excluded overstates coverage (feedback-e2e-suite-red-on-main-7b3f F002).
 - A `package.json`'s declared `name` and `scripts` must match the actual
   package and files on disk. A stale script entry is treated as a bug, not
   background noise.
@@ -340,4 +354,4 @@ repository. Amendments require:
    clarifications or wording fixes.
 4. `last_updated` date updated in frontmatter.
 
-**Version**: 1.6.1 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-19
+**Version**: 1.6.2 | **Ratified**: 2026-06-30 | **Last Amended**: 2026-07-23

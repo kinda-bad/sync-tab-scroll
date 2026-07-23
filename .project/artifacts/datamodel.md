@@ -1,7 +1,7 @@
 ---
 name: datamodel
 status: stable
-last_updated: 2026-07-20
+last_updated: 2026-07-23
 diagram_type: erDiagram
 render_section: Datamodel
 diagram_status: current
@@ -87,6 +87,8 @@ no key — so existing local/personal deployments need no migration.
 | spotlightMode | boolean | Host-only toggle (default false), same pattern as `countInEnabled`. Gates `lobbyCursorTick`'s force-follow effect. Resets to false when playback starts, same as `lobbyCursorTick` resetting to null |
 | pendingHostRequest | string \| null | `Participant.id` of a non-host participant who has asked to become host; null when no request is outstanding. Set by a `request-host` message; cleared either by the current host declining it (`host-request-decline`), by the host granting *any* host transfer that resolves it (accepting this request is not a separate action from `host-delegate` targeting the same participant — see infrastructure.md's Host Transfer), or by the requester disconnecting before the host responds. At most one outstanding request at a time — a second `request-host` while one is already pending is rejected as an error, not queued |
 | unlockedCatalogueIds | string[] | Private `Catalogue.id` values unlocked for this session (public catalogues need no entry). Starts empty. It is the union of two conceptually distinct slices: (a) a **key-entered slice** — catalogues a host unlocked by typing the activation key this session (`catalogue-unlock`, infrastructure.md); this is a session fact, sticky, and survives host succession, exactly as before accounts existed; and (b) a **membership-derived slice** — when the current host is a logged-in `User`, the private catalogues in the host's `CatalogueMembership` set. The membership-derived slice is **re-derived whenever `hostId` changes** (host succession, infrastructure.md), not left append-only: on host change it is recomputed from the *new* host's memberships, so a catalogue unlocked only by a departed host's membership re-locks if the new host isn't a member (per the accounts design's host-only auto-unlock, §13 S4). Still per-session for anonymous hosts (no persistence) |
+| hostBarsPerRow | number \| null | `host-mandated-bars-per-row-layout`. Host-only pin overriding every participant's own bars-per-row layout preference (`Participant`'s client-local preference isn't modeled server-side — see ui.md); `null` (default) means no pin, each participant's own preference applies. Host-only toggle, same pattern as `countInEnabled`/`spotlightMode`. Resets to `null` when the selected song changes, same lifecycle as `lobbyCursorTick`/`spotlightMode` |
+| earlyStopTick | number \| null | `host-set-early-stop-point-for`. MIDI tick position (same unit as `PlaybackState.tickPosition`) past which the tab is visually de-emphasized for every participant and at which playback automatically stops, same as a manual host Stop; `null` (default) means no early stop point set. Host-only toggle, same pattern as `lobbyCursorTick`. Resets to `null` on song change |
 
 ### Participant
 
@@ -94,7 +96,7 @@ no key — so existing local/personal deployments need no migration.
 |-------|------|-------|
 | id | string | |
 | userId | string \| null | Optional reference to a `User.id` (account layer, below). Null for an **anonymous** participant — the default; anonymous and logged-in participants coexist in one session. Set when a participant joins with a valid `AuthSession` cookie. Seeds host-only catalogue auto-unlock from the host's `CatalogueMembership` set (see `unlockedCatalogueIds`). **As of Phase 2 (in-app authoring), also broadcast to peers** in `session-state` — peer-visible identity is what makes an ownership/invite UI (e.g. "invite this participant as a co-owner") meaningful; Phase 1 kept it connection-registry-only since nothing needed it broadcast yet |
-| displayName | string | |
+| displayName | string | **Validated server-side** (feedback-input-sanitization-hardening-7a9a F001; infrastructure.md): control characters and HTML/script-like content are rejected/stripped at the point `session-create`/`session-join` are handled; Unicode and emoji stay allowed (a real display-name use case); capped at a fixed max length. Same validation function applies to the activation-key input (below) at the point `catalogue-unlock` is handled |
 | role | 'host' \| 'member' | |
 | connectionStatus | 'connected' \| 'disconnected' | Survives brief drops for reconnect |
 | selectedPart | number \| 'lyrics' \| null | A `CatalogPart.trackIndex` for an instrument part, or the literal `'lyrics'` for the tab-less lyrics part (ui.md) — renders no staff, but still runs a headless alphaTab instance for the shared clock (infrastructure.md), with this participant's own personal metronome preference (`client/src/metronome-preference.ts`) applied locally to that instance — not a session-level setting. Not itself a `CatalogPart` entry — see CatalogSong's `lyricsLrc` |

@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-20
+last_updated: 2026-07-23
 diagram_type: graph TD
 render_section: UI
 diagram_status: current
@@ -39,6 +39,30 @@ time. Both forms have a small "Back" control returning to the chooser.
 Persists session code + display name (e.g. to localStorage) so a refresh
 can silently rejoin, bypassing the chooser entirely when a stored session
 exists.
+
+**Remembered display name (`remember-logged-in-display-nam`).** When a
+signed-in `User` (Account & Sign-In, below) has no locally-persisted
+display name for this browser yet (a first visit, or after clearing
+storage), both the create and join forms' "Your name" input pre-fills
+from the account's provider-profile `displayName` (datamodel.md) instead
+of starting blank — but the field stays a normal editable text input, not
+read-only: the user can still retype it before submitting, and whatever
+they submit is what's sent (Session Creation/Join messages,
+infrastructure.md), same as today. Once a name has been typed and a
+session created/joined, the existing localStorage persistence (above)
+takes over as usual — the account-derived pre-fill only ever applies to
+an otherwise-empty field, never overwrites a value the user already
+typed or a previously-persisted local name. Signed-out users see the
+same blank-by-default field as today.
+
+**Input hardening (feedback-input-sanitization-hardening-7a9a F001).**
+The name typed here (and the activation-key input, Lobby View below) is
+free text sent to the server as-is; validation/sanitization is enforced
+server-side (infrastructure.md, datamodel.md), not by this form — the
+client applies no special client-side stripping beyond a practical
+length cap reflecting the server-enforced one, so a user sees their
+input rejected/truncated consistently rather than accepted here and
+rejected later.
 
 ## Account & Sign-In (Optional)
 
@@ -163,6 +187,19 @@ once a song is picked, its name/artist render alongside the join code,
 not in place of it, so participants can still read off the code to invite
 others after song selection.
 
+**Click-to-copy join code (feedback-join-code-click-to-copy-4971 F001).**
+The join-code chip is itself a clickable control (not just selectable
+text): clicking it copies `Session.code` to the clipboard
+(`navigator.clipboard.writeText`) and shows a brief inline confirmation
+(e.g. the chip's label swaps to "Copied!" for a moment, reverting on its
+own — no toast, since this is a transient success not an error). Same
+icon-only-control accessible-name rule applies if rendered with a copy
+icon (Bar controls, below) — the accessible name states the action
+("Copy join code") not just the code's value. Falls back to no-op (chip
+still displays the code, still selectable/copyable by hand) if the
+Clipboard API is unavailable (e.g. non-secure context) — never an error
+state for something this low-stakes.
+
 Song and part selection happens in a modal, not inline in the Lobby body
 — opened via a "Song & part" control in the persistent nav bar, and
 opened **automatically once** whenever the current participant has no song
@@ -233,6 +270,28 @@ which is only present when the song's lyrics came from the source GP file
 directly — a song whose `.lrc` came from the lrclib.net fallback has the
 Lyrics part selectable but no in-tab overlay available on any instrument
 part (pipeline.md).
+
+**Help/Info/About panel (`help-info-about-panel-in-nav-b`).** The
+persistent nav bar also carries a `?` (help) icon control, alongside
+"Song & part" and the settings cog, present in every view including
+Landing (the account menu's sibling, not gated on a session existing) —
+opening a plain freely-dismissible modal (same idiom as the settings
+modal) with three tabs:
+
+- **About** — a shoutout and link to `@coderline/alphatab` as the
+  playback engine, a shoutout and link to Songsterr as this app's
+  inspiration, a link to the GitHub source
+  (`https://github.com/kinda-bad/sync-tab-scroll`), and a sponsor link
+  (`https://github.com/sponsors/moui72`).
+- **Info** — static prose overview of what the app is for (synchronized
+  tab-scrolling for remote musicians, constitution.md's Project Scope).
+- **Help** — static prose walking through how to use the app (create/join
+  a session, pick a song/part, ready up, playback view controls).
+
+All three tabs are static content, no server round-trip — content
+authored at implementation time, not modeled data. The tab strip follows
+the same equal-width segmented-row idiom the settings modal's four tabs
+use (above).
 
 The persistent nav bar also always carries a "Leave session" control
 (present in both Lobby and Playback, alongside "Song & part" and the
@@ -380,6 +439,29 @@ regardless of whether playback has started:
     original host-controlled `Session.metronomeEnabled` design: each
     participant's own alphaTab instance generates the clicks locally, so
     nobody else is affected and the server has no reason to know.
+  - **Layout** (`host-mandated-bars-per-row-layout`): a host-only
+    "Bars per row" control — an "Auto" default plus a small set of fixed
+    counts (implementation-time judgment on the exact steps) — setting
+    `Session.hostBarsPerRow` (datamodel.md; `null` = auto/unset). When
+    set, it pins `settings.display.barsPerRow` (infrastructure.md's Tab
+    Rendering) for every participant's alphaTab instance, overriding each
+    participant's own layout-density preference (below) while active — a
+    session-wide mandate, not a suggestion, same host-controlled-setting
+    shape as Count-in/Spotlight/Audio source. A host-only hint explains
+    the override ("Pins everyone's row density; participants' own layout
+    choice is ignored while this is set."). Clearing it (back to "Auto")
+    restores each participant's independent preference immediately.
+  - **Early stop point** (`host-set-early-stop-point-for`): a host-only
+    control to set an early stopping tick on the current tab — mirroring
+    the Lobby cursor's "tick input, Set, Clear" shape above — writing
+    `Session.earlyStopTick` (datamodel.md; `null` = no stop point set).
+    While set, any tab content past that point renders visually
+    de-emphasized (dimmed) for every participant, and playback
+    automatically stops there for everyone the same way a manual host
+    Stop does (infrastructure.md), rather than continuing to the song's
+    actual end. Clearing it restores normal full-song playback and
+    removes the de-emphasis. Resets to `null` on song change, same
+    lifecycle as the lobby cursor/Spotlight mode.
 - **Preferences**: personal, this-device-only settings, none of which
   touch the server:
   - two orthogonal theme controls (`client/src/theme.ts`), per
@@ -417,6 +499,16 @@ regardless of whether playback has started:
     measure number at each measure boundary, interleaved into the
     syllable strip. Has no effect on the tab-less Lyrics part's full
     lyric sheet.
+  - a personal "Bars per row" control (`host-mandated-bars-per-row-layout`),
+    visible to **every** participant (not host-gated): the same "Auto" +
+    fixed-count choices as the host's Layout control above, persisted
+    client-side (`client/src/bars-per-row-preference.ts`, default
+    **Auto**), applied to this participant's own alphaTab instance only.
+    **Overridden while `Session.hostBarsPerRow` is set** (Session tab,
+    above) — a hint explains this ("The host has pinned everyone's row
+    density; your own choice resumes once they clear it."); the
+    preference itself is never cleared by the override, only shadowed,
+    so it resumes the moment the host's pin is lifted.
 - **Tracks**: a dedicated 4th tab for personal per-part mute controls,
   visible to **every** participant (not host-gated) — moved out of
   Preferences into its own tab so each part gets its own row rather than
@@ -641,10 +733,25 @@ participants:
 
 - **Per-part mute/solo** and **"hear only my part"** — disabled, with an
   explanatory reason rather than a silently inert control.
-- **The personal metronome preference** — disabled, same treatment.
 - **Count-in** — ignored in recording mode; the recording's own intro
   *is* the count-in. The host's count-in toggle stays meaningful for
   when the session returns to the synth source.
+
+**Metronome preference stays interactive in recording mode**
+(feedback-recording-mode-metronome-lock-reconsidered-c415 F001 —
+reconsideration of the prior "disabled, same treatment" stance above).
+The personal Metronome toggle (Preferences, above) is **not** disabled
+during recording playback: the beat widget (Count-In & Metronome Beat
+Widget, below) has a visual component independent of audio, so a
+participant can still turn the *visual* metronome on/off regardless of
+audio source. Whether the toggle also produces an audible click layered
+over the recording is an **open implementation question** — alphaTab
+cannot mix synthesized audio with a backing track (upstream #1961,
+infrastructure.md), which is exactly the constraint the original disable
+was built around, so audible click-over-recording may not be achievable
+at all; if it isn't, the toggle drives the beat widget only while in
+recording mode (audio stays silent for that toggle specifically, distinct
+from the toggle being disabled) — implementation confirms which.
 
 The source control is host-only and lives with the other host playback
 controls, appearing only for a song that is actually recording-capable.
@@ -689,7 +796,12 @@ infrastructure.md Start Negotiation):
   and their modal is **auto-dismissed** the moment the host answers
   either way (`host-start-resolved`). Neither modal blocks the Bar's
   other controls; both follow the existing modal idiom (dismissible,
-  Esc closes = no action).
+  Esc closes = no action). If every not-ready participant readies up
+  while the host's modal is still open, the negotiation auto-resolves
+  (infrastructure.md's Start Negotiation) and playback starts
+  immediately — the host's modal closes on its own as part of that
+  transition rather than continuing to show a stale "0 participants are
+  not yet ready" prompt (feedback-host-start-modal-stale-count-bc66 F001).
 
 ### Count-In & Metronome Beat Widget
 

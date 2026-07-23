@@ -1,9 +1,163 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-21 (**Phases 1–4 + the T019-surfaced production-wiring
+_Updated: 2026-07-23 (**Ran `/ardd-plan` scoped to the single open feedback
+file `feedback-host-start-modal-stale-count-bc66.md` (F001, now `[x]`
+incorporated, file flipped to `status: planned`). Updated `infrastructure.md`
+(Start Negotiation: auto-resolve a pending start when a `ready-set` brings
+the not-ready count to zero) and `ui.md` (host's confirmation modal closes
+as part of that auto-resolution instead of showing a stale "0 not ready"
+prompt). Wrote and approved `plan-host-start-modal-fix-2026-07-23-0a6a.md`
+(no bound features) and generated `tasks-host-start-modal-fix-8603.md` (4
+tasks, 2 phases, `status: ready`) — inline, not yet delegated. **Note**:
+`parallel-matrix.sh` flags `tasks-host-start-modal-fix-8603.md` as
+`shared-artifact` (infrastructure, ui) against both `tasks-c75f-1349.md`
+(the in-flight worktree's bundle, now at 5/26) and that worktree's own
+copy — same declared-artifact-tag overlap, not necessarily a real code
+conflict (the c75f bundle doesn't touch Start Negotiation), but worth a
+quick skim before running both concurrently. Open feedback count now 0.
+Feature backlog unchanged: 0 backlogged · 0 planned · 5 tasked · 27
+implemented. ArDD up to date at `9bc9b38` (beta).
+`tasks-recording-drift-foundation-cc87.md` unchanged at 20/22 (in-progress,
+on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at 11/12
+(in-progress). Recommended next step: `/ardd-implement` to execute
+`tasks-host-start-modal-fix-8603.md`.**)_
+
+_Updated: 2026-07-23 (**Filed one new feedback item via `/ardd-feedback`:
+`feedback-host-start-modal-stale-count-bc66.md` F001 (Bug, `[artifacts: ui,
+infrastructure]`) — the host's "N participants are not yet ready, start
+anyway?" Start Negotiation modal goes stale if every remaining participant
+readies up while it's still open: it keeps showing the modal (reportedly
+"0 participants are not ready yet") instead of recognizing the not-ready
+count reached 0 and starting playback directly. Open feedback count now 1
+(up from 0). No other state changed this pass — `/ardd-plan`'s prior
+`tasks-c75f-1349.md` delegation (26 tasks, 9 phases) is now running in a
+background worktree (`.claude/worktrees/agent-acb70fee47e94e45b`, branch
+`worktree-agent-acb70fee47e94e45b`), still at 0/26 as of this check; the
+primary-checkout tasks file itself stays `ready` until that worktree's
+branch merges. `tasks-recording-drift-foundation-cc87.md` unchanged at
+20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged
+at 11/12 (in-progress). ArDD up to date at `9bc9b38` (beta). Recommended
+next step: target `feedback-host-start-modal-stale-count-bc66.md` with the
+next `/ardd-plan` once the in-flight `tasks-c75f-1349.md` work lands — not
+urgent enough to interrupt the running delegation for.**)_
+
+_Updated: 2026-07-23 (**Ran `/ardd-plan` against a user-selected bundle: all
+4 backlogged features (`help-info-about-panel-in-nav-b`,
+`host-mandated-bars-per-row-layout`, `host-set-early-stop-point-for`,
+`remember-logged-in-display-nam`), all 4 open feedback files (including
+accepting the reconsidered metronome-lock decision — recording mode no
+longer force-disables the personal Metronome toggle; audible click-layering
+over a recording stays an open question pending alphaTab upstream #1961),
+and both of DEFECTS.md's 2 known cosmetic defects (bf07f912, b16e2ab1) as
+fix tasks. Updated `ui.md`, `datamodel.md`, `infrastructure.md` for the four
+features/feedback items; bumped `constitution.md` 1.6.1 → 1.6.2 (PATCH) for
+a new Quality Standards bullet from feedback F002 (test-tier "green" must
+name which tiers ran). Wrote and approved
+`plan-c75f-2026-07-23-5638.md` and generated `tasks-c75f-1349.md` (26 tasks,
+9 phases, `status: ready`). All 4 targeted features flipped
+`backlogged → planned → tasked`; all 4 feedback files flipped to
+`status: planned`, bound to this plan. Feature backlog now 0 backlogged · 0
+planned · 5 tasked · 27 implemented. Open feedback count now 0. DEFECTS.md
+itself is unchanged on disk (still says 2 known defects, last checked
+2026-07-23) — both are now ready-file fix tasks (T025/T026) but not yet
+resolved in code; the next `/ardd-defects` run after this tasks file
+completes should confirm they're closed. Zero cross-artifact conflicts,
+zero orphaned completion flips, zero in-flight worktrees/draft PRs, ArDD up
+to date at `9bc9b38` (beta). `tasks-recording-drift-foundation-cc87.md`
+unchanged at 20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12 (in-progress). New ready tasks file
+`tasks-c75f-1349.md` (0/26) is independent of both in-progress files (no
+shared feature slug or `[artifacts: ...]` tag declared against either).
+Recommended next step: `/ardd-implement` to execute `tasks-c75f-1349.md`.**)_
+
+_Updated: 2026-07-23 (**Two feedback files landed since the prior entry below:
+`feedback-recording-mode-metronome-lock-reconsidered-c415.md` (F001,
+Reconsidered — reopens ui.md's recording-mode decision to fully disable the
+personal metronome toggle; proposes still allowing the toggle, possibly with
+audible click layered over the recording pending confirmation it's
+achievable given upstream alphaTab #1961) and
+`feedback-input-sanitization-hardening-7a9a.md` (F001, Bug — displayName and
+catalogue activation key inputs unsanitized against script-injection/
+rendering-breaking content). Open feedback count now 4 (adds to the
+pre-existing `feedback-e2e-suite-red-on-main-7b3f.md` and
+`feedback-join-code-click-to-copy-4971.md`). Feature backlog grew to 4
+backlogged (new: `remember-logged-in-display-nam` — pre-fill a logged-in
+user's display name from their account at join/create, staying editable) ·
+0 planned · 1 tasked · 27 implemented. Ran `/ardd-defects` per this pass's
+auto next-step: full survey of all six artifacts against the codebase,
+priority depth on the recording-mode/drift-correction area given T021's
+recent live verification — found 2 cosmetic-only defects (a stale line
+citation in infrastructure.md for `client/src/tab-renderer.ts`'s
+`scriptFile` assignment, now line 71; ui.md's `mute-all-parts-button`
+identifier is a code-comment tag only, not a queryable DOM id/testid — see
+`DEFECTS.md`). No documented-but-never-built capabilities found. Zero
+cross-artifact conflicts, zero orphaned completion flips, zero in-flight
+worktrees/draft PRs, zero ready tasks files, ArDD up to date at `9bc9b38`
+(beta). `tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at
+11/12 (in-progress). Recommended next step: target one of the 4 open
+feedback files or 4 backlogged features with `/ardd-plan` — not a single
+forced slug, so this pass stops as plain-text guidance.**)_
+
+## Artifacts Found
+- brand.md — stable ✅
+- constitution.md — stable ✅ (v1.6.2)
+- datamodel.md — stable ✅
+- infrastructure.md — stable ✅
+- pipeline.md — stable ✅
+- ui.md — stable ✅
+
+## Within-Artifact Issues
+### infrastructure.md
+- [OPEN] Synth path's own output latency (alphaTab 1.8.3 doesn't expose it) — needs an external reference or an explicit decision to proceed without it. Pre-existing.
+- [OPEN] Can alphaTab layer an audible synth metronome click over a playing recording, or is upstream #1961 an absolute blocker limiting the metronome-lock reconsideration to the visual beat widget only? (feedback-recording-mode-metronome-lock-reconsidered-c415 F001, now tracked as an Open Question in plan-c75f-2026-07-23-5638.md)
+
+## Diagrams
+- datamodel.md — stale ⚠️ (run /ardd-diagram datamodel)
+- infrastructure.md — stale ⚠️ (run /ardd-diagram infrastructure)
+- ui.md — stale ⚠️ (run /ardd-diagram ui)
+
+## Code-vs-Artifact Defects
+- 2 known defects (both cosmetic) — see DEFECTS.md, last checked 2026-07-23. Both are now fix tasks (T025/T026) in `tasks-c75f-1349.md`, not yet resolved in code.
+
+## Feature Backlog
+- 0 backlogged · 0 planned · 5 tasked · 27 implemented — see `.project/features/`.
+
+## Work Queue
+- `tasks-c75f-1349.md` — plan `plan-c75f-2026-07-23-5638.md`, features `help-info-about-panel-in-nav-b, host-mandated-bars-per-row-layout, host-set-early-stop-point-for, remember-logged-in-display-nam`:
+  - vs `tasks-host-start-modal-fix-8603.md`: shared-artifact (`infrastructure, ui`) — declared-tag overlap only; the two plans' actual work (recording/layout/stop-point features vs. Start Negotiation) doesn't touch the same code paths, but worth a skim before running both concurrently.
+  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
+  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
+  - vs in-flight worktree claim: claimed (same tasks file, ready in the primary checkout, in-progress 5/26 in worktree `agent-acb70fee47e94e45b`)
+- `tasks-host-start-modal-fix-8603.md` — plan `plan-host-start-modal-fix-2026-07-23-0a6a.md`, no bound features:
+  - vs `tasks-c75f-1349.md`: shared-artifact (`infrastructure, ui`) — see above.
+  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
+  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
+
+  (`independent` means no declared shared feature slug or `[artifacts: ...]` tag only — not conflict-free; `shared-artifact` is a declared-tag match, also not necessarily a real conflict; `merge_policy: auto` still governs at merge time either way.)
+
+## In Flight
+- Worktree `.claude/worktrees/agent-acb70fee47e94e45b` (branch `worktree-agent-acb70fee47e94e45b`) — `tasks-c75f-1349.md` in-progress, 5/26.
+- `tasks-recording-drift-foundation-cc87.md` — in-progress, 20/22 (on main).
+- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
+
+## Summary
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement` to execute `tasks-host-start-modal-fix-8603.md` (4 tasks, 2 phases, ready).
+
+---
+
+_Updated: 2026-07-23 (**Post-/ardd-update status check: install confirmed
+up to date at `9bc9b38` (beta) — the "ArDD update available" line is
+clear. No new register/schema issues surfaced. All 8 migrations already
+applied. Zero cross-artifact conflicts, zero orphaned completion flips,
+zero in-flight worktrees. `tasks-recording-drift-foundation-cc87.md`
+remains the only in-progress work (19/22), T021 (manual) still the
+recommended next step.**)_
+
+_Updated: 2026-07-23 (**Phases 1–4 + the T019-surfaced production-wiring
 fix landed (19/22); recording mode is code-complete but UNVERIFIED live —
 T021 (manual) is the remaining gate. New feature backlogged this pass:
-`help-info-about-panel-in-nav-b`. ArDD has an update available (v1.0.4).**)_
+`host-set-early-stop-point-for`. ArDD update available (beta v1.1.1-beta.3).**)_
 
 **✅ The Phase 5 wiring defect is FIXED and merged (T022, `1e7a0d6`).** The
 production `correctDrift` caller (`playback-engine.ts`) now passes
@@ -120,8 +274,6 @@ stress the disclosed caveats above. Continue with
 - infrastructure.md — current ✅
 - ui.md — current ✅
 
-(All three regenerated 2026-07-20, committed `e8006de`.)
-
 ## Code-vs-Artifact Defects
 
 - 0 known defects — see DEFECTS.md, last checked 2026-07-19. Run
@@ -134,17 +286,19 @@ stress the disclosed caveats above. Continue with
 
 ## Feature Backlog
 
-- 2 backlogged · 0 planned · 1 tasked · 27 implemented — see
-  `.project/features/`. Newly backlogged this pass: `help-info-about-panel-in-nav-b`
-  (About/Info/Help nav panel). Also backlogged:
+- 3 backlogged · 0 planned · 1 tasked · 27 implemented — see
+  `.project/features/`. Newly backlogged this pass:
+  `host-set-early-stop-point-for` (host sets an early stop point; playback
+  auto-stops there for everyone; tab past that point is de-emphasized).
+  Also backlogged: `help-info-about-panel-in-nav-b`,
   `host-mandated-bars-per-row-layout`. The tasked slug is
   `sync-tabs-to-real-audio` (Phase 1 of 5 landed; stays `tasked` until the
   tasks file completes). Target a backlogged slug with `/ardd-plan <slug>`.
 
 ## Housekeeping
 
-- **ArDD update available** — installed `0fc43f6`, latest release `v1.0.4`
-  (beta channel). Run `/ardd-update`.
+- **ArDD update available** — installed `0fc43f6`, source at beta release
+  `v1.1.1-beta.3` (beta channel). Run `/ardd-update`.
 - `tasks-lobby-cursor-modes-0bea.md` remains **in-progress (11/12)** since
   2026-07-02 — only T010's manual two-browser verification is left
   (scenario 3 auto-covered 2026-07-20). Reconcile to done/abandoned to
@@ -154,12 +308,12 @@ stress the disclosed caveats above. Continue with
 
 Phases 1–4 + the T019-surfaced wiring fix landed (19/22); synth path
 unchanged and safe on `main`. Recording mode is now **code-complete and
-correctly wired**, but **unverified in a real browser**. `help-info-about-panel-in-nav-b`
-was newly backlogged this pass but does not change the active priority.
-**Recommended next step: T021 — a manual live two-participant recording
-session with a real `recording.mp3` + Media Sync Editor sync points**
-(headless automation can't; T019's e2e is env-blocked). The feature stays
-`tasked`/`in-progress` until that live verification passes; do NOT flip it
-to `implemented` on the strength of the CT/unit suites alone. T020's
-synth-regression can also be re-confirmed once a clean e2e environment is
-available.
+correctly wired**, but **unverified in a real browser**.
+`host-set-early-stop-point-for` was newly backlogged this pass but does not
+change the active priority. **Recommended next step: T021 — a manual live
+two-participant recording session with a real `recording.mp3` + Media Sync
+Editor sync points** (headless automation can't; T019's e2e is
+env-blocked). The feature stays `tasked`/`in-progress` until that live
+verification passes; do NOT flip it to `implemented` on the strength of the
+CT/unit suites alone. T020's synth-regression can also be re-confirmed once
+a clean e2e environment is available.

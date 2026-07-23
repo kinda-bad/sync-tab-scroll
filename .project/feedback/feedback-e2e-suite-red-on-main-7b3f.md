@@ -1,5 +1,5 @@
 ---
-status: open
+status: planned
 created: 2026-07-20
 ---
 
@@ -14,7 +14,7 @@ conversion.
 
 ## Bugs
 
-- [ ] F001 **The Playwright e2e suite is red on `main`, and has been for
+- [x] F001 **The Playwright e2e suite is red on `main`, and has been for
   an unknown period.** `client/e2e/host-controls.spec.ts` — the
   Start/Pause/Resume/Stop-reflected-to-a-member spec — fails identically
   on baseline `cc23caa` and on the threshold-conversion branch. The
@@ -46,7 +46,7 @@ conversion.
 
 ## Reconsidered
 
-- [ ] F002 **A "full suite green" claim should not be reportable while a
+- [x] F002 **A "full suite green" claim should not be reportable while a
   tier of the suite is known-red.** This session repeatedly treated
   "tests pass" as verification evidence — including, at the user's
   decision, as the basis for closing

@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-20
+last_updated: 2026-07-23
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: current
@@ -287,6 +287,14 @@ and runs a confirmation exchange:
   start flow) or a cancel (nothing starts). Either way the server sends
   `host-start-resolved { started }` to the pending participants, which
   auto-dismisses their modal.
+- **Auto-resolve on zero (feedback-host-start-modal-stale-count-bc66 F001)**:
+  if a `ready-set` brings the pending negotiation's not-ready count to `0`
+  before the host answers, the server auto-resolves the negotiation as a
+  start-anyway confirm — proceeding with the normal start flow immediately,
+  the same as an explicit host confirm — rather than leaving the host's
+  modal open showing a stale "0 participants are not yet ready" prompt.
+  `host-start-resolved { started: true }` still goes to the (now-empty) set
+  of pending participants for symmetry with the explicit-confirm path.
 
 Only one negotiation is pending per session at a time; a second host
 `start` while one is pending replaces it (recount, re-broadcast).
@@ -390,6 +398,44 @@ socket — while also setting a `suppressReconnect` flag so the socket's
 attempt (which would otherwise just rejoin the session this participant
 was just removed from). See ui.md's Participants tab and "Removed from
 session" state.
+
+## Host Layout & Early Stop Controls
+
+Two host-only session settings, each following the same message/broadcast
+shape as `lobbyCursorTick`/`spotlightMode` (Session & Real-Time Sync,
+above) — a host-authorization-checked message sets the field, the normal
+`session-state` broadcast carries it to everyone, no dedicated result
+message:
+
+- **`host-mandated-bars-per-row-layout`**: `bars-per-row-set { value:
+  number | null }` sets `Session.hostBarsPerRow` (datamodel.md), host-only
+  (same authorization check as `playback-control`). `null` clears the pin.
+  Every participant's client re-applies `settings.display.barsPerRow` (Tab
+  Rendering, above) on change — a renderer rebuild, the same trigger shape
+  a song change already uses.
+- **`host-set-early-stop-point-for`**: `early-stop-set { tick: number |
+  null }` sets `Session.earlyStopTick` (datamodel.md), host-only. The
+  server enforces the stop the same way it already enforces a host Stop —
+  once the host-reported `tickPosition` (Session & Real-Time Sync, above)
+  reaches or passes `earlyStopTick` while `playbackState.status ===
+  'running'`, the server transitions `playbackState.status` to `'stopped'`
+  and broadcasts it, same as a manual `playback-control stop`. Resets to
+  `null` on song change, same lifecycle as `lobbyCursorTick`.
+
+## Input Validation (feedback-input-sanitization-hardening-7a9a)
+
+`displayName` (`session-create`/`session-join`, `server/src/handlers/
+session-create.ts`/`session-join.ts`) and the activation-key input
+(`catalogue-unlock`, `server/src/handlers/catalogue-unlock.ts`) are
+validated server-side by one shared function before being accepted, rather
+than trusting client input or relying only on Svelte's default
+interpolation escaping on render: control characters and HTML/script-like
+content are rejected or stripped, Unicode/emoji pass through unchanged
+(a real display-name use case), and a fixed max length is enforced (both
+values are currently unbounded). A value that fails validation is
+rejected as an `error` message (ui.md States), the same pattern other
+rejected inputs already use here — not silently truncated/mutated
+server-side without telling the client what was sent back.
 
 ## Song Catalog Delivery
 
@@ -528,9 +574,11 @@ settings.display.layoutMode = at.LayoutMode.Page;
 // layout re-wraps bars to the container, so this can't introduce
 // horizontal overflow.
 settings.display.scale = tabScaleForViewportWidth(window.innerWidth);
-// No settings.display.barsPerRow pin — auto-wrap by default (someday:
-// host-mandated bars-per-row and participant-preferred horizontal layout
-// are deferred future direction, not built now).
+// settings.display.barsPerRow (host-mandated-bars-per-row-layout): pinned
+// to Session.hostBarsPerRow (datamodel.md) when the host has set one;
+// otherwise left at the participant's own bars-per-row-preference.ts
+// value (client-local, default auto/unset) — auto-wrap when neither is
+// set. Re-applied (renderer rebuild) whenever either value changes.
 settings.display.staveProfile = isPercussion ? at.StaveProfile.Score : at.StaveProfile.TabMixed;
 // TabRhythmMode.Automatic silently falls through to Hidden for TabMixed — must be explicit.
 if (!isPercussion) settings.notation.rhythmMode = at.TabRhythmMode.ShowWithBars;
