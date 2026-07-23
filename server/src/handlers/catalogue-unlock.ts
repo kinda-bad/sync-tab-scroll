@@ -3,6 +3,7 @@ import type { WebSocket } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 import { visibleCatalog } from '../catalog-loader.js';
+import { validateActivationKey } from '../input-validation.js';
 
 /**
  * True when `key` hashes (with `salt`) to `storedHashHex`. Uses
@@ -47,13 +48,15 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
     return;
   }
 
+  const key = validateActivationKey(message.key);
+
   // Try the key against every locked, not-yet-unlocked catalogue and take the
   // first match. Public catalogues (no salt/hash) and already-unlocked ones are
   // excluded from the set, so there's no per-id early-return that could leak
   // which catalogues exist.
   const unlocked = new Set(session.unlockedCatalogueIds);
   const catalogue = ctx.catalog.catalogues.find(
-    (c) => !c.public && !!c.salt && !!c.hash && !unlocked.has(c.id) && verifyKey(message.key, c.salt, c.hash),
+    (c) => !c.public && !!c.salt && !!c.hash && !unlocked.has(c.id) && verifyKey(key, c.salt, c.hash),
   );
   if (!catalogue) {
     ctx.connections.send(socket, { type: 'error', message: 'Incorrect activation key' });

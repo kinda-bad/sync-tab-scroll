@@ -130,6 +130,18 @@ describe('catalogue-unlock', () => {
     expect(sent[0].type).toBe('error');
   });
 
+  // T003: input-validation hardening (feedback-input-sanitization-hardening-7a9a
+  // F001) — the key is sanitized (control chars/HTML special chars stripped)
+  // before being checked against the stored hash.
+  it('T003: sanitizes the key (a key with injected control chars around the real key still unlocks)', () => {
+    const { ctx, session, hostSocket, broadcasts } = withHostSession();
+
+    handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: `\x00${KEY}\x07` });
+
+    expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
+    expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
+  });
+
   describe('persisting the unlock for a logged-in host (T013)', () => {
     /** Installs a spyable enabled store and stamps a userId on the host connection. */
     function withSignedInHost(userId: string | null, upsert = vi.fn(async () => null)) {

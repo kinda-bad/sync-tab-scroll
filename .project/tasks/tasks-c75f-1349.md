@@ -8,9 +8,9 @@ status: in-progress
 
 ## Phase 1: Input Validation Hardening
 
-- [ ] T001 [artifacts: infrastructure, datamodel] Write a failing server test in a new `server/src/input-validation.test.ts` asserting a shared `validateDisplayName`/`validateActivationKey`-style function (to be created at `server/src/input-validation.ts`) rejects control characters and HTML tags, enforces a length cap, and passes through Unicode/emoji unchanged. Confirm it fails (module doesn't exist yet).
-- [ ] T002 [artifacts: infrastructure] Implement `server/src/input-validation.ts` to make T001 pass: strip/reject control characters and HTML special characters, cap length, allow Unicode/emoji. Addresses feedback-input-sanitization-hardening-7a9a F001.
-- [ ] T003 [artifacts: infrastructure] [parallel] Write a failing integration test extending an existing session-create/join handler test (e.g. alongside `server/src/connections.test.ts` patterns) asserting `session-create`, `session-join`, and `catalogue-unlock` handlers reject/sanitize invalid `displayName`/key input via the new validator; confirm it fails, then wire the validator into those three handlers to make it pass.
+- [x] T001 [artifacts: infrastructure, datamodel] Write a failing server test in a new `server/src/input-validation.test.ts` asserting a shared `validateDisplayName`/`validateActivationKey`-style function (to be created at `server/src/input-validation.ts`) rejects control characters and HTML tags, enforces a length cap, and passes through Unicode/emoji unchanged. Confirm it fails (module doesn't exist yet).
+- [x] T002 [artifacts: infrastructure] Implement `server/src/input-validation.ts` to make T001 pass: strip/reject control characters and HTML special characters, cap length, allow Unicode/emoji. Addresses feedback-input-sanitization-hardening-7a9a F001.
+- [x] T003 [artifacts: infrastructure] [parallel] Write a failing integration test extending an existing session-create/join handler test (e.g. alongside `server/src/connections.test.ts` patterns) asserting `session-create`, `session-join`, and `catalogue-unlock` handlers reject/sanitize invalid `displayName`/key input via the new validator; confirm it fails, then wire the validator into those three handlers to make it pass.
 
 ## Phase 2: Join-Code Click-to-Copy
 

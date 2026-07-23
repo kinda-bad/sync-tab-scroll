@@ -196,4 +196,16 @@ describe('session-join', () => {
     // advance, just confirm calling it again is safe and nothing fired.
     expect(fired).toBe(false);
   });
+
+  // T003: input-validation hardening (feedback-input-sanitization-hardening-7a9a
+  // F001).
+  it('T003: sanitizes displayName (strips control chars and HTML special chars)', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    ctx.connections.broadcast = () => {};
+
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: '<script>Bob</script>\x00' });
+
+    expect(session.participants[0].displayName).toBe('scriptBob/script');
+  });
 });
