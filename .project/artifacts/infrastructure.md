@@ -4,7 +4,7 @@ status: stable
 last_updated: 2026-07-23
 diagram_type: graph TD
 render_section: Infrastructure
-diagram_status: current
+diagram_status: stale
 ---
 
 # Infrastructure
