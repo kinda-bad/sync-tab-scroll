@@ -1,5 +1,29 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**Ran `/ardd-refine infrastructure` on the
+`/ardd-defects` findings.** User decision: the artifact's "reject invalid
+input" claim is the intended behavior — `input-validation.ts` (silently
+sanitize/truncate) is the one that needs to change, not the doc; that code
+fix is tracked separately (not yet planned). Fixed both cosmetic drifts in
+the same pass: the `scriptFile` citation (`client/src/tab-renderer.ts:51`
+→ `:84`, `createTabRenderer`) and the `bars-per-row-set`/`early-stop-set`
+field names (`value`/`tick` → `barsPerRow`/`tickPosition`, confirmed
+against `packages/shared/src/messages.ts`). `infrastructure.md` stamped
+`last_updated: 2026-07-23` (`b8f107a`); `diagram_status` was already
+`stale` from the prior pass, unchanged. `DEFECTS.md` itself is unchanged
+on disk — the 2 cosmetic entries are now fixed in code and the
+broken-contract entry's resolution direction is now decided; the next
+`/ardd-defects` run will confirm and drop the 2 cosmetic ones (the
+broken-contract entry stays until the actual code fix lands). No other
+state changed: zero in-flight worktrees, 1 open feedback file unchanged
+(`feedback-e2e-fixture-song-selection-drift-60d7.md`).
+`tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at
+11/12. Recommended next step: `/ardd-plan` to task the `input-validation.ts`
+reject-behavior fix (small, well-scoped — similar shape to the earlier
+host-start-modal-fix) or the e2e fixture-drift feedback item; neither
+urgent.**)_
+
 _Updated: 2026-07-23 (**Ran `/ardd-defects`: full artifact-vs-codebase
 survey after this session's two merged bundles.** Regenerated
 `DEFECTS.md` (`359fcca`) — 3 defects found, all in `infrastructure.md`:
@@ -234,7 +258,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 3 known defects — see DEFECTS.md, last checked 2026-07-23. 2 cosmetic (infrastructure.md: `scriptFile` line-citation drift, `bars-per-row-set`/`early-stop-set` field-name drift), 1 **broken-contract** (infrastructure.md claims invalid input is rejected; `input-validation.ts` actually sanitizes/truncates silently instead). The prior mute-all-parts-button defect is now closed.
+- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this pass's fixes). 2 cosmetic entries (scriptFile line-citation, bars-per-row-set/early-stop-set field names) are now fixed in `infrastructure.md` — will drop on the next `/ardd-defects` run. 1 **broken-contract** remains open in code: infrastructure.md's "reject invalid input" claim is confirmed as the intended behavior; `input-validation.ts` (silently sanitizes/truncates instead) still needs the actual code fix.
 
 ## Feedback
 - 1 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
@@ -247,7 +271,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-refine infrastructure` to resolve the broken-contract input-validation defect (decide reject-vs-sanitize intent), or fold it and the 2 cosmetic drifts into the next `/ardd-plan` as artifact-fix tasks.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-plan` to task the `input-validation.ts` reject-behavior fix, or the e2e fixture-drift feedback item; neither urgent.
 
 ---
 
