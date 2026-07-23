@@ -14,8 +14,8 @@ status: in-progress
 
 ## Phase 2: Join-Code Click-to-Copy
 
-- [ ] T004 [artifacts: ui] Write a failing Playwright CT spec (new `client/src/join-code-copy.ct.spec.ts`) asserting the Bar identity area's join-code chip is clickable and writes the code to the clipboard, showing a transient inline confirmation. Confirm it fails (no such behavior exists yet).
-- [ ] T005 [artifacts: ui] Implement the click-to-copy behavior on the Bar's join-code chip (client component owning the persistent Bar identity area) to make T004 pass, including the transient confirmation UI. Addresses feedback-join-code-click-to-copy-4971 F001.
+- [x] T004 [artifacts: ui] Write a failing Playwright CT spec (new `client/src/join-code-copy.ct.spec.ts`) asserting the Bar identity area's join-code chip is clickable and writes the code to the clipboard, showing a transient inline confirmation. Confirm it fails (no such behavior exists yet).
+- [x] T005 [artifacts: ui] Implement the click-to-copy behavior on the Bar's join-code chip (client component owning the persistent Bar identity area) to make T004 pass, including the transient confirmation UI. Addresses feedback-join-code-click-to-copy-4971 F001.
 
 ## Phase 3: Remembered Display Name
 

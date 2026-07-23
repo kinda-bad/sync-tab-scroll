@@ -38,6 +38,20 @@
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
+
+  // Join-code click-to-copy (feedback-join-code-click-to-copy-4971 F001):
+  // clicking the Bar identity area's join-code chip copies Session.code to
+  // the clipboard and shows a transient inline "Copied!" confirmation.
+  let joinCodeCopied = false;
+  let joinCodeCopiedTimeout: ReturnType<typeof setTimeout> | undefined;
+  async function copyJoinCode(code: string) {
+    await navigator.clipboard.writeText(code);
+    joinCodeCopied = true;
+    clearTimeout(joinCodeCopiedTimeout);
+    joinCodeCopiedTimeout = setTimeout(() => {
+      joinCodeCopied = false;
+    }, 1500);
+  }
   let fullLyricsEl: HTMLDivElement;
   let previousHasPart = false;
   let songPartModalOpen = false;
@@ -217,7 +231,15 @@
 {#if showBar && session}
   <Bar progress={barProgress}>
     {#snippet identity()}
-      <span class="bar-artist bar-code">Join code: {session.code}</span>
+      <button
+        type="button"
+        class="bar-artist bar-code bar-code-copy"
+        aria-label="Copy join code {session.code}"
+        title="Copy join code"
+        onclick={() => copyJoinCode(session.code)}
+      >
+        Join code: {session.code}{#if joinCodeCopied}<span class="bar-code-copied">Copied!</span>{/if}
+      </button>
       {#if catalogSong}
         <strong class="bar-title glitch-text">{catalogSong.name}</strong>
         <span class="bar-artist"> — {catalogSong.artist}</span>
@@ -409,5 +431,18 @@
      short and fixed-length; let the song title/artist give way instead. */
   .bar-code {
     flex-shrink: 0;
+  }
+  .bar-code-copy {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  .bar-code-copied {
+    margin-left: 0.4em;
+    color: var(--accent, #6cf);
+    font-weight: 600;
   }
 </style>
