@@ -1,5 +1,25 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**Filed 2 new feedback items via `/ardd-feedback`:
+`feedback-input-validation-reject-and-defense-in-depth-fc7d.md` F001 (Bug,
+`[artifacts: infrastructure]`) — fix `input-validation.ts` to actually
+reject invalid `displayName`/activation-key input rather than silently
+sanitizing, per the `/ardd-refine`-confirmed intended contract; and F002
+(Bug, `[artifacts: infrastructure, ui]`) — a defense-in-depth requirement
+that every user-input surface validate/sanitize at both client and server
+layers, server never trusting client-side validation alone. Grounded by a
+quick audit: `displayName`'s Landing View input currently has **no
+client-side validation at all**; scoped to also cover the join-code field,
+activation-key field, and Phase 2 authoring's catalogue name/key,
+submitter identifier, and co-owner invite fields. Open feedback count now
+3 (up from 1) — the pre-existing `feedback-e2e-fixture-song-selection-
+drift-60d7.md` is unchanged. No other state changed this pass. Zero
+in-flight worktrees. `tasks-recording-drift-foundation-cc87.md` unchanged
+at 20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12. Recommended next step: `/ardd-plan` to bundle both new
+feedback items (they overlap — F001 is the concrete first instance of
+F002's broader audit) — not urgent.**)_
+
 _Updated: 2026-07-23 (**Ran `/ardd-refine infrastructure` on the
 `/ardd-defects` findings.** User decision: the artifact's "reject invalid
 input" claim is the intended behavior — `input-validation.ts` (silently
@@ -261,7 +281,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this pass's fixes). 2 cosmetic entries (scriptFile line-citation, bars-per-row-set/early-stop-set field names) are now fixed in `infrastructure.md` — will drop on the next `/ardd-defects` run. 1 **broken-contract** remains open in code: infrastructure.md's "reject invalid input" claim is confirmed as the intended behavior; `input-validation.ts` (silently sanitizes/truncates instead) still needs the actual code fix.
 
 ## Feedback
-- 1 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
+- 2 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`), `feedback-input-validation-reject-and-defense-in-depth-fc7d.md` (F001, Bug — fix `input-validation.ts` to reject rather than sanitize; `[artifacts: infrastructure]`; F002, Bug — defense-in-depth audit of every user-input surface, client + server both; `[artifacts: infrastructure, ui]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
 
 ## Feature Backlog
 - 0 backlogged · 0 planned · 1 tasked · 31 implemented — see `.project/features/`.
@@ -271,7 +291,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-plan` to task the `input-validation.ts` reject-behavior fix, or the e2e fixture-drift feedback item; neither urgent.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-plan` to bundle `feedback-input-validation-reject-and-defense-in-depth-fc7d.md`'s F001/F002, or the e2e fixture-drift item; neither urgent.
 
 ---
 
