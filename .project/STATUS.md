@@ -1,5 +1,33 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**Ran `/ardd-defects`: full artifact-vs-codebase
+survey after this session's two merged bundles.** Regenerated
+`DEFECTS.md` (`359fcca`) — 3 defects found, all in `infrastructure.md`:
+(1) `scriptFile` citation drift, cosmetic — the corrected explanation now
+matches the code comment verbatim, but the cited line number (51) has
+drifted again to 84 after further edits; (2) `bars-per-row-set`/
+`early-stop-set` field-name drift, cosmetic — docs say `value`/`tick`,
+code actually uses `barsPerRow`/`tickPosition`; (3) **broken-contract** —
+`infrastructure.md` claims invalid `displayName`/activation-key input is
+*rejected* with an `error` message, but `input-validation.ts` actually
+*silently sanitizes/truncates* it instead, per its own header comment —
+this is a real doc/code mismatch, not cosmetic, and worth a `/ardd-refine
+infrastructure` pass or a decision on which behavior is actually intended.
+Of the 2 previously-known defects: `mute-all-parts-button`'s missing
+testid is **now closed** (tasks-c75f-1349.md T026 added a real `testId`);
+the `scriptFile` line-citation issue is **still open**, but only the line
+number — its content-accuracy half was already fixed. No documented-but-
+never-built capabilities found. No other state changed this pass — zero
+in-flight worktrees, zero open feedback beyond the pre-existing
+`feedback-e2e-fixture-song-selection-drift-60d7.md`.
+`tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at
+11/12. Recommended next step: `/ardd-refine infrastructure` to resolve the
+broken-contract defect (decide: should invalid input actually be
+rejected, or should the artifact be corrected to document sanitize-not-
+reject?), or a quick fix for the two cosmetic citation/field-name
+drifts.**)_
+
 _Updated: 2026-07-23 (**`tasks-c75f-1349.md` completed and merged (all 26
 tasks, 9 phases).** Delivered: input-validation hardening, join-code
 click-to-copy, remembered display name, Help/Info/About nav panel, host
@@ -206,7 +234,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 2 known defects (both cosmetic) — see DEFECTS.md, last checked 2026-07-23. Both were fixed in code by tasks-c75f-1349.md's T025/T026 (merged). DEFECTS.md itself is unchanged on disk — run `/ardd-defects` to confirm they're closed and refresh the count.
+- 3 known defects — see DEFECTS.md, last checked 2026-07-23. 2 cosmetic (infrastructure.md: `scriptFile` line-citation drift, `bars-per-row-set`/`early-stop-set` field-name drift), 1 **broken-contract** (infrastructure.md claims invalid input is rejected; `input-validation.ts` actually sanitizes/truncates silently instead). The prior mute-all-parts-button defect is now closed.
 
 ## Feedback
 - 1 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
@@ -219,7 +247,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: run `/ardd-defects` to confirm the 2 fixed defects are closed and refresh DEFECTS.md, or `/ardd-diagram` for the 3 stale diagrams, or target `feedback-e2e-fixture-song-selection-drift-60d7.md` with `/ardd-plan` — none urgent.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-refine infrastructure` to resolve the broken-contract input-validation defect (decide reject-vs-sanitize intent), or fold it and the 2 cosmetic drifts into the next `/ardd-plan` as artifact-fix tasks.
 
 ---
 
