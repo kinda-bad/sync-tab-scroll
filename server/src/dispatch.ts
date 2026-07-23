@@ -11,6 +11,8 @@ import { handleHostRemoveParticipant } from './handlers/host-remove-participant.
 import { handlePlaybackControl } from './handlers/playback-control.js';
 import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
+import { handleBarsPerRowSet } from './handlers/bars-per-row-set.js';
+import { handleEarlyStopSet } from './handlers/early-stop-set.js';
 import { handleCountInSet } from './handlers/count-in-set.js';
 import { handlePlaybackSourceSet } from './handlers/playback-source-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
@@ -46,6 +48,10 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleLobbyCursorSet(ctx, socket, message);
     case 'spotlight-mode-set':
       return handleSpotlightModeSet(ctx, socket, message);
+    case 'bars-per-row-set':
+      return handleBarsPerRowSet(ctx, socket, message);
+    case 'early-stop-set':
+      return handleEarlyStopSet(ctx, socket, message);
     case 'count-in-set':
       return handleCountInSet(ctx, socket, message);
     case 'playback-source-set':

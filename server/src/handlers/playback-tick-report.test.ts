@@ -54,4 +54,51 @@ describe('playback-tick-report', () => {
     expect(broadcasts).toHaveLength(1);
     expect(broadcasts[0]).toMatchObject({ type: 'session-state', session: { playbackState: { tickPosition: 1234 } } });
   });
+
+  // T018 (host-set-early-stop-point-for): once the host-reported tickPosition
+  // passes Session.earlyStopTick, the server auto-triggers the existing
+  // host-Stop transition (playbackState.status flip), reusing the same
+  // effect as playback-control.ts's 'stop' action.
+  it('T018: auto-stops (status -> stopped, tickPosition reset to 0) once tickPosition passes earlyStopTick', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.playbackState.status = 'running';
+    session.earlyStopTick = 1000;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handlePlaybackTickReport(ctx, hostSocket, { type: 'playback-tick-report', tickPosition: 1050 });
+
+    expect(session.playbackState.status).toBe('stopped');
+    expect(session.playbackState.tickPosition).toBe(0);
+  });
+
+  it('T018: does not auto-stop while tickPosition is still before earlyStopTick', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.playbackState.status = 'running';
+    session.earlyStopTick = 1000;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handlePlaybackTickReport(ctx, hostSocket, { type: 'playback-tick-report', tickPosition: 500 });
+
+    expect(session.playbackState.status).toBe('running');
+    expect(session.playbackState.tickPosition).toBe(500);
+  });
+
+  it('T018: is a no-op when earlyStopTick is null', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.playbackState.status = 'running';
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handlePlaybackTickReport(ctx, hostSocket, { type: 'playback-tick-report', tickPosition: 999999 });
+
+    expect(session.playbackState.status).toBe('running');
+  });
 });
