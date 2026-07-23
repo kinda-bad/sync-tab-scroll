@@ -17,6 +17,14 @@
     if (stored) connect(stored.displayName, stored.code, stored.participantId);
   });
 
+  // Remembered display name (remember-logged-in-display-nam): pre-fill the
+  // create/join "Your name" input from a signed-in user's provider-profile
+  // display name, but only while no local value exists yet (empty input) —
+  // never override a value the participant has already typed.
+  $: if (!displayName && $accountStore.status === 'signed-in' && $accountStore.displayName) {
+    displayName = $accountStore.displayName;
+  }
+
   function createSession() {
     if (!displayName) return;
     connect(displayName);

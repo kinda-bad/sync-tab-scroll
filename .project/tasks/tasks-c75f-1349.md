@@ -19,8 +19,8 @@ status: in-progress
 
 ## Phase 3: Remembered Display Name
 
-- [ ] T006 [artifacts: ui] Write a failing Playwright CT spec (new `client/src/remembered-display-name.ct.spec.ts`) asserting the Landing View's create/join "Your name" inputs pre-fill from a signed-in user's provider-profile display name when no local (`session-persistence.ts`-stored) value exists yet, and do NOT override an existing local value. Confirm it fails.
-- [ ] T007 [artifacts: ui] Implement the pre-fill in the Landing View's create/join forms to make T006 pass. Implements `remember-logged-in-display-nam`.
+- [x] T006 [artifacts: ui] Write a failing Playwright CT spec (new `client/src/remembered-display-name.ct.spec.ts`) asserting the Landing View's create/join "Your name" inputs pre-fill from a signed-in user's provider-profile display name when no local (`session-persistence.ts`-stored) value exists yet, and do NOT override an existing local value. Confirm it fails.
+- [x] T007 [artifacts: ui] Implement the pre-fill in the Landing View's create/join forms to make T006 pass. Implements `remember-logged-in-display-nam`.
 
 ## Phase 4: Help/Info/About Nav Panel
 
