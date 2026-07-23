@@ -14,6 +14,7 @@
   import ReadinessBadge from './components/ReadinessBadge.svelte';
   import SongPartModal from './components/SongPartModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
+  import HelpAboutModal from './components/HelpAboutModal.svelte';
   import StartNegotiationModals from './components/StartNegotiationModals.svelte';
   import AccountMenu from './components/AccountMenu.svelte';
   import AuthoringModal from './components/AuthoringModal.svelte';
@@ -35,6 +36,7 @@
   import ListMusic from 'lucide-svelte/icons/list-music';
   import Clock from 'lucide-svelte/icons/clock';
   import Check from 'lucide-svelte/icons/check';
+  import CircleHelp from 'lucide-svelte/icons/circle-help';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -57,6 +59,7 @@
   let songPartModalOpen = false;
   let songPartDismissed = false;
   let settingsModalOpen = false;
+  let helpAboutModalOpen = false;
 
   $: session = $clientStore.session;
   $: participant = session?.participants.find((p) => p.id === $clientStore.selfParticipantId);
@@ -187,6 +190,10 @@
     settingsModalOpen = !settingsModalOpen;
   }
 
+  function toggleHelpAboutModal() {
+    helpAboutModalOpen = !helpAboutModalOpen;
+  }
+
   function startPlayback() {
     songPartModalOpen = false;
     settingsModalOpen = false;
@@ -276,6 +283,7 @@
       {#if $clientStore.view === 'lobby' || $clientStore.view === 'playback'}
         <Button variant="ghost" label="Settings" iconOnly icon={Settings} onclick={toggleSettingsModal} />
       {/if}
+      <Button variant="ghost" label="Help & About" iconOnly icon={CircleHelp} onclick={toggleHelpAboutModal} />
       {#if isHost}
         {#if $clientStore.view === 'lobby'}
           <Button variant="riot" label="Start" iconOnly icon={Play} disabled={!session.selectedSong} onclick={startPlayback} />
@@ -315,6 +323,7 @@
 
 <SongPartModal open={songPartModalOpen} dismissible={true} onClose={closeSongPartModal} />
 <SettingsModal open={settingsModalOpen} onClose={() => (settingsModalOpen = false)} />
+<HelpAboutModal open={helpAboutModalOpen} onClose={() => (helpAboutModalOpen = false)} />
 <!-- In-app authoring (T011-T018, ui.md In-App Authoring) — a single instance
      shared by both AccountMenu entry points (Landing and Bar) via
      authoringModalOpen (Principle I). -->

@@ -24,8 +24,8 @@ status: in-progress
 
 ## Phase 4: Help/Info/About Nav Panel
 
-- [ ] T008 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/help-info-about-panel.ct.spec.ts`) asserting a new `?` icon control in the persistent nav bar opens a modal with three tabs (About, Info, Help), the About tab rendering the alphaTab/Songsterr shoutout links, the GitHub source link (`https://github.com/kinda-bad/sync-tab-scroll`), and the sponsor link (`https://github.com/sponsors/moui72`). Confirm it fails.
-- [ ] T009 [artifacts: ui] Create the Help/Info/About modal component and its `?` nav-bar trigger to make T008 pass, following the existing icon-only Bar control pattern (accessible name, tooltip) per ui.md's Accessibility rule. Implements `help-info-about-panel-in-nav-b`.
+- [x] T008 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/help-info-about-panel.ct.spec.ts`) asserting a new `?` icon control in the persistent nav bar opens a modal with three tabs (About, Info, Help), the About tab rendering the alphaTab/Songsterr shoutout links, the GitHub source link (`https://github.com/kinda-bad/sync-tab-scroll`), and the sponsor link (`https://github.com/sponsors/moui72`). Confirm it fails.
+- [x] T009 [artifacts: ui] Create the Help/Info/About modal component and its `?` nav-bar trigger to make T008 pass, following the existing icon-only Bar control pattern (accessible name, tooltip) per ui.md's Accessibility rule. Implements `help-info-about-panel-in-nav-b`.
 
 ## Phase 5: Host-Mandated Bars-Per-Row Layout
 
