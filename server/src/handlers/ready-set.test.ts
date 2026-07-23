@@ -86,4 +86,53 @@ describe('ready-set', () => {
 
     expect(broadcasts).toHaveLength(0);
   });
+
+  it('auto-resolves a pending start when the last not-ready participant readies up', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 0, userId: null });
+    session.participants.push({ id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'loaded', joinedAt: 0, userId: null });
+    ctx.sessionStore.setPendingStart(session.code, ['member-1']);
+
+    const memberSocket = fakeSocket();
+    ctx.connections.attach(memberSocket, { sessionCode: session.code, participantId: 'member-1' });
+    ctx.connections.broadcast = () => {};
+    const sentToParticipant: Array<{ participantId: string; message: ServerMessage }> = [];
+    ctx.connections.sendToParticipant = (_code, participantId, message) => {
+      sentToParticipant.push({ participantId, message });
+    };
+
+    handleReadySet(ctx, memberSocket, { type: 'ready-set', ready: true });
+
+    expect(session.participants.find((p) => p.id === 'member-1')?.readiness).toBe('ready');
+    expect(sentToParticipant).toContainEqual({ participantId: 'member-1', message: { type: 'host-start-resolved', started: true } });
+    expect(session.playbackState.status).toBe('running');
+    expect(session.lobbyCursorTick).toBeNull();
+    expect(session.spotlightMode).toBe(false);
+    expect(ctx.sessionStore.getPendingStart(session.code)).toBeUndefined();
+  });
+
+  it('does not auto-resolve a pending start while other pending participants remain not-ready', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    session.participants.push({ id: 'host-1', displayName: 'Host', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 0, userId: null });
+    session.participants.push({ id: 'member-1', displayName: 'Member 1', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'loaded', joinedAt: 0, userId: null });
+    session.participants.push({ id: 'member-2', displayName: 'Member 2', role: 'member', connectionStatus: 'connected', selectedPart: 0, readiness: 'loaded', joinedAt: 0, userId: null });
+    ctx.sessionStore.setPendingStart(session.code, ['member-1', 'member-2']);
+
+    const memberSocket = fakeSocket();
+    ctx.connections.attach(memberSocket, { sessionCode: session.code, participantId: 'member-1' });
+    ctx.connections.broadcast = () => {};
+    const sentToParticipant: Array<{ participantId: string; message: ServerMessage }> = [];
+    ctx.connections.sendToParticipant = (_code, participantId, message) => {
+      sentToParticipant.push({ participantId, message });
+    };
+
+    handleReadySet(ctx, memberSocket, { type: 'ready-set', ready: true });
+
+    expect(session.participants.find((p) => p.id === 'member-1')?.readiness).toBe('ready');
+    expect(sentToParticipant).toHaveLength(0);
+    expect(session.playbackState.status).not.toBe('running');
+    expect(ctx.sessionStore.getPendingStart(session.code)).toEqual(['member-1', 'member-2']);
+  });
 });
