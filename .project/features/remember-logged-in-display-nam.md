@@ -1,6 +1,6 @@
 ---
 slug: remember-logged-in-display-nam
-status: tasked
+status: implemented
 logged: 2026-07-23
 plan: plan-c75f-2026-07-23-5638.md
 tasks: tasks-c75f-1349.md

@@ -1,6 +1,6 @@
 ---
 slug: host-set-early-stop-point-for
-status: tasked
+status: implemented
 logged: 2026-07-23
 plan: plan-c75f-2026-07-23-5638.md
 tasks: tasks-c75f-1349.md
