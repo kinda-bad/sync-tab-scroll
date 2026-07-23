@@ -1,7 +1,7 @@
 ---
 plan: plan-host-start-modal-fix-2026-07-23-0a6a.md
 generated: 2026-07-23
-status: ready
+status: in-progress
 ---
 
 # Tasks
