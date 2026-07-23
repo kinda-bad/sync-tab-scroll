@@ -239,9 +239,18 @@
   <div bind:this={tabContainer} class="tab-container"></div>
   {#if session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
     <!-- Host early-stop point (host-set-early-stop-point-for): a visual cue,
-         for every participant, that tab content past the host-set stop tick
-         is de-emphasized — the exact stop point is enforced server-side
-         (playback-tick-report.ts), this is purely visual. -->
+         for every participant, that an early-stop point IS set — the exact
+         enforcement (auto-stop once tickPosition passes earlyStopTick) is
+         server-side (playback-tick-report.ts) and fully correct regardless
+         of this element.
+         KNOWN LIMITATION: this scrim is a fixed bottom-third gradient, not
+         positioned at the actual stop tick's row — alphaTab's tick→pixel
+         mapping wasn't wired up for this pass (a real "de-emphasize past
+         THIS bar" treatment needs that mapping). It currently under-dims
+         an early stop point and over-dims a late one. Tracked as a
+         follow-up (log via /ardd-feedback) rather than blocking this task
+         — ui.md leaves the exact visual treatment to implementation-time
+         judgment. -->
     <div class="early-stop-dimmed" aria-hidden="true"></div>
   {/if}
   <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
