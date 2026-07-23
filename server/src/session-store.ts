@@ -62,6 +62,8 @@ export class SessionStore {
       spotlightMode: false,
       pendingHostRequest: null,
       unlockedCatalogueIds: [],
+      hostBarsPerRow: null,
+      earlyStopTick: null,
     };
     this.sessions.set(code, session);
     this.keyUnlocked.set(code, new Set());

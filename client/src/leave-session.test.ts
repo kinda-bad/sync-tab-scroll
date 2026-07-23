@@ -41,6 +41,8 @@ describe('leaveSession', () => {
         spotlightMode: false,
         pendingHostRequest: null,
         unlockedCatalogueIds: [],
+        hostBarsPerRow: null,
+        earlyStopTick: null,
       },
       selfParticipantId: 'p1',
       catalog: [], catalogues: [],

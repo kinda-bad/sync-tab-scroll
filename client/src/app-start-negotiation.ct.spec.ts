@@ -56,6 +56,8 @@ function makeSession(memberReadiness: ReadinessStatus[], selfId = 'p1'): { sessi
       spotlightMode: false,
       pendingHostRequest: null,
       unlockedCatalogueIds: [],
+      hostBarsPerRow: null,
+      earlyStopTick: null,
     },
   };
 }

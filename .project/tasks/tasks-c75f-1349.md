@@ -29,8 +29,8 @@ status: in-progress
 
 ## Phase 5: Host-Mandated Bars-Per-Row Layout
 
-- [ ] T010 [artifacts: datamodel] Write a failing server test asserting `Session.hostBarsPerRow` defaults to `null` and resets to `null` on song change, following the existing `spotlightMode`/`lobbyCursorTick` reset-on-song-change test pattern. Confirm it fails (field doesn't exist).
-- [ ] T011 [artifacts: datamodel, infrastructure] Add `Session.hostBarsPerRow: number | null` to the server-side session model and wire its song-change reset to make T010 pass.
+- [x] T010 [artifacts: datamodel] Write a failing server test asserting `Session.hostBarsPerRow` defaults to `null` and resets to `null` on song change, following the existing `spotlightMode`/`lobbyCursorTick` reset-on-song-change test pattern. Confirm it fails (field doesn't exist).
+- [x] T011 [artifacts: datamodel, infrastructure] Add `Session.hostBarsPerRow: number | null` to the server-side session model and wire its song-change reset to make T010 pass.
 - [ ] T012 [artifacts: infrastructure] Write a failing server test asserting a new host-only `bars-per-row-set` WS message updates `Session.hostBarsPerRow` and broadcasts `session-state`, and is rejected for a non-host sender, following the existing host-authorization-checked message pattern (e.g. `host-remove-participant`). Confirm it fails, then implement the handler to make it pass.
 - [ ] T013 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/bars-per-row-layout.ct.spec.ts`) asserting the Session tab's host-only "Layout" control sends `bars-per-row-set` and a personal per-participant bars-per-row preference exists in the Preferences tab, persisted client-side like the theme/metronome preferences. Confirm it fails.
 - [ ] T014 [artifacts: ui] Implement the Session-tab host control and Preferences-tab personal preference to make T013 pass, and apply the pin-shadows-preference logic at alphaTab renderer construction (`client/src/tab-renderer.ts` or the relevant renderer module), pinned when `hostBarsPerRow` is set, falling back to the personal preference otherwise. Implements `host-mandated-bars-per-row-layout`.
