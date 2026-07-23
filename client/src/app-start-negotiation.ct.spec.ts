@@ -169,3 +169,35 @@ for (const started of [true, false]) {
     await expect(dialog).toHaveCount(0);
   });
 }
+
+// host-start-modal-fix (infrastructure.md Start Negotiation, auto-resolve on
+// zero): if every pending not-ready participant readies up while the host's
+// own confirmation modal is still open, the server auto-resolves the
+// negotiation (started: true, playback running) exactly as if the host had
+// clicked "Start anyway". ws-client.ts flips startConfirmationOpen to false
+// on host-start-resolved (either way) — this asserts the host's modal
+// follows that flip with no stale "0 participants are not yet ready" render
+// in between, and the view lands on Playback once the session-state driving
+// it reflects the running playback.
+test("host modal: auto-closes on host-start-resolved when the last participant readies up, with no stale zero-count render", async ({ mount, page }) => {
+  await mount(AppHarness);
+  const { session, selfId } = makeSession(['loaded']);
+  await setStore(page, session, selfId, { startConfirmationOpen: true });
+  const dialog = page.getByRole('dialog', { name: 'Start anyway?' });
+  await expect(dialog).toContainText('1 participant is not yet ready');
+
+  // The server auto-resolves: it sends host-start-resolved (started: true)
+  // and a session-state with playback now running, and the pending
+  // negotiation cleared. ws-client.ts maps host-start-resolved to
+  // startConfirmationOpen: false regardless of the message ordering, so the
+  // modal never renders an intermediate "0 participants are not yet ready"
+  // state — it just disappears.
+  const resolvedSession: Session = {
+    ...session,
+    participants: session.participants.map((p) => (p.id === 'm1' ? { ...p, readiness: 'ready' as const } : p)),
+    playbackState: { ...session.playbackState, status: 'running' },
+  };
+  await setStore(page, resolvedSession, selfId, { startConfirmationOpen: false });
+
+  await expect(dialog).toHaveCount(0);
+});
