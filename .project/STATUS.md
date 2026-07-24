@@ -1,5 +1,26 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**Ran `/ardd-defects`: full survey confirming all 3
+known defects are closed.** Direct re-inspection: `scriptFile` citation is
+correctly `client/src/tab-renderer.ts:84`; `bars-per-row-set`/
+`early-stop-set` field names correctly `barsPerRow`/`tickPosition`; and
+`input-validation.ts` genuinely rejects (not sanitizes) invalid input at
+all three call sites. No new defects found in this session's third
+merged bundle (join-code format enforcement, Phase 2 authoring field
+validation, client-side `TextInput.svelte` checks) — all consistent with
+artifact claims or correctly scoped as undocumented internal hardening.
+`DEFECTS.md` regenerated to its all-clear state (`cfcf072`). Diagram
+status for `datamodel.md`/`infrastructure.md`/`ui.md` remains `stale`
+(content changed across three merged bundles this session, diagrams never
+regenerated) — the only loose end left standing. Zero in-flight
+worktrees, zero open feedback, zero backlogged features.
+`tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at
+11/12. ArDD up to date at `9bc9b38` (beta). Recommended next step: run
+`/ardd-diagram` for `datamodel`, `infrastructure`, and `ui` to regenerate
+the 3 stale diagrams — the only remaining cleanup item; nothing else
+urgent.**)_
+
 _Updated: 2026-07-23 (**`tasks-input-validation-e2e-hardening-e2da.md`
 completed and merged (all 17 tasks, 6 phases).** Delivered:
 `input-validation.ts` now actually rejects invalid `displayName`/
@@ -340,7 +361,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this session's fixes). All 3 are now fixed in code/docs (2 cosmetic citations, 1 broken-contract input-validation reject behavior) — will drop on the next `/ardd-defects` run.
+- 0 known defects — see DEFECTS.md, last checked 2026-07-23. All-clear: all 3 prior defects confirmed closed by direct re-inspection.
 
 ## Feature Backlog
 - 0 backlogged · 0 planned · 1 tasked · 31 implemented — see `.project/features/`.
@@ -350,7 +371,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-defects` to confirm all 3 known defects are closed and refresh DEFECTS.md.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: run `/ardd-diagram` for `datamodel`, `infrastructure`, and `ui` to regenerate the 3 stale diagrams — the only remaining cleanup item.
 
 ---
 
