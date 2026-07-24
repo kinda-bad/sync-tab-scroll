@@ -34,9 +34,9 @@ status: in-progress
 
 ## Phase 6: e2e Fixture-Drift Sweep
 
-- [ ] T012 [parallel] Fix `client/e2e/host-transfer.spec.ts`'s `.first()`-based song selection (line 6): replace with a `.filter({ hasText: '<song name>' })` selection of whichever fixture song the spec's assertions actually depend on, following the pattern `host-controls.spec.ts` (T023/T024, prior session) already established. No new test framework needed — this is a fix to an existing e2e spec; verify it passes against the current fixture catalog after the change.
-- [ ] T013 [parallel] Fix `client/e2e/multi-participant.spec.ts`'s `.first()`-based song selection (lines 25, 45) the same way as T012.
-- [ ] T014 [parallel] Fix `client/e2e/single-participant.spec.ts`'s `.first()`-based song selection (lines 24, 41, 61) the same way as T012.
-- [ ] T015 [parallel] Fix `client/e2e/small-screen.spec.ts`'s `.first()`-based song selection (lines 43, 55, 107, 129) the same way as T012.
-- [ ] T016 [parallel] Fix `client/e2e/song-part-modal.spec.ts`'s `.first()`-based song selection (lines 58, 94, 111 — leave the *part*-selection `.first()` calls at lines 59, 69, 70, 105, 112 untouched, per the plan's Out of Scope) the same way as T012.
-- [ ] T017 [parallel] Fix `client/e2e/lyrics-only-view.spec.ts`'s `.first()`-based song selection (line 20) the same way as T012.
+- [x] T012 [parallel] Fix `client/e2e/host-transfer.spec.ts`'s `.first()`-based song selection (line 6): replace with a `.filter({ hasText: '<song name>' })` selection of whichever fixture song the spec's assertions actually depend on, following the pattern `host-controls.spec.ts` (T023/T024, prior session) already established. No new test framework needed — this is a fix to an existing e2e spec; verify it passes against the current fixture catalog after the change.
+- [x] T013 [parallel] Fix `client/e2e/multi-participant.spec.ts`'s `.first()`-based song selection (lines 25, 45) the same way as T012.
+- [x] T014 [parallel] Fix `client/e2e/single-participant.spec.ts`'s `.first()`-based song selection (lines 24, 41, 61) the same way as T012.
+- [x] T015 [parallel] Fix `client/e2e/small-screen.spec.ts`'s `.first()`-based song selection (lines 43, 55, 107, 129) the same way as T012.
+- [x] T016 [parallel] Fix `client/e2e/song-part-modal.spec.ts`'s `.first()`-based song selection (lines 58, 94, 111 — leave the *part*-selection `.first()` calls at lines 59, 69, 70, 105, 112 untouched, per the plan's Out of Scope) the same way as T012.
+- [x] T017 [parallel] Fix `client/e2e/lyrics-only-view.spec.ts`'s `.first()`-based song selection (line 20) the same way as T012.

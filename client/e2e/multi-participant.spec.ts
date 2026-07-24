@@ -22,7 +22,7 @@ test('song/part selection sync between host and member', async ({ page, browser 
 
   const { context: memberContext, page: memberPage } = await joinSessionAsMember(browser, 'Member', hostSession.code);
 
-  await page.getByRole('button', { name: 'Select' }).first().click();
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click();
   await expect(memberPage.locator('.song-name')).toHaveText('Synthetic Test Song', { timeout: 10_000 });
 
   // Selecting a part immediately sends readiness-update: 'loading' (App.svelte's
@@ -42,7 +42,7 @@ test('song/part selection sync between host and member', async ({ page, browser 
 
 test('Spotlight mode: lobby cursor readout syncs to the member, and both fields auto-reset after Start', async ({ page, browser }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click();
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — auto-closes the modal
   const hostSession = await readStoredSession(page);
 

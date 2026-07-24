@@ -17,7 +17,7 @@ import { createSessionAsHost } from './helpers';
  */
 test('lyrics part: real playback renders the synced lyrics text', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list
 
   // No sendAsParticipant workaround — waiting on the real readiness

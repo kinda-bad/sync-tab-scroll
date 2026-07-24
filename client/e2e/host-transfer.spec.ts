@@ -3,7 +3,8 @@ import { createSessionAsHost, joinSessionAsMember, readStoredSession } from './h
 
 async function setUpHostAndMember(page: import('@playwright/test').Page, browser: import('@playwright/test').Browser) {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click();
+  // See host-controls.spec.ts (T023/T024) for why this can't be `.first()`.
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click();
   await page.getByRole('button', { name: 'Select' }).first().click(); // the (only) instrument part — auto-closes the modal
   const hostSession = await readStoredSession(page);
 
