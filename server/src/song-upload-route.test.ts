@@ -130,6 +130,55 @@ describe('song upload route — size limit + staging (T009)', () => {
     expect(res.status).toBe(400);
     expect(extractLyricsMock).not.toHaveBeenCalled();
   });
+
+  // T010: applies the generalized validateField (input-validation.ts) to
+  // artist/title/submitterName — notably before buildStagedFilename(artist,
+  // title) builds a filesystem path from them, previously unvalidated
+  // attacker-controlled input feeding a path construction.
+  it('rejects an invalid artist (control/HTML chars) with 400 before touching the request body', async () => {
+    srv = startServer({ store: ownerStore(), catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=${encodeURIComponent('<script>')}&title=B&submitterName=S`, {
+      method: 'POST',
+      headers: { Cookie: 'sts_session=s' },
+      body: 'x',
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+    expect(extractLyricsMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid title (control/HTML chars) with 400', async () => {
+    srv = startServer({ store: ownerStore(), catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=${encodeURIComponent('<b>B</b>')}&submitterName=S`, {
+      method: 'POST',
+      headers: { Cookie: 'sts_session=s' },
+      body: 'x',
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+    expect(extractLyricsMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid submitterName (control/HTML chars) with 400', async () => {
+    srv = startServer({ store: ownerStore(), catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues/kinda-bad/songs?artist=A&title=B&submitterName=${encodeURIComponent('<i>S</i>')}`, {
+      method: 'POST',
+      headers: { Cookie: 'sts_session=s' },
+      body: 'x',
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+    expect(extractLyricsMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('song upload route — availability gate (T014)', () => {

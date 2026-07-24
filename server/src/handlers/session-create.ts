@@ -8,6 +8,12 @@ import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 import { validateDisplayName } from '../input-validation.js';
 
 export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-create' }>): void {
+  const displayNameResult = validateDisplayName(message.displayName);
+  if (!displayNameResult.ok) {
+    ctx.connections.send(socket, { type: 'error', message: 'Display name is invalid' });
+    return;
+  }
+
   const hostId = crypto.randomUUID();
   const session = ctx.sessionStore.create(hostId);
 
@@ -19,7 +25,7 @@ export function handleSessionCreate(ctx: HandlerContext, socket: WebSocket, mess
 
   session.participants.push({
     id: hostId,
-    displayName: validateDisplayName(message.displayName),
+    displayName: displayNameResult.value,
     role: 'host',
     connectionStatus: 'connected',
     selectedPart: null,

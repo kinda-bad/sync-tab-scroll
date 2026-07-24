@@ -2,6 +2,7 @@
   import Modal from './Modal.svelte';
   import Button from './Button.svelte';
   import ListRow from './ListRow.svelte';
+  import { fieldValidationError } from '../input-validation';
 
   // In-app authoring surface (ui.md In-App Authoring, Phase 2) — a standalone
   // modal opened from AccountMenu's "My catalogues" entry (T011), never a tab
@@ -24,6 +25,22 @@
   let createError: string | null = null;
   let creating = false;
 
+  // T009: non-authoritative inline feedback mirroring server/src/catalogue-
+  // authoring-routes.ts's validateField caps — UX only, the actual
+  // enforcement is server-side.
+  let slugError: string | null = null;
+  let nameError: string | null = null;
+  let keyError: string | null = null;
+  function handleSlugBlur() {
+    slugError = fieldValidationError(slug, 64, 'Slug');
+  }
+  function handleNameBlur() {
+    nameError = fieldValidationError(name, 128, 'Name');
+  }
+  function handleKeyBlur() {
+    keyError = fieldValidationError(key, 256, 'Activation key');
+  }
+
   function resetCreateForm(): void {
     showCreateForm = false;
     slug = '';
@@ -31,6 +48,9 @@
     visibility = 'public';
     key = '';
     createError = null;
+    slugError = null;
+    nameError = null;
+    keyError = null;
     creating = false;
   }
 
@@ -70,6 +90,21 @@
   let songUploadState: SongUploadState = 'idle';
   let songUploadError: string | null = null;
 
+  // T011: non-authoritative inline feedback mirroring server/src/song-
+  // upload-route.ts's validateField caps — UX only.
+  let artistError: string | null = null;
+  let titleError: string | null = null;
+  let submitterNameError: string | null = null;
+  function handleArtistBlur() {
+    artistError = fieldValidationError(artist, 128, 'Artist');
+  }
+  function handleTitleBlur() {
+    titleError = fieldValidationError(title, 128, 'Title');
+  }
+  function handleSubmitterNameBlur() {
+    submitterNameError = fieldValidationError(submitterName, 128, 'Submitter name');
+  }
+
   function toggleSongPanel(catalogueId: string): void {
     openSongPanelFor = openSongPanelFor === catalogueId ? null : catalogueId;
     artist = '';
@@ -79,6 +114,9 @@
     songFile = undefined;
     songUploadState = 'idle';
     songUploadError = null;
+    artistError = null;
+    titleError = null;
+    submitterNameError = null;
   }
 
   function submitSong(catalogueId: string): void {
@@ -194,9 +232,12 @@
             }}
           >
             <input type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx" bind:files={songFile} required aria-label="Guitar Pro file" />
-            <input type="text" placeholder="Artist" bind:value={artist} required />
-            <input type="text" placeholder="Title" bind:value={title} required />
-            <input type="text" placeholder="Submitter name" bind:value={submitterName} required />
+            <input type="text" placeholder="Artist" bind:value={artist} onblur={handleArtistBlur} required />
+            {#if artistError}<p class="form-error">{artistError}</p>{/if}
+            <input type="text" placeholder="Title" bind:value={title} onblur={handleTitleBlur} required />
+            {#if titleError}<p class="form-error">{titleError}</p>{/if}
+            <input type="text" placeholder="Submitter name" bind:value={submitterName} onblur={handleSubmitterNameBlur} required />
+            {#if submitterNameError}<p class="form-error">{submitterNameError}</p>{/if}
             <label><input type="checkbox" bind:checked={tosAccepted} /> I have the right to distribute this song</label>
             {#if songUploadState === 'uploading'}
               <p class="song-status">Uploading…</p>
@@ -248,12 +289,15 @@
         void submitCreate();
       }}
     >
-      <input type="text" placeholder="Slug (e.g. my-band)" bind:value={slug} required />
-      <input type="text" placeholder="Display name" bind:value={name} required />
+      <input type="text" placeholder="Slug (e.g. my-band)" bind:value={slug} onblur={handleSlugBlur} required />
+      {#if slugError}<p class="form-error">{slugError}</p>{/if}
+      <input type="text" placeholder="Display name" bind:value={name} onblur={handleNameBlur} required />
+      {#if nameError}<p class="form-error">{nameError}</p>{/if}
       <label><input type="radio" name="visibility" value="public" bind:group={visibility} /> Public</label>
       <label><input type="radio" name="visibility" value="private" bind:group={visibility} /> Private</label>
       {#if visibility === 'private'}
-        <input type="text" placeholder="Activation key" bind:value={key} required />
+        <input type="text" placeholder="Activation key" bind:value={key} onblur={handleKeyBlur} required />
+        {#if keyError}<p class="form-error">{keyError}</p>{/if}
       {/if}
       {#if createError}
         <p class="form-error">{createError}</p>

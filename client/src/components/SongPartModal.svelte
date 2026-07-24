@@ -5,6 +5,7 @@
   import Button from './Button.svelte';
   import TextInput from './TextInput.svelte';
   import { partDisplayNames } from '../part-display-name';
+  import { activationKeyError } from '../input-validation';
 
   export let open: boolean;
   export let dismissible: boolean;
@@ -26,6 +27,12 @@
   // (ui.md, infrastructure.md). Reset on submit.
   let showUnlock = false;
   let keyInput = '';
+  // Non-authoritative inline feedback (T004/T005) — shown once the field is
+  // blurred, mirroring the server's reject rules; UX only.
+  let keyError: string | null = null;
+  function handleKeyBlur() {
+    keyError = activationKeyError(keyInput);
+  }
 
   $: session = $clientStore.session;
   $: wsClient = $clientStore.wsClient;
@@ -64,6 +71,7 @@
     // (ws-client.ts), same terse pattern as every other error here (ui.md).
     wsClient?.send({ type: 'catalogue-unlock', key: keyInput });
     keyInput = '';
+    keyError = null;
     showUnlock = false;
   }
 
@@ -122,11 +130,11 @@
         <div class="unlock-control">
           {#if showUnlock}
             <form class="unlock-form" on:submit|preventDefault={submitUnlock}>
-              <TextInput label="Activation key" bind:value={keyInput} placeholder="Enter activation key" />
-              <Button type="submit" variant="riot" label="Unlock" />
+              <TextInput label="Activation key" bind:value={keyInput} placeholder="Enter activation key" error={keyError} onblur={handleKeyBlur} />
+              <Button type="submit" variant="riot" label="Unlock" disabled={!!keyError} />
             </form>
           {:else}
-            <Button variant="ghost" label="Enter activation key" onclick={() => { showUnlock = true; keyInput = ''; }} />
+            <Button variant="ghost" label="Enter activation key" onclick={() => { showUnlock = true; keyInput = ''; keyError = null; }} />
           {/if}
         </div>
       {/if}

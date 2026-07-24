@@ -40,7 +40,7 @@ test('lobby with song/part modal, then settings modal, fits a phone screen', asy
   await expect(page.getByRole('button', { name: 'Select' }).first()).toBeVisible();
   await expectNoHorizontalOverflow(page, 'lobby with song/part modal open');
 
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
   await expect(page.getByRole('dialog', { name: 'Song & part' })).not.toBeVisible();
   await expectNoHorizontalOverflow(page, 'lobby, no modal');
@@ -52,7 +52,7 @@ test('lobby with song/part modal, then settings modal, fits a phone screen', asy
 
 test('narrow (360px): lobby, member settings modal, error toast fit', async ({ page, browser }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
   await expect(page.getByRole('dialog', { name: 'Song & part' })).not.toBeVisible();
   const code = (await page.getByText(/Join code:/).textContent())?.match(/[A-Z2-9]{4}/)?.[0];
@@ -104,7 +104,7 @@ test('narrow (360px): lobby, member settings modal, error toast fit', async ({ p
 
 test('playback view fits a phone screen', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
   await expect(page.getByRole('dialog', { name: 'Song & part' })).not.toBeVisible();
 
@@ -126,7 +126,7 @@ test('playback view fits a phone screen', async ({ page }) => {
 
 test('full-lyrics view (lyrics part) fits a phone screen', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last part row — auto-closes the modal
   await expect(page.getByRole('dialog', { name: 'Song & part' })).not.toBeVisible();
 

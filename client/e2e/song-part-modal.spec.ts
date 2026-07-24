@@ -55,7 +55,7 @@ test('selecting a part auto-closes the modal', async ({ page }) => {
   const modal = page.getByRole('dialog', { name: 'Song & part' });
   await expect(modal).toBeVisible({ timeout: 10_000 });
 
-  await modal.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await modal.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await modal.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part
 
   await expect(modal).not.toBeVisible();
@@ -91,7 +91,7 @@ test('"Change song" shows the catalog list again, not a no-op', async ({ page })
 
   const modal = page.getByRole('dialog', { name: 'Song & part' });
   await expect(modal).toBeVisible({ timeout: 10_000 });
-  await modal.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await modal.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
 
   // Now showing the "song selected" summary, not the catalog list.
   await expect(modal.getByText('Catalog')).not.toBeVisible();
@@ -108,7 +108,7 @@ test('"Change song" shows the catalog list again, not a no-op', async ({ page })
 test('the Playback view shows which part is currently selected', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
 
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
 
   const session = await readStoredSession(page);

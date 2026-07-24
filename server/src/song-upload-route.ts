@@ -7,6 +7,13 @@ import type { AccountStore } from './accounts/store.js';
 import { resolveUserIdFromCookie } from './auth/session.js';
 import { rescanAndBroadcastCatalog } from './authoring-rescan.js';
 import type { HandlerContext } from './handlers/context.js';
+import { validateField } from './input-validation.js';
+
+// T010: artist/title/submitterName field cap (implementation-time judgment,
+// following input-validation.ts's precedent — plan's Open Questions). These
+// feed buildStagedFilename's path construction below, so a reject-not-
+// sanitize check runs before that ever happens.
+const FIELD_MAX_LENGTH = 128;
 
 const ROUTE = /^\/catalogues\/([^/]+)\/songs$/;
 
@@ -194,6 +201,27 @@ export function createSongUploadRequestHandler(opts: SongUploadRouteOptions): (r
     const submitterName = url.searchParams.get('submitterName')?.trim();
     if (!artist || !title || !submitterName) {
       json(res, 400, { error: 'artist, title, and submitterName query params are required' });
+      req.resume();
+      return;
+    }
+
+    // T010: reject (not sanitize) control/HTML-char/over-length input in
+    // artist/title/submitterName, same contract as every other validated
+    // surface (infrastructure.md Input Validation) — crucially BEFORE
+    // buildStagedFilename(artist, title) below builds a filesystem path
+    // from them.
+    if (!validateField(artist, FIELD_MAX_LENGTH).ok) {
+      json(res, 400, { error: 'artist is invalid' });
+      req.resume();
+      return;
+    }
+    if (!validateField(title, FIELD_MAX_LENGTH).ok) {
+      json(res, 400, { error: 'title is invalid' });
+      req.resume();
+      return;
+    }
+    if (!validateField(submitterName, FIELD_MAX_LENGTH).ok) {
+      json(res, 400, { error: 'submitterName is invalid' });
       req.resume();
       return;
     }

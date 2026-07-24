@@ -21,7 +21,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
   // entirely once a song/part was picked).
   await expect(page.getByText(/Join code:/)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
 
   // Still visible after song and part selection.
@@ -38,7 +38,7 @@ test('instrument part: Lobby → Playback shows a rendered tab canvas', async ({
 
 test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canvas', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).last().click(); // Lyrics is the last row in Lobby.svelte's part list — auto-closes the modal
 
   const session = await readStoredSession(page);
@@ -58,7 +58,7 @@ test('lyrics part: Lobby → Playback shows the full-lyrics view, not a tab canv
 test('Start closes the settings modal (plan-settings-modal-redesign T012)', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
 
-  await page.getByRole('button', { name: 'Select' }).first().click(); // pick the song
+  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
 
   const session = await readStoredSession(page);

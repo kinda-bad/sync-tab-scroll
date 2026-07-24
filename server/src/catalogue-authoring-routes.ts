@@ -7,6 +7,16 @@ import { resolveUserIdFromCookie } from './auth/session.js';
 import { signValue, verifySignedValue } from './auth/cookies.js';
 import { rescanAndBroadcastCatalog } from './authoring-rescan.js';
 import type { HandlerContext } from './handlers/context.js';
+import { validateField } from './input-validation.js';
+
+// T008/T010: Phase 2 authoring field caps (implementation-time judgment,
+// following input-validation.ts's 64/256-char precedent — plan's Open
+// Questions). slug/name/artist/title/submitterName are short display-ish
+// fields; the activation key reuses the same 256-char cap as the WS
+// catalogue-unlock key.
+const SLUG_MAX_LENGTH = 64;
+const NAME_MAX_LENGTH = 128;
+const KEY_MAX_LENGTH = 256;
 
 const CREATE_ROUTE = '/catalogues';
 const INVITE_GENERATE_ROUTE = /^\/catalogues\/([^/]+)\/invite$/;
@@ -77,8 +87,27 @@ export function createCatalogueAuthoringRequestHandler(opts: CatalogueAuthoringR
       json(res, 400, { error: 'slug, name, and visibility (public|private) are required' });
       return;
     }
+
+    // T008: reject (not sanitize) control/HTML-char/over-length input in
+    // slug/name, same contract as the WS handlers (infrastructure.md Input
+    // Validation) — alongside the presence/type checks above.
+    const slugResult = validateField(slug, SLUG_MAX_LENGTH);
+    if (!slugResult.ok) {
+      json(res, 400, { error: 'slug is invalid' });
+      return;
+    }
+    const nameResult = validateField(name, NAME_MAX_LENGTH);
+    if (!nameResult.ok) {
+      json(res, 400, { error: 'name is invalid' });
+      return;
+    }
+
     if (visibility === 'private' && (typeof key !== 'string' || !key)) {
       json(res, 400, { error: 'a private catalogue requires a key' });
+      return;
+    }
+    if (visibility === 'private' && typeof key === 'string' && !validateField(key, KEY_MAX_LENGTH).ok) {
+      json(res, 400, { error: 'key is invalid' });
       return;
     }
 

@@ -93,6 +93,56 @@ describe('POST /catalogues — create catalogue (T012)', () => {
     expect(fs.existsSync(path.join(catalogRoot, 'secret-band', 'catalogue.json'))).toBe(true);
   });
 
+  // T008: applies the generalized validateField (input-validation.ts) to
+  // slug/name/key before proceeding, rejecting with the route's existing
+  // 400 shape — same reject-not-sanitize contract as the WS handlers
+  // (infrastructure.md Input Validation).
+  it('rejects an invalid slug (control/HTML chars) with 400 and does not create the directory', async () => {
+    const store = signedInStore();
+    srv = startServer({ store, catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: 'sts_session=s' },
+      body: JSON.stringify({ slug: '<script>', name: 'My Band', visibility: 'public' }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+    expect(fs.existsSync(path.join(catalogRoot, '<script>'))).toBe(false);
+  });
+
+  it('rejects an invalid name (control/HTML chars) with 400', async () => {
+    const store = signedInStore();
+    srv = startServer({ store, catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: 'sts_session=s' },
+      body: JSON.stringify({ slug: 'my-band', name: '<b>My Band</b>', visibility: 'public' }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+  });
+
+  it('rejects an invalid activation key (control/HTML chars) with 400 for a private catalogue', async () => {
+    const store = signedInStore();
+    srv = startServer({ store, catalogRoot });
+
+    const res = await fetch(`${srv.base}/catalogues`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: 'sts_session=s' },
+      body: JSON.stringify({ slug: 'my-band', name: 'My Band', visibility: 'private', key: '<b>key</b>' }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid/i);
+  });
+
   it('rejects a duplicate slug with 409', async () => {
     const store = signedInStore();
     store.createOwnership = vi.fn(async (input) => ({ id: 'o1', createdAt: 0, ...input }));
