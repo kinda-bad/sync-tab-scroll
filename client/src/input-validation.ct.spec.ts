@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/experimental-ct-svelte';
 import LandingHarness from './test-harness/LandingHarness.svelte';
 import SongPartModalHarness from './test-harness/SongPartModalHarness.svelte';
+import AuthoringModal from './components/AuthoringModal.svelte';
 import type { Session } from '@sync-tab-scroll/shared';
 
 function hostSession(): Session {
@@ -96,4 +97,69 @@ test('Activation key input shows inline feedback for a control/HTML-char value',
   await component.getByLabel('Activation key').blur();
 
   await expect(component.getByText(/invalid/i)).toBeVisible();
+});
+
+// T009: create-catalogue form (slug/name/key) inline feedback, mirroring
+// T004's pattern.
+test('AuthoringModal create-catalogue form shows inline feedback for an invalid slug', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: [] } });
+  await modal.getByText('Create catalogue').click();
+
+  await modal.getByPlaceholder('Slug (e.g. my-band)').fill('<script>');
+  await modal.getByPlaceholder('Slug (e.g. my-band)').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
+});
+
+test('AuthoringModal create-catalogue form shows inline feedback for an invalid name', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: [] } });
+  await modal.getByText('Create catalogue').click();
+
+  await modal.getByPlaceholder('Display name').fill('<b>My Band</b>');
+  await modal.getByPlaceholder('Display name').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
+});
+
+test('AuthoringModal create-catalogue form shows inline feedback for an invalid activation key', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: [] } });
+  await modal.getByText('Create catalogue').click();
+  await modal.getByLabel('Private').check();
+
+  await modal.getByPlaceholder('Activation key').fill('<b>key</b>');
+  await modal.getByPlaceholder('Activation key').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
+});
+
+// T011: add-song form (artist/title/submitterName) inline feedback,
+// mirroring T004's pattern.
+test('AuthoringModal add-song form shows inline feedback for an invalid artist', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: ['my-band'] } });
+  await modal.getByRole('button', { name: 'Add song' }).click();
+
+  await modal.getByPlaceholder('Artist').fill('<script>');
+  await modal.getByPlaceholder('Artist').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
+});
+
+test('AuthoringModal add-song form shows inline feedback for an invalid title', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: ['my-band'] } });
+  await modal.getByRole('button', { name: 'Add song' }).click();
+
+  await modal.getByPlaceholder('Title').fill('<b>Title</b>');
+  await modal.getByPlaceholder('Title').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
+});
+
+test('AuthoringModal add-song form shows inline feedback for an invalid submitterName', async ({ mount }) => {
+  const modal = await mount(AuthoringModal, { props: { open: true, ownedCatalogueIds: ['my-band'] } });
+  await modal.getByRole('button', { name: 'Add song' }).click();
+
+  await modal.getByPlaceholder('Submitter name').fill('<i>S</i>');
+  await modal.getByPlaceholder('Submitter name').blur();
+
+  await expect(modal.getByText(/invalid/i)).toBeVisible();
 });
