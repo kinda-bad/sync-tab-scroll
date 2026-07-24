@@ -14,8 +14,8 @@ status: in-progress
 
 ## Phase 2: Client Validation — displayName + Activation Key
 
-- [ ] T004 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/input-validation.ct.spec.ts`) asserting the Landing View's "Your name" input and the Lobby's activation-key input show inline validation feedback (e.g. a field-level error message) when the entered value contains control/HTML characters or exceeds the server's max length, mirroring `input-validation.ts`'s rules (64/256-char caps). Confirm it fails (no such client-side check exists yet).
-- [ ] T005 [artifacts: ui] Add the non-authoritative client-side checks to `client/src/views/Landing.svelte`'s name input and the activation-key input component, surfacing the inline feedback T004 tests for. Make T004 pass. This is UX only — does not replace or weaken the server-side reject from Phase 1.
+- [x] T004 [artifacts: ui] [parallel] Write a failing Playwright CT spec (new `client/src/input-validation.ct.spec.ts`) asserting the Landing View's "Your name" input and the Lobby's activation-key input show inline validation feedback (e.g. a field-level error message) when the entered value contains control/HTML characters or exceeds the server's max length, mirroring `input-validation.ts`'s rules (64/256-char caps). Confirm it fails (no such client-side check exists yet).
+- [x] T005 [artifacts: ui] Add the non-authoritative client-side checks to `client/src/views/Landing.svelte`'s name input and the activation-key input component, surfacing the inline feedback T004 tests for. Make T004 pass. This is UX only — does not replace or weaken the server-side reject from Phase 1.
 
 ## Phase 3: Join-Code Field Audit
 

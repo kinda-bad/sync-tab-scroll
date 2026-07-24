@@ -6,11 +6,19 @@
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
   import AccountMenu from '../components/AccountMenu.svelte';
+  import { displayNameError } from '../input-validation';
 
   let mode: 'choice' | 'create' | 'join' = 'choice';
 
   let displayName = '';
   let joinCode = '';
+
+  // Non-authoritative inline feedback (T004/T005) — only shown once the
+  // field has been touched (blurred), not on every keystroke while typing.
+  let nameError: string | null = null;
+  function handleNameBlur() {
+    nameError = displayNameError(displayName);
+  }
 
   onMount(() => {
     const stored = loadStoredSession();
@@ -71,15 +79,15 @@
       {/if}
     {:else if mode === 'create'}
       <form onsubmit={(e) => { e.preventDefault(); createSession(); }}>
-        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
-        <Button variant="riot" type="submit" label="Create session" disabled={!displayName} />
+        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} error={nameError} onblur={handleNameBlur} />
+        <Button variant="riot" type="submit" label="Create session" disabled={!displayName || !!nameError} />
         <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
       </form>
     {:else if mode === 'join'}
       <form onsubmit={(e) => { e.preventDefault(); joinSession(); }}>
-        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} />
+        <TextInput label="Your name" placeholder="Musician" bind:value={displayName} error={nameError} onblur={handleNameBlur} />
         <TextInput label="Session code" placeholder="AB12" uppercase bind:value={joinCode} />
-        <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode} />
+        <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode || !!nameError} />
         <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
       </form>
     {/if}

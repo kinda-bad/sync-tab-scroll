@@ -3,6 +3,11 @@
   export let value: string = '';
   export let placeholder: string = '';
   export let uppercase = false;
+  // Non-authoritative inline validation feedback (T004/T005) — a caller-
+  // computed message (or null) shown under the field; purely UX, the actual
+  // enforcement always stays server-side (infrastructure.md Input Validation).
+  export let error: string | null = null;
+  export let onblur: (() => void) | undefined = undefined;
 </script>
 
 <label class="field">
@@ -13,7 +18,12 @@
     {placeholder}
     class="field-input"
     class:uppercase
+    class:has-error={!!error}
+    {onblur}
   />
+  {#if error}
+    <span class="field-error">{error}</span>
+  {/if}
 </label>
 
 <style>
@@ -53,5 +63,15 @@
   .field-input:focus {
     outline: none;
     border-color: var(--riot);
+  }
+
+  .field-input.has-error {
+    border-color: var(--riot);
+  }
+
+  .field-error {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--riot);
   }
 </style>
