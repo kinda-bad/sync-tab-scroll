@@ -13,23 +13,23 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * Reproduction for plan-f841-2026-07-24-bdce.md: live two-tab manual
+ * Regression coverage for plan-f841-2026-07-24-bdce.md: live two-tab manual
  * verification (tasks-lobby-cursor-modes-0bea.md T010, scenario 2) found
  * that with Spotlight mode ON, a host setting `session.lobbyCursorTick`
- * never moves a participant's `api.tickPosition` — even though real synth
+ * never moved a participant's `api.tickPosition` — even though real synth
  * playback (the same `isReadyForPlayback`-gated `clientStore.subscribe`
  * callback in `playback-engine.ts`) is proven to work correctly elsewhere
- * in this file's "real playback emits real tempo" test. This spec mounts
- * the same harness, waits for `isReadyForPlayback` (the established
- * polling pattern from `full-lyrics-view.ct.spec.ts` /
- * `playback-engine.ct.spec.ts`'s real-playback test), then drives the
- * mounted `clientStore` to a session with `spotlightMode: true` and a
- * fresh `lobbyCursorTick`, and asserts `api.tickPosition` actually moves
- * to that value.
- *
- * Expected to be RED on completion (constitution Principle VII, red-first)
- * — a passing result here would mean this reproduction failed to capture
- * the live-verified bug, not that the bug is fixed.
+ * in this file's "real playback emits real tempo" test. Root cause (T002):
+ * two of `correctDrift`'s own sub-blocks in `playback-sync.ts` fought the
+ * Spotlight-follow assignment while `playbackState.status === 'stopped'`
+ * (the pre-playback Lobby state Spotlight mode targets) — fixed in T003 by
+ * exempting both on a boolean `spotlightHoldingTick`. This spec mounts the
+ * same harness, waits for `isReadyForPlayback` (the established polling
+ * pattern from `full-lyrics-view.ct.spec.ts` / `playback-engine.ct.spec.ts`'s
+ * real-playback test), then drives the mounted `clientStore` to a session
+ * with `spotlightMode: true` and a fresh `lobbyCursorTick`, and asserts
+ * `api.tickPosition` actually moves to (and stays at) roughly that value.
+ * This test was red before the T003 fix (constitution Principle VII).
  */
 function makeSession(overrides: { hostId: string; spotlightMode: boolean; lobbyCursorTick: number | null }) {
   return {
@@ -87,4 +87,37 @@ test('Spotlight mode force-follow moves a non-host participant view to the host-
   await page.waitForTimeout(1000);
   const after = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
   expect(after).toBeGreaterThan(4000);
+});
+
+/**
+ * T004 (plan-f841-2026-07-24-bdce.md Phase 3): scenario 1 (Spotlight off ⇒
+ * no follow) already passed live re-verification per T010, but had no CT
+ * coverage — cheap to add now that this harness/pattern exists, and it
+ * closes the same live-verified-but-previously-uncovered gap T010 found for
+ * scenario 2. Reuses `makeSession` with `spotlightMode: false` and asserts
+ * `api.tickPosition` is unchanged after a `lobbyCursorTick` update.
+ */
+test('Spotlight mode off leaves a non-host participant view unchanged after a lobbyCursorTick update', async ({ mount, page }) => {
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+  await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { isReadyForPlayback: boolean } }).__getApi().isReadyForPlayback), {
+      timeout: 15_000,
+    })
+    .toBe(true);
+
+  const before = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+
+  await page.evaluate((session) => {
+    (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore.update((s) => ({
+      ...(s as object),
+      selfParticipantId: 'member-1',
+      session,
+    }));
+  }, makeSession({ hostId: 'host-1', spotlightMode: false, lobbyCursorTick: 4800 }));
+
+  await page.waitForTimeout(1_000);
+  const after = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+  expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
 });
