@@ -23,7 +23,7 @@ status: in-progress
 
 - [x] T008 [artifacts: ui] In whichever module holds the persistent per-participant alphaTab instance and its `clientStore` subscriptions (`client/src/playback-engine.ts`, following the same pattern as the existing drift-correction subscription that calls `correctDrift`/`applyPlaybackSettings` from `client/src/playback-sync.ts`), add a subscription reacting to `session.lobbyCursorTick` changes: only when `session.spotlightMode === true`, set `api.tickPosition = session.lobbyCursorTick` (skip if `lobbyCursorTick` is `null`). When `spotlightMode` is `false`, the subscription must not touch `api.tickPosition` at all.
 - [x] T009 [artifacts: ui] In `client/src/views/Lobby.svelte`, add a host-only "Spotlight mode" toggle `Button` (reuse the existing `Button` component per `brand.md`'s established patterns) placed next to the existing "Set lobby cursor"/"Clear" controls. Clicking it sends `{ type: 'spotlight-mode-set', enabled: !session.spotlightMode }` over the client's websocket connection (following the same send pattern used by the existing lobby-cursor controls). Only render this toggle when the current participant is the host (mirror the existing host-only conditional already guarding the lobby-cursor controls).
-- [ ] T010 [partial: scenario 3 now covered automatically; scenarios 1–2 still unverified] [blocked: browser automation unavailable] Manual browser verification (two tabs/participants, both with a part selected so both have a rendered/persistent alphaTab instance per the existing T011c persistent-engine design): with Spotlight mode **off**, host sets the lobby cursor and confirm the other participant's view does not move. Toggle Spotlight mode **on**, host sets the lobby cursor again, confirm the other participant's view snaps to match. Host clicks Start, then Stop to return to Lobby, and confirm Spotlight mode has auto-reset to off (toggle UI shows off, and setting the lobby cursor again does not force-follow until re-enabled). Report results; do not mark this task complete until verified live, not just code-reviewed. **Blocked during implementation:** the claude-in-chrome browser extension's `type` action failed repeatedly ("Cannot access a chrome-extension:// URL of different extension") across a fresh navigation and multiple retries — clicks/screenshots worked, typing didn't. Deferred at the user's direction (2026-07-02); dev servers were left running (client `:5180` via `pnpm --filter client dev --port 5180 --strictPort`, server `:8080` via `CATALOG_ROOT=<repo>/catalog pnpm --filter server dev`). Steps to verify manually: open `http://localhost:5180` in one tab (host, "Create session"), `http://127.0.0.1:5180` in another (join with the session code, avoids shared localStorage) — then follow the steps above.
+- [x] T010 [partial: scenario 3 now covered automatically; scenarios 1–2 still unverified] [blocked: browser automation unavailable] Manual browser verification (two tabs/participants, both with a part selected so both have a rendered/persistent alphaTab instance per the existing T011c persistent-engine design): with Spotlight mode **off**, host sets the lobby cursor and confirm the other participant's view does not move. Toggle Spotlight mode **on**, host sets the lobby cursor again, confirm the other participant's view snaps to match. Host clicks Start, then Stop to return to Lobby, and confirm Spotlight mode has auto-reset to off (toggle UI shows off, and setting the lobby cursor again does not force-follow until re-enabled). Report results; do not mark this task complete until verified live, not just code-reviewed. **Blocked during implementation:** the claude-in-chrome browser extension's `type` action failed repeatedly ("Cannot access a chrome-extension:// URL of different extension") across a fresh navigation and multiple retries — clicks/screenshots worked, typing didn't. Deferred at the user's direction (2026-07-02); dev servers were left running (client `:5180` via `pnpm --filter client dev --port 5180 --strictPort`, server `:8080` via `CATALOG_ROOT=<repo>/catalog pnpm --filter server dev`). Steps to verify manually: open `http://localhost:5180` in one tab (host, "Create session"), `http://127.0.0.1:5180` in another (join with the session code, avoids shared localStorage) — then follow the steps above.
 
 ## Phase 4: Remaining artifact revisions
 
@@ -53,3 +53,48 @@ status: in-progress
 > checking it off would be a false record. The cheap way to close this is
 > CT coverage of the force-follow path rather than another manual pass;
 > that is real work and belongs in a plan, not in a status edit.
+
+> **T010 checked off 2026-07-24** via `plan-f841-2026-07-24-bdce.md` /
+> `tasks-f841-8faf.md` (F001: live two-tab verification found scenario 2
+> — Spotlight on ⇒ force-follow — genuinely broken in production, not
+> just "unverified"; root-caused and fixed there).
+>
+> - **T001 (that plan's red-first CT spec)** reproduced the failure
+>   deterministically: `client/src/spotlight-follow.ct.spec.ts` mounted
+>   the real engine, drove `clientStore` to `spotlightMode: true` plus a
+>   fresh `lobbyCursorTick`, and confirmed `api.tickPosition` never
+>   settled on the target tick against pre-fix code.
+> - **T002's diagnosis:** not the `isReadyForPlayback` gate and not
+>   `clientStore.subscribe` failing to re-fire (both suspected, both
+>   ruled out). Root cause was `correctDrift()` in
+>   `client/src/playback-sync.ts` fighting the Spotlight-follow
+>   assignment on every subsequent subscribe fire while
+>   `playbackState.status === 'stopped'` (the pre-playback Lobby state
+>   Spotlight targets) — via two sub-blocks: the stopped-state reset, and
+>   (the dominant culprit) the drift-correction/extrapolation resync,
+>   which re-snapped a non-host participant's tick back toward the stale
+>   `playbackState.tickPosition` even while stopped/paused (deliberately,
+>   so a host seek-while-paused still propagates, T011/F002).
+> - **T003's fix:** exempted both `correctDrift` sub-blocks with a
+>   boolean `spotlightHoldingTick` (`spotlightMode && lobbyCursorTick !==
+>   null`) — boolean rather than an exact-tick comparison, since
+>   alphaTab's own `tickPosition` setter doesn't round-trip exactly.
+>   Scoped narrowly enough that scenarios 1 and 3 (both already passing)
+>   are unaffected: spotlight off or reset ⇒ the exemption is `false` ⇒
+>   `correctDrift` behaves exactly as before.
+> - **T004:** full suite green — client vitest (153 tests), server
+>   vitest (318 tests), client CT (232 tests, including a new scenario-1
+>   CT assertion added alongside T001's spec).
+> - **T005 (this task's live re-verification):** two real browser tabs
+>   (`http://localhost:5180` host, `http://127.0.0.1:5180` participant,
+>   both with a part selected, Brave "tester" profile via
+>   claude-in-chrome) — host enabled Spotlight mode via the Settings
+>   modal's Session tab, set the lobby cursor to tick 4800, and the
+>   participant's alphaTab cursor visibly snapped from bar 1 to bar 2
+>   (matching tick 4800) and stayed there under observation. **Pass** —
+>   scenario 2 confirmed live, matching the CT coverage.
+>
+> Scenarios 1 and 3 were already covered (scenario 3 automatically per
+> the 2026-07-20 note above; scenario 1 gained CT coverage in this same
+> plan's T004). All three scenarios this task originally asked for are
+> now verified, live or by test.
