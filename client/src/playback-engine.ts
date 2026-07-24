@@ -647,6 +647,27 @@ export function __getEngineStateForTesting(): { api: AlphaTabApi; scoreLoaded: b
   return state;
 }
 
+/**
+ * Test-only accessor for e2e specs (T019, tasks-recording-drift-foundation)
+ * — the production bundle has no other window-reachable handle on the
+ * engine, so e2e (real preview build, real browser context, no test-harness
+ * component) needs a minimal read-only surface to assert real separation
+ * between two independently-driven participant pages. Mirrors exactly how
+ * `RecordingDriftHarness.svelte` (T001) reaches ground truth: in recording
+ * mode, `api.tickPosition` tracks the backing track's own
+ * `HTMLAudioElement.currentTime` to ±5ms (infra.md), not the synth's
+ * scheduled position, so the audio element's `currentTime` — not
+ * `tickPosition` — is the trustworthy separation signal this returns.
+ * Wired onto `window` unconditionally from main.ts (not env-gated): it's a
+ * read-only snapshot, not a control surface, so shipping it in production
+ * carries no behavioral or security risk.
+ */
+export function __getPlaybackPositionForE2E(): { tickPosition: number; audioCurrentTimeMs: number | null } | undefined {
+  if (!state) return undefined;
+  const audioEl = (state.api.player?.output as unknown as { audioElement?: HTMLAudioElement } | undefined)?.audioElement;
+  return { tickPosition: state.api.tickPosition, audioCurrentTimeMs: audioEl ? audioEl.currentTime * 1000 : null };
+}
+
 export function setEngineTheme(theme: Theme): void {
   if (!state) return;
   state.theme = theme;

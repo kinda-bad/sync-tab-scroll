@@ -60,7 +60,7 @@ status: in-progress
 
 ## Phase 5: End-to-End Verification
 
-- [ ] T019 Add a Playwright e2e spec in `client/e2e/` driving two participants in a recording-mode session through a full play → pause → seek → resume → stop cycle, asserting separation stays within the 50ms bar throughout. **This is the first test with independent `play()` calls, real network transport, and no shared audio stack** — every Phase 1 number was measured on one machine, one page, one shared audio context, and is explicitly a *lower bound*. A failure here is a real finding about the design, not a flaky test; investigate rather than retry. Use the existing `client/e2e/helpers.ts` harness.
+- [x] T019 Add a Playwright e2e spec in `client/e2e/` driving two participants in a recording-mode session through a full play → pause → seek → resume → stop cycle, asserting separation stays within the 50ms bar throughout. **This is the first test with independent `play()` calls, real network transport, and no shared audio stack** — every Phase 1 number was measured on one machine, one page, one shared audio context, and is explicitly a *lower bound*. A failure here is a real finding about the design, not a flaky test; investigate rather than retry. Use the existing `client/e2e/helpers.ts` harness.
 
 - [ ] T020 Run the full suite (vitest, CT, e2e) and confirm synth-only sessions are bit-for-bit unchanged — the default path must not move. Any behavioral difference in a synth-only session is a regression in this feature, not an acceptable side effect. Investigate and fix, or explicitly document, any diff.
 
