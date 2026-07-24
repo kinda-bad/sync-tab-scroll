@@ -9,7 +9,12 @@ import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 import { validateDisplayName } from '../input-validation.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
-  const displayName = validateDisplayName(message.displayName);
+  const displayNameResult = validateDisplayName(message.displayName);
+  if (!displayNameResult.ok) {
+    ctx.connections.send(socket, { type: 'error', message: 'Display name is invalid' });
+    return;
+  }
+  const displayName = displayNameResult.value;
   const session = ctx.sessionStore.get(message.code);
   if (!session) {
     // Typed terminal signal (F001) rather than a stringly-typed `error`: the

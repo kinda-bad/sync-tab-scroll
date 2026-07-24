@@ -130,16 +130,18 @@ describe('catalogue-unlock', () => {
     expect(sent[0].type).toBe('error');
   });
 
-  // T003: input-validation hardening (feedback-input-sanitization-hardening-7a9a
-  // F001) — the key is sanitized (control chars/HTML special chars stripped)
-  // before being checked against the stored hash.
-  it('T003: sanitizes the key (a key with injected control chars around the real key still unlocks)', () => {
-    const { ctx, session, hostSocket, broadcasts } = withHostSession();
+  // T003: input-validation reject behavior (infrastructure.md Input
+  // Validation, feedback-input-sanitization-hardening-7a9a F001) — a key
+  // containing control/HTML chars is rejected with an error, not
+  // sanitized/mutated and checked against the stored hash.
+  it('T003: rejects a key containing control characters with an error and does not unlock', () => {
+    const { ctx, session, hostSocket, sent, broadcasts } = withHostSession();
 
     handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: `\x00${KEY}\x07` });
 
-    expect(session.unlockedCatalogueIds).toEqual(['premium-pack']);
-    expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
+    expect(session.unlockedCatalogueIds).toEqual([]);
+    expect(broadcasts).toEqual([]);
+    expect(sent).toEqual([{ type: 'error', message: 'Activation key is invalid' }]);
   });
 
   describe('persisting the unlock for a logged-in host (T013)', () => {

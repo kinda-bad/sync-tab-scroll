@@ -197,15 +197,32 @@ describe('session-join', () => {
     expect(fired).toBe(false);
   });
 
-  // T003: input-validation hardening (feedback-input-sanitization-hardening-7a9a
-  // F001).
-  it('T003: sanitizes displayName (strips control chars and HTML special chars)', () => {
+  // T003: input-validation reject behavior (infrastructure.md Input
+  // Validation, feedback-input-sanitization-hardening-7a9a F001) — invalid
+  // displayName is rejected with an error message, not sanitized/mutated
+  // and accepted.
+  it('T003: rejects an invalid displayName with an error and does not add a participant', () => {
+    const ctx = makeCtx();
+    const session = ctx.sessionStore.create('host-1');
+    ctx.connections.broadcast = () => {};
+    const sent: unknown[] = [];
+    ctx.connections.send = (_socket, message) => {
+      sent.push(message);
+    };
+
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: '<script>Bob</script>\x00' });
+
+    expect(sent).toEqual([{ type: 'error', message: 'Display name is invalid' }]);
+    expect(session.participants).toHaveLength(0);
+  });
+
+  it('T003: accepts a valid displayName unchanged', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');
     ctx.connections.broadcast = () => {};
 
-    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: '<script>Bob</script>\x00' });
+    handleSessionJoin(ctx, fakeSocket(), { type: 'session-join', code: session.code, displayName: 'Bob' });
 
-    expect(session.participants[0].displayName).toBe('scriptBob/script');
+    expect(session.participants[0].displayName).toBe('Bob');
   });
 });

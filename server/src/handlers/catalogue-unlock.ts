@@ -48,7 +48,12 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
     return;
   }
 
-  const key = validateActivationKey(message.key);
+  const keyResult = validateActivationKey(message.key);
+  if (!keyResult.ok) {
+    ctx.connections.send(socket, { type: 'error', message: 'Activation key is invalid' });
+    return;
+  }
+  const key = keyResult.value;
 
   // Try the key against every locked, not-yet-unlocked catalogue and take the
   // first match. Public catalogues (no salt/hash) and already-unlocked ones are

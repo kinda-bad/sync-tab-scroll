@@ -57,17 +57,20 @@ describe('session-create', () => {
     expect(session.participants[0].userId).toBeNull();
   });
 
-  // T003: input-validation hardening (feedback-input-sanitization-hardening-7a9a
-  // F001) — control characters and HTML special characters must be stripped
-  // from displayName before it's stored/broadcast.
-  it('T003: sanitizes displayName (strips control chars and HTML special chars)', () => {
+  // T003: input-validation reject behavior (infrastructure.md Input
+  // Validation, feedback-input-sanitization-hardening-7a9a F001) — invalid
+  // displayName is rejected with an error, no session is created.
+  it('T003: rejects an invalid displayName with an error and does not create a session', () => {
     const ctx: HandlerContext = { sessionStore: new SessionStore(), connections: new ConnectionRegistry(), accountStore: new NullAccountStore(), catalog: { catalogues: [], songs: [] } };
     const socket = fakeSocket();
+    const sent: unknown[] = [];
+    ctx.connections.send = (_socket, message) => {
+      sent.push(message);
+    };
 
     handleSessionCreate(ctx, socket, { type: 'session-create', displayName: '<script>Alice</script>\x00' });
 
-    const conn = ctx.connections.get(socket)!;
-    const session = ctx.sessionStore.get(conn.sessionCode)!;
-    expect(session.participants[0].displayName).toBe('scriptAlice/script');
+    expect(sent).toEqual([{ type: 'error', message: 'Display name is invalid' }]);
+    expect(ctx.connections.get(socket)).toBeUndefined();
   });
 });
