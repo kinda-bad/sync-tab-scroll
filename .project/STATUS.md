@@ -1,5 +1,32 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**Ran `/ardd-plan` against both open feedback files**
+(`feedback-e2e-fixture-song-selection-drift-60d7.md`,
+`feedback-input-validation-reject-and-defense-in-depth-fc7d.md`) plus the
+2 unsurfaced defects (`0b8dc7ed`, `59b17701`) — declined both defects as
+bookkeeping (already fixed in docs / duplicated by this plan's own F001),
+still recorded in `surfaced-defects:` so they won't re-prompt. No artifact
+edits needed — `infrastructure.md`'s Input Validation section already
+documented the correct (reject) behavior; the gap is in code. **Scope
+correction caught mid-draft**: initially scoped Phase 2 in-app authoring's
+input fields (catalogue `slug`/`name`/`key`, song `artist`/`title`/
+`submitterName`) as out-of-scope, assuming that feature was future/
+CLI-only — a quick grep found `phase-2-in-app-authoring` is actually
+`status: implemented` with a real `AuthoringModal.svelte` UI and zero
+validation on any of those fields (one of them, `artist`/`title`,
+currently feeds `buildStagedFilename()`'s filesystem path construction
+unvalidated) — brought back into scope before drafting the phase
+breakdown. Wrote and approved
+`plan-input-validation-e2e-hardening-2026-07-23-61c0.md` (no bound
+features) and generated `tasks-input-validation-e2e-hardening-e2da.md` (17
+tasks, 6 phases, `status: ready`) — inline, not yet delegated. Both
+feedback files flipped to `status: planned`. Feature backlog unchanged: 0
+backlogged · 0 planned · 1 tasked · 31 implemented. Zero in-flight
+worktrees. `tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged at
+11/12. Recommended next step: `/ardd-implement` to execute
+`tasks-input-validation-e2e-hardening-e2da.md`.**)_
+
 _Updated: 2026-07-23 (**Filed 2 new feedback items via `/ardd-feedback`:
 `feedback-input-validation-reject-and-defense-in-depth-fc7d.md` F001 (Bug,
 `[artifacts: infrastructure]`) — fix `input-validation.ts` to actually
@@ -278,20 +305,24 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this pass's fixes). 2 cosmetic entries (scriptFile line-citation, bars-per-row-set/early-stop-set field names) are now fixed in `infrastructure.md` — will drop on the next `/ardd-defects` run. 1 **broken-contract** remains open in code: infrastructure.md's "reject invalid input" claim is confirmed as the intended behavior; `input-validation.ts` (silently sanitizes/truncates instead) still needs the actual code fix.
-
-## Feedback
-- 2 open feedback file(s) — `feedback-e2e-fixture-song-selection-drift-60d7.md` (F001, Bug — `.first()`-based fixture song selection likely also broken in ~6 other e2e specs beyond the one already fixed; `[artifacts: none]`), `feedback-input-validation-reject-and-defense-in-depth-fc7d.md` (F001, Bug — fix `input-validation.ts` to reject rather than sanitize; `[artifacts: infrastructure]`; F002, Bug — defense-in-depth audit of every user-input surface, client + server both; `[artifacts: infrastructure, ui]`) — see `.project/feedback/`, will be picked up by the next `/ardd-plan`.
+- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this pass's fixes). 2 cosmetic entries (scriptFile line-citation, bars-per-row-set/early-stop-set field names) are already fixed in `infrastructure.md` — will drop on the next `/ardd-defects` run. 1 **broken-contract** now has a fix task (T001-T003 in `tasks-input-validation-e2e-hardening-e2da.md`), not yet resolved in code.
 
 ## Feature Backlog
 - 0 backlogged · 0 planned · 1 tasked · 31 implemented — see `.project/features/`.
+
+## Work Queue
+- `tasks-input-validation-e2e-hardening-e2da.md` — plan `plan-input-validation-e2e-hardening-2026-07-23-61c0.md`, no bound features:
+  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
+  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
+
+  (`independent` means no declared shared feature slug or `[artifacts: ...]` tag only — not conflict-free; `merge_policy: auto` still governs at merge time.)
 
 ## In Flight
 - `tasks-recording-drift-foundation-cc87.md` — in-progress, 20/22 (on main).
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-plan` to bundle `feedback-input-validation-reject-and-defense-in-depth-fc7d.md`'s F001/F002, or the e2e fixture-drift item; neither urgent.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement` to execute `tasks-input-validation-e2e-hardening-e2da.md` (17 tasks, 6 phases, ready).
 
 ---
 
