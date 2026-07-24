@@ -1,5 +1,166 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-plan
+feedback-spotlight-mode-force-follow-br-f438.md` drafted, approved, and
+tasked `plan-f841-2026-07-24-bdce.md` (Fix Spotlight mode force-follow) —
+3 phases (Reproduce a red CT spec / Fix / Close out), 6 tasks in
+`tasks-f841-8faf.md`, now `status: ready`. F001 flipped to `planned`; no
+feature-register slugs bound (plan `features: []`).** Artifacts (6, all
+`status: stable` except `constitution.md` v1.6.2 which has no `status`
+field by convention): `brand.md`, `constitution.md`, `datamodel.md`,
+`infrastructure.md`, `pipeline.md`, `ui.md` — all read in full.
+
+## Artifacts Found
+- brand.md — stable ✅
+- constitution.md — stable ✅ (v1.6.2, `next_step_prompt: auto`)
+- datamodel.md — stable ✅
+- infrastructure.md — stable ✅
+- pipeline.md — stable ✅
+- ui.md — stable ✅
+
+## Cross-Artifact Issues
+None found. No entity/field/endpoint referenced in one artifact and left
+undefined in another.
+
+## Within-Artifact Issues
+No unresolved `[OPEN: ...]` placeholders or TODOs found in any artifact.
+No draft-status artifacts blocking planning.
+
+## Constitution Compliance
+No violations found.
+
+## Diagrams
+- datamodel.md — current ✅
+- infrastructure.md — current ✅
+- ui.md — current ✅
+
+## Code-vs-Artifact Defects
+0 known defects — see `DEFECTS.md`, last checked 2026-07-23. The newly
+logged Spotlight force-follow bug is filed as feedback (F001 below), not
+a defect — it's a code bug caught by live manual testing, not
+artifact-vs-code drift; `ui.md`'s Spotlight description still matches the
+intended design.
+
+## Feedback
+0 open feedback files — `feedback-spotlight-mode-force-follow-br-f438.md`
+(F001) is now `status: planned`, bound to `plan-f841-2026-07-24-bdce.md`.
+
+## Feature Backlog
+0 backlogged · 0 planned · 0 tasked · 32 implemented — see
+`.project/features/`. No feature carries a non-empty `epic` — by-epic
+breakdown omitted.
+
+## Documented but Untracked
+None found.
+
+## Orphaned Completion Flips
+None found.
+
+## Work Queue
+- `tasks-f841-8faf.md` — plan `plan-f841-2026-07-24-bdce.md`, features
+  none: no other `ready` tasks file to compare against
+  (`parallel-matrix.sh` silent with fewer than two ready files); no
+  in-flight worktree claims it either.
+
+## In Flight
+- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12 (T010 left
+  unchecked pending `tasks-f841-8faf.md`'s Spotlight force-follow fix).
+- No other worktrees, no `worktree-reap.sh --dry-run` candidates. ArDD
+  install up to date at `9bc9b38fa85` (beta channel).
+
+## Summary
+0 issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement`
+to execute `tasks-f841-8faf.md` — write the red CT spec (T001), diagnose
+and fix the `isReadyForPlayback`/Spotlight-follow root cause (T002-T003),
+run the full suite and one live two-tab re-verification (T004-T005), then
+check off T010 in `tasks-lobby-cursor-modes-0bea.md` (T006).
+
+_Updated: 2026-07-24 (**Ran `/ardd-status`: full refresh after
+`tasks-recording-drift-foundation-cc87.md` reached `status: completed`
+(T019 two-participant e2e passed the 50ms bar, T020 full-suite regression
+check clean) and merged to main; the `sync-tabs-to-real-audio` feature
+register entry is flipped to `implemented`.** Artifacts (6, all
+`status: stable` except `constitution.md` v1.6.2 which has no `status`
+field by convention): `brand.md`, `constitution.md`, `datamodel.md`,
+`infrastructure.md`, `pipeline.md`, `ui.md` — all read in full.
+
+## Artifacts Found
+- brand.md — stable ✅
+- constitution.md — stable ✅ (v1.6.2, `next_step_prompt: auto`)
+- datamodel.md — stable ✅
+- infrastructure.md — stable ✅
+- pipeline.md — stable ✅
+- ui.md — stable ✅
+
+## Cross-Artifact Issues
+None found. No entity/field/endpoint referenced in one artifact and left
+undefined in another; infrastructure.md's synth-path output-latency
+decision (instrumented `AudioContext` anchor, resolved last run) remains
+consistent with datamodel.md's `PlaybackState.tickPosition` notes and
+ui.md's recording-mode carve-out language.
+
+## Within-Artifact Issues
+No unresolved `[OPEN: ...]` placeholders or TODOs found in any artifact
+(confirmed by direct grep across `.project/artifacts/*.md`). No
+draft-status artifacts blocking planning.
+
+## Constitution Compliance
+No violations found. Production Annotations (datamodel.md's placeholder
+ToS version, infrastructure.md's out-of-band datastore/secrets and
+hand-rolled OAuth) remain correctly flagged as annotated shortcuts, not
+silent gaps.
+
+## Diagrams
+- datamodel.md — current ✅
+- infrastructure.md — current ✅ (regenerated in the prior
+  `docs(diagrams)` commit)
+- ui.md — current ✅
+
+## Code-vs-Artifact Defects
+0 known defects — see `DEFECTS.md`, last checked 2026-07-23 (all 3
+previously-recorded defects confirmed closed). Run `/ardd-defects` to
+refresh if code has changed since.
+
+## Feedback
+No open-feedback section — 0 files at `status: open` across 50
+`.project/feedback/feedback-*.md` files (48 at `status: planned`, 2
+further `split` into 4 group files each independently `planned`).
+
+## Feature Backlog
+0 backlogged · 0 planned · 0 tasked · 32 implemented — see
+`.project/features/`. `sync-tabs-to-real-audio` has advanced from
+`tasked` to `implemented` now that
+`tasks-recording-drift-foundation-cc87.md` is complete and merged. No
+feature carries a non-empty `epic` — by-epic breakdown omitted.
+
+## Documented but Untracked
+None found — every capability described by a stable artifact traces to
+either a feature-register entry or existing, working code.
+
+## Orphaned Completion Flips
+None found — `completion-flip-check.sh` ran clean against
+`tasks-recording-drift-foundation-cc87.md` (and all other
+`status: completed` tasks files): the register already correctly reads
+`sync-tabs-to-real-audio: implemented`, no stale `tasked` entry left
+behind.
+
+## Work Queue
+None — no `ready`-status tasks file exists project-wide.
+
+## In Flight
+- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12 (unrelated
+  branch, untouched by this merge).
+- No other worktrees (`inflight-worktrees.sh` empty), no
+  `parallel-matrix.sh` entries, no `worktree-reap.sh --dry-run`
+  candidates. ArDD install up to date at `9bc9b38fa85` (beta channel).
+
+## Summary
+0 issues found. Safe to /plan: yes. Recommended next step: pick the next
+feature to work — with the register at 0 backlogged/planned/tasked and
+32 implemented, there is no queued feature; use `/ardd-backlog` to log a
+new idea or `/ardd-feedback` review to pull the next actionable item from
+the 48 `planned` feedback files.
+
 _Updated: 2026-07-24 (**Ran `/ardd-status`: full cross-artifact consistency
 check after `/ardd-refine infrastructure` resolved the synth-path
 output-latency `[OPEN: ...]` question (decided: instrumented `AudioContext`
