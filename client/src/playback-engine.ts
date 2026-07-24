@@ -500,9 +500,27 @@ export function ensurePlaybackEngine(
     // a mixed-source session the server rejects (session-wide source), so that
     // path is unreachable in production. Wiring a value only a dead path reads
     // would be dead weight (Principle II).
+    // Spotlight-exempt (T002 finding, plan-f841-2026-07-24-bdce.md):
+    // correctDrift's own stopped-state reset (playbackState.status ===
+    // 'stopped' — the pre-playback Lobby state Spotlight mode targets) isn't
+    // edge-triggered on the Stop transition; it re-checks on every single
+    // subscribe callback while stopped. Left unguarded, it stomps the
+    // Spotlight-follow assignment below back to 0 on the very next store
+    // update after it's applied — confirmed via instrumented diagnostic
+    // (applied tick, then immediately reset before ever being read back).
+    // A *boolean* exemption, not an exact-tick one: alphaTab's tickPosition
+    // setter doesn't round-trip exactly (the async worker settles a set of
+    // 200 to 201, same non-exact-equality quantization
+    // STOPPED_RESET_TOLERANCE_TICKS already exists for below) — an
+    // exact-tick exempt comparison fails against that quantized readback and
+    // still resets. Exempting on spotlightMode alone (whenever a tick is
+    // actively held) lets a real Stop, unrelated to Spotlight, still reset
+    // normally in every other case — including once spotlightMode or
+    // lobbyCursorTick clears again.
+    const spotlightHoldingTick = s.session.spotlightMode && s.session.lobbyCursorTick !== null;
     correctDrift(api, s.session.playbackState, isHost, (tick) => {
       lastProgrammaticTick = tick;
-    }, undefined, isBackingParticipant);
+    }, undefined, isBackingParticipant, spotlightHoldingTick);
     applyPlaybackSettings(api, s.session);
 
     // Spotlight mode (ui.md "lobby cursor"): force this participant's view

@@ -168,7 +168,15 @@ export function syncPointRateAtTick(
  * discrete reposition event, not drift), and `correctDrift`'s projection
  * arithmetic is left entirely untouched — the block is simply not entered.
  */
-export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isHost: boolean, onApply?: (tick: number) => void, projectionBpm?: number, isBackingParticipant?: boolean): number | null {
+export function correctDrift(
+  api: AlphaTabApi,
+  playbackState: PlaybackState,
+  isHost: boolean,
+  onApply?: (tick: number) => void,
+  projectionBpm?: number,
+  isBackingParticipant?: boolean,
+  spotlightHoldingTick?: boolean,
+): number | null {
   if (!api.isReadyForPlayback) return null;
 
   const isPlaying = api.playerState === at.synth.PlayerState.Playing;
@@ -206,7 +214,30 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   // back a near-zero (non-zero) tick, seek to 0 again — a real, observed
   // infinite loop (freeze investigation, recording-drift-foundation T021).
   // Harmless for synth mode too, where the assignment already lands exactly.
-  if (playbackState.status === 'stopped' && Math.abs(api.tickPosition) > STOPPED_RESET_TOLERANCE_TICKS) {
+  //
+  // Spotlight mode (ui.md "lobby cursor", plan-f841-2026-07-24-bdce.md)
+  // deliberately holds a non-zero `api.tickPosition` while
+  // `playbackState.status` is still 'stopped' — that's exactly the
+  // pre-playback lobby state the feature exists for. Without this
+  // exemption, this stopped-reset re-fires on every single
+  // `clientStore.subscribe` callback while stopped (not just once per Stop
+  // transition) and stomps the Spotlight-follow assignment back to 0 on the
+  // very next store tick after it was applied — confirmed via T002
+  // diagnostic instrumentation (subscribe fired, applied tick, next
+  // subscribe fire reset it before the caller ever read it back).
+  // `spotlightHoldingTick` is a boolean, not an exact-tick comparison, for
+  // the same non-round-tripping reason `STOPPED_RESET_TOLERANCE_TICKS`
+  // exists below: alphaTab's own async worker settles a `tickPosition`
+  // assignment to a nearby-but-not-identical value (observed: set 200,
+  // settles to 201), so an exact-tick exempt still fails and still resets.
+  // Exempting on spotlightMode alone (whenever a tick is actively held)
+  // lets a real Stop, unrelated to Spotlight, still reset normally in every
+  // other case — including once spotlightMode or lobbyCursorTick clears.
+  if (
+    playbackState.status === 'stopped' &&
+    Math.abs(api.tickPosition) > STOPPED_RESET_TOLERANCE_TICKS &&
+    !spotlightHoldingTick
+  ) {
     onApply?.(0);
     api.tickPosition = 0;
     return 0;
@@ -220,6 +251,24 @@ export function correctDrift(api: AlphaTabApi, playbackState: PlaybackState, isH
   // transitions above (start/pause/stop, and a host seek that arrives as a
   // discrete reposition) have already been applied.
   if (isBackingParticipant) return null;
+
+  // Spotlight mode (T002/T003 finding, plan-f841-2026-07-24-bdce.md): this
+  // was the actual root cause of the Spotlight force-follow bug, not the
+  // stopped-state reset above. This drift-correction block runs against
+  // `playbackState.tickPosition` (the host's real playback position, still
+  // 0/stale pre-playback) even while stopped/paused — deliberately, per the
+  // comment below, so a host seek-while-paused still propagates to
+  // non-hosts (T011, feedback F002). But that means it re-snaps a non-host
+  // participant's `api.tickPosition` straight back toward
+  // `playbackState.tickPosition` on every subsequent subscribe fire,
+  // unconditionally undoing the Spotlight-follow block's assignment to
+  // `lobbyCursorTick` a moment later — confirmed via diagnostic
+  // instrumentation (applied tick, immediately reset toward 0 on the very
+  // next fire, independent of the stopped-reset block above, which was
+  // already correctly skipping). While Spotlight mode is actively holding a
+  // tick, force-follow supersedes normal seek-propagation for this
+  // participant, so skip this resync entirely rather than fight it.
+  if (spotlightHoldingTick) return null;
 
   // Extrapolation only makes sense while playback is actually running: once
   // paused/stopped, playbackState.serverTimestamp stops advancing but

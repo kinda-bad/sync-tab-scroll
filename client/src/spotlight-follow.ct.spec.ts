@@ -59,8 +59,12 @@ test('Spotlight mode force-follow moves a non-host participant view to the host-
 
   const before = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
 
+  // A large, fresh tick, well clear of the near-zero range the bug
+  // resets to (and clear of alphaTab's own non-exact tickPosition
+  // round-tripping — an async worker settles a set of e.g. 200 to 201, so
+  // this asserts real movement to roughly the target, not exact equality).
   const FRESH_TICK = 4800;
-  expect(before).not.toBe(FRESH_TICK);
+  expect(before).not.toBeGreaterThan(1000);
 
   // Drive the store as a non-host participant — the scenario under test:
   // "host sets Spotlight mode on and sets a lobby cursor tick, the second
@@ -75,5 +79,12 @@ test('Spotlight mode force-follow moves a non-host participant view to the host-
 
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition), { timeout: 5_000 })
-    .toBe(FRESH_TICK);
+    .toBeGreaterThan(4000);
+
+  // Stays there — not a one-shot correct-then-reset flicker: the stopped-
+  // reset exemption must hold across further store updates, not just the
+  // instant the tick was applied.
+  await page.waitForTimeout(1000);
+  const after = await page.evaluate(() => (window as unknown as { __getApi: () => { tickPosition: number } }).__getApi().tickPosition);
+  expect(after).toBeGreaterThan(4000);
 });
