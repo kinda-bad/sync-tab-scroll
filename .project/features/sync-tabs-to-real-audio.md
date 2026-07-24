@@ -1,6 +1,6 @@
 ---
 slug: sync-tabs-to-real-audio
-status: tasked
+status: implemented
 logged: 2026-07-19
 plan: plan-recording-drift-foundation-2026-07-20-9ca3.md
 tasks: tasks-recording-drift-foundation-cc87.md
