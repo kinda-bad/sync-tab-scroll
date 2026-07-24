@@ -1,5 +1,15 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-implement
+--reconcile tasks-lobby-cursor-modes-0bea.md`** confirmed all 12 of its
+tasks genuinely done and flipped its frontmatter `status: in-progress` →
+`completed` (delegated worktree, merged clean fast-forward, reaped). Its
+plan (`plan-lobby-cursor-modes-2026-07-03.md`) bound no feature slugs, so
+no register flip applied. This closes out the loose end from the prior
+entry below — both `tasks-f841-8faf.md` and `tasks-lobby-cursor-modes-
+0bea.md` are now `completed`, and there is no remaining in-flight or
+queued work.
+
 _Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-implement`
 executed `tasks-f841-8faf.md` to completion (6/6) in a delegated worktree
 and merged clean (fast-forward, `merge_policy: auto`).** The Spotlight
@@ -75,20 +85,15 @@ None found — `completion-flip-check.sh` ran clean against
 None — no `ready`-status tasks file exists project-wide.
 
 ## In Flight
-- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 12/12 (T010 now
-  checked; the file's own `status:` frontmatter was not auto-flipped to
-  `completed` since this session executed `tasks-f841-8faf.md`, not this
-  file — flipping it is small unclaimed housekeeping, e.g. via
-  `/ardd-implement --reconcile tasks-lobby-cursor-modes-0bea.md`).
-- No other worktrees, no `worktree-reap.sh --dry-run` candidates. ArDD
-  install up to date at `9bc9b38fa85` (beta channel).
+None — `tasks-lobby-cursor-modes-0bea.md` is now `completed` (12/12), no
+other worktrees, no `worktree-reap.sh --dry-run` candidates. ArDD install
+up to date at `9bc9b38fa85` (beta channel).
 
 ## Summary
-0 issues found. Safe to /plan: yes. Recommended next step: run
-`/ardd-implement --reconcile tasks-lobby-cursor-modes-0bea.md` to flip
-that file's frontmatter `status` to `completed` now that all 12 of its
-tasks are checked (cheap housekeeping, not new work) — or, if there's no
-appetite for that right now, just start the next `/ardd-plan`.
+0 issues found. Safe to /plan: yes. Recommended next step: no queued work
+— the feature backlog is at 0 backlogged/planned/tasked and both recent
+tasks files are `completed`. Use `/ardd-backlog` to log a new idea or
+`/ardd-feedback` to capture something found by inspecting the running app.
 
 _Updated: 2026-07-24 (**Ran `/ardd-status`: full refresh after
 `tasks-recording-drift-foundation-cc87.md` reached `status: completed`
