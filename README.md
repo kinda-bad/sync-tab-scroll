@@ -244,13 +244,15 @@ erDiagram
         number lobbyCursorTick "null once playing"
         boolean spotlightMode
         boolean countInEnabled
+        number hostBarsPerRow "host-pinned layout, null = each participant's own"
+        number earlyStopTick "auto-stop point, null = unset"
         string pendingHostRequest
         string_array unlockedCatalogueIds
     }
     PARTICIPANT {
         string id
         string userId "null = anonymous"
-        string displayName
+        string displayName "server-validated: rejected, not sanitized"
         string role "host | member"
         string connectionStatus
         string selectedPart "trackIndex | lyrics | null"
@@ -339,17 +341,21 @@ graph TD
 
     subgraph Server["Server — single http.Server, one process"]
         WSS["WebSocket server (ws)<br/>authoritative session store (in-memory)"]
-        DISPATCH["message dispatch<br/>host-only handlers"]
+        VALIDATE["input-validation.ts<br/>reject (not sanitize) displayName / activation key / authoring fields"]
+        DISPATCH["message dispatch<br/>host-only handlers incl. bars-per-row-set,<br/>early-stop-set, Start Negotiation auto-resolve"]
         STATIC["catalog-static.ts<br/>static /catalog + Range support"]
         SPA["client SPA fallback (client/dist)"]
         OAUTH["OAuth routes<br/>/auth/*/login /callback /logout /me"]
+        AUTHOR["catalogue-authoring-routes.ts + song-upload-route.ts<br/>owner-only create-catalogue / add-song"]
         LOADER["catalog-loader.ts<br/>scan + re-scan, visibleCatalog()"]
         SUCC["host succession + transfer<br/>grace timer, tenure promote"]
         TTL["empty-session idle TTL (12h)"]
-        WSS --> DISPATCH
+        WSS --> VALIDATE
+        VALIDATE --> DISPATCH
         DISPATCH --> SUCC
         WSS --> TTL
         DISPATCH --> LOADER
+        AUTHOR --> VALIDATE
     end
 
     subgraph Durable["Durable / out-of-band (optional)"]
@@ -369,6 +375,8 @@ graph TD
     WS -->|"Origin-checked WS upgrade + cookie"| OAUTH
     OAUTH --> PG
     OAUTH -.->|"cookie → AuthSession → userId"| WSS
+    AUTHOR --> LOADER
+    AUTHOR --> PG
     LOADER --> VOL
     STATIC --> VOL
     EXTRACT --> VOL
@@ -387,18 +395,19 @@ graph TD
 
     subgraph LANDING["Landing View"]
         CHOOSER["Chooser: Create / Join"]
-        CREATE["Create form (name)"]
+        CREATE["Create form (name, pre-filled if signed in)"]
         JOIN["Join form (name + code)"]
         CHOOSER --> CREATE
         CHOOSER --> JOIN
         ACCT1["AccountMenu (optional)<br/>Sign in / Sign out / My catalogues"]
+        HELP1["Help/Info/About (?)<br/>About / Info / Help tabs"]
     end
     LANDING -.->|"stored session → silent rejoin"| LOBBY
 
     CREATE -->|"session-create"| LOBBY
     JOIN -->|"session-join"| LOBBY
 
-    subgraph LOBBY["Lobby View — persistent Bar (code, account, leave, cog)"]
+    subgraph LOBBY["Lobby View — persistent Bar (code + click-to-copy, account, help, leave, cog)"]
         HINT["state-dependent hint line"]
         SONGMODAL["Song & Part modal (auto-opens once)<br/>catalog picker grouped by Catalogue<br/>+ host Enter-activation-key"]
         SETTINGS["Settings modal — 4 tabs"]
@@ -408,16 +417,16 @@ graph TD
 
     subgraph TABS["Settings tabs"]
         T1["Participants<br/>readiness, Make host, Remove, Request host"]
-        T2["Session (host)<br/>Lobby cursor + Spotlight, Count-in"]
-        T3["Preferences (personal)<br/>theme, metronome, ticker size/position, measure markers"]
+        T2["Session (host)<br/>Lobby cursor + Spotlight, Count-in,<br/>Bars-per-row pin, Early stop point"]
+        T3["Preferences (personal)<br/>theme, metronome (unlocked in recording mode),<br/>bars-per-row, ticker size/position, measure markers"]
         T4["Tracks (personal)<br/>per-part mute, Solo, Mute all"]
     end
     SETTINGS --> T1 & T2 & T3 & T4
 
-    LOBBY -->|"host Start (ready or start-negotiation)"| PLAYBACK
+    LOBBY -->|"host Start (ready, or auto-resolved start-negotiation)"| PLAYBACK
 
     subgraph PLAYBACK["Playback View"]
-        INSTR["Instrument part<br/>live alphaTab tab + native cursor<br/>optional lyrics ticker overlay"]
+        INSTR["Instrument part<br/>live alphaTab tab + native cursor<br/>optional lyrics ticker overlay<br/>de-emphasized past early stop point"]
         LYRICS["Lyrics part (headless)<br/>full scrolling lyric sheet + gap timing"]
         WIDGET["Count-in / Metronome beat widget (Bar)"]
         SRC["host: synth ⇄ recording source<br/>(session-wide, recording-capable songs)"]
@@ -426,7 +435,7 @@ graph TD
     PLAYBACK -->|"Leave session"| LANDING
 
     subgraph ST["Cross-cutting States"]
-        S1["Error toasts (join, key, not-host, stale target)"]
+        S1["Error toasts (join, key, not-host, stale target, invalid input)"]
         S2["Removed from session → Landing"]
         S3["Stale session → clears identity, stops reconnect"]
         S4["Connection lost → persistent banner"]
