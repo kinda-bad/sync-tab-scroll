@@ -1,7 +1,7 @@
 ---
 plan: plan-lobby-cursor-modes-2026-07-03.md
 generated: 2026-07-02
-status: in-progress
+status: completed
 ---
 
 # Tasks
