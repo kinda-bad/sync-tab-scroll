@@ -1,14 +1,26 @@
 # sync-tab-scroll — Project Status
 
-_Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-plan
-feedback-spotlight-mode-force-follow-br-f438.md` drafted, approved, and
-tasked `plan-f841-2026-07-24-bdce.md` (Fix Spotlight mode force-follow) —
-3 phases (Reproduce a red CT spec / Fix / Close out), 6 tasks in
-`tasks-f841-8faf.md`, now `status: ready`. F001 flipped to `planned`; no
-feature-register slugs bound (plan `features: []`).** Artifacts (6, all
-`status: stable` except `constitution.md` v1.6.2 which has no `status`
-field by convention): `brand.md`, `constitution.md`, `datamodel.md`,
-`infrastructure.md`, `pipeline.md`, `ui.md` — all read in full.
+_Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-implement`
+executed `tasks-f841-8faf.md` to completion (6/6) in a delegated worktree
+and merged clean (fast-forward, `merge_policy: auto`).** The Spotlight
+force-follow bug (F001) is fixed: root cause was `correctDrift()` in
+`client/src/playback-sync.ts` fighting the Spotlight-follow tick
+assignment while `playbackState.status === 'stopped'`, not the originally
+suspected `isReadyForPlayback` gate — fixed via a `spotlightHoldingTick`
+exemption. New CT coverage (`client/src/spotlight-follow.ct.spec.ts`)
+locks in both the fix and the already-passing "Spotlight off" case. Full
+suite green (client vitest 153/153, server vitest 318/318, client CT
+232/232) and live two-tab re-verified (participant cursor snapped to the
+host's set tick with Spotlight on). `tasks-lobby-cursor-modes-0bea.md`'s
+T010 is now checked (12/12) — that file's own `status:` frontmatter is
+still `in-progress`, not auto-flipped to `completed`, since this run
+executed a *different* tasks file (`tasks-f841-8faf.md`) and only edited
+T010's checkbox as one of its own tasks; flipping that file's status is
+unclaimed housekeeping (see Summary below). Worktree reaped clean.
+Artifacts (6, all `status: stable` except `constitution.md` v1.6.2 which
+has no `status` field by convention): `brand.md`, `constitution.md`,
+`datamodel.md`, `infrastructure.md`, `pipeline.md`, `ui.md` — all read in
+full.
 
 ## Artifacts Found
 - brand.md — stable ✅
@@ -43,37 +55,40 @@ intended design.
 
 ## Feedback
 0 open feedback files — `feedback-spotlight-mode-force-follow-br-f438.md`
-(F001) is now `status: planned`, bound to `plan-f841-2026-07-24-bdce.md`.
+(F001) is `status: planned`, bound to `plan-f841-2026-07-24-bdce.md`, now
+implemented.
 
 ## Feature Backlog
 0 backlogged · 0 planned · 0 tasked · 32 implemented — see
 `.project/features/`. No feature carries a non-empty `epic` — by-epic
-breakdown omitted.
+breakdown omitted. (`plan-f841-2026-07-24-bdce.md` bound no feature slugs —
+a pure bug-fix plan — so nothing to flip here.)
 
 ## Documented but Untracked
 None found.
 
 ## Orphaned Completion Flips
-None found.
+None found — `completion-flip-check.sh` ran clean against
+`tasks-f841-8faf.md` (and all other `status: completed` tasks files).
 
 ## Work Queue
-- `tasks-f841-8faf.md` — plan `plan-f841-2026-07-24-bdce.md`, features
-  none: no other `ready` tasks file to compare against
-  (`parallel-matrix.sh` silent with fewer than two ready files); no
-  in-flight worktree claims it either.
+None — no `ready`-status tasks file exists project-wide.
 
 ## In Flight
-- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12 (T010 left
-  unchecked pending `tasks-f841-8faf.md`'s Spotlight force-follow fix).
+- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 12/12 (T010 now
+  checked; the file's own `status:` frontmatter was not auto-flipped to
+  `completed` since this session executed `tasks-f841-8faf.md`, not this
+  file — flipping it is small unclaimed housekeeping, e.g. via
+  `/ardd-implement --reconcile tasks-lobby-cursor-modes-0bea.md`).
 - No other worktrees, no `worktree-reap.sh --dry-run` candidates. ArDD
   install up to date at `9bc9b38fa85` (beta channel).
 
 ## Summary
-0 issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement`
-to execute `tasks-f841-8faf.md` — write the red CT spec (T001), diagnose
-and fix the `isReadyForPlayback`/Spotlight-follow root cause (T002-T003),
-run the full suite and one live two-tab re-verification (T004-T005), then
-check off T010 in `tasks-lobby-cursor-modes-0bea.md` (T006).
+0 issues found. Safe to /plan: yes. Recommended next step: run
+`/ardd-implement --reconcile tasks-lobby-cursor-modes-0bea.md` to flip
+that file's frontmatter `status` to `completed` now that all 12 of its
+tasks are checked (cheap housekeeping, not new work) — or, if there's no
+appetite for that right now, just start the next `/ardd-plan`.
 
 _Updated: 2026-07-24 (**Ran `/ardd-status`: full refresh after
 `tasks-recording-drift-foundation-cc87.md` reached `status: completed`
