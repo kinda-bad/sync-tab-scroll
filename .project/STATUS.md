@@ -1,5 +1,28 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-24 (**Ran `/ardd-diagram` for all 3 renderable
+artifacts.** Regenerated `datamodel.md`'s `erDiagram`, `infrastructure.md`'s
+and `ui.md`'s `graph TD` diagrams, upserted into `README.md`'s
+Datamodel/Infrastructure/UI sections. Datamodel: added
+`Session.hostBarsPerRow`/`earlyStopTick`, noted `Participant.displayName`
+is now reject-validated. Infrastructure: added a `VALIDATE` node
+(`input-validation.ts`) between `WSS` and `DISPATCH`, a new `AUTHOR` node
+(`catalogue-authoring-routes.ts` + `song-upload-route.ts`), annotated
+`DISPATCH` with `bars-per-row-set`/`early-stop-set`/Start Negotiation
+auto-resolve. UI: added the Help/Info/About panel, join-code click-to-copy
+and remembered-name pre-fill noted inline, Session-tab bars-per-row/
+early-stop controls, Preferences-tab bars-per-row preference, early-stop
+de-emphasis on Playback View. All three artifacts stamped
+`diagram_status: current`. Committed `769d2dd`. This was the last
+remaining loose end from this session's three merged bundles — no other
+state changed. Zero in-flight worktrees, zero open feedback, zero
+backlogged features, zero known defects (DEFECTS.md still all-clear from
+the prior pass). `tasks-recording-drift-foundation-cc87.md` unchanged at
+20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md` unchanged
+at 11/12. ArDD up to date at `9bc9b38` (beta). Recommended next step: none
+— project is in a fully clean, all-diagrams-current, all-defects-closed
+state.**)_
+
 _Updated: 2026-07-23 (**Ran `/ardd-defects`: full survey confirming all 3
 known defects are closed.** Direct re-inspection: `scriptFile` citation is
 correctly `client/src/tab-renderer.ts:84`; `bars-per-row-set`/
@@ -356,9 +379,9 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - [OPEN] Can alphaTab layer an audible synth metronome click over a playing recording, or is upstream #1961 an absolute blocker limiting the metronome-lock reconsideration to the visual beat widget only? (feedback-recording-mode-metronome-lock-reconsidered-c415 F001, now tracked as an Open Question in plan-c75f-2026-07-23-5638.md)
 
 ## Diagrams
-- datamodel.md — stale ⚠️ (run /ardd-diagram datamodel)
-- infrastructure.md — stale ⚠️ (run /ardd-diagram infrastructure)
-- ui.md — stale ⚠️ (run /ardd-diagram ui)
+- datamodel.md — current ✅
+- infrastructure.md — current ✅
+- ui.md — current ✅
 
 ## Code-vs-Artifact Defects
 - 0 known defects — see DEFECTS.md, last checked 2026-07-23. All-clear: all 3 prior defects confirmed closed by direct re-inspection.
@@ -371,7 +394,7 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: run `/ardd-diagram` for `datamodel`, `infrastructure`, and `ui` to regenerate the 3 stale diagrams — the only remaining cleanup item.
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: none — project is in a fully clean state.
 
 ---
 
