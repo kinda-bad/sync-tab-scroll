@@ -6,7 +6,7 @@
   import TextInput from '../components/TextInput.svelte';
   import Button from '../components/Button.svelte';
   import AccountMenu from '../components/AccountMenu.svelte';
-  import { displayNameError } from '../input-validation';
+  import { displayNameError, joinCodeError } from '../input-validation';
 
   let mode: 'choice' | 'create' | 'join' = 'choice';
 
@@ -18,6 +18,11 @@
   let nameError: string | null = null;
   function handleNameBlur() {
     nameError = displayNameError(displayName);
+  }
+
+  let joinCodeErrorMsg: string | null = null;
+  function handleJoinCodeBlur() {
+    joinCodeErrorMsg = joinCodeError(joinCode);
   }
 
   onMount(() => {
@@ -86,8 +91,8 @@
     {:else if mode === 'join'}
       <form onsubmit={(e) => { e.preventDefault(); joinSession(); }}>
         <TextInput label="Your name" placeholder="Musician" bind:value={displayName} error={nameError} onblur={handleNameBlur} />
-        <TextInput label="Session code" placeholder="AB12" uppercase bind:value={joinCode} />
-        <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode || !!nameError} />
+        <TextInput label="Session code" placeholder="AB12" uppercase bind:value={joinCode} error={joinCodeErrorMsg} onblur={handleJoinCodeBlur} />
+        <Button variant="ghost" type="submit" label="Join" disabled={!displayName || !joinCode || !!nameError || !!joinCodeErrorMsg} />
         <button type="button" class="landing-back" onclick={() => (mode = 'choice')}>Back</button>
       </form>
     {/if}

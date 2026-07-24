@@ -1,5 +1,32 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SessionStore } from './session-store.js';
+import { SessionStore, isValidJoinCodeFormat } from './session-store.js';
+
+// T006: join-code field format audit (infrastructure.md/ui.md) — grounded in
+// the actual generated format (4 chars, A-Z minus I/O, 2-9 minus 0/1),
+// case-insensitive since lookup is case-insensitive (SessionStore.get).
+describe('isValidJoinCodeFormat', () => {
+  it('accepts a well-formed 4-char code from the generated alphabet', () => {
+    expect(isValidJoinCodeFormat('AB2X')).toBe(true);
+  });
+
+  it('accepts lowercase input (entry is case-insensitive)', () => {
+    expect(isValidJoinCodeFormat('ab2x')).toBe(true);
+  });
+
+  it('rejects a code with the wrong length', () => {
+    expect(isValidJoinCodeFormat('AB2')).toBe(false);
+    expect(isValidJoinCodeFormat('AB2XY')).toBe(false);
+  });
+
+  it('rejects visually-ambiguous characters excluded from the alphabet (I, O, 0, 1)', () => {
+    expect(isValidJoinCodeFormat('ABIO')).toBe(false);
+    expect(isValidJoinCodeFormat('AB01')).toBe(false);
+  });
+
+  it('rejects non-alphanumeric characters', () => {
+    expect(isValidJoinCodeFormat('AB2!')).toBe(false);
+  });
+});
 
 describe('SessionStore.create', () => {
   it('returns a Session with a 4-character code from the documented charset and all defaults', () => {

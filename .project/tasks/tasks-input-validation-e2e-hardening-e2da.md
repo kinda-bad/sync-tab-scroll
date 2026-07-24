@@ -19,7 +19,7 @@ status: in-progress
 
 ## Phase 3: Join-Code Field Audit
 
-- [ ] T006 [artifacts: ui, infrastructure] Determine what format constraint is appropriate for the join-code field (`client/src/views/Landing.svelte`'s "Session code" input, bound to `joinCode`) — check the actual code-generation format server-side (session code generator) to ground the constraint in real generated values, not a guess. Write a failing test (client CT for the client-side check, server test for the server-side check) asserting the chosen constraint is enforced at both layers, confirm it fails, then implement it at both layers to pass.
+- [x] T006 [artifacts: ui, infrastructure] Determine what format constraint is appropriate for the join-code field (`client/src/views/Landing.svelte`'s "Session code" input, bound to `joinCode`) — check the actual code-generation format server-side (session code generator) to ground the constraint in real generated values, not a guess. Write a failing test (client CT for the client-side check, server test for the server-side check) asserting the chosen constraint is enforced at both layers, confirm it fails, then implement it at both layers to pass.
 
 ## Phase 4: Phase 2 Authoring — Catalogue-Creation Field Validation
 

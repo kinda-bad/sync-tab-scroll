@@ -62,6 +62,30 @@ test('Landing "Your name" input shows no inline feedback for a valid value', asy
   await expect(component.getByText(/invalid/i)).not.toBeVisible();
 });
 
+// T006: join-code field format audit — grounded in SessionStore's actual
+// 4-char generated alphabet (A-Z minus I/O, 2-9 minus 0/1).
+test('Landing "Session code" input shows inline feedback for a code outside the generated format', async ({ mount, page }) => {
+  await page.addInitScript(() => localStorage.removeItem('sync-tab-scroll:session'));
+  const component = await mount(LandingHarness, { props: { status: 'signed-out', displayName: null } });
+
+  await component.getByRole('button', { name: 'Join a session' }).click();
+  await component.getByLabel('Session code').fill('AB1O');
+  await component.getByLabel('Session code').blur();
+
+  await expect(component.getByText(/invalid/i)).toBeVisible();
+});
+
+test('Landing "Session code" input shows no inline feedback for a well-formed code', async ({ mount, page }) => {
+  await page.addInitScript(() => localStorage.removeItem('sync-tab-scroll:session'));
+  const component = await mount(LandingHarness, { props: { status: 'signed-out', displayName: null } });
+
+  await component.getByRole('button', { name: 'Join a session' }).click();
+  await component.getByLabel('Session code').fill('AB2X');
+  await component.getByLabel('Session code').blur();
+
+  await expect(component.getByText(/invalid/i)).not.toBeVisible();
+});
+
 test('Activation key input shows inline feedback for a control/HTML-char value', async ({ mount }) => {
   const component = await mount(SongPartModalHarness, {
     props: { session: hostSession(), selfParticipantId: 'host-1', catalog: [], catalogues: [{ id: 'default', name: 'default', public: true }] },

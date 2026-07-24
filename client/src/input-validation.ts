@@ -32,3 +32,13 @@ export function displayNameError(input: string): string | null {
 export function activationKeyError(input: string): string | null {
   return fieldValidationError(input, ACTIVATION_KEY_MAX_LENGTH, 'Activation key');
 }
+
+// T006: join-code format, mirroring session-store.ts's JOIN_CODE_PATTERN
+// (4 chars, A-Z minus the visually-ambiguous I/O, 2-9 minus the visually-
+// ambiguous 0/1) — case-insensitive since entry/lookup is case-insensitive.
+const JOIN_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{4}$/i;
+
+export function joinCodeError(input: string): string | null {
+  if (!input) return null;
+  return JOIN_CODE_PATTERN.test(input) ? null : 'Session code is invalid';
+}

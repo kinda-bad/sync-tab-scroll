@@ -74,6 +74,30 @@ describe('session-join', () => {
     expect(sent.some((m) => (m as { type: string }).type === 'error')).toBe(false);
   });
 
+  // T006: join-code format audit — a code that can never match the generated
+  // format (wrong length here) is rejected as session-not-found without even
+  // touching the session store, since no stored session could ever have this
+  // code.
+  it('rejects a malformed-length code as session-not-found without hitting the session store', () => {
+    const ctx = makeCtx();
+    const socket = fakeSocket();
+    const sent: unknown[] = [];
+    ctx.connections.send = (_socket, message) => {
+      sent.push(message);
+    };
+    let storeQueried = false;
+    const originalGet = ctx.sessionStore.get.bind(ctx.sessionStore);
+    ctx.sessionStore.get = (code: string) => {
+      storeQueried = true;
+      return originalGet(code);
+    };
+
+    handleSessionJoin(ctx, socket, { type: 'session-join', code: 'AB', displayName: 'Bob' });
+
+    expect(sent).toEqual([{ type: 'session-not-found', code: 'AB' }]);
+    expect(storeQueried).toBe(false);
+  });
+
   it('finds the session regardless of the join code\'s case (entry box only visually uppercases input)', () => {
     const ctx = makeCtx();
     const session = ctx.sessionStore.create('host-1');

@@ -4,6 +4,20 @@ const DEFAULT_HOST_REASSIGN_GRACE_MS = 120_000;
 /** Default idle TTL for empty sessions: 12 hours (infrastructure.md session lifecycle; SESSION_EMPTY_TTL_MS). */
 const DEFAULT_SESSION_EMPTY_TTL_MS = 43_200_000;
 
+// Join codes are 4 characters drawn from this alphabet — uppercase A-Z minus
+// the visually-ambiguous I/O, plus digits 2-9 minus the visually-ambiguous
+// 0/1 (T006, infrastructure.md/ui.md join-code format). JOIN_CODE_PATTERN
+// mirrors this alphabet+length exactly so both the server (session-join.ts)
+// and the client (Landing.svelte) can validate a typed code's format before
+// treating it as a real lookup attempt, case-insensitively (codes are
+// generated uppercase-only, but entry/lookup is case-insensitive).
+export const JOIN_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{4}$/i;
+
+/** True when `code` matches the generated join-code format (T006) — 4 characters from JOIN_CODE_PATTERN's alphabet, case-insensitive. */
+export function isValidJoinCodeFormat(code: string): boolean {
+  return JOIN_CODE_PATTERN.test(code);
+}
+
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';

@@ -7,6 +7,7 @@ import { seedHostMembershipUnlocks } from '../membership-unlock.js';
 import { promoteNextHost } from '../host-succession.js';
 import { sendOwnerVisibleCatalog } from '../owner-visibility.js';
 import { validateDisplayName } from '../input-validation.js';
+import { isValidJoinCodeFormat } from '../session-store.js';
 
 export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'session-join' }>): void {
   const displayNameResult = validateDisplayName(message.displayName);
@@ -15,6 +16,19 @@ export function handleSessionJoin(ctx: HandlerContext, socket: WebSocket, messag
     return;
   }
   const displayName = displayNameResult.value;
+
+  // T006: join-code format audit — a code that can't possibly match a real
+  // session (wrong length, or a character outside the generated alphabet,
+  // e.g. the visually-ambiguous I/O/0/1 the generator never produces) is
+  // rejected the same way a well-formed-but-nonexistent code always was:
+  // the typed session-not-found terminal signal (F001), not a new error
+  // shape — this only short-circuits the store lookup, it doesn't change
+  // the client-observable behavior.
+  if (!isValidJoinCodeFormat(message.code)) {
+    ctx.connections.send(socket, { type: 'session-not-found', code: message.code });
+    return;
+  }
+
   const session = ctx.sessionStore.get(message.code);
   if (!session) {
     // Typed terminal signal (F001) rather than a stringly-typed `error`: the
