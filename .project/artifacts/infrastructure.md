@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: current
@@ -138,10 +138,18 @@ at the host's reporting boundary** — broadcast emitted position, not
 scheduled — which is one change in one place and would benefit the
 synth-only path too.
 
-[OPEN: establishing the synth path's own output latency, which alphaTab
-1.8.3 does not expose and which the host-reporting-boundary fix needs.
-Requires an external reference (loopback capture or an instrumented
-`AudioContext` anchor), or an explicit decision to proceed without it.]
+**Decided: an instrumented `AudioContext` anchor**, not an external
+loopback capture. alphaTab drives synth playback through a Web Audio
+`AudioContext` it already owns; the fix instruments that context directly
+— comparing `AudioContext.currentTime` against the tick position alphaTab
+schedules a note-on for — rather than requiring a physical loopback/mic
+capture step per device. This keeps calibration in-process and automatic
+(no manual per-device calibration step, no external hardware), at the
+cost of only covering scheduling-to-audio-graph latency and not latency
+introduced downstream of the `AudioContext` (e.g. OS/driver buffering) —
+accepted, since that residual is expected to be small and stable relative
+to the ~50ms acceptance bar. This is follow-on implementation work against
+the host-reporting-boundary fix above, not yet built.
 
 **Acceptance criterion.** Participant separation is measured against a
 **~50ms** bar, with **end-state separation as the gate — never corrective

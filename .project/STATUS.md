@@ -1,5 +1,169 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-24 (**Ran `/ardd-status`: full cross-artifact consistency
+check after `/ardd-refine infrastructure` resolved the synth-path
+output-latency `[OPEN: ...]` question (decided: instrumented `AudioContext`
+anchor), no other state changes.** Artifacts (6, all `status: stable` except
+`constitution.md` v1.6.2 which has no `status` field by convention):
+`brand.md`, `constitution.md`, `datamodel.md`, `infrastructure.md`,
+`pipeline.md`, `ui.md` — all read in full.
+
+## Artifacts Found
+- brand.md — stable ✅
+- constitution.md — stable ✅ (v1.6.2, `next_step_prompt: auto`)
+- datamodel.md — stable ✅
+- infrastructure.md — stable ✅ (`last_updated: 2026-07-24`)
+- pipeline.md — stable ✅
+- ui.md — stable ✅
+
+## Cross-Artifact Issues
+None found. infrastructure.md's newly-decided output-latency anchor
+(instrumented `AudioContext`, compared against alphaTab's scheduled
+note-on tick) is consistent with datamodel.md's `PlaybackState.tickPosition`
+notes and ui.md's recording-mode carve-out language — no field/endpoint
+referenced in one artifact and left undefined in another.
+
+## Within-Artifact Issues
+No unresolved `[OPEN: ...]` placeholders or TODOs found in any artifact
+(confirmed by direct grep across `.project/artifacts/*.md`) — the prior
+run's one open item (infrastructure.md line 141, synth output latency) is
+now resolved and reads as a decision ("Decided: an instrumented
+`AudioContext` anchor...") rather than a question. No draft-status
+artifacts blocking planning.
+
+## Constitution Compliance
+No violations found. Production Annotations (datamodel.md's placeholder
+ToS version, infrastructure.md's out-of-band datastore/secrets and
+hand-rolled OAuth) remain correctly flagged as annotated shortcuts, not
+silent gaps.
+
+## Diagrams
+- datamodel.md — current ✅
+- infrastructure.md — **stale ⚠️ (run `/ardd-diagram infrastructure`)** —
+  frontmatter's `diagram_status: stale` correctly reflects that this
+  artifact's content changed (the output-latency resolution above,
+  `last_updated: 2026-07-24`) since the diagram was last generated.
+- ui.md — current ✅
+
+## Code-vs-Artifact Defects
+0 known defects — see `DEFECTS.md`, last checked 2026-07-23 (all 3
+previously-recorded defects confirmed closed). Run `/ardd-defects` to
+refresh if code has changed since.
+
+## Feedback
+No open-feedback section — 0 files at `status: open` across 50
+`.project/feedback/feedback-*.md` files (48 already advanced to
+`status: planned`, 2 further `split` into 4 group files each independently
+`planned`).
+
+## Feature Backlog
+0 backlogged · 0 planned · 1 tasked · 31 implemented — see
+`.project/features/`. The 1 tasked entry (`sync-tabs-to-real-audio`) is
+correctly bound to `plan-recording-drift-foundation-2026-07-20-9ca3.md` /
+`tasks-recording-drift-foundation-cc87.md`, both in progress. No feature
+carries a non-empty `epic` — by-epic breakdown omitted.
+
+## Documented but Untracked
+None found — every capability described by a stable artifact traces to
+either a feature-register entry or existing, working code.
+
+## Orphaned Completion Flips
+None found — `completion-flip-check.sh` ran clean against all 63
+`status: completed` tasks files (2 `abandoned`: `tasks-99e6-e76f.md`,
+`tasks-sync-tabs-to-real-audio-cb85.md`; 2 `in-progress`, correctly
+excluded from the completed-set check:
+`tasks-recording-drift-foundation-cc87.md`,
+`tasks-lobby-cursor-modes-0bea.md`).
+
+## Work Queue
+None — no `ready`-status tasks file exists project-wide.
+
+## In Flight
+- `tasks-recording-drift-foundation-cc87.md` (plan
+  `plan-recording-drift-foundation-2026-07-20-9ca3.md`, branch
+  `recording-drift-foundation`) — in-progress, 20/22 (Phase 1 diagnosis
+  substantially done; the just-resolved output-latency decision unblocks
+  continued work here).
+- `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
+- No other worktrees (`inflight-worktrees.sh` empty), no
+  `parallel-matrix.sh` entries, no `worktree-reap.sh --dry-run`
+  candidates. ArDD install up to date at `9bc9b38fa85` (beta channel).
+
+## Summary
+1 issue found (infrastructure.md's diagram is stale, expected side effect
+of the just-completed refine). Safe to /plan: yes. Recommended next step:
+`/ardd-diagram infrastructure` to regenerate the diagram from the
+refined content, then resume `tasks-recording-drift-foundation-cc87.md`
+now that its blocking open question is decided.
+
+--- Artifacts (6, all `status: stable` except
+`constitution.md` v1.6.2 which has no `status` field by convention):
+`brand.md`, `constitution.md`, `datamodel.md`, `infrastructure.md`,
+`pipeline.md`, `ui.md` — all read in full. One unresolved `[OPEN: ...]`
+placeholder found, in `infrastructure.md` (line 141): establishing the
+synth playback path's own output latency, which alphaTab 1.8.3 doesn't
+expose — needs an external reference (loopback capture or instrumented
+`AudioContext` anchor) or an explicit decision to proceed without it; this
+is the acknowledged open question behind the in-progress
+`tasks-recording-drift-foundation-cc87.md` work, not a newly-discovered
+gap. No other `[OPEN: ...]` markers, TODOs, or draft-status artifacts.
+Diagram frontmatter for `datamodel.md`/`infrastructure.md`/`ui.md` all
+`diagram_status: current` (regenerated last session, `769d2dd`). No
+cross-artifact contradictions found (entities/fields/endpoints referenced
+across datamodel/infrastructure/ui/pipeline line up). No constitution
+violations found; no `workflow_mode: collaborative` set, so PR-draft check
+skipped.
+
+`DEFECTS.md` last verified 2026-07-23: all-clear, 0 open defects (3
+previously-recorded defects confirmed closed by direct inspection).
+Feedback: 50 files under `.project/feedback/`, 0 at `status: open` — 48
+already advanced to `status: planned` (2 of those split into 4 group
+files, tracked as `open -> split -> planned` per-group) and consumed by
+their respective plans; no unaddressed feedback backlog. Feature register:
+32 entries in `.project/features/`, 31 `implemented`, 1 `tasked`
+(`sync-tabs-to-real-audio`, correctly bound to
+`plan-recording-drift-foundation-2026-07-20-9ca3.md` /
+`tasks-recording-drift-foundation-cc87.md`, both in progress) — 0
+`backlogged`/`planned`, so no epic grouping applies (no feature carries a
+non-empty `epic` field either). Documented-but-untracked: none found —
+every capability described by a stable artifact traces to either a
+feature-register entry or existing, working code (consistent with
+`DEFECTS.md`'s same finding one day prior).
+
+Completion-flip check: ran
+`.claude/skills/ardd-scripts/completion-flip-check.sh` against all 63
+`status: completed` tasks files (2 `abandoned`:
+`tasks-99e6-e76f.md`, `tasks-sync-tabs-to-real-audio-cb85.md`; 2
+`in-progress`: `tasks-recording-drift-foundation-cc87.md`,
+`tasks-lobby-cursor-modes-0bea.md` — correctly excluded from the
+completed-set check). Zero flip candidates found — no orphaned
+completions needing user confirmation.
+
+In Flight: zero other worktrees (`inflight-worktrees.sh` empty), zero
+parallel-matrix entries, zero worktree-reap candidates. On `main`:
+`tasks-recording-drift-foundation-cc87.md` unchanged at 20/22
+(in-progress — Phase 1 diagnosis substantially done, gated on the
+infrastructure.md `[OPEN: ...]` above); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12 (in-progress). ArDD install up to date at `9bc9b38`
+(beta channel).
+
+Work Queue: none — no open feedback, no backlogged/planned features, no
+recorded defects. The only outstanding item project-wide is the two
+in-progress tasks files above, both already mid-execution on `main`.
+
+Summary: project is healthy. 0 issues found (no cross-artifact
+contradictions, no constitution violations, no orphaned completion
+flips, no documented-but-untracked capabilities). Safe to /plan: yes —
+though there is little to plan given zero backlog; the natural next
+action is resuming/closing out the two in-progress tasks files, in
+particular resolving `infrastructure.md`'s open synth-latency question
+so `tasks-recording-drift-foundation-cc87.md` can proceed past its
+current gate. Recommended next step: continue
+`tasks-recording-drift-foundation-cc87.md` (resolve the synth
+output-latency `[OPEN: ...]` first) or `tasks-lobby-cursor-modes-0bea.md`
+— both are the only non-clean state in the project; no `/ardd-status`
+follow-up action is required beyond this.**)_
+
 _Updated: 2026-07-24 (**Ran `/ardd-diagram` for all 3 renderable
 artifacts.** Regenerated `datamodel.md`'s `erDiagram`, `infrastructure.md`'s
 and `ui.md`'s `graph TD` diagrams, upserted into `README.md`'s

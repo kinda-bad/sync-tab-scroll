@@ -336,7 +336,10 @@ graph TD
         WS["ws-client.ts<br/>reconnect-by-identity + retry"]
         AT["@coderline/alphatab<br/>live tab render + audio + shared clock"]
         DRIFT["latency-compensated drift correction<br/>35ms tempo-stable threshold"]
+        ANCHOR["instrumented AudioContext anchor<br/>synth-path output-latency compensation<br/>(host-reporting boundary fix)"]
         AT --> DRIFT
+        AT --> ANCHOR
+        ANCHOR --> DRIFT
     end
 
     subgraph Server["Server — single http.Server, one process"]
