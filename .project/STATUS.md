@@ -1,5 +1,40 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-07-23 (**`tasks-input-validation-e2e-hardening-e2da.md`
+completed and merged (all 17 tasks, 6 phases).** Delivered:
+`input-validation.ts` now actually rejects invalid `displayName`/
+activation-key input (a `ValidationResult` discriminated union) instead
+of silently sanitizing, wired through `session-create`/`session-join`/
+`catalogue-unlock`; matching non-authoritative client-side validation on
+Landing's name input and the activation-key field (new
+`client/src/input-validation.ts`, a new `error`/`onblur` pair on
+`TextInput.svelte`); join-code format grounded in `session-store.ts`'s
+actual 4-char generator alphabet and enforced at both layers; a
+generalized `validateField` helper applied to Phase 2 in-app authoring's
+catalogue-creation (`slug`/`name`/`key`) and add-song (`artist`/`title`/
+`submitterName`) fields at both layers — closing the real gap where
+`artist`/`title` fed `buildStagedFilename`'s filesystem path construction
+unvalidated; and the remaining 6 e2e specs' `.first()`-based fixture song
+selection fixed. Test suites: server 318/318, client vitest 153/153,
+client CT 229/230 (1 pre-existing unrelated flake, unchanged from prior
+passes), e2e 18/21 on the 6 fixed specs (3 pre-existing unrelated
+failures — a strict-mode spinbutton violation from unrelated in-flight
+work, a hazard-bar overlay issue, a fixture-data limitation — none caused
+by this work). Merged `worktree-agent-a18196966954993db` into `main` at
+`e0c5915` — clean, no conflicts (unlike the two earlier merges this
+session, this one needed no manual resolution and no dist rebuild). Both
+source feedback items already flipped to `status: planned` at plan time;
+no bound features to flip (`features: []`). `DEFECTS.md`'s remaining
+broken-contract entry (invalid input silently sanitized) is now resolved
+in code — will confirm and drop on the next `/ardd-defects` run.
+
+Zero in-flight worktrees, zero open feedback, zero unsurfaced defects,
+zero backlogged features. `tasks-recording-drift-foundation-cc87.md`
+unchanged at 20/22 (in-progress, on main); `tasks-lobby-cursor-modes-0bea.md`
+unchanged at 11/12. ArDD up to date at `9bc9b38` (beta). Recommended next
+step: `/ardd-defects` to confirm the broken-contract defect and the 2
+already-fixed cosmetic ones are all closed, and refresh `DEFECTS.md`.**)_
+
 _Updated: 2026-07-23 (**Ran `/ardd-plan` against both open feedback files**
 (`feedback-e2e-fixture-song-selection-drift-60d7.md`,
 `feedback-input-validation-reject-and-defense-in-depth-fc7d.md`) plus the
@@ -305,24 +340,17 @@ forced slug, so this pass stops as plain-text guidance.**)_
 - ui.md — stale ⚠️ (run /ardd-diagram ui)
 
 ## Code-vs-Artifact Defects
-- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this pass's fixes). 2 cosmetic entries (scriptFile line-citation, bars-per-row-set/early-stop-set field names) are already fixed in `infrastructure.md` — will drop on the next `/ardd-defects` run. 1 **broken-contract** now has a fix task (T001-T003 in `tasks-input-validation-e2e-hardening-e2da.md`), not yet resolved in code.
+- 3 known defects — see DEFECTS.md, last checked 2026-07-23 (predates this session's fixes). All 3 are now fixed in code/docs (2 cosmetic citations, 1 broken-contract input-validation reject behavior) — will drop on the next `/ardd-defects` run.
 
 ## Feature Backlog
 - 0 backlogged · 0 planned · 1 tasked · 31 implemented — see `.project/features/`.
-
-## Work Queue
-- `tasks-input-validation-e2e-hardening-e2da.md` — plan `plan-input-validation-e2e-hardening-2026-07-23-61c0.md`, no bound features:
-  - vs in-progress `tasks-recording-drift-foundation-cc87.md`: independent (no declared overlap)
-  - vs in-progress `tasks-lobby-cursor-modes-0bea.md`: independent (no declared overlap)
-
-  (`independent` means no declared shared feature slug or `[artifacts: ...]` tag only — not conflict-free; `merge_policy: auto` still governs at merge time.)
 
 ## In Flight
 - `tasks-recording-drift-foundation-cc87.md` — in-progress, 20/22 (on main).
 - `tasks-lobby-cursor-modes-0bea.md` — in-progress, 11/12.
 
 ## Summary
-0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-implement` to execute `tasks-input-validation-e2e-hardening-e2da.md` (17 tasks, 6 phases, ready).
+0 cross-artifact/constitution issues found. Safe to /plan: yes. Recommended next step: `/ardd-defects` to confirm all 3 known defects are closed and refresh DEFECTS.md.
 
 ---
 
