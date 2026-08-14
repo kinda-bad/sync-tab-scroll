@@ -27,6 +27,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Workspace packages resolve each other through their published entry
+      # points (e.g. @sync-tab-scroll/shared -> dist/index.d.ts), and dist/ is
+      # gitignored — so a clean checkout has no type declarations to resolve
+      # until everything is built. Without this, `check` and the test steps
+      # fail on TS2307 for cross-package imports.
+      - name: Build
+        run: pnpm build
+
       - name: Typecheck
         run: pnpm check
 
