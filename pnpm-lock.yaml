@@ -27,8 +27,8 @@ importers:
         specifier: ^1.58.2
         version: 1.58.2(@types/node@22.20.1)(svelte@5.56.4)(tsx@4.22.4)(vite@6.4.3(@types/node@22.20.1)(tsx@4.22.4))
       '@playwright/test':
-        specifier: ^1.58.2
-        version: 1.58.2
+        specifier: ^1.62.1
+        version: 1.62.1
       '@storybook/addon-svelte-csf':
         specifier: ^5.1.2
         version: 5.1.2(@storybook/svelte@10.4.6(storybook@10.4.6(@testing-library/dom@10.4.1)(@types/react@19.2.17)(react@19.2.7))(svelte@5.56.4))(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.56.4)(vite@6.4.3(@types/node@22.20.1)(tsx@4.22.4)))(storybook@10.4.6(@testing-library/dom@10.4.1)(@types/react@19.2.17)(react@19.2.7))(svelte@5.56.4)(vite@6.4.3(@types/node@22.20.1)(tsx@4.22.4))
@@ -903,9 +903,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@playwright/test@1.58.2':
-    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
-    engines: {node: '>=18'}
+  '@playwright/test@1.62.1':
+    resolution: {integrity: sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==}
+    engines: {node: '>=20'}
     hasBin: true
 
   '@rollup/rollup-android-arm-eabi@4.62.2':
@@ -1534,9 +1534,19 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  playwright-core@1.62.1:
+    resolution: {integrity: sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   playwright@1.58.2:
     resolution: {integrity: sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==}
     engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.62.1:
+    resolution: {integrity: sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   postcss@8.5.16:
@@ -2344,9 +2354,9 @@ snapshots:
       - vite
       - yaml
 
-  '@playwright/test@1.58.2':
+  '@playwright/test@1.62.1':
     dependencies:
-      playwright: 1.58.2
+      playwright: 1.62.1
 
   '@rollup/rollup-android-arm-eabi@4.62.2':
     optional: true
@@ -2995,9 +3005,17 @@ snapshots:
 
   playwright-core@1.58.2: {}
 
+  playwright-core@1.62.1: {}
+
   playwright@1.58.2:
     dependencies:
       playwright-core: 1.58.2
+    optionalDependencies:
+      fsevents: 2.3.2
+
+  playwright@1.62.1:
+    dependencies:
+      playwright-core: 1.62.1
     optionalDependencies:
       fsevents: 2.3.2
 
