@@ -24,9 +24,10 @@ function verifyKey(key: string, salt: string, storedHashHex: string): boolean {
  * selection. The message carries **no catalogueId** — a locked catalogue's
  * id/name is never sent to the client — so the server resolves *which*
  * catalogue the key belongs to by trying it against every locked,
- * not-yet-unlocked catalogue and unlocking the first whose stored hash matches.
+ * not-yet-unlocked catalogue and unlocking **every** one whose stored hash
+ * matches (one key can open several catalogues, e.g. a series split in two).
  * Public and already-unlocked catalogues are never in that set, so nothing
- * leaks which catalogue ids exist. On success the matched catalogue id is
+ * leaks which catalogue ids exist. On success each matched catalogue id is
  * appended to `Session.unlockedCatalogueIds` and two messages are broadcast:
  * the normal `session-state` and a fresh, now-wider `catalog` (via
  * `visibleCatalog`). A key matching nothing is the same terse `error` as a
@@ -55,24 +56,26 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
   }
   const key = keyResult.value;
 
-  // Try the key against every locked, not-yet-unlocked catalogue and take the
-  // first match. Public catalogues (no salt/hash) and already-unlocked ones are
+  // Try the key against every locked, not-yet-unlocked catalogue and take
+  // every match. Public catalogues (no salt/hash) and already-unlocked ones are
   // excluded from the set, so there's no per-id early-return that could leak
   // which catalogues exist.
   const unlocked = new Set(session.unlockedCatalogueIds);
-  const catalogue = ctx.catalog.catalogues.find(
+  const matched = ctx.catalog.catalogues.filter(
     (c) => !c.public && !!c.salt && !!c.hash && !unlocked.has(c.id) && verifyKey(key, c.salt, c.hash),
   );
-  if (!catalogue) {
+  if (matched.length === 0) {
     ctx.connections.send(socket, { type: 'error', message: 'Incorrect activation key' });
     return;
   }
 
-  session.unlockedCatalogueIds.push(catalogue.id);
-  // Record this as the key-typed slice (a sticky session fact that survives host
-  // change, §13 S4) — distinct from the membership-derived slice re-derived on
-  // host change (membership-unlock.ts).
-  ctx.sessionStore.recordKeyUnlock(session.code, catalogue.id);
+  for (const catalogue of matched) {
+    session.unlockedCatalogueIds.push(catalogue.id);
+    // Record this as the key-typed slice (a sticky session fact that survives
+    // host change, §13 S4) — distinct from the membership-derived slice
+    // re-derived on host change (membership-unlock.ts).
+    ctx.sessionStore.recordKeyUnlock(session.code, catalogue.id);
+  }
   ctx.connections.broadcast(session.code, (selfParticipantId) => ({ type: 'session-state', session, selfParticipantId }));
   ctx.connections.broadcast(session.code, () => ({ type: 'catalog', ...visibleCatalog(ctx.catalog, session) }));
 
@@ -85,9 +88,11 @@ export function handleCatalogueUnlock(ctx: HandlerContext, socket: WebSocket, me
   // just isn't remembered for next time — never a crash. It records the
   // catalogue's CURRENT epoch (§13 S5) keyed on the stable catalogue id (§13 S8).
   if (conn.userId) {
-    const keyEpoch = catalogue.epoch ?? 1;
-    void ctx.accountStore
-      .upsertMembership({ userId: conn.userId, catalogueId: catalogue.id, grantedVia: 'key', keyEpoch })
-      .catch((err) => console.error('[catalogue-unlock] best-effort membership write failed:', err instanceof Error ? err.message : err));
+    for (const catalogue of matched) {
+      const keyEpoch = catalogue.epoch ?? 1;
+      void ctx.accountStore
+        .upsertMembership({ userId: conn.userId, catalogueId: catalogue.id, grantedVia: 'key', keyEpoch })
+        .catch((err) => console.error('[catalogue-unlock] best-effort membership write failed:', err instanceof Error ? err.message : err));
+    }
   }
 }

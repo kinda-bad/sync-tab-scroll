@@ -130,6 +130,54 @@ describe('catalogue-unlock', () => {
     expect(sent[0].type).toBe('error');
   });
 
+  describe('one key shared by several locked catalogues', () => {
+    /** Adds a second locked catalogue whose record carries the same salt/hash as premium-pack. */
+    function withSharedKeyCatalogue() {
+      const h = withHostSession();
+      h.ctx.catalog.catalogues.push({ id: 'premium-pack-ii', name: 'Premium Pack II', public: false, salt: SALT, hash: HASH, epoch: 3 });
+      h.ctx.catalog.songs.push(fakeSong('bonus-ii', 'premium-pack-ii'));
+      return h;
+    }
+
+    it('unlocks every locked catalogue the key matches, with one broadcast pair', () => {
+      const { ctx, session, hostSocket, sent, broadcasts } = withSharedKeyCatalogue();
+
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
+
+      expect(session.unlockedCatalogueIds).toEqual(['premium-pack', 'premium-pack-ii']);
+      expect(sent).toEqual([]);
+      expect(broadcasts.map((m) => m.type)).toEqual(['session-state', 'catalog']);
+      const catalogMsg = broadcasts.find((m) => m.type === 'catalog');
+      expect(catalogMsg && catalogMsg.type === 'catalog' && catalogMsg.songs.map((s) => s.id).sort()).toEqual(['bonus', 'bonus-ii', 'creep']);
+    });
+
+    it('unlocks the still-locked one when another sharing the key is already unlocked', () => {
+      const { ctx, session, hostSocket, sent } = withSharedKeyCatalogue();
+      session.unlockedCatalogueIds.push('premium-pack');
+
+      handleCatalogueUnlock(ctx, hostSocket, { type: 'catalogue-unlock', key: KEY });
+
+      expect(session.unlockedCatalogueIds).toEqual(['premium-pack', 'premium-pack-ii']);
+      expect(sent).toEqual([]);
+    });
+
+    it('persists a membership for each matched catalogue at its own epoch for a signed-in host', () => {
+      const h = withSharedKeyCatalogue();
+      const upsert = vi.fn(async () => null);
+      const store = new NullAccountStore();
+      store.upsertMembership = upsert;
+      h.ctx.accountStore = store;
+      h.ctx.connections.stampUserId(h.hostSocket, 'user-1');
+      h.ctx.connections.attach(h.hostSocket, { sessionCode: h.session.code, participantId: 'host-1' });
+
+      handleCatalogueUnlock(h.ctx, h.hostSocket, { type: 'catalogue-unlock', key: KEY });
+
+      expect(upsert).toHaveBeenCalledTimes(2);
+      expect(upsert).toHaveBeenCalledWith({ userId: 'user-1', catalogueId: 'premium-pack', grantedVia: 'key', keyEpoch: 1 });
+      expect(upsert).toHaveBeenCalledWith({ userId: 'user-1', catalogueId: 'premium-pack-ii', grantedVia: 'key', keyEpoch: 3 });
+    });
+  });
+
   // T003: input-validation reject behavior (infrastructure.md Input
   // Validation, feedback-input-sanitization-hardening-7a9a F001) — a key
   // containing control/HTML chars is rejected with an error, not
