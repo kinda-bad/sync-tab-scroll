@@ -46,3 +46,29 @@ anchors; the bridge anchors (61/62/63) only pass with this patch applied.
 Zip-editing note: rewrite the zip without macOS AppleDouble `._*` entries
 (`COPYFILE_DISABLE=1`, or edit with a script rather than Finder) — stray
 AppleDouble files have broken tab loading before (see memory/deploy notes).
+
+## Part names — every song's `meta.json` (applied 2026-11-26)
+
+*Why:* GP track names come in mixed styles (`Ray Toro | Gibson Les Paul |
+Lead Guitar`, `Brian - Rhythm Guitar`, `Chirs Bass`). The client's part-name
+display (`client/src/part-display-name.ts`) only splits the
+`Performer (Instrument)` form, so the other styles showed the whole raw
+string on the instrument line. Every part's `instrumentName` was rewritten by
+hand to `Performer (Instrument)`, or `Performer (Instrument, Gear)` when the
+tab named the gear — the comma part renders on the detail line after the
+performer.
+
+*The edit:* `docs/catalog-part-names.json` maps each song directory (relative
+to `catalog/`) to its part names in `trackIndex` order. `extract-lyrics`
+regenerates `meta.json` from the `.gp` track names, so after re-running it on
+a listed song, reapply from the repo root:
+
+```sh
+k=kinda-bad/radiohead-creep   # the song's key in the map
+f=catalog/$k/meta.json
+jq --slurpfile map docs/catalog-part-names.json --arg k "$k" \
+  '.parts |= [.[] | .instrumentName = $map[0][$k][.trackIndex]]' "$f" > "$f.tmp" \
+  && mv "$f.tmp" "$f"
+```
+
+When adding a new song, add its entry to the map in the same form.
