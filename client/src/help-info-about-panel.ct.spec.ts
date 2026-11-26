@@ -112,6 +112,26 @@ for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light']) {
   });
 }
 
+test('a hovered link switches to the normal text color', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, lobbySession());
+
+  await page.getByRole('button', { name: 'Help & About' }).click();
+  const link = page.locator('a[href="https://github.com/kinda-bad/sync-tab-scroll"]');
+  await link.hover();
+
+  const readColors = () =>
+    link.evaluate((a) => {
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--ink)';
+      a.parentElement!.appendChild(probe);
+      const ink = getComputedStyle(probe).color;
+      probe.remove();
+      return { ink, link: getComputedStyle(a).color };
+    });
+  await expect.poll(async () => { const c = await readColors(); return c.link === c.ink; }).toBe(true);
+});
+
 test('the About tab shows a version mark', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, lobbySession());
