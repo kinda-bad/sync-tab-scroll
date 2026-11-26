@@ -9,7 +9,7 @@ import { createSessionAsHost } from './helpers';
  * resolved — this asserts real rendered text, not just the absence of a
  * tab canvas (single-participant.spec.ts's older lyrics-part test only
  * checked the latter). No sendAsParticipant raw-WS bypass here — the
- * worker-asset fix (vite.config.ts's alphaTabWorkerAssets()) lets readiness
+ * worker-asset fix (the alphaTab plugin in vite.config.ts) lets readiness
  * resolve for real under Playwright automation now (confirmed empirically:
  * the old "Chrome autoplay policy blocks it" belief this project held was
  * never actually correct — the real blocker was always this same asset

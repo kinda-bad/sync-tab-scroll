@@ -1,46 +1,23 @@
 import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { createRequire } from 'node:module';
-import type { Plugin } from 'vite';
+import { alphaTab } from '@coderline/alphatab-vite';
 import { accountDevProxy } from './src/dev-proxy';
 
-// @coderline/alphatab's vite plugin (dist/vite/alphaTab.vite.mjs) is missing
-// from the published 1.8.3 package — a packaging bug, not a config error
-// (verified: the file genuinely doesn't exist in node_modules). Configuring
-// asset handling manually instead; see tab-renderer.ts for font/worker setup.
-//
-// The dev server (optimizeDeps.exclude below) and the production build need
-// two DIFFERENT fixes for the same underlying problem — alphaTab's ESM
-// build always attempts `new Worker(new URL('./alphaTab.worker.mjs',
-// import.meta.url), {type:'module'})` first (regardless of
-// core.scriptFile/core.useWorkers, which are only a fallback reached on a
-// *synchronous* construction error — a hanging/404 Worker never throws
-// one). Excluding the dep from esbuild's optimizer changes how alphaTab's
-// own bundler-detection resolves at dev-time, so the dev server takes a
-// different, working code path (verified empirically — see the real-browser
-// repro this fix was based on). The production `vite build` output has no
-// such detection difference, so the ESM worker request goes out for real —
-// but Vite can't see that `new URL(...)` call (it's wrapped inside
-// alphaTab's own Environment class), so the worker files never land in
-// dist/assets/ and the request hangs forever with no visible error,
-// permanently blocking playback readiness. Mirrors playwright.config.ts's
-// `alphaTabWorkerAssets()` (already applied to the CT project) for the
-// main client build.
-function alphaTabWorkerAssets(): Plugin {
-  const require = createRequire(import.meta.url);
-  const distDir = path.dirname(require.resolve('@coderline/alphatab'));
-  return {
-    name: 'alphatab-build-worker-assets',
-    generateBundle() {
-      for (const f of ['alphaTab.worker.mjs', 'alphaTab.worklet.mjs', 'alphaTab.core.mjs']) {
-        this.emitFile({ type: 'asset', fileName: `assets/${f}`, source: fs.readFileSync(path.join(distDir, f)) });
-      }
-    },
-  };
-}
+// alphaTab's ESM build spawns its synth/render worker and its audio worklet
+// from `new URL('./alphaTab.worker.mjs' | './alphaTab.worklet.mjs',
+// import.meta.url)`. alphaTab's own Vite plugin (@coderline/alphatab-vite,
+// its own package since 1.9) handles both halves:
+// - build: emits the worker and worklet as chunks that share the page's
+//   alphaTab core chunk. Without it Vite inlines the tiny worklet entry as a
+//   `data:` URL, its relative import of the core module cannot resolve, and
+//   playback never starts (alphaTab logs "Audio Worklet operation failed").
+// - dev server: excludes alphaTab from dependency pre-bundling, which would
+//   otherwise move the main module away from the worker files its relative
+//   URLs point to.
+// scripts/check-worker-assets.mjs fails the build if those chunks go missing.
+// `assetOutputDir: false` because the font and SoundFont are already
+// committed under public/ (see tab-renderer.ts).
 //
 // Ports: dev servers (a real person's own session) run on 6100/6080; e2e
 // spins up its own instances on 6001/6081 (playwright.config.ts's
@@ -58,15 +35,7 @@ const fileEnv = loadEnv('', process.cwd(), '');
 const backendPort = process.env.VITE_BACKEND_PORT ?? fileEnv.VITE_BACKEND_PORT ?? '6080';
 
 export default defineConfig({
-  plugins: [svelte(), alphaTabWorkerAssets()],
-  // The dep-optimizer's own bundling of alphaTab.worker.mjs never resolves
-  // under Vite's dev server (verified: request stays pending forever,
-  // blocking soundFontLoaded/readiness) — excluding it forces alphaTab to
-  // use the classic worker script (core.scriptFile, see tab-renderer.ts)
-  // instead, matching how the render worker is already handled.
-  optimizeDeps: {
-    exclude: ['@coderline/alphatab']
-  },
+  plugins: [svelte(), alphaTab({ assetOutputDir: false })],
   server: {
     // 6100, not 6000: Chrome (and other Chromium browsers) refuses to
     // navigate to port 6000 at all — it's on their hardcoded "unsafe

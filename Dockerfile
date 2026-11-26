@@ -14,7 +14,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 # Install first, from just the manifests, so dependency layers cache
 # independently of source changes.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs ./
 COPY client/package.json client/package.json
 COPY server/package.json server/package.json
 COPY packages/shared/package.json packages/shared/package.json
