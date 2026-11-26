@@ -8,9 +8,10 @@
 # the runtime stage automatically by `pnpm --filter server deploy`, which
 # resolves transitive workspace deps into /app/server-deploy/node_modules.
 
-FROM node:26-slim AS build
+FROM node:24-slim AS build
 WORKDIR /app
-# Node 25+ images no longer ship corepack, so pnpm comes from npm.
+# Installed with npm rather than corepack: Node 25+ images no longer ship
+# corepack, so this line survives the next Node bump.
 RUN npm install -g pnpm@10.33.0
 
 # Install first, from just the manifests, so dependency layers cache
@@ -44,7 +45,7 @@ RUN pnpm build
 # applies via the env var pnpm reads instead.
 RUN npm_config_ignore_scripts=true pnpm --filter server deploy --legacy --prod /app/server-deploy
 
-FROM node:26-slim AS runtime
+FROM node:24-slim AS runtime
 WORKDIR /app/server
 COPY --from=build /app/server-deploy ./
 # server/src/config.ts's CLIENT_ROOT default ('../client/dist', relative to

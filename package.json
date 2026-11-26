@@ -2,7 +2,7 @@
   "name": "sync-tab-scroll",
   "private": true,
   "engines": {
-    "node": ">=26"
+    "node": ">=24"
   },
   "scripts": {
     "build": "pnpm -r build",
