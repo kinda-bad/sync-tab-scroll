@@ -1,5 +1,84 @@
 # sync-tab-scroll — Project Status
 
+_Updated: 2026-11-26 (**Ran `/ardd-status` after `/ardd-feedback` filed
+`feedback-song-part-control-during-playb-dba8.md` (4 items).** This is a
+light pass: frontmatter, `[OPEN]` markers, the ArDD scripts, the register
+and the feedback and tasks directories were checked. The six artifacts were
+not re-read in full for cross-artifact conflicts; the only artifact content
+changed since the 2026-07-24 full pass is `infrastructure.md`'s Font &
+Worker Setup section (alphaTab 1.9.0 and its Vite plugin, PR #21).
+
+Work landed on `main` today outside the ArDD plan/tasks flow, as dependency
+and test maintenance: PRs #19, #20, #21, #22, #27 and #28 (patch/minor
+bumps, Vite 8, Vitest 5, alphaTab 1.9.0, pnpm/action-setup v6, the three
+stale e2e specs, accessible names for the Session tab number inputs). Open
+and unmerged: #29 (TypeScript 7, `@types/node` 26) and #30 (link color,
+version mark in Help & About).
+
+## Artifacts Found
+- brand.md — stable ✅
+- constitution.md — stable ✅ (v1.6.2, `next_step_prompt: auto`)
+- datamodel.md — stable ✅
+- infrastructure.md — stable ✅ (`last_updated: 2026-11-26`)
+- pipeline.md — stable ✅
+- ui.md — stable ✅
+
+## Cross-Artifact Issues
+Not re-checked this pass (see above). None known.
+
+## Within-Artifact Issues
+No `[OPEN: ...]` placeholders in any artifact (grep). No draft-status
+artifacts.
+
+## Constitution Compliance
+Not re-checked this pass. None known.
+
+## Diagrams
+- datamodel.md — current ✅
+- infrastructure.md — current ✅ (today's edit changed prose only, no node
+  or edge of the diagram)
+- ui.md — current ✅
+
+## Code-vs-Artifact Defects
+0 recorded — see `DEFECTS.md`, last checked 2026-07-23, which is now four
+months and several merges old. Run `/ardd-defects` to refresh. One drift is
+already known from today's feedback (F001 below): `ui.md` places the
+"Song & part" control in the bar during Playback, the code renders it in
+the Lobby only. Still to be written into the artifacts: PR #30's global
+link style (brand.md) and the About tab's version mark (ui.md), if it
+merges.
+
+## Feedback
+1 open feedback file — `feedback-song-part-control-during-playb-dba8.md`,
+4 items, will be picked up by the next `/ardd-plan`:
+- F001 (Bug) "Song & part" control missing from the Playback view.
+- F002 (UX) clicking it during playback should pause, not stop and reset;
+  carries code findings and one open question (host-only pause?).
+- F004 (UX) "No lyrics for this song" shown for a song that has a Lyrics
+  part; two candidate fixes, to be chosen at plan time.
+- F003 (Reconsidered) "Leave session" icon: bone → `Power`.
+
+## Feature Backlog
+0 backlogged · 0 planned · 0 tasked · 32 implemented — see
+`.project/features/`. No feature carries an `epic`.
+
+## Orphaned Completion Flips
+None — `completion-flip-check.sh` ran clean over all completed tasks files.
+
+## Work Queue
+None — no `ready` tasks file.
+
+## In Flight
+No other worktrees, no reap candidates. ArDD update available: installed
+`9bc9b38fa85`, source at `v1.2.1-beta.6` (beta channel) — run
+`/ardd-update`.
+
+## Summary
+0 issues found by this light pass. Safe to /plan: yes. Recommended next
+step, when the user is ready (they closed this session's feedback round
+with "that's it for now", so nothing was auto-run): plan the open feedback
+file with `/ardd-plan`. `/ardd-defects` and `/ardd-update` are both due.**)_
+
 _Updated: 2026-07-24 (**Ran `/ardd-status`: refresh after `/ardd-implement
 --reconcile tasks-lobby-cursor-modes-0bea.md`** confirmed all 12 of its
 tasks genuinely done and flipped its frontmatter `status: in-progress` →
