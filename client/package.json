@@ -16,12 +16,13 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@coderline/alphatab": "^1.8.4",
+    "@coderline/alphatab": "^1.9.0",
     "@lucide/svelte": "^1.80.0",
     "@sync-tab-scroll/shared": "workspace:*"
   },
   "devDependencies": {
     "@breezystack/lamejs": "^1.2.7",
+    "@coderline/alphatab-vite": "^1.9.0",
     "@playwright/experimental-ct-svelte": "^1.58.2",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-svelte-csf": "^5.1.6",

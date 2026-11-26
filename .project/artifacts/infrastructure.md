@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-07-24
+last_updated: 2026-11-26
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: current
@@ -709,13 +709,15 @@ reported stutter should be confirmed live in a future pass.
 Three more implementation-verified deviations from what the render-settings
 block above might suggest at a glance:
 
-- `@coderline/alphatab`'s Vite plugin (`@coderline/alphatab/vite`) is
-  broken in the installed 1.8.3 release — it references a nested build
-  file (`dist/vite/alphaTab.vite.mjs`) that doesn't exist in the published
-  package. Font assets (Bravura, OFL-licensed) are instead committed
-  directly to the client's static assets and served from `/font/`, with
-  `core.fontDirectory` pointed at that path — a manual substitute for
-  what the plugin would otherwise automate, not a design choice.
+- alphaTab's Vite plugin is used for workers only, not for assets. It
+  was broken in the 1.8.x releases (`@coderline/alphatab/vite` referenced
+  a build file missing from the published package) and has been its own
+  package, `@coderline/alphatab-vite`, since 1.9.0. Both Vite configs
+  (`client/vite.config.ts` and `playwright.config.ts`'s `ctViteConfig`)
+  apply it with `assetOutputDir: false`: font assets (Bravura,
+  OFL-licensed) and the SoundFont stay committed in the client's static
+  assets and are served from `/font/` and `/soundfont/`, with
+  `core.fontDirectory` pointed at that path.
 - `core.useWorkers` must be `false` (see code block above) — alphaTab's
   web-worker script auto-detection assumes a single bundled script file,
   which doesn't hold under Vite's ESM module output. Main-thread
@@ -739,28 +741,38 @@ block above might suggest at a glance:
     import.meta.url)`, resolved against alphaTab's own package location)
     goes out and is served by Vite's `/@fs/` raw-filesystem passthrough,
     straight out of `node_modules/@coderline/alphatab/dist/` — no
-    building/rewriting involved. `client/vite.config.ts`'s
-    `optimizeDeps.exclude: ['@coderline/alphatab']` is what makes this
-    resolve at all: without it, Vite's dev-time dep-optimizer (esbuild)
-    tries to pre-bundle the package into its own rewritten `deps/` cache
-    first, and that rewritten copy's own internal `import.meta.url`
-    resolution breaks the same request the exclude avoids inviting in the
-    first place.
-  - **Production build** (`vite build`): the same request goes out, but
-    there is no `node_modules`/`/@fs/` passthrough in a built app — Vite
-    can't see `new URL(...)` wrapped inside alphaTab's own `Environment`
-    class to begin with, so `alphaTab.worker.mjs`/`alphaTab.worklet.mjs`/
-    `alphaTab.core.mjs` never land in `dist/assets/` on their own.
-    `client/vite.config.ts`'s `alphaTabWorkerAssets()` plugin (mirroring
-    the equivalent plugin already in `playwright.config.ts`'s
-    `ctViteConfig`) emits them via `generateBundle`, so the request the
-    built code actually issues resolves. Without it, the request hangs
-    forever with zero visible
-    error, permanently blocking `soundFontLoaded`/playback readiness for
-    every participant — this was the root cause of
-    feedback-lyrics-only-view-d7d8 (the lyrics-only view has no fallback
-    content at all, unlike an instrument participant who at least sees a
-    static, if unsynced, rendered tab).
+    building/rewriting involved. This only resolves because alphaTab is
+    excluded from Vite's dev-time dependency pre-bundling, which would
+    otherwise move the main module away from the worker files its relative
+    URLs point to. The alphaTab Vite plugin applies that exclusion itself.
+  - **Production build** (`vite build`): there is no `node_modules`/`/@fs/`
+    passthrough in a built app, so the worker and the audio worklet must
+    exist as real files next to the built chunk. The alphaTab Vite plugin
+    emits both as chunks (`dist/assets/alphaTab.worker-*.js`,
+    `alphaTab.worklet-*.js`) that share the page's alphaTab core chunk.
+    Two silent failure modes exist without it, and both stop playback for
+    every participant with no visible error:
+    - Up to alphaTab 1.8.x the URLs were hidden from Vite inside alphaTab's
+      own `Environment` class, so the files were never emitted and the
+      worker request hung forever, blocking `soundFontLoaded`/playback
+      readiness. This was the root cause of feedback-lyrics-only-view-d7d8
+      (the lyrics-only view has no fallback content at all, unlike an
+      instrument participant who at least sees a static, if unsynced,
+      rendered tab). A hand-written `alphaTabWorkerAssets()` plugin copied
+      the three files until the move to 1.9.0.
+    - From 1.9.0 the URLs are plain `new URL(..., import.meta.url)` calls
+      that Vite does see. Vite then inlines the 1.5 kB worklet entry as a
+      `data:` URL, whose relative `import './alphaTab.core.mjs'` cannot
+      resolve: readiness succeeds, `play()` returns true, and the position
+      never advances (console: "Audio Worklet operation failed").
+    `client/scripts/check-worker-assets.mjs` runs after every client build
+    and fails it when either chunk is missing.
+- A single copy of `@coderline/alphatab` must be installed across the
+  workspace. From 1.9.0 it declares its bundler plugins as optional peers,
+  which makes pnpm install one copy per distinct Vite peer set (client and
+  pipeline differ); TypeScript then rejects passing one copy's `Score` to
+  code typed against the other. `.pnpmfile.cjs` strips those peers, and the
+  `Dockerfile` copies that file before `pnpm install --frozen-lockfile`.
 
 The audio side of tab rendering also deviates from a bare visual-only
 setup: `settings.player.enablePlayer = true` and `settings.player.soundFont

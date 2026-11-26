@@ -76,8 +76,8 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // build always attempts `new Worker(new URL('./alphaTab.worker.mjs',
   // import.meta.url), {type: 'module'})` first, in every environment; that
   // request resolves via Vite's dev-time `/@fs/` passthrough or, in a
-  // production build, the `alphaTabWorkerAssets()` vite plugin emitting the
-  // asset (see vite.config.ts). This `core.scriptFile` line is only a
+  // production build, the chunk emitted by alphaTab's Vite plugin (see
+  // vite.config.ts). This `core.scriptFile` line is only a
   // fallback reached inside a `catch` for a *synchronous* Worker-construction
   // error — a Worker pointed at a hanging or 404ing URL never throws
   // synchronously, so this line does nothing to rescue that failure mode.

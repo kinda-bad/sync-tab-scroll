@@ -17,7 +17,7 @@
     "create-catalogue": "tsx src/create-catalogue.ts"
   },
   "dependencies": {
-    "@coderline/alphatab": "^1.8.4",
+    "@coderline/alphatab": "^1.9.0",
     "@sync-tab-scroll/shared": "workspace:*",
     "adm-zip": "^0.6.1",
     "fast-xml-parser": "^5.12.1"
