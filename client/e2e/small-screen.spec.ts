@@ -104,7 +104,9 @@ test('narrow (360px): lobby, member settings modal, error toast fit', async ({ p
 
 test('playback view fits a phone screen', async ({ page }) => {
   await createSessionAsHost(page, 'Host');
-  await page.getByRole('listitem').filter({ hasText: 'Synthetic Test Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
+  // The one fixture song whose lyrics live in the GP file: the in-tab lyrics
+  // ticker toggled below is disabled for a song without a lyrics track.
+  await page.getByRole('listitem').filter({ hasText: 'Lyrics In Tab Song' }).getByRole('button', { name: 'Select' }).click(); // pick the song
   await page.getByRole('button', { name: 'Select' }).first().click(); // pick the (only) instrument part — auto-closes the modal
   await expect(page.getByRole('dialog', { name: 'Song & part' })).not.toBeVisible();
 
@@ -115,13 +117,17 @@ test('playback view fits a phone screen', async ({ page }) => {
   await page.getByRole('button', { name: 'Start' }).click();
   await expect(page.locator('svg').first()).toBeVisible({ timeout: 15_000 });
 
-  await expectNoHorizontalOverflow(page, 'playback view (instrument part)');
-
-  // The in-tab lyrics ticker strip must also fit (it clips/scrolls its own
-  // content programmatically — overflow:hidden — but the strip itself must
-  // not widen the page).
-  await page.getByRole('button', { name: 'Toggle lyrics' }).click();
+  // The in-tab lyrics ticker strip is on by default and must also fit (it
+  // clips/scrolls its own content programmatically — overflow:hidden — but
+  // the strip itself must not widen the page).
+  await expect(page.locator('.engine-containers')).not.toHaveClass(/lyrics-overlay-hidden/);
+  await expect(page.locator('.lyrics-overlay-container')).toContainText('one');
   await expectNoHorizontalOverflow(page, 'playback view with lyrics ticker');
+
+  // Toggling the ticker off collapses its strip; the tab alone must fit too.
+  await page.getByRole('button', { name: 'Toggle lyrics' }).click();
+  await expect(page.locator('.engine-containers')).toHaveClass(/lyrics-overlay-hidden/);
+  await expectNoHorizontalOverflow(page, 'playback view without lyrics ticker');
 });
 
 test('full-lyrics view (lyrics part) fits a phone screen', async ({ page }) => {

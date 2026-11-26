@@ -53,7 +53,9 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   // Session tab (SettingsModal.svelte), not inline in the Lobby body.
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Session', exact: true }).click();
-  await page.getByRole('spinbutton').fill('500');
+  // The Session tab has two number inputs (lobby cursor, early-stop point) and
+  // neither has an accessible name, so pick this one by class.
+  await page.locator('input.cursor-input').fill('500');
   await page.getByRole('button', { name: 'Set lobby cursor' }).click();
 
   await expect(page.getByText('Host is pointing at tick 500')).toBeVisible();
