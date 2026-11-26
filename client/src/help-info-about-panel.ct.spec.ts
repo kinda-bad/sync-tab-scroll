@@ -80,3 +80,43 @@ test('the About tab renders the alphaTab/Songsterr shoutout, GitHub source link,
   await expect(page.locator('a[href="https://github.com/kinda-bad/sync-tab-scroll"]')).toBeVisible();
   await expect(page.locator('a[href="https://github.com/sponsors/moui72"]')).toBeVisible();
 });
+
+// Links had no style of their own, so they rendered in the browser's default
+// blue: close to unreadable on the dark themes' near-black surfaces. They now
+// take the theme's ink color and are marked as links by a riot underline.
+for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light']) {
+  test(`About tab links use the theme's ink color, not browser-default blue (${theme})`, async ({ mount, page }) => {
+    await mount(AppHarness);
+    await setStore(page, lobbySession());
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t;
+    }, theme);
+
+    await page.getByRole('button', { name: 'Help & About' }).click();
+    const link = page.locator('a[href="https://github.com/kinda-bad/sync-tab-scroll"]');
+    await expect(link).toBeVisible();
+
+    const readColors = () =>
+      link.evaluate((a) => {
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--ink)';
+        a.parentElement!.appendChild(probe);
+        const ink = getComputedStyle(probe).color;
+        probe.remove();
+        const style = getComputedStyle(a);
+        return { ink, link: style.color, underline: style.textDecorationLine };
+      });
+    // Polled: the theme switch above cross-fades text color over 150ms.
+    await expect.poll(async () => { const c = await readColors(); return c.link === c.ink; }).toBe(true);
+    expect((await readColors()).underline).toContain('underline');
+  });
+}
+
+test('the About tab shows a version mark', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, lobbySession());
+
+  await page.getByRole('button', { name: 'Help & About' }).click();
+  // The CT bundle is built without a commit, so it reports a dev build.
+  await expect(page.getByTestId('version-mark')).toHaveText('Version dev');
+});

@@ -163,3 +163,21 @@ button,
 input {
   font-family: inherit;
 }
+
+/* Links take the surrounding text color rather than the browser's default
+   blue/purple, which is close to unreadable on the dark themes' near-black
+   surfaces. The riot underline is what marks them as links: --riot as a text
+   color would miss AA contrast on the light themes. */
+a,
+a:visited {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--riot);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration-thickness: 3px;
+}

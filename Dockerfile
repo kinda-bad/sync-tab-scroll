@@ -27,6 +27,10 @@ COPY packages/pipeline/package.json packages/pipeline/package.json
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
+# Railway supplies the commit being deployed as a build argument. The client
+# build bakes it into the version mark shown in Help & About
+# (client/vite.config.ts); without it the mark reads "dev".
+ARG RAILWAY_GIT_COMMIT_SHA
 RUN pnpm build
 
 # pnpm's own idiomatic mechanism for a self-contained, deployable package

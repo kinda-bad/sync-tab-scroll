@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { execSync } from 'node:child_process';
 import { alphaTab } from '@coderline/alphatab-vite';
 import { accountDevProxy } from './src/dev-proxy';
 
@@ -31,6 +32,21 @@ import { accountDevProxy } from './src/dev-proxy';
 // loadEnv() to see .env at all. A shell-set var (e.g. playwright.config.ts's
 // e2e override) must still win over a .env-supplied value, so it's checked
 // first, not merged over.
+// The version mark in Help & About (src/build-info.ts) shows the commit the
+// client was built from. Railway passes it to the image build as
+// RAILWAY_GIT_COMMIT_SHA (declared as an ARG in the Dockerfile, where there is
+// no .git to ask); a local build asks git. Vite exposes any VITE_-prefixed
+// process variable to the client, so setting it here is all it takes.
+function buildCommit(): string {
+  if (process.env.RAILWAY_GIT_COMMIT_SHA) return process.env.RAILWAY_GIT_COMMIT_SHA;
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+process.env.VITE_APP_COMMIT ??= buildCommit();
+
 const fileEnv = loadEnv('', process.cwd(), '');
 const backendPort = process.env.VITE_BACKEND_PORT ?? fileEnv.VITE_BACKEND_PORT ?? '6080';
 
