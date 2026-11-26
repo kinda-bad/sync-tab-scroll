@@ -11,8 +11,8 @@ importers:
   client:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.4
-        version: 1.8.4
+        specifier: ^1.9.0
+        version: 1.9.0
       '@lucide/svelte':
         specifier: ^1.80.0
         version: 1.80.0(svelte@5.59.2)
@@ -66,8 +66,8 @@ importers:
   packages/pipeline:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.4
-        version: 1.8.4
+        specifier: ^1.9.0
+        version: 1.9.0
       '@sync-tab-scroll/shared':
         specifier: workspace:*
         version: link:../shared
@@ -94,8 +94,8 @@ importers:
   packages/shared:
     dependencies:
       '@coderline/alphatab':
-        specifier: ^1.8.4
-        version: 1.8.4
+        specifier: ^1.9.0
+        version: 1.9.0
     devDependencies:
       adm-zip:
         specifier: ^0.6.1
@@ -161,9 +161,17 @@ packages:
   '@breezystack/lamejs@1.2.7':
     resolution: {integrity: sha512-6wc7ck65ctA75Hq7FYHTtTvGnYs6msgdxiSUICQ+A01nVOWg6rqouZB8IdyteRlfpYYiFovkf67dIeOgWIUzTA==}
 
-  '@coderline/alphatab@1.8.4':
-    resolution: {integrity: sha512-VN5rfTZZWgA63Ny1aDKCp02k3Qm9CHhg4Q9AnK0kHm7G+fNDNZo36TeToPDFoJ6VpB9+AHcCrHwHFUP1tKqdsw==}
+  '@coderline/alphatab@1.9.0':
+    resolution: {integrity: sha512-pG/Um03DdiTW7i9KR+rPTRRnzIW5oJBWs67altBXtCkxGvUG1RuvkgRTZO3GIaOD2vATjcw+5OevMZl9I2/T+Q==}
     engines: {node: '>=6.0.0'}
+    peerDependencies:
+      '@coderline/alphatab-vite': ^1.9.0
+      '@coderline/alphatab-webpack': ^1.9.0
+    peerDependenciesMeta:
+      '@coderline/alphatab-vite':
+        optional: true
+      '@coderline/alphatab-webpack':
+        optional: true
 
   '@emnapi/core@1.11.0':
     resolution: {integrity: sha512-l9Oo58x0HOP5znGzVhYW9U3e5wVuA4LAZU2AGezTmkhO1CgQRFDhDg4nneHsu/t3WniXg9QrG2nIXL/ZS8ln8Q==}
@@ -1970,7 +1978,7 @@ snapshots:
 
   '@breezystack/lamejs@1.2.7': {}
 
-  '@coderline/alphatab@1.8.4': {}
+  '@coderline/alphatab@1.9.0': {}
 
   '@emnapi/core@1.11.0':
     dependencies:
