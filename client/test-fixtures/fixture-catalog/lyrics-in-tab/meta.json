@@ -1,0 +1,19 @@
+{
+  "name": "Lyrics In Tab Song",
+  "artist": "Test Fixtures",
+  "parts": [
+    {
+      "instrumentName": "Guitar",
+      "trackIndex": 0
+    }
+  ],
+  "lyricsTrackIndex": 0,
+  "lyricsLineIndex": 0,
+  "lyricLineBreaks": [
+    4,
+    4,
+    4,
+    4
+  ],
+  "lyricsRawLine": "one two three four five six sev en eight nine ten more and then we stop"
+}

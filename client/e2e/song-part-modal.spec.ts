@@ -40,8 +40,10 @@ test('the song/part modal is dismissible via a backdrop click while still unset'
   const modal = page.getByRole('dialog', { name: 'Song & part' });
   await expect(modal).toBeVisible({ timeout: 10_000 });
 
-  // Click the backdrop (top-left corner, outside the centered panel).
-  await page.locator('.modal-backdrop').click({ position: { x: 5, y: 5 } });
+  // Click the backdrop at its left edge, outside the centered panel. Not the
+  // very top: the hazard strip is pinned there above the modal (Bar.svelte's
+  // .hazard-wrap, z-index 1100) and would take the click instead.
+  await page.locator('.modal-backdrop').click({ position: { x: 5, y: 100 } });
   await expect(modal).not.toBeVisible();
 
   // Stays closed while still unset.

@@ -576,6 +576,15 @@ test('a non-host, non-requesting viewer sees a plain pending label on the reques
   await expect(component.getByText('Requesting host')).toBeVisible();
 });
 
+test("the host's Session tab number inputs each have an accessible name", async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+  await component.getByRole('button', { name: 'Session' }).click();
+
+  await expect(component.getByRole('spinbutton')).toHaveCount(2);
+  await expect(component.getByRole('spinbutton', { name: 'Lobby cursor tick' })).toBeVisible();
+  await expect(component.getByRole('spinbutton', { name: 'Early stop tick' })).toBeVisible();
+});
+
 /**
  * Regression test for the rapid-click cursor-thrash bug
  * (feedback-lobby-cursor-race-4262, tasks-lobby-cursor-race-c9f8 T004/T005):
@@ -587,7 +596,7 @@ test('rapidly clicking "Set lobby cursor" debounces to a single lobby-cursor-set
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
   await component.getByRole('button', { name: 'Session' }).click();
 
-  const input = component.locator('.cursor-input');
+  const input = component.getByRole('spinbutton', { name: 'Lobby cursor tick' });
   const setButton = component.getByRole('button', { name: 'Set lobby cursor' });
 
   await input.fill('100');
