@@ -163,3 +163,20 @@ button,
 input {
   font-family: inherit;
 }
+
+/* Links use the theme's primary color (--riot) rather than the browser's
+   default blue/purple, which is close to unreadable on the dark themes'
+   near-black surfaces. Always underlined, so color is never the only thing
+   marking a link. */
+a,
+a:visited {
+  color: var(--riot);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--ink);
+}

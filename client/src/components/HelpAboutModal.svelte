@@ -1,6 +1,7 @@
 <script lang="ts">
   import Modal from './Modal.svelte';
   import Button from './Button.svelte';
+  import { buildInfo } from '../build-info';
 
   // Help/Info/About nav panel (help-info-about-panel-in-nav-b): static
   // content, no server round-trip. Three tabs, following SettingsModal's
@@ -33,6 +34,14 @@
       <p>
         <a href="https://github.com/sponsors/moui72" target="_blank" rel="noopener noreferrer">Sponsor this project</a>
       </p>
+      <p class="version-mark" data-testid="version-mark">
+        Version
+        {#if buildInfo.url}
+          <a href={buildInfo.url} target="_blank" rel="noopener noreferrer">{buildInfo.label}</a>
+        {:else}
+          {buildInfo.label}
+        {/if}
+      </p>
     </div>
   {:else if activeTab === 'info'}
     <div class="help-about-panel">
@@ -59,5 +68,9 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+  .version-mark {
+    color: var(--ink-dim);
+    font-size: 0.85em;
   }
 </style>
