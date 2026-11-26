@@ -329,7 +329,7 @@
       {/if}
       {#if isHost}
         <div class="control-row">
-          <input type="number" bind:value={lobbyCursorInput} class="cursor-input" />
+          <input type="number" bind:value={lobbyCursorInput} class="cursor-input" aria-label="Lobby cursor tick" />
           <Button variant="ghost" label="Set lobby cursor" onclick={setLobbyCursor} />
           <Button variant="ghost" label="Clear" onclick={clearLobbyCursor} />
           <Button
@@ -358,7 +358,7 @@
           <p class="hint">No early-stop point set.</p>
         {/if}
         <div class="control-row">
-          <input type="number" bind:value={earlyStopInput} class="early-stop-input" />
+          <input type="number" bind:value={earlyStopInput} class="early-stop-input" aria-label="Early stop tick" />
           <Button variant="ghost" label="Set early-stop point" onclick={setEarlyStop} />
           <Button variant="ghost" label="Clear early-stop point" onclick={clearEarlyStop} />
         </div>
