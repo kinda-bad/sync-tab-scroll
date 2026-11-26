@@ -251,15 +251,19 @@ mapped to an `{instrument, detail}` pair with the **instrument extracted
 and prominent** and the detail **de-emphasized** (smaller/dimmer, kept
 not dropped). "Name (Instrument)" puts the performer in the detail
 ("M. Bellamy (Vocals)" → **Vocals** · M. Bellamy); bare instrument
-phrases pass through whole ("Backing Vocals"), with trailing
-roman-numeral/digit or comma qualifiers becoming the detail
-("Keyboards I" → **Keyboards** · I, "Guitar, lead" → **Guitar** · lead).
+phrases pass through whole ("Backing Vocals"). A trailing
+roman-numeral/digit qualifier stays on the instrument line ("Keyboards
+I" → **Keyboards I**, "M. Bellamy (Guitar II)" → **Guitar II** · M.
+Bellamy — user direction 2026-11-26), while a comma qualifier becomes
+the detail ("Guitar, lead" → **Guitar** · lead; "Ray Toro (Lead Guitar,
+Gibson Les Paul)" → **Lead Guitar** · Ray Toro · Gibson Les Paul).
 Instrument+detail pairs are **unique per song**: GP's own qualifiers are
 preferred as the disambiguator, and colliding pairs with no usable
 qualifier get sequential numbering in track order (**Guitar** · 1,
 **Guitar** · 2). A name with no recognizable instrument falls back to
 the raw name whole, detail-less — the extraction dictionary is small
-(guitar/bass/drums/vocals/keys/keyboards/synth/piano/strings/brass,
+(guitar/bass/drums/vocals/keys/keyboards/synth/piano/strings/brass/
+organ/percussion/tambourine,
 case-insensitive) and grows from real feedback rather than aiming for
 completeness. The part picker
 includes a **Lyrics** option alongside the instrument parts — selectable
