@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --dir src",
     "extract-lyrics": "tsx src/extract-lyrics.ts",
     "record-consent": "tsx src/record-consent.ts",
     "create-catalogue": "tsx src/create-catalogue.ts"
@@ -20,12 +20,12 @@
     "@coderline/alphatab": "^1.8.4",
     "@sync-tab-scroll/shared": "workspace:*",
     "adm-zip": "^0.6.1",
-    "fast-xml-parser": "^4.5.0"
+    "fast-xml-parser": "^5.12.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0",
-    "vitest": "^2.1.9"
+    "vitest": "^5.1.2"
   }
 }
