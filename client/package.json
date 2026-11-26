@@ -17,23 +17,23 @@
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.4",
-    "@sync-tab-scroll/shared": "workspace:*",
-    "lucide-svelte": "^1.0.1"
+    "@lucide/svelte": "^1.80.0",
+    "@sync-tab-scroll/shared": "workspace:*"
   },
   "devDependencies": {
     "@breezystack/lamejs": "^1.2.7",
     "@playwright/experimental-ct-svelte": "^1.58.2",
     "@playwright/test": "^1.58.2",
-    "@storybook/addon-svelte-csf": "^5.1.2",
-    "@storybook/addon-themes": "^10.4.6",
-    "@storybook/svelte-vite": "^10.4.6",
+    "@storybook/addon-svelte-csf": "^5.1.6",
+    "@storybook/addon-themes": "^10.6.9",
+    "@storybook/svelte-vite": "^10.6.9",
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
-    "@types/ws": "^8.18.1",
-    "storybook": "^10.5.7",
-    "svelte": "^5.0.0",
+    "@types/ws": "^8.18.2",
+    "storybook": "^10.6.9",
+    "svelte": "^5.59.2",
     "typescript": "^5.9.0",
     "vite": "^6.4.3",
     "vitest": "^2.1.9",
-    "ws": "^8.21.3"
+    "ws": "^8.23.0"
   }
 }

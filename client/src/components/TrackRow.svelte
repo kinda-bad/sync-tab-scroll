@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Volume2, VolumeOff } from 'lucide-svelte';
+  import { Volume2, VolumeOff } from '@lucide/svelte';
   import Button from './Button.svelte';
   import { formatPartDisplayName, type PartDisplayName } from '../part-display-name';
 

@@ -4,7 +4,7 @@
   // designation renders as a crown icon instead of "HOST" text. The icon is
   // decorative (aria-hidden); an adjacent visually-hidden "Host" keeps the
   // designation announced to screen readers.
-  import Crown from 'lucide-svelte/icons/crown';
+  import Crown from '@lucide/svelte/icons/crown';
 
   // Generic row used for both the participant list and the catalog picker —
   // a label, optional dim secondary text, and trailing content (a badge or

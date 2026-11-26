@@ -14,14 +14,14 @@
   "dependencies": {
     "@sync-tab-scroll/pipeline": "workspace:*",
     "@sync-tab-scroll/shared": "workspace:*",
-    "pg": "^8.13.0",
-    "ws": "^8.21.3"
+    "pg": "^8.23.1",
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@types/pg": "^8.11.0",
-    "@types/ws": "^8.5.10",
-    "tsx": "^4.16.0",
+    "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "vitest": "^2.1.9"
   }
