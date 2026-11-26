@@ -13,9 +13,10 @@ First user: Smashing Pumpkins – 1979 (Kinda Bad II). The band starts
 after the synth intro, which is in a different time signature: bars 1–3
 are 4/4, bar 4 is 7/8, and bar 5 is the tab's "Band Entrance" section.
 Or they may start just before the vocals: Verse 1 begins at bar 9, and
-the first lyric lands in bar 11 (about 0:19). The user still needs to
-confirm which. 1979 has no `recording.mp3` yet, so the recording half
-needs one first.
+the first lyric lands in bar 11 (about 0:19). **Assume bar 9** for now
+(user, 2026-11-26), pending the user's confirmation. 1979 has no
+`recording.mp3` yet, so the recording half needs one first (see
+`recordings-for-kinda-bad-ii`).
 Likely shape: an optional `defaultStartBar` (or tick) in `meta.json`,
 set by hand like the part names, that seeds the song's starting position
 when it's selected. Planning needs to confirm which field that is:
