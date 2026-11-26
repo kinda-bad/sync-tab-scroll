@@ -517,8 +517,10 @@ Session.unlockedCatalogueIds`), computes `crypto.scryptSync(key,
 storedSalt, storedHash.length)` (the stored hash is 64 bytes)
 for each, and compares it to that catalogue's stored hash with
 `crypto.timingSafeEqual` — not a plain `===`, to avoid a timing side-channel
-on the hash comparison itself. The first catalogue whose hash matches is
-unlocked. The comparison runs against every locked catalogue rather than
+on the hash comparison itself. **Every** catalogue whose hash matches is
+unlocked, so one key can open several catalogues that share it (e.g. a
+series split into "Kinda Bad I" and "Kinda Bad II", whose records carry
+the same salt and hash). The comparison runs against every locked catalogue rather than
 early-returning on a public/already-unlocked one, so neither timing nor
 behavior leaks which ids exist. A non-host request is rejected before any key
 comparison. A key matching no locked catalogue is just an `error` message
@@ -528,7 +530,7 @@ consistent with this app's terse error-toast pattern elsewhere and the
 constitution's no-rate-limiting Production Posture (nothing here needs to
 distinguish failure reasons to a potential brute-forcer).
 
-On a correct key: the matched catalogue's id is appended to
+On a correct key: each matched catalogue's id is appended to
 `Session.unlockedCatalogueIds`, and the server broadcasts **two**
 messages to every connected participant in the session, not one — the
 normal `session-state` broadcast (so every participant's UI reflects the
