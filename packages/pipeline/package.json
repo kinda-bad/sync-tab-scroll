@@ -19,13 +19,12 @@
   "dependencies": {
     "@coderline/alphatab": "^1.8.4",
     "@sync-tab-scroll/shared": "workspace:*",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "fast-xml-parser": "^4.5.0"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.6",
     "@types/node": "^22.14.0",
-    "tsx": "^4.16.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "vitest": "^2.1.9"
   }

@@ -4,8 +4,8 @@
   // actions carry the door icons — Sign out gets `log-out` (freed up from
   // the Bar's Leave session, now `bone`), Sign in gets `log-in`. Decorative
   // (aria-hidden): the visible text remains the accessible name.
-  import LogIn from 'lucide-svelte/icons/log-in';
-  import LogOut from 'lucide-svelte/icons/log-out';
+  import LogIn from '@lucide/svelte/icons/log-in';
+  import LogOut from '@lucide/svelte/icons/log-out';
 
   // Persistent account menu for the Lobby/Playback Bar identity area (ui.md
   // Account & Sign-In). Prop-driven and presentational: the parent wires it to

@@ -28,16 +28,16 @@
   // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): Settings
   // moved cog → settings; Leave session moved log-out → bone ("breaking up
   // the band" — log-out now belongs to the account menu's actual Sign out).
-  import Settings from 'lucide-svelte/icons/settings';
-  import Play from 'lucide-svelte/icons/play';
-  import Pause from 'lucide-svelte/icons/pause';
-  import Square from 'lucide-svelte/icons/square';
+  import Settings from '@lucide/svelte/icons/settings';
+  import Play from '@lucide/svelte/icons/play';
+  import Pause from '@lucide/svelte/icons/pause';
+  import Square from '@lucide/svelte/icons/square';
   import Bone from './components/icons/BoneFracture.svelte';
-  import MicVocal from 'lucide-svelte/icons/mic-vocal';
-  import ListMusic from 'lucide-svelte/icons/list-music';
-  import Clock from 'lucide-svelte/icons/clock';
-  import Check from 'lucide-svelte/icons/check';
-  import CircleHelp from 'lucide-svelte/icons/circle-help';
+  import MicVocal from '@lucide/svelte/icons/mic-vocal';
+  import ListMusic from '@lucide/svelte/icons/list-music';
+  import Clock from '@lucide/svelte/icons/clock';
+  import Check from '@lucide/svelte/icons/check';
+  import CircleHelp from '@lucide/svelte/icons/circle-help';
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ReadinessStatus } from '@sync-tab-scroll/shared';
-  import Clock from 'lucide-svelte/icons/clock';
-  import Check from 'lucide-svelte/icons/check';
+  import Clock from '@lucide/svelte/icons/clock';
+  import Check from '@lucide/svelte/icons/check';
 
   export let readiness: ReadinessStatus;
   export let connected: boolean = true;
