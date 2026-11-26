@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { Writable } from 'node:stream';
+import { finished } from 'node:stream/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createCatalogRequestHandler } from './catalog-static.js';
 
@@ -59,7 +60,7 @@ describe('createCatalogRequestHandler', () => {
     const res = fakeRes();
 
     const handled = handler(fakeReq('/catalog/song.gp'), res);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await finished(res);
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
@@ -73,7 +74,7 @@ describe('createCatalogRequestHandler', () => {
     const res = fakeRes();
 
     handler(fakeReq('/catalog/lyrics.lrc'), res);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await finished(res);
 
     expect(res.headers).toMatchObject({ 'Content-Type': 'text/plain; charset=utf-8' });
   });
@@ -84,7 +85,7 @@ describe('createCatalogRequestHandler', () => {
     const res = fakeRes();
 
     handler(fakeReq('/catalog/recording.mp3'), res);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await finished(res);
 
     expect(res.headers).toMatchObject({ 'Content-Type': 'audio/mpeg' });
   });
@@ -109,7 +110,7 @@ describe('createCatalogRequestHandler', () => {
       const res = fakeRes();
 
       handler(fakeReq('/catalog/recording.mp3'), res);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await finished(res);
 
       expect(res.statusCode).toBe(200);
       expect(res.headers).toMatchObject({ 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes' });
@@ -122,7 +123,7 @@ describe('createCatalogRequestHandler', () => {
       const res = fakeRes();
 
       handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=3-7' }), res);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await finished(res);
 
       expect(res.statusCode).toBe(206);
       expect(res.headers).toMatchObject({
@@ -140,7 +141,7 @@ describe('createCatalogRequestHandler', () => {
       const res = fakeRes();
 
       handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=9-' }), res);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await finished(res);
 
       expect(res.statusCode).toBe(206);
       expect(res.headers).toMatchObject({ 'Content-Range': `bytes 9-11/${body.length}` });
@@ -153,7 +154,7 @@ describe('createCatalogRequestHandler', () => {
       const res = fakeRes();
 
       handler(fakeReq('/catalog/recording.mp3', { range: 'bytes=99-120' }), res);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await finished(res);
 
       expect(res.statusCode).toBe(416);
       expect(res.headers).toMatchObject({ 'Content-Range': `bytes */${body.length}` });
@@ -165,7 +166,7 @@ describe('createCatalogRequestHandler', () => {
       const res = fakeRes();
 
       handler(fakeReq('/catalog/recording.mp3', { range: 'pages=1-2' }), res);
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await finished(res);
 
       expect(res.statusCode).toBe(200);
       expect(Buffer.concat(res.chunks).toString()).toBe(body);
