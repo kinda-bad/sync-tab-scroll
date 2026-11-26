@@ -1,6 +1,11 @@
 node_modules
 dist
 .env
+# A bare `.env` only matches the repo root. The workspace packages keep their
+# own (client/.env, server/.env); without this a local `docker build` copies
+# them in, and Vite bakes client/.env's dev-only VITE_BACKEND_PORT into the
+# client bundle.
+**/.env
 .git
 .github
 
