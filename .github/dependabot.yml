@@ -4,6 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # @playwright/experimental-ct-svelte stopped publishing at 1.58.2, and its
+      # ct-core pins playwright-core to that exact version. A newer
+      # @playwright/test brings a second playwright-core whose Page type clashes
+      # with ct's (see PR #18), so hold it until component testing moves off ct-svelte.
+      - dependency-name: "@playwright/test"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
