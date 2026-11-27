@@ -176,6 +176,19 @@ export function ensurePlaybackEngine(
   // so the guard has nothing to protect against.
   if (!isRecording) installCountInCursorGuard(api);
 
+  // Every Start scrolls to the cursor, the first one too (ui.md "Cursor
+  // follow on Start"). alphaTab skips a follow scroll to the row it last
+  // scrolled to, and a render after the tick cache exists records the
+  // parked cursor's row as scrolled even while stopped; if the page moves
+  // after that (the Lobby's content goes at Start, the user scrolls), the
+  // first Start's row is not scrolled to until the next row. (After a Start
+  // and Stop the memo holds a later row, so the second Start worked.)
+  // scrollToCursor() force-scrolls and clears the memo, as alphaTab itself
+  // does on a pause.
+  api.playerStateChanged.on((e) => {
+    if (e.state === atLib.synth.PlayerState.Playing) api.scrollToCursor();
+  });
+
   state = { api, songId: song.id, playbackSource, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
   // A fresh engine always starts with the overlay shown (matches
   // `showOverlay: true` above) — resets any stale `false` left over from a
