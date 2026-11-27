@@ -58,6 +58,7 @@ test('only one scrollable container is present, and app-content is collapsed, on
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
   };
 
   await page.evaluate(

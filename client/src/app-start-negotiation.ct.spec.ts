@@ -58,6 +58,7 @@ function makeSession(memberReadiness: ReadinessStatus[], selfId = 'p1'): { sessi
       unlockedCatalogueIds: [],
       hostBarsPerRow: null,
       earlyStopTick: null,
+      startMarkerBar: null,
     },
   };
 }

@@ -43,6 +43,7 @@ describe('leaveSession', () => {
         unlockedCatalogueIds: [],
         hostBarsPerRow: null,
         earlyStopTick: null,
+        startMarkerBar: null,
       },
       selfParticipantId: 'p1',
       catalog: [], catalogues: [],

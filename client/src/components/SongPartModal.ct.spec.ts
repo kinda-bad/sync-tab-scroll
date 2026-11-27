@@ -21,6 +21,7 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
     ...overrides,
   };
 }

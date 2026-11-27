@@ -24,6 +24,7 @@ function lobbySession(): Session {
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
   };
 }
 

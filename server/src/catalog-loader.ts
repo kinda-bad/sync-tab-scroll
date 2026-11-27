@@ -21,6 +21,25 @@ interface SongMeta {
    * song to be recording-capable (T009).
    */
   syncPoints?: FlatSyncPoint[];
+  /** 1-based bar a run-through starts at (per-song-default-start-point); hand-set, validated by `readDefaultStartBar`. */
+  defaultStartBar?: unknown;
+}
+
+/**
+ * Validates `meta.json`'s hand-set `defaultStartBar`: a positive integer
+ * passes through; anything else is logged (naming the song) and dropped, so a
+ * typo costs only the start point, never the song (skip-not-fatal, same
+ * posture as the rest of the loader). Whether the bar exists in the score is
+ * checked on the client, which is the only side that parses the `.gp`.
+ */
+function readDefaultStartBar(meta: SongMeta, relPath: string): number | undefined {
+  const value = meta.defaultStartBar;
+  if (value === undefined) return undefined;
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1) return value;
+  console.warn(
+    `[catalog-loader] song "${path.basename(relPath)}" has an invalid defaultStartBar (${JSON.stringify(value)}) in meta.json; ignoring it (expected a 1-based bar number)`,
+  );
+  return undefined;
 }
 
 /** On-disk `catalogue.json` shape (datamodel.md Catalogue Activation Key) — the raw key material for a private catalogue. */
@@ -96,6 +115,8 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
     }
   }
 
+  const defaultStartBar = readDefaultStartBar(meta, relPath);
+
   return {
     id: path.basename(relPath),
     catalogueId,
@@ -111,6 +132,7 @@ function loadSong(catalogRoot: string, relPath: string, catalogueId: string): Ca
     lyricsRawLineStartBar: meta.lyricsRawLineStartBar,
     recordingPath,
     syncPoints,
+    ...(defaultStartBar !== undefined && { defaultStartBar }),
   };
 }
 

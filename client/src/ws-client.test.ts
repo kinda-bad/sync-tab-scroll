@@ -71,6 +71,7 @@ function baseSession(participants: Session['participants']): Session {
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
   };
 }
 

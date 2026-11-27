@@ -47,6 +47,7 @@ function makeSession(selfReadiness: ReadinessStatus, memberReadiness: ReadinessS
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
   };
 }
 
