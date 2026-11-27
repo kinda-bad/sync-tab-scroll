@@ -172,10 +172,11 @@ describe('correctDrift', () => {
   });
 
   // per-song-default-start-point: while stopped, every client parks at
-  // playbackState.tickPosition (0 after a Stop, or a seeded/host-clicked
-  // start point) rather than literal 0 — and only when that target changes,
-  // never on every store update, so a backing track's inexact tick readback
-  // can't loop and a host click isn't snapped back before its seek echoes.
+  // playbackState.tickPosition (0 after a Stop, or the start marker / a host
+  // click once the host's seek echoes) rather than literal 0. Re-checked on
+  // every call, like the original reset, so a stray position (alphaTab emits a
+  // late seek event after a Stop's pause) is corrected; the tolerance is a
+  // real duration, so a backing track's inexact readback can't loop.
   describe('stopped-state park', () => {
     it('parks a stopped client at a non-zero playbackState.tickPosition, host included', () => {
       for (const isHost of [true, false]) {
@@ -193,7 +194,7 @@ describe('correctDrift', () => {
       expect(onApply).toHaveBeenCalledWith(30720);
     });
 
-    it('does not re-seek on later calls once parked, even when the readback is quantized off the target', () => {
+    it('does not re-seek a readback that lands near, not on, the target', () => {
       const api = fakeApi({ tickPosition: 0 });
       const state = fakePlaybackState({ status: 'stopped', tickPosition: 30720 });
       correctDrift(api, state, true);
@@ -202,15 +203,25 @@ describe('correctDrift', () => {
       expect(api.tickPosition).toBe(30731);
     });
 
-    it('leaves a host click alone until the server echoes a new target, then parks there', () => {
+    it('re-parks a position that strays off the target while stopped', () => {
       const api = fakeApi({ tickPosition: 0 });
-      correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true);
-      api.tickPosition = 0; // host clicks back to bar 1; its debounced seek hasn't echoed yet
-      expect(correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true)).toBeNull();
-      expect(api.tickPosition).toBe(0);
-      // A non-host receiving that echo moves to it.
+      const state = fakePlaybackState({ status: 'stopped', tickPosition: 30720 });
+      correctDrift(api, state, true);
+      api.tickPosition = 2881; // alphaTab's late seek event after a Stop's pause
+      expect(correctDrift(api, state, true)).toBe(30720);
+      expect(api.tickPosition).toBe(30720);
+    });
+
+    it('uses a real-duration tolerance: 35ms at the local tempo', () => {
+      // 35ms at 120bpm (960 ticks/quarter) is 67.2 ticks.
+      const near = fakeApi({ tickPosition: 1000 + 60 });
+      expect(correctDrift(near, fakePlaybackState({ status: 'stopped', tickPosition: 1000 }), true)).toBeNull();
+      const far = fakeApi({ tickPosition: 1000 + 80 });
+      expect(correctDrift(far, fakePlaybackState({ status: 'stopped', tickPosition: 1000 }), true)).toBe(1000);
+    });
+
+    it('a non-host follows a new stopped target', () => {
       const member = fakeApi({ tickPosition: 30720 });
-      correctDrift(member, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), false);
       expect(correctDrift(member, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), false)).toBe(0);
       expect(member.tickPosition).toBe(0);
     });

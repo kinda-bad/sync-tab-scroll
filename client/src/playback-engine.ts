@@ -97,9 +97,9 @@ let state: EngineState | undefined;
 const PROGRAMMATIC_SEEK_TOLERANCE_TICKS = 10;
 
 /**
- * One default-start seeder for the page, not per engine
+ * One start-marker seeder for the page, not per engine
  * (per-song-default-start-point): an engine rebuild for a part or audio-source
- * switch must not re-seed over a position the host already moved.
+ * switch must not re-seek over a position the host already moved.
  */
 const seedDefaultStart = createDefaultStartSeeder();
 
@@ -480,6 +480,12 @@ export function ensurePlaybackEngine(
   let lastAppliedInteraction: boolean | undefined;
   let lastProgrammaticTick: number | null = null;
   let lastAppliedSpotlightTick: number | null = null;
+  // The host's own click while stopped (per-song-default-start-point), held
+  // as its local park target until the server echoes it back as
+  // playbackState.tickPosition — otherwise correctDrift's stopped park would
+  // snap the cursor back to the old position for the length of the debounced
+  // seek's round trip. Cleared on the echo, or once the session leaves stopped.
+  let heldClickTick: number | null = null;
   let latestSession: Session | null = null;
   let latestSelfId: string | null = null;
 
@@ -529,26 +535,36 @@ export function ensurePlaybackEngine(
     // normally in every other case — including once spotlightMode or
     // lobbyCursorTick clears again.
     const spotlightHoldingTick = s.session.spotlightMode && s.session.lobbyCursorTick !== null;
-    correctDrift(api, s.session.playbackState, isHost, (tick) => {
+    const serverState = s.session.playbackState;
+    if (
+      heldClickTick !== null &&
+      (!isHost || serverState.status !== 'stopped' || Math.abs(serverState.tickPosition - heldClickTick) <= PROGRAMMATIC_SEEK_TOLERANCE_TICKS)
+    ) {
+      heldClickTick = null;
+    }
+    const parkState = heldClickTick !== null ? { ...serverState, tickPosition: heldClickTick } : serverState;
+    correctDrift(api, parkState, isHost, (tick) => {
       lastProgrammaticTick = tick;
     }, undefined, isBackingParticipant, spotlightHoldingTick);
     applyPlaybackSettings(api, s.session);
 
-    // Default start point (per-song-default-start-point, ui.md): the host's
-    // client is the only one that can map the song's defaultStartBar to a
-    // tick (the server never parses the .gp), so it seeds
-    // playbackState.tickPosition through the ordinary seek relay. The
-    // broadcast echo then parks every client there (correctDrift's stopped
-    // branch), and Start plays from it, in recording mode too: the running
-    // branch assigns api.tickPosition and alphaTab maps it through the
-    // sync points to the recording's time.
+    // Start marker (per-song-default-start-point, ui.md): the server holds
+    // Session.startMarkerBar as a bar, and the host's client is the only one
+    // that can map it to a tick (the server never parses the .gp), so it
+    // moves playbackState.tickPosition there through the ordinary seek relay.
+    // The broadcast echo then parks every client there (correctDrift's
+    // stopped branch), and Start plays from it, in recording mode too: the
+    // running branch assigns api.tickPosition and alphaTab maps it through
+    // the sync points to the recording's time.
     if (s.session.selectedSong === song.id) {
+      const markerBar = s.session.startMarkerBar ?? null;
       const seekTo = seedDefaultStart({
         status: s.session.playbackState.status,
         songId: song.id,
+        markerBar,
         serverTick: s.session.playbackState.tickPosition,
         isHost,
-        startTick: defaultStartTick(api.score, api.tickCache, song.defaultStartBar),
+        startTick: defaultStartTick(api.score, api.tickCache, markerBar ?? undefined),
       });
       if (seekTo !== null) wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: seekTo });
     }
@@ -584,6 +600,18 @@ export function ensurePlaybackEngine(
   const debouncedSendSeek = debounce((tickPosition: number) => {
     wsClient.send({ type: 'playback-control', action: 'seek', tickPosition });
   }, 150);
+  //
+  // Only a seek that follows a real click on the tab is broadcast
+  // (per-song-default-start-point): alphaTab's beatMouseDown fires on the
+  // press, and click-to-seek assigns the tick on the release. Without this
+  // gate, alphaTab's own late seek event after a Stop's pause() — landing on
+  // some earlier position, not the park target — went out as a host seek,
+  // moving the session's stopped position (and so where Start plays from,
+  // and where the start marker's seek had just put everyone) to a stray tick.
+  let clickSeekArmed = false;
+  api.beatMouseDown.on(() => {
+    clickSeekArmed = true;
+  });
   api.playerPositionChanged.on((e) => {
     if (!e.isSeek) return;
     if (!api.isReadyForPlayback) return;
@@ -594,6 +622,9 @@ export function ensurePlaybackEngine(
     // a beat, never this close to the tick just applied.
     if (lastProgrammaticTick !== null && Math.abs(e.currentTick - lastProgrammaticTick) <= PROGRAMMATIC_SEEK_TOLERANCE_TICKS) return;
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
+    if (!clickSeekArmed) return;
+    clickSeekArmed = false;
+    if (latestSession.playbackState.status === 'stopped') heldClickTick = e.currentTick;
     debouncedSendSeek(e.currentTick);
   });
 

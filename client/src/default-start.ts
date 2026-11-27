@@ -24,35 +24,40 @@ export interface DefaultStartSeedInput {
   status: PlaybackState['status'];
   /** The song the engine has loaded. */
   songId: string;
+  /** `Session.startMarkerBar` — the host-controlled start marker, or null once cleared. */
+  markerBar: number | null;
   /** `playbackState.tickPosition` as the server last broadcast it. */
   serverTick: number;
   isHost: boolean;
-  /** `defaultStartTick(...)` for this song, or null when it has none. */
+  /** `defaultStartTick(...)` for the marker bar, or null when there's no marker (or it's past the end of the score). */
   startTick: number | null;
 }
 
 /**
- * Decides when the host's client seeds `PlaybackState.tickPosition` with the
- * song's default start (per-song-default-start-point). One seed per song per
- * stopped stretch: the arm is consumed by every client the first time it
- * sees the song stopped (so a participant who later becomes host doesn't
- * re-seed over the old host's choice) and re-armed when the session leaves
- * `stopped` — so song select seeds, every Stop seeds again, and a host click
- * (even back to bar 1) sticks. Only a position still at the top is seeded, so
- * a host reload mid-song doesn't override it. Returns the tick to seek to, or
- * null. One seeder lives for the page (playback-engine.ts) so an engine
- * rebuild (part or audio-source switch) doesn't re-seed either.
+ * Decides when the host's client moves `PlaybackState.tickPosition` to the
+ * session's start marker (per-song-default-start-point). The server holds the
+ * marker as a bar and can't map it to a tick, so after song select, after
+ * every Stop and whenever the marker changes, the host seeks there. One seek
+ * per (song, marker) per stopped stretch: the arm is consumed by every client
+ * the first time it sees that combination stopped (so a participant who
+ * later becomes host doesn't re-seek over the old host's choice) and re-armed
+ * when the session leaves `stopped`. A host click while stopped (even back to
+ * bar 1) therefore sticks until the next Stop, and a cleared marker never
+ * seeks, so Stop stays on bar 1. Returns the tick to seek to, or null. One
+ * seeder lives for the page (playback-engine.ts) so an engine rebuild (part
+ * or audio-source switch) doesn't re-seek either.
  */
 export function createDefaultStartSeeder(): (input: DefaultStartSeedInput) => number | null {
   let consumedFor: string | null = null;
-  return ({ status, songId, serverTick, isHost, startTick }) => {
+  return ({ status, songId, markerBar, serverTick, isHost, startTick }) => {
     if (status !== 'stopped') {
       consumedFor = null;
       return null;
     }
-    if (consumedFor === songId) return null;
-    consumedFor = songId;
-    if (!isHost || serverTick !== 0 || startTick === null || startTick === 0) return null;
+    const key = `${songId}|${markerBar}`;
+    if (consumedFor === key) return null;
+    consumedFor = key;
+    if (!isHost || startTick === null || startTick === serverTick) return null;
     return startTick;
   };
 }

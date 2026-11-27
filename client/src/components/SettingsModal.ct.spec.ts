@@ -21,6 +21,7 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
     ...overrides,
   };
 }
@@ -580,7 +581,8 @@ test("the host's Session tab number inputs each have an accessible name", async 
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
   await component.getByRole('button', { name: 'Session' }).click();
 
-  await expect(component.getByRole('spinbutton')).toHaveCount(2);
+  await expect(component.getByRole('spinbutton')).toHaveCount(3);
+  await expect(component.getByRole('spinbutton', { name: 'Start marker bar' })).toBeVisible();
   await expect(component.getByRole('spinbutton', { name: 'Lobby cursor tick' })).toBeVisible();
   await expect(component.getByRole('spinbutton', { name: 'Early stop tick' })).toBeVisible();
 });

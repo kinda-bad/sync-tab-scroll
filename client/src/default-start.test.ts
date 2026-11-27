@@ -38,44 +38,57 @@ describe('defaultStartTick', () => {
 });
 
 describe('createDefaultStartSeeder', () => {
-  const stopped = { status: 'stopped' as const, songId: 'sp-1979', serverTick: 0, isHost: true, startTick: 30720 };
+  const stopped = { status: 'stopped' as const, songId: 'sp-1979', markerBar: 9 as number | null, serverTick: 0, isHost: true, startTick: 30720 as number | null };
 
-  it('seeds the host once per song while stopped at the top', () => {
+  it('seeks the host to the start marker once per stopped stretch', () => {
     const seed = createDefaultStartSeeder();
     expect(seed(stopped)).toBe(30720);
-    // Later store updates in the same stopped stretch never re-seed — a
-    // host click back to bar 1 (serverTick 0 again) must stick.
+    // Later store updates in the same stopped stretch never re-seek — a host
+    // click back to bar 1 (serverTick 0 again) must stick.
     expect(seed(stopped)).toBeNull();
     expect(seed({ ...stopped, serverTick: 30720 })).toBeNull();
   });
 
-  it('re-arms once the session leaves stopped, so every Stop returns to the default start', () => {
+  it('re-arms once the session leaves stopped, so every Stop returns to the marker', () => {
     const seed = createDefaultStartSeeder();
     expect(seed(stopped)).toBe(30720);
     expect(seed({ ...stopped, status: 'running', serverTick: 50000 })).toBeNull();
     expect(seed(stopped)).toBe(30720);
   });
 
-  it('seeds again for a different song in the same stopped stretch', () => {
+  it('a cleared marker never seeks, so Stop stays at bar 1', () => {
     const seed = createDefaultStartSeeder();
-    expect(seed(stopped)).toBe(30720);
-    expect(seed({ ...stopped, songId: 'other', startTick: 3840 })).toBe(3840);
+    expect(seed({ ...stopped, markerBar: null, startTick: null })).toBeNull();
+    expect(seed({ ...stopped, status: 'running', markerBar: null, startTick: null })).toBeNull();
+    expect(seed({ ...stopped, markerBar: null, startTick: null })).toBeNull();
   });
 
-  it('never seeds for a non-host, and the arm is consumed so a later host transfer does not re-seed', () => {
+  it('seeks again when the host moves the marker while stopped', () => {
+    const seed = createDefaultStartSeeder();
+    expect(seed(stopped)).toBe(30720);
+    expect(seed({ ...stopped, markerBar: 5, startTick: 14880, serverTick: 30720 })).toBe(14880);
+  });
+
+  it('a marker on bar 1 seeks back to the top from a clicked position', () => {
+    const seed = createDefaultStartSeeder();
+    expect(seed({ ...stopped, markerBar: 1, startTick: 0, serverTick: 9000 })).toBe(0);
+  });
+
+  it('seeks again for a different song in the same stopped stretch', () => {
+    const seed = createDefaultStartSeeder();
+    expect(seed(stopped)).toBe(30720);
+    expect(seed({ ...stopped, songId: 'other', markerBar: 2, startTick: 3840 })).toBe(3840);
+  });
+
+  it('never seeks for a non-host, and the arm is consumed so a later host transfer does not re-seek', () => {
     const seed = createDefaultStartSeeder();
     expect(seed({ ...stopped, isHost: false })).toBeNull();
     expect(seed(stopped)).toBeNull();
   });
 
-  it('does not override a position that is already off the top (e.g. after a host reload)', () => {
+  it('skips a seek that would not move anything, or a marker past the end of the score', () => {
     const seed = createDefaultStartSeeder();
-    expect(seed({ ...stopped, serverTick: 9000 })).toBeNull();
-  });
-
-  it('does nothing for a song with no default start, or one that resolves to the top', () => {
-    const seed = createDefaultStartSeeder();
-    expect(seed({ ...stopped, startTick: null })).toBeNull();
-    expect(seed({ ...stopped, songId: 'b', startTick: 0 })).toBeNull();
+    expect(seed({ ...stopped, serverTick: 30720 })).toBeNull();
+    expect(seed({ ...stopped, songId: 'b', startTick: null })).toBeNull();
   });
 });

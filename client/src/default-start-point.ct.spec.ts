@@ -16,8 +16,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * per-song-default-start-point: the host's real engine maps the song's
- * `defaultStartBar` to a playback tick once it's ready and seeds it with an
+ * per-song-default-start-point: the host's real engine maps the session's
+ * start marker (`Session.startMarkerBar`) to a playback tick once it's ready and seeks to it with an
  * ordinary `seek`; the server's echo (driven here through the real
  * clientStore) then parks the engine at that tick while stopped, and the
  * lyrics ticker follows the parked position. Uses the same real-engine
@@ -36,7 +36,13 @@ type Win = {
   __clientStore: { update: (fn: (s: unknown) => unknown) => void };
 };
 
-function makeSession(overrides: { hostId: string; tickPosition: number; status?: 'stopped' | 'running'; playbackSource?: 'synth' | 'recording' }) {
+function makeSession(overrides: {
+  hostId: string;
+  tickPosition: number;
+  status?: 'stopped' | 'running';
+  playbackSource?: 'synth' | 'recording';
+  startMarkerBar?: number | null;
+}) {
   return {
     code: 'ABCD',
     selectedSong: 'creep',
@@ -50,12 +56,13 @@ function makeSession(overrides: { hostId: string; tickPosition: number; status?:
     spotlightMode: false,
     earlyStopTick: null,
     hostBarsPerRow: null,
+    startMarkerBar: overrides.startMarkerBar === undefined ? START_BAR : overrides.startMarkerBar,
   };
 }
 
 // Untyped `mount`, same helper shape as full-lyrics-view.ct.spec.ts.
 async function mountReady(mount: any, page: Page, props: Record<string, unknown> = {}) {
-  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, defaultStartBar: START_BAR, ...props } });
+  const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, ...props } });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
   await expect.poll(() => page.evaluate(() => (window as unknown as Win).__getApi().isReadyForPlayback), { timeout: 15_000 }).toBe(true);
   return component;
@@ -70,6 +77,16 @@ async function pushSession(page: Page, selfParticipantId: string, session: Retur
   );
 }
 
+// Lets a Start settle before the next push. A Stop sent milliseconds after a
+// Start (never at human speed) can race alphaTab's late seek echo of play().
+function waitUntilPlaying(page: Page) {
+  return expect.poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { playerState: number } }).__getApi().playerState), { timeout: 10_000 }).toBe(1);
+}
+
+function tickNow(page: Page) {
+  return page.evaluate(() => (window as unknown as Win).__getApi().tickPosition);
+}
+
 function seeks(page: Page) {
   return page.evaluate(() => (window as unknown as Win).__sentMessages.filter((m) => m.type === 'playback-control' && m.action === 'seek'));
 }
@@ -81,7 +98,7 @@ function expectedStartTick(page: Page) {
   }, START_BAR);
 }
 
-test('host engine seeds one seek to the default start bar, then parks there once the server echoes it', async ({ mount, page }) => {
+test('host engine seeks once to the start marker, then parks there once the server echoes it', async ({ mount, page }) => {
   await mountReady(mount, page);
   const target = await expectedStartTick(page);
   expect(target).toBeGreaterThan(0);
@@ -102,7 +119,7 @@ test('host engine seeds one seek to the default start bar, then parks there once
   expect(Math.abs(after - target)).toBeLessThanOrEqual(10);
 });
 
-test('a non-host engine never seeds, but parks at the stopped position the host set', async ({ mount, page }) => {
+test('a non-host engine never seeks, but parks at the stopped position the host set', async ({ mount, page }) => {
   await mountReady(mount, page);
   const target = await expectedStartTick(page);
 
@@ -117,20 +134,84 @@ test('a non-host engine never seeds, but parks at the stopped position the host 
   expect(Math.abs(after - target)).toBeLessThanOrEqual(10);
 });
 
-test('the host does not seed over a stopped position that is already off the top', async ({ mount, page }) => {
+test('a host click while stopped is broadcast, held locally until echoed, and not overridden by the marker', async ({ mount, page }) => {
   await mountReady(mount, page);
-
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 1920 }));
-  await page.waitForTimeout(500);
-  expect(await seeks(page)).toEqual([]);
-});
-
-test('a song with no default start bar sends no seek', async ({ mount, page }) => {
-  await mountReady(mount, page, { defaultStartBar: undefined });
+  const target = await expectedStartTick(page);
 
   await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await expect.poll(() => seeks(page)).toHaveLength(1);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await expect.poll(() => tickNow(page)).toBeGreaterThan(target - 70);
+
+  // The host clicks bar 2: alphaTab fires beatMouseDown, then click-to-seek
+  // assigns the tick.
+  const bar2 = await page.evaluate(() => {
+    const api = (window as unknown as Win).__getApi() as ReturnType<Win['__getApi']> & { beatMouseDown: { trigger: (beat: unknown) => void } };
+    api.beatMouseDown.trigger(null);
+    const tick = api.tickCache.getMasterBarStart(api.score.masterBars[1]);
+    api.tickPosition = tick;
+    return tick;
+  });
+  await expect.poll(() => seeks(page)).toHaveLength(2);
+  expect((await seeks(page))[1].tickPosition).toBeGreaterThanOrEqual(bar2 - 2);
+
+  // Before the echo, further store updates don't snap the click back.
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await page.waitForTimeout(300);
+  expect(Math.abs((await tickNow(page)) - bar2)).toBeLessThanOrEqual(70);
+
+  // Echo: the click is now the session's stopped position, and it sticks.
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: bar2 }));
+  await page.waitForTimeout(300);
+  expect(Math.abs((await tickNow(page)) - bar2)).toBeLessThanOrEqual(70);
+  expect(await seeks(page)).toHaveLength(2);
+});
+
+test('with no start marker (or once it is cleared) no seek is sent, before or after a Stop', async ({ mount, page }) => {
+  await mountReady(mount, page);
+
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, startMarkerBar: null }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 1920, status: 'running', startMarkerBar: null }));
+  await waitUntilPlaying(page);
+  await page.waitForTimeout(1_000);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, startMarkerBar: null }));
   await page.waitForTimeout(500);
+  // alphaTab's late seek event after the Stop's pause is neither broadcast
+  // nor left standing: the cursor is back on bar 1.
   expect(await seeks(page)).toEqual([]);
+  expect(await tickNow(page)).toBeLessThanOrEqual(70);
+});
+
+test('every Stop returns to the marker while it is set', async ({ mount, page }) => {
+  await mountReady(mount, page);
+  const target = await expectedStartTick(page);
+
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await expect.poll(() => seeks(page)).toHaveLength(1);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target, status: 'running' }));
+  await waitUntilPlaying(page);
+  // Stop: the server resets to 0; the host seeks straight back to the marker.
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await expect.poll(() => seeks(page)).toHaveLength(2);
+  expect((await seeks(page))[1].tickPosition).toBe(target);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await page.waitForTimeout(500);
+  expect(await seeks(page)).toHaveLength(2);
+  expect(Math.abs((await tickNow(page)) - target)).toBeLessThanOrEqual(70);
+});
+
+test('moving the marker while stopped seeks the host to the new bar', async ({ mount, page }) => {
+  await mountReady(mount, page);
+  const bar2 = await page.evaluate(() => {
+    const api = (window as unknown as Win).__getApi();
+    return api.tickCache.getMasterBarStart(api.score.masterBars[1]);
+  });
+
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await expect.poll(() => seeks(page)).toHaveLength(1);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, startMarkerBar: 2 }));
+  await expect.poll(() => seeks(page)).toHaveLength(2);
+  expect((await seeks(page))[1].tickPosition).toBe(bar2);
 });
 
 test('the lyrics ticker follows a mid-song stopped park', async ({ mount, page }) => {
@@ -160,7 +241,7 @@ test('in recording mode, a seeded bar-9 start plays the recording from the sync 
   const expectedMs = syncPoints.find((p) => p.barIndex === 8)!.millisecondOffset;
 
   const component = await mount(PlaybackEngineHarness, {
-    props: { gpFilePath: '/recording.gp', trackIndex: 0, recordingPath: '/recording.mp3', syncPoints, defaultStartBar: 9 },
+    props: { gpFilePath: '/recording.gp', trackIndex: 0, recordingPath: '/recording.mp3', syncPoints },
   });
   await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
   await page.evaluate(() => (window as unknown as { __switchSource: (s: string) => void }).__switchSource('recording'));
@@ -175,14 +256,14 @@ test('in recording mode, a seeded bar-9 start plays the recording from the sync 
     )
     .toBe(true);
 
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, playbackSource: 'recording' }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, playbackSource: 'recording', startMarkerBar: 9 }));
   await expect.poll(() => seeks(page)).toHaveLength(1);
   const [{ tickPosition: seeded }] = await seeks(page);
   expect(seeded).toBe(8 * 3840);
 
   // Echo the seek, then start.
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: seeded!, playbackSource: 'recording' }));
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: seeded!, status: 'running', playbackSource: 'recording' }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: seeded!, playbackSource: 'recording', startMarkerBar: 9 }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: seeded!, status: 'running', playbackSource: 'recording', startMarkerBar: 9 }));
   await expect.poll(() => page.evaluate(() => (window as unknown as { __getApi: () => { playerState: number } }).__getApi().playerState), { timeout: 10_000 }).toBe(1);
 
   const audioMs = await page.evaluate(() => {
@@ -198,27 +279,27 @@ test('in recording mode, a seeded bar-9 start plays the recording from the sync 
   expect(audioMs).toBeLessThan(expectedMs + 1000);
 });
 
-test('a part switch while parked keeps the default start position, and does not re-seed', async ({ mount, page }) => {
+test('a part switch while parked keeps the marker position, and does not re-seek', async ({ mount, page }) => {
   // Two tracks, two bars: start at bar 2 so there's a track to switch to.
   // Registered after beforeEach's route, so it takes precedence.
   const twoTrack = fs.readFileSync(path.resolve(__dirname, '../test-fixtures/two-track-song.gp'));
   await page.route('**/fixture.gp', (route) => route.fulfill({ body: twoTrack, contentType: 'application/octet-stream' }));
-  await mountReady(mount, page, { defaultStartBar: 2 });
+  await mountReady(mount, page);
   const target = await page.evaluate(() => {
     const api = (window as unknown as Win).__getApi();
     return api.tickCache.getMasterBarStart(api.score.masterBars[1]);
   });
   expect(target).toBe(3840);
 
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0, startMarkerBar: 2 }));
   await expect.poll(() => seeks(page)).toHaveLength(1);
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target, startMarkerBar: 2 }));
   await expect.poll(() => page.evaluate(() => (window as unknown as Win).__getApi().tickPosition)).toBeGreaterThan(target - 10);
 
   // Same-api part switch (switchTrack re-renders another track of the same score).
   await page.evaluate(() => (window as unknown as { __switchPart: (i: number) => void }).__switchPart(1));
   await page.waitForTimeout(1_500);
-  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target, startMarkerBar: 2 }));
   await page.waitForTimeout(500);
 
   const after = await page.evaluate(() => (window as unknown as Win).__getApi().tickPosition);
