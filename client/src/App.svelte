@@ -4,6 +4,7 @@
   import { ensurePlaybackEngine, renderNowVisible, dropEngineIfSongChanged, beatWidgetState } from './playback-engine';
   import { metronomeStore } from './metronome-preference';
   import { loadStoredBarsPerRow } from './bars-per-row-preference';
+  import { horizontalViewStore, persistHorizontalView } from './horizontal-view-preference';
   import BeatWidget from './components/BeatWidget.svelte';
   import Landing from './views/Landing.svelte';
   import Lobby from './views/Lobby.svelte';
@@ -21,7 +22,7 @@
   import AuthoringModal from './components/AuthoringModal.svelte';
   import { accountStore, signIn, signOut, authoringModalOpen, loadAccount } from './account';
   import { leaveSession } from './leave-session';
-  import { toggleOverlay as engineToggleOverlay } from './playback-engine';
+  import { toggleOverlay as engineToggleOverlay, setEngineEarlyStop } from './playback-engine';
   // Bar control icons (tasks-bottom-bar-icons-47a6.md T002/T003,
   // feedback-bottom-bar-icons-3a15 F003-F006) — lucide-svelte, adopted per
   // Principle V rather than hand-rolled inline SVGs.
@@ -40,6 +41,8 @@
   import CircleHelp from '@lucide/svelte/icons/circle-help';
 
   let tabContainer: HTMLDivElement;
+  let tabScrollEl: HTMLDivElement;
+  let engineContainersEl: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
 
   // Join-code click-to-copy (feedback-join-code-click-to-copy-4971 F001):
@@ -92,7 +95,19 @@
       // same override-shadows-preference pattern as the metronome/recording
       // carve-out.
       const effectiveBarsPerRow = session!.hostBarsPerRow ?? loadStoredBarsPerRow();
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, $clientStore.wsClient, song, trackIndex, isLyricsPart, session!.playbackSource, effectiveBarsPerRow);
+      // The horizontal view (personal preference, feature horizontal-scroll-
+      // view) ignores bars-per-row: a single line has no rows. Flipping it
+      // rebuilds the engine in the other layout.
+      ensurePlaybackEngine(
+        { tabContainer, overlayContainer, fullLyricsEl, tabScrollEl },
+        $clientStore.wsClient,
+        song,
+        trackIndex,
+        isLyricsPart,
+        session!.playbackSource,
+        effectiveBarsPerRow,
+        $horizontalViewStore,
+      );
     }
   }
 
@@ -111,6 +126,25 @@
     }
     previousHasPart = hasPart;
   }
+
+  // The horizontal view fills the viewport between the hazard strip and the
+  // Bar; on Start it is brought fully into view (the Playback view's part
+  // line sits above it), the vertical counterpart of the paged view's
+  // cursor follow. Phones in portrait get a "rotate" prompt over it, plus a
+  // best-effort orientation lock (most browsers allow it only in
+  // fullscreen, so it usually rejects; the prompt is the real mechanism).
+  $: horizontalActive = $horizontalViewStore && hasPart;
+  $: if (horizontalActive && isRunning && engineContainersEl && !isLyricsPart) {
+    tick().then(() => engineContainersEl.scrollIntoView({ block: 'start' }));
+  }
+  $: if (horizontalActive && $clientStore.view === 'playback') {
+    const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+    orientation?.lock?.('landscape').catch(() => {});
+  }
+
+  // The horizontal view draws the host's early-stop point in the sheet
+  // itself (playback-engine.ts); the paged view keeps its scrim below.
+  $: setEngineEarlyStop(session?.earlyStopTick ?? null);
 
   // The one persistent bar (brand.md) — shown in Lobby and Playback both,
   // never a separate top header + bottom transport split. Landing has no
@@ -235,13 +269,29 @@
   {/if}
 </div>
 
-<div class="engine-containers" class:visible={hasPart && !isLyricsPart} class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}>
+<div
+  bind:this={engineContainersEl}
+  class="engine-containers"
+  class:visible={hasPart && !isLyricsPart}
+  class:horizontal={$horizontalViewStore}
+  class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}
+>
   <!-- First in flow: with the ticker at the top, lyrics-overlay.ts sizes
        this container to the strip so the tab starts beneath it (ui.md
        "Lyrics ticker position"). Empty-height otherwise. -->
   <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
-  <div bind:this={tabContainer} class="tab-container"></div>
-  {#if session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
+  <!-- .tab-band/.tab-scroll are plain blocks in the paged view; in the
+       horizontal view .tab-scroll is the element alphaTab scrolls the
+       one-line staff inside (styles/horizontal-view.css). -->
+  <div class="tab-band">
+    <div bind:this={tabScrollEl} class="tab-scroll">
+      <div bind:this={tabContainer} class="tab-container"></div>
+    </div>
+  </div>
+  {#if $horizontalViewStore}
+    <div class="hview-playhead" aria-hidden="true"></div>
+  {/if}
+  {#if !$horizontalViewStore && session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
     <!-- Host early-stop point (host-set-early-stop-point-for): a visual cue,
          for every participant, that an early-stop point IS set — the exact
          enforcement (auto-stop once tickPosition passes earlyStopTick) is
@@ -258,7 +308,15 @@
     <div class="early-stop-dimmed" aria-hidden="true"></div>
   {/if}
 </div>
-<div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
+<div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart} class:horizontal={$horizontalViewStore && isLyricsPart}></div>
+{#if horizontalActive && showBar}
+  <!-- Shown only on a phone in portrait (styles/horizontal-view.css media
+       query); covers the tab area, never the Bar. -->
+  <div class="hview-rotate-prompt" role="status">
+    <p>Turn your phone sideways for the horizontal view.</p>
+    <Button variant="ghost" label="Use the paged view instead" onclick={() => persistHorizontalView(false)} />
+  </div>
+{/if}
 
 {#if showBar && session}
   <Bar progress={barProgress}>
@@ -411,10 +469,11 @@
   .engine-containers {
     display: none;
   }
-  .engine-containers.visible {
+  /* The horizontal view lays these out itself (styles/horizontal-view.css). */
+  .engine-containers.visible:not(.horizontal) {
     display: block;
   }
-  .engine-containers.visible {
+  .engine-containers.visible:not(.horizontal) {
     /* Reserves scroll room so the tab's last rows can clear the fixed
        lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). */
     padding-bottom: calc(var(--lyrics-strip-height) * 2);

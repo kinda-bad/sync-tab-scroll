@@ -5,6 +5,7 @@
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
   import TrackRow from './TrackRow.svelte';
+  import HorizontalViewSetting from './HorizontalViewSetting.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
@@ -446,6 +447,8 @@
       {/each}
     </div>
     <p class="hint">Your personal layout preference — overridden while the host has pinned a layout (Session tab).</p>
+
+    <HorizontalViewSetting />
 
     <span class="section-label">Playback audio</span>
     <div class="control-row">

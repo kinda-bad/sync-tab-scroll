@@ -1,0 +1,188 @@
+/* ── Horizontal view (feature horizontal-scroll-view, ui.md Playback View) ──
+   The tab is one long staff scrolling right to left past a fixed playhead,
+   with the lyrics in their own band above it. Global, not scoped: the same
+   structure is built by App.svelte and the CT harness, and the band's DOM
+   is plain DOM from horizontal-lyrics-band.ts.
+
+   Structure (App.svelte):
+     .engine-containers.horizontal
+       .lyrics-overlay-container   lyrics band, ~1/3 of the height
+       .tab-band                   ~2/3
+         .tab-scroll               alphaTab's scroll element (overflow hidden:
+                                   only alphaTab scrolls it, never the user,
+                                   so the page has no sideways scroll)
+           .tab-container          alphaTab's container, as wide as the staff
+       .hview-playhead             fixed line, across both bands
+*/
+:root {
+  /* The playhead's offset from the left edge, shared by the tab band (its
+     left padding) and the lyrics band (its track's origin). */
+  --hview-playhead: 25%;
+}
+
+.engine-containers.horizontal.visible {
+  display: flex;
+  flex-direction: column;
+  /* The viewport between the top hazard strip and the bottom Bar. */
+  height: calc(100dvh - var(--space-6) - var(--bar-height));
+  padding-bottom: 0;
+  overflow: hidden;
+  scroll-margin-top: var(--space-6);
+}
+.engine-containers.horizontal .lyrics-overlay-container {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+/* No band (toggled off, or a song with no lyric track): the tab takes it all. */
+.engine-containers.horizontal .lyrics-overlay-container:empty,
+.engine-containers.horizontal.lyrics-overlay-hidden .lyrics-overlay-container {
+  flex: 0 0 0;
+}
+.engine-containers.horizontal .tab-band {
+  flex: 2 1 0;
+  min-height: 0;
+  position: relative;
+}
+.engine-containers.horizontal .tab-scroll {
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: var(--hview-playhead);
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  align-items: safe center;
+  background: var(--canvas-bg, #0a0a0a);
+}
+.engine-containers.horizontal .tab-container {
+  flex: none;
+  min-width: 100%;
+  min-height: 0;
+}
+/* The beat cursor would travel slightly ahead of and behind the playhead as
+   the scroll animation and the cursor animation drift (alphaTab's own note
+   on its Smooth mode); the playhead stands in for it. The bar highlight stays. */
+.engine-containers.horizontal .at-cursor-beat {
+  visibility: hidden;
+}
+.hview-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--hview-playhead);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--riot);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1001;
+}
+
+/* The lyrics band. */
+.hview-lyrics {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--lyrics-ticker-font-size, 1.425rem);
+  color: var(--lyric-base);
+  background: color-mix(in srgb, var(--surface-raised) 85%, transparent);
+  pointer-events: none;
+}
+.hview-lyrics-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--hview-playhead);
+  will-change: transform;
+}
+.hview-lyrics-item {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+.hview-lyrics-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--ink-dim);
+  color: var(--ink-dim);
+  opacity: 0.7;
+}
+.hview-lyrics-marker .lyrics-measure-marker-number {
+  position: absolute;
+  top: var(--space-2);
+  left: 0.25em;
+}
+.hview-lyrics-marker.lyrics-measure-marker--current {
+  background: var(--ink);
+  color: var(--ink);
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* The Lyrics part in the horizontal view: the band alone, larger and
+   vertically centered, with its own playhead. */
+.full-lyrics-view.horizontal {
+  position: relative;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  height: calc(100dvh - var(--space-6) - var(--bar-height));
+  margin-top: var(--space-6);
+}
+.full-lyrics-view.horizontal .hview-lyrics {
+  flex: none;
+  height: 50%;
+  font-size: 2.5rem;
+}
+.full-lyrics-view.horizontal::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: var(--hview-playhead);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--riot);
+  opacity: 0.8;
+}
+
+/* Phones in portrait (ui.md "Horizontal view", orientation): the view needs
+   landscape, so a prompt covers the tab area (never the Bar) until the
+   phone is turned, with a way out. */
+.hview-rotate-prompt {
+  display: none;
+}
+@media (orientation: portrait) and (max-width: 600px) {
+  .hview-rotate-prompt {
+    position: fixed;
+    inset: var(--space-6) 0 var(--bar-height) 0;
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    text-align: center;
+    background: var(--bg);
+    color: var(--ink);
+  }
+}
+
+/* The host's early-stop point (playback-engine.ts setEngineEarlyStop): the
+   sheet from the stop beat onward, dimmed, scrolling with the staff. */
+.engine-containers.horizontal .tab-scroll {
+  position: relative;
+}
+.hview-early-stop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: var(--bg, #0a0a0a);
+  opacity: 0.6;
+}

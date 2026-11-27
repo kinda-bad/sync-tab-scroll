@@ -8,6 +8,7 @@ import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
 import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
+import { createHorizontalLyricsBand } from './horizontal-lyrics-band';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
@@ -48,6 +49,8 @@ export interface EngineContainers {
   tabContainer: HTMLElement;
   overlayContainer: HTMLElement;
   fullLyricsEl: HTMLElement;
+  /** The horizontal view's band the one-line staff scrolls inside (feature horizontal-scroll-view). Required for the horizontal view; without it the engine falls back to the paged view. */
+  tabScrollEl?: HTMLElement;
 }
 
 interface EngineState {
@@ -71,6 +74,10 @@ interface EngineState {
    * one (T015).
    */
   playbackSource: Session['playbackSource'];
+  /** Whether this engine was built for the horizontal view (personal preference, feature horizontal-scroll-view). alphaTab fixes the layout's scroll element at construction, so a switch rebuilds, like a source switch. */
+  horizontal: boolean;
+  /** The horizontal view's tab band (EngineContainers.tabScrollEl), where the early-stop scrim goes. */
+  tabScrollEl?: HTMLElement;
   overlay?: LyricsOverlay;
   isLyricsPart: boolean;
   trackIndex: number;
@@ -94,6 +101,14 @@ interface EngineState {
 }
 
 let state: EngineState | undefined;
+
+/**
+ * The host's early-stop tick (Session.earlyStopTick), as last told by
+ * App.svelte. Module-level, not per engine, so an engine built after the
+ * host set it still shows it. Only the horizontal view draws it here (the
+ * paged view's scrim is App.svelte's own).
+ */
+let earlyStopTick: number | null = null;
 
 /** How far a seek event's tick may sit from the tick this module just assigned and still count as that assignment's echo (see the seek-broadcast listener). */
 const PROGRAMMATIC_SEEK_TOLERANCE_TICKS = 10;
@@ -125,9 +140,16 @@ export function ensurePlaybackEngine(
   isLyricsPart: boolean,
   playbackSource: Session['playbackSource'] = 'synth',
   barsPerRow: number | null = null,
+  horizontalView = false,
 ): void {
+  const horizontal = horizontalView && (isLyricsPart || containers.tabScrollEl != null);
   if (state) {
-    if (state.songId !== song.id || state.isLyricsPart !== isLyricsPart || state.playbackSource !== playbackSource) {
+    if (
+      state.songId !== song.id ||
+      state.isLyricsPart !== isLyricsPart ||
+      state.playbackSource !== playbackSource ||
+      state.horizontal !== horizontal
+    ) {
       // Song changed, engine kind changed, or the session's audio source
       // changed: the loaded score, lyrics overlay/lrc DOM, and synth/backing
       // state all belong to the old configuration — and alphaTab fixes
@@ -162,7 +184,15 @@ export function ensurePlaybackEngine(
     : undefined;
   const api = isLyricsPart
     ? createHeadlessPlayer(song.gpFilePath, trackIndex, recording)
-    : createTabRenderer({ container: containers.tabContainer, gpFilePath: song.gpFilePath, trackIndex, theme, barsPerRow, ...recording });
+    : createTabRenderer({
+        container: containers.tabContainer,
+        gpFilePath: song.gpFilePath,
+        trackIndex,
+        theme,
+        barsPerRow,
+        horizontalScrollElement: horizontal ? containers.tabScrollEl : undefined,
+        ...recording,
+      });
 
   // Metronome is a client-local personal preference (ui.md Preferences
   // tab), not session state — applied once at creation and thereafter via
@@ -189,7 +219,50 @@ export function ensurePlaybackEngine(
     if (e.state === atLib.synth.PlayerState.Playing) api.scrollToCursor();
   });
 
-  state = { api, songId: song.id, playbackSource, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
+  // The horizontal view keeps the cursor on the fixed playhead while stopped
+  // too: after each render, and after every seek that isn't playback's own
+  // (the start marker's park, Spotlight, the host's click-to-seek), the
+  // sheet scrolls so the parked beat sits under the playhead. alphaTab
+  // itself only scrolls while playing. Two frames later, so alphaTab has
+  // moved its cursor to the new beat first (it does so on its own frame).
+  if (horizontal && !isLyricsPart) {
+    const scrollToCursorSoon = () => requestAnimationFrame(() => requestAnimationFrame(() => api.scrollToCursor()));
+    api.postRenderFinished.on(scrollToCursorSoon);
+    // Fit the staff to the tab band's height: on a phone in landscape the
+    // band is short, and a staff taller than it would need scrolling up and
+    // down. Only ever shrinks (to no less than 60% of the starting scale),
+    // re-rendering once per fit, so it can't loop.
+    const tabScrollEl = containers.tabScrollEl!;
+    const minScale = api.settings.display.scale * 0.6;
+    api.postRenderFinished.on(() => {
+      const staffHeight = api.canvasElement.height;
+      const room = tabScrollEl.clientHeight;
+      if (staffHeight <= 0 || room <= 0 || staffHeight <= room) return;
+      const scale = Math.max(minScale, api.settings.display.scale * (room / staffHeight) * 0.98);
+      if (scale >= api.settings.display.scale - 0.01) return;
+      api.settings.display.scale = scale;
+      api.updateSettings();
+      api.render();
+    });
+    api.postRenderFinished.on(() => placeEarlyStopScrim());
+    api.playerPositionChanged.on((e) => {
+      if (e.isSeek && api.playerState !== atLib.synth.PlayerState.Playing) scrollToCursorSoon();
+    });
+  }
+
+  state = {
+    api,
+    songId: song.id,
+    playbackSource,
+    horizontal,
+    tabScrollEl: horizontal ? containers.tabScrollEl : undefined,
+    isLyricsPart,
+    trackIndex,
+    theme,
+    showOverlay: true,
+    scoreLoaded: false,
+    renderedWhileVisible: isLyricsPart,
+  };
   // A fresh engine always starts with the overlay shown (matches
   // `showOverlay: true` above) — resets any stale `false` left over from a
   // previous song/session (T004).
@@ -261,9 +334,70 @@ export function ensurePlaybackEngine(
       const order = playbackOrderOf(score, tickCache);
       const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
       const measures = playbackMeasureBoundaries(order.plays);
-      state!.overlay = createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
+      // The horizontal view's lyrics band (above the tab) replaces the
+      // single-line ticker, from the same placed syllable stream. No
+      // syllables, no band: the tab keeps the whole height.
+      if (horizontal && placed.length === 0) return;
+      state!.overlay = horizontal
+        ? createHorizontalLyricsBand(
+            api,
+            placed.map((s) => ({ text: s.text, at: s.tickPosition })),
+            containers.overlayContainer,
+            { unit: 'tick', measures, followFontSizePreference: true },
+          )
+        : createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
+  } else if (isLyricsPart && horizontal) {
+    // The Lyrics part in the horizontal view (feature horizontal-scroll-
+    // view): the same side-scrolling band, alone and vertically centered,
+    // in place of the stacked sheet. From the GP lyric track when the song
+    // has one (the in-tab band's syllables, on the playback timeline), else
+    // from the `.lrc` lines by time (converted to tab time, as the sheet
+    // does). The sheet's gap indicators don't carry over.
+    containers.fullLyricsEl.textContent = '';
+    if (song.lyricsTrackIndex !== null && song.lyricsLineIndex !== null && song.lyricLineBreaks) {
+      const lyricsTrackIndex = song.lyricsTrackIndex;
+      const lyricsLineIndex = song.lyricsLineIndex;
+      const lyricLineBreaks = song.lyricLineBreaks;
+      const rawLine = song.lyricsRawLine;
+      api.midiLoad.on(() => {
+        const score = api.score;
+        const tickCache = api.tickCache;
+        if (state!.overlay || !score || !tickCache) return;
+        const syllables = rawLine
+          ? walkLyricBeatsFromRawLine(score, lyricsTrackIndex, rawLine)
+          : walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
+        const written = groupIntoLines(syllables, lyricLineBreaks).flat();
+        const order = playbackOrderOf(score, tickCache);
+        const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
+        state!.overlay = createHorizontalLyricsBand(
+          api,
+          placed.map((s) => ({ text: s.text, at: s.tickPosition })),
+          containers.fullLyricsEl,
+          { unit: 'tick', measures: playbackMeasureBoundaries(order.plays) },
+        );
+      });
+    } else if (song.lyricsLrc) {
+      let lrcScore: at.model.Score | undefined;
+      let lrcAll: LrcLine[] | undefined;
+      const build = () => {
+        if (!lrcScore || !lrcAll || state?.api !== api || state.overlay) return;
+        const toTabTime = lrcToTabTime(song, lrcScore);
+        const lines = lrcAll.filter((l) => l.text.length > 0).map((l) => ({ text: lyricLineDisplayText(song, l.text), at: toTabTime(l.timeMs) }));
+        state.overlay = createHorizontalLyricsBand(api, lines, containers.fullLyricsEl, { unit: 'ms' });
+      };
+      fetch(song.lyricsLrc)
+        .then((res) => res.text())
+        .then((content) => {
+          lrcAll = parseLrc(content);
+          build();
+        });
+      api.scoreLoaded.on((score) => {
+        lrcScore = score;
+        build();
+      });
+    }
   } else if (isLyricsPart && song.lyricsLrc) {
     let lrcLines: LrcLine[] = []; // rendered (real-line-only) list — DOM building + active-line matching, unchanged shape from before this feature.
     let lineEls: HTMLElement[] = [];
@@ -716,6 +850,7 @@ function destroyEngine(): void {
   // otherwise keep scrolling the OLD song's lyrics under the new engine
   // (observed live during the F001 fix verification).
   state.overlay?.destroy();
+  state.tabScrollEl?.querySelector('.hview-early-stop')?.remove();
   state.api.destroy();
   state = undefined;
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
@@ -795,6 +930,37 @@ export function __getPlaybackPositionForE2E(): { tickPosition: number; audioCurr
   if (!state) return undefined;
   const audioEl = (state.api.player?.output as unknown as { audioElement?: HTMLAudioElement } | undefined)?.audioElement;
   return { tickPosition: state.api.tickPosition, audioCurrentTimeMs: audioEl ? audioEl.currentTime * 1000 : null };
+}
+
+/**
+ * The early-stop point in the horizontal view (feature horizontal-scroll-view,
+ * ui.md): everything from the stop beat onward is dimmed, in the scrolled
+ * sheet itself, so the dim edge passes the playhead exactly where playback
+ * will stop. The stop itself is the server's (playback-tick-report.ts).
+ */
+export function setEngineEarlyStop(tick: number | null): void {
+  earlyStopTick = tick;
+  placeEarlyStopScrim();
+}
+
+function placeEarlyStopScrim(): void {
+  const scroll = state?.tabScrollEl;
+  let scrim = scroll?.querySelector<HTMLElement>('.hview-early-stop') ?? null;
+  const api = state?.api;
+  const lookup = earlyStopTick !== null && state?.horizontal && api?.tickCache ? api.tickCache.findBeat(new Set([state.trackIndex]), earlyStopTick) : null;
+  const bounds = lookup?.beat ? api?.boundsLookup?.findBeat(lookup.beat) : null;
+  if (!scroll || !bounds) {
+    scrim?.remove();
+    return;
+  }
+  if (!scrim) {
+    scrim = document.createElement('div');
+    scrim.className = 'hview-early-stop';
+    scrim.setAttribute('aria-hidden', 'true');
+    scroll.appendChild(scrim);
+  }
+  scrim.style.left = `calc(var(--hview-playhead) + ${bounds.onNotesX}px)`;
+  scrim.style.width = `${Math.max(0, api!.canvasElement.width - bounds.onNotesX)}px`;
 }
 
 export function setEngineTheme(theme: Theme): void {
