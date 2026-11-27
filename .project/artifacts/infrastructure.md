@@ -686,7 +686,11 @@ change.
 
 A `playback-source-set` message carries the host's toggle, following the
 same host-authorization check as `playback-control`, and is rejected
-while playback is `running`.
+while playback is `running`. The default comes from the song
+(`default-to-recording-source`): a genuine `song-select` sets
+`playbackSource` to `'recording'` when the new song is recording-capable
+and `'synth'` otherwise, so every participant's first engine for that song
+is built in the right `playerMode` with no synth-then-rebuild step.
 
 ### Audio Engine Warm-Up
 

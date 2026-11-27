@@ -761,11 +761,18 @@ participant has an instrument or the tab-less lyrics part selected. A
 tracks in that mix, and it is personal — see below.
 
 **Recording-mode carve-out** (`sync-tabs-to-real-audio`). The paragraph
-above describes the **synth** audio source, which stays the default and
-the only source for songs with no recording. Where a song ships an
-operator-supplied recording (`CatalogSong.recordingPath` + `syncPoints`,
-datamodel.md), the host may switch the session to the **recording**
-source. This is a scoped carve-out of the full-mix decision, not a
+above describes the **synth** audio source, the only source for songs with
+no recording. Where a song ships an operator-supplied recording
+(`CatalogSong.recordingPath` + `syncPoints`, datamodel.md), selecting it
+puts the session on the **recording** source by default, and the host may
+switch it to the synth (`default-to-recording-source`, 2026-11-27 — this
+reverses the earlier "synth stays the default" stance, at the user's
+request: a real recording is what the band wants to hear when there is
+one). The host's synth choice holds for that song only; picking a
+different song applies the default again, since a source choice made for
+one song's recording has no meaning for another's. Count-in is ignored
+while on the recording (below), so a recording-defaulted song starts
+without one even if the host's Count-in toggle is on. This is a scoped carve-out of the full-mix decision, not a
 reversal: the multi-track mix still loads and still renders — it simply
 doesn't *sound*; the recording does.
 
