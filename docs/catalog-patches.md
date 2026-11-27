@@ -1500,3 +1500,22 @@ from the instruments. Only `syncPoints` changed.
 | End of bar 85 | 196628.2 | 196581.0 |
 
 The old points were 31 ms late at bar 1 and 47 ms late at the end.
+
+## Recordings must be CBR: Lazy Eye, Creep and Last Nite re-encoded (2026-11-27)
+
+*Why:* a click-to-seek deep into Lazy Eye landed half a bar to a bar off,
+although continuous playback was right. Its tab has one tempo and no
+repeats, so the two-point map couldn't be the cause. The recording was a VBR
+mp3 (Xing header). Browsers can only estimate seek positions in VBR mp3s,
+while seeks in CBR mp3s are exact. Creep and Last Nite were VBR too. Every
+other recording is CBR (Info header).
+
+*The edit:* each was re-encoded with
+`ffmpeg -i <vbr>.mp3 -map 0:a -c:a libmp3lame -b:a 320k -write_xing 1 recording.mp3`.
+Decoded cross-correlation against the original at 5/100/200/300 s gives a
+0-sample lag, so `syncPoints` are unchanged. The VBR originals are kept as
+`catalog-originals/<song>/recording.vbr.mp3`.
+
+*Rule for new recordings:* check for a `Xing` header
+(`python3 -c "import sys;print(b'Xing' in open(sys.argv[1],'rb').read(200000))" f.mp3`)
+and re-encode to CBR the same way before fitting sync points.
