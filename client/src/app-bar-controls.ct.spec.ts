@@ -137,6 +137,19 @@ test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render i
   await expect(page.locator('.playback-controls button')).toHaveCount(0);
 });
 
+// feedback-song-part-control-during-playb-dba8 F001: the "Song & part"
+// control stays in the bar through playback (ui.md: present in both Lobby
+// and Playback), not just in the Lobby.
+test('playback: the Song & part control stays visible in the bar', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'playback', instrumentSession('playback'));
+
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  const songPart = page.getByRole('button', { name: 'Song & part' });
+  await expect(songPart).toBeVisible();
+  await expect(songPart).toBeEnabled();
+});
+
 // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): icon
 // reassignment. Leave session drops `log-out` (now reserved for the account
 // menu's actual sign-out); the Settings control moves cog -> settings.

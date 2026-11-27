@@ -7,7 +7,7 @@ plan: null
 # Feedback
 
 ## Bugs
-- [ ] F001 The "Song & part" nav control disappears once playback starts, which is confusing: there is no visible way to see or reach the song/part selection from the Playback view. It should be visible throughout. `ui.md` already describes the control as part of the persistent bar in both Lobby and Playback (the "Leave session" paragraph: "present in both Lobby and Playback, alongside "Song & part" and the settings cog"), but the code renders it in the Lobby only: `client/src/App.svelte`, the `{#if $clientStore.view === 'lobby'}` wrapper around the `ListMusic` "Song & part" `Button` in the Bar's `controls` snippet. Related: the auto-open rule (`needsSongOrPart`) is deliberately Lobby-only and can stay that way. [artifacts: ui]
+- [x] F001 The "Song & part" nav control disappears once playback starts, which is confusing: there is no visible way to see or reach the song/part selection from the Playback view. It should be visible throughout. `ui.md` already describes the control as part of the persistent bar in both Lobby and Playback (the "Leave session" paragraph: "present in both Lobby and Playback, alongside "Song & part" and the settings cog"), but the code renders it in the Lobby only: `client/src/App.svelte`, the `{#if $clientStore.view === 'lobby'}` wrapper around the `ListMusic` "Song & part" `Button` in the Bar's `controls` snippet. Related: the auto-open rule (`needsSongOrPart`) is deliberately Lobby-only and can stay that way. [artifacts: ui]
 
 ## UX
 - [ ] F002 The "Song & part" control should be clickable during playback, and clicking it should ideally just pause playback rather than stop and reset it. Findings from a code read (2026-11-26), to settle at plan time:

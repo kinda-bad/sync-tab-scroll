@@ -296,9 +296,10 @@
         barNumber={$beatWidgetState.barNumber}
         beatDurationMs={$beatWidgetState.beatDurationMs}
       />
-      {#if $clientStore.view === 'lobby'}
-        <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
-      {/if}
+      <!-- Present in Lobby and Playback alike (ui.md; feedback
+           feedback-song-part-control-during-playb-dba8 F001). Only the
+           auto-open (needsSongOrPart) is Lobby-only. -->
+      <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
       <!-- T004 (tasks-icons-a11y-ticker-a10d.md, feedback F006 — confirmed
            reversal of ui.md's "absent entirely" decision): always visible,
            disabled (never absent) when no ticker is available, with the
