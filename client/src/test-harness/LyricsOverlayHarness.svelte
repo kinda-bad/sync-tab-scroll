@@ -4,20 +4,30 @@
   import type { Syllable } from '../lyrics-beat-walk';
   import type { AlphaTabApi } from '@coderline/alphatab';
 
+  // Defaults are the fixture every existing overlay spec asserts against;
+  // a spec can pass its own syllables/measures (e.g. a wordless measure).
+  export let lines: Syllable[][] = [
+    [
+      { text: 'When', tickPosition: 0 },
+      { text: 'you', tickPosition: 100 },
+      { text: 'were', tickPosition: 200 },
+    ],
+    [
+      { text: 'here', tickPosition: 400 },
+      { text: 'before', tickPosition: 500 },
+    ],
+  ];
+  // Measure boundaries at ticks 0 (measure 1, before "When") and 300
+  // (measure 2, between "were" tick 200 and "here" tick 400) — used by
+  // the measure-markers CT spec to assert marker DOM position.
+  export let measures: { tick: number; number: number }[] = [
+    { tick: 0, number: 1 },
+    { tick: 300, number: 2 },
+  ];
+
   let container: HTMLDivElement;
 
   onMount(() => {
-    const lines: Syllable[][] = [
-      [
-        { text: 'When', tickPosition: 0 },
-        { text: 'you', tickPosition: 100 },
-        { text: 'were', tickPosition: 200 },
-      ],
-      [
-        { text: 'here', tickPosition: 400 },
-        { text: 'before', tickPosition: 500 },
-      ],
-    ];
 
     let handler: ((e: { currentTick: number }) => void) | undefined;
     const fakeApi = {
@@ -30,14 +40,6 @@
         },
       },
     } as unknown as AlphaTabApi;
-
-    // Measure boundaries at ticks 0 (measure 1, before "When") and 300
-    // (measure 2, between "were" tick 200 and "here" tick 400) — used by
-    // the measure-markers CT spec to assert marker DOM position.
-    const measures = [
-      { tick: 0, number: 1 },
-      { tick: 300, number: 2 },
-    ];
 
     const overlay = createLyricsOverlay(fakeApi, lines, container, { measures });
 

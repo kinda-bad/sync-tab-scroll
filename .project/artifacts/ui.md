@@ -713,6 +713,27 @@ identically regardless of which one they're on:
   personal orientation aid — it does not affect syllable
   highlighting/centering, which continues to index only the real
   syllable stream.
+
+  **Repeats (2026-11-27)**: the strip follows the playback order, not
+  the notation. A repeated section's syllables (and measure markers,
+  with their notated numbers) appear again for each pass, and everything
+  after a repeat sign activates when it is actually played
+  (infrastructure.md In-Tab Lyrics Overlay).
+
+  **Current bar (2026-11-27)**: the marker of the bar playback is in is
+  shown brighter than the others — full-strength `--ink` (bold, full
+  opacity) instead of the markers' dimmed `--ink-dim` — in every theme;
+  `--riot` stays the sung syllable's color. It follows the playback order,
+  so on a repeat's second pass that pass's own marker is the current one.
+
+  **Wordless bars (2026-11-27)**: when playback enters a bar in which no
+  syllable starts, the last sung syllable's highlight clears; it returns
+  with the next syllable. There are no per-syllable end times, so a
+  syllable still being held across the bar line loses its highlight at
+  the bar line: a bar that only sustains a syllable (a `+` hold or a tie)
+  counts as wordless. The strip does not move, and the pre-singing
+  placeholder is unaffected. This applies whether or not the measure
+  markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked
@@ -733,6 +754,17 @@ identically regardless of which one they're on:
   hidden — alphaTab lays lyric text out as part of its normal paginated
   bar-by-bar score grid, which would produce small per-bar lyric
   fragments wrapping across rows, not a single readable scrolling sheet.
+
+  **Line text and timing (2026-11-27)**: when a line's text is the raw
+  GP lyric line (a tab-sourced song whose raw lyrics carry their own line
+  breaks, pipeline.md), it is shown without GP's dispatch markup: `+`
+  holds are dropped, a `+` joining two words reads as a space, and `-`
+  syllable splits are joined back into words. lrclib line text is shown
+  as written. Line times are compared on the tab's own timeline: an
+  lrclib `.lrc` (recording time) is converted through the song's sync
+  points when it has them (infrastructure.md Lyrics time base); a song
+  with neither a lyric track nor a recording keeps its lrclib times as
+  they are.
 
   **Gap timing indicator (2026-07-06)**: `CatalogSong.lyricsLrc`'s blank
   "gap" lines (pipeline.md — a blank-text line marking a real line's end

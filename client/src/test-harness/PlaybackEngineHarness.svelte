@@ -19,6 +19,9 @@
   // recording-capable song variant carries these when switching to recording.
   export let recordingPath: string | null = null;
   export let syncPoints: import('@sync-tab-scroll/shared').FlatSyncPoint[] | null = null;
+  // Lets a CT test vary the song's lyric metadata (e.g. an lrclib-sourced
+  // song: lyricsTrackIndex null + its own syncPoints) without a new harness.
+  export let songOverrides: Partial<CatalogSong> = {};
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -59,6 +62,7 @@
       lyricLineBreaks: [6, 7, 6],
       recordingPath: null,
       syncPoints: null,
+      ...songOverrides,
     };
 
     ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);

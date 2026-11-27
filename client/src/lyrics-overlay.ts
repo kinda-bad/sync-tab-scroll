@@ -14,7 +14,7 @@ export interface LyricsOverlay {
 }
 
 export interface LyricsOverlayOptions {
-  /** Measure-boundary tick data (lyrics-gap-timing.ts's computeMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
+  /** Measure-boundary tick data (lyrics-gap-timing.ts's playbackMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
   measures?: MeasureBoundary[];
 }
 
@@ -22,7 +22,9 @@ export interface LyricsOverlayOptions {
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
  * right now, using brand.md's `.at-highlight` active/base color roles.
  * Driven by `api.playerPositionChanged` (tick position) compared against
- * the flat syllable stream from lyrics-beat-walk.ts, not alphaTab's own
+ * the flat syllable stream from lyrics-beat-walk.ts, already placed on
+ * the playback timeline by the caller (`unrollSyllables`, so a repeated
+ * bar's syllables appear once per pass), not alphaTab's own
  * per-beat SVG groups — toggle-able independent of which track is
  * currently rendered, since the lyrics-bearing track need not be the one
  * on screen (infrastructure.md).
@@ -104,12 +106,23 @@ export function createLyricsOverlay(
     return marker;
   });
 
+  // Which measures start at least one syllable (wordless-bar clearing,
+  // ui.md "Measure markers"): measure i spans [measures[i].tick,
+  // measures[i + 1].tick). A bar that only sustains the previous syllable
+  // (a `+` hold or a tie) starts none, so it counts as wordless.
+  const measures = options.measures ?? [];
+  const measureStartsSyllable = measures.map((measure, i) => {
+    const end = measures[i + 1]?.tick ?? Infinity;
+    return flat.some((s) => s.tickPosition >= measure.tick && s.tickPosition < end);
+  });
+
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
     el.style.display = measureMarkersVisible ? '' : 'none';
   });
 
   let activeIndex = -1;
+  let currentMeasure = -1;
 
   // Rect-based (not offsetLeft/clientWidth-based): those turned out to
   // disagree with real screen position by exactly `.lyrics-overlay`'s
@@ -165,15 +178,38 @@ export function createLyricsOverlay(
       if (flat[i].tickPosition <= tickPosition) index = i;
       else break;
     }
-    if (index === activeIndex) return;
-    if (activeIndex < 0 && index >= 0) {
-      placeholder.classList.remove('at-highlight');
-      placeholder.style.display = 'none';
+    updateCurrentMeasure(tickPosition);
+    if (index !== activeIndex) {
+      if (activeIndex < 0 && index >= 0) {
+        placeholder.classList.remove('at-highlight');
+        placeholder.style.display = 'none';
+      }
+      if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
+      activeIndex = index;
+      centerActiveSyllable();
     }
-    if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
-    if (index >= 0) spans[index].classList.add('at-highlight');
-    activeIndex = index;
-    centerActiveSyllable();
+    // Wordless bar (ui.md "Measure markers"): once playback is in a measure
+    // that starts no syllable, the last sung syllable is no longer
+    // highlighted. No per-syllable end times: the highlight clears at the
+    // bar line even if the syllable is still sounding. The strip stays
+    // where it is, and the placeholder is unaffected.
+    const wordless = currentMeasure >= 0 && !measureStartsSyllable[currentMeasure];
+    if (activeIndex >= 0) spans[activeIndex].classList.toggle('at-highlight', !wordless);
+  }
+
+  // The measure containing the playback tick gets the current-bar style
+  // (ui.md "Measure markers"). Measures are in playback order, so a
+  // repeated measure's own marker for this pass is the one marked.
+  function updateCurrentMeasure(tickPosition: number): void {
+    let index = -1;
+    for (let i = 0; i < measures.length; i++) {
+      if (measures[i].tick <= tickPosition) index = i;
+      else break;
+    }
+    if (index === currentMeasure) return;
+    if (currentMeasure >= 0) markerEls[currentMeasure].classList.remove('lyrics-measure-marker--current');
+    if (index >= 0) markerEls[index].classList.add('lyrics-measure-marker--current');
+    currentMeasure = index;
   }
 
   // Synchronous initial paint (T005): centered and highlighted before any

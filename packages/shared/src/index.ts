@@ -1,6 +1,7 @@
 export * from './messages.js';
 export * from './lyrics-walk.js';
 export * from './lyrics-dispatch.js';
+export * from './lyrics-unroll.js';
 
 // --- Recording sync anchors (datamodel.md FlatSyncPoint) ---
 // alphaTab's OWN named type, re-exported rather than redefined (constitution

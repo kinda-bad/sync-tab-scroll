@@ -849,6 +849,48 @@ works regardless of which instrument track the viewing participant
 actually has rendered — the lyrics-bearing track need not be the one
 on screen, or even a selectable `CatalogPart` at all.
 
+**Playback timeline, not notation (2026-11-27,
+plan-lyrics-timing-repeats-2026-11-27-4c1e).** Both syllable sources yield
+*written* (notation) ticks, but `playerPositionChanged`'s `currentTick` is
+the *playback* tick, which keeps counting through repeats. The flat
+syllable stream is therefore moved onto the playback timeline before the
+overlay sees it: `packages/shared/src/lyrics-unroll.ts#unrollSyllables`
+re-emits each syllable once per play of its bar, at that pass's start
+tick plus the syllable's offset in the bar. The play order is alphaTab's
+own (`playbackOrderOf` over `MidiTickLookup.masterBars` — one entry per
+played bar, repeats, alternate endings and directions already expanded),
+read from `api.tickCache`; the overlay is built on `api.midiLoad`, since
+the tick cache only exists once the MIDI is generated. GP dispatches one
+syllable set per written bar, so a repeated bar shows the same syllables
+on every pass, and a first-ending bar is skipped on the pass that takes
+the second ending. The measure markers come from the same play order
+(`playbackMeasureBoundaries`), so a repeated measure's marker shows again
+with its notated number. The pipeline's `.lrc` uses the same function
+(pipeline.md Repeats).
+
+### Lyrics time base
+
+The lyric sheet (ui.md "Lyrics part selected") compares `.lrc` line times
+with `playerPositionChanged`'s `currentTime`. That is alphaTab's own synth
+(tab) timeline in **both** playback modes: in backing-track mode alphaTab
+converts the audio position through the sync points
+(`MidiFileSequencer.mainTimePositionFromBackingTrack`) before reporting
+it. A `.lrc` generated from the tab (`CatalogSong.lyricsTrackIndex` set)
+is already tab time. An lrclib `.lrc` (`lyricsTrackIndex: null`) is
+studio-recording time, so `client/src/lrc-time-base.ts#lrcToTabTime`
+converts each line through the song's `syncPoints`: the anchors are
+alphaTab's own (`MidiFileGenerator.generateSyncPoints`, the list the
+backing-track player is fed; the flat points are applied to the score for
+that one call and the score's previous points restored), and
+`recordingMsToTabMs` mirrors `mainTimePositionFromBackingTrack` —
+linear within a segment, the first segment extrapolated before the first
+anchor, held at the song end after the last. The converted list feeds both
+the active-line match and the gap indicators. The conversion applies in
+synth mode too, because the tab timeline is the same in both modes. A song
+with neither a lyric track nor `syncPoints` (Cracker – Low) has nothing to
+anchor its lrclib times to the tab; they are used as they are and may run
+ahead of or behind the tab.
+
 The legacy fallback walk itself lives in exactly one place, `packages/shared/src/
 lyrics-walk.ts#walkSyllables(score, source)`, used identically by the
 client (`client/src/lyrics-beat-walk.ts`, live overlay) and the pipeline

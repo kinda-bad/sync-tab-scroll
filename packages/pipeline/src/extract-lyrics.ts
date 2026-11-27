@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { loadScore, findLyricsSource, extractSyllables, extractSyllablesFromRawLine, buildTickToMs, buildMsToTick } from './gp-parser.js';
+import { loadScore, findLyricsSource, extractSyllables, extractSyllablesFromRawLine, buildTickToMs, buildMsToTick, buildPlaybackOrder } from './gp-parser.js';
 import { readRawLyricsLines, readRawLyricsLine, countSyllables, alignLinesByTimestamp, type RawLyricsLine } from './line-breaks.js';
 import { isLegacyGpFile, readGp5RawLyricsLine } from './gp5-lyrics.js';
 import { searchLrclib, parseLrclibLinesWithTimestamps } from './lrclib.js';
@@ -88,7 +88,7 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
       }
     }
 
-    lrcContent = buildLrc(lines, lyricLineBreaks, syllables, tickToMs);
+    lrcContent = buildLrc(lines, lyricLineBreaks, syllables, buildPlaybackOrder(score), tickToMs);
     meta = { ...meta, lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
 
     if (rawLine) {

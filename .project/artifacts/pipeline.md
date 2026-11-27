@@ -1,7 +1,7 @@
 ---
 name: pipeline
 status: stable
-last_updated: 2026-07-19
+last_updated: 2026-11-27
 ---
 
 # Lyrics Extraction Pipeline
@@ -94,6 +94,23 @@ infrastructure.md.
    [00:12.340]I'm a creep
    [00:14.870]
    ```
+   **Repeats (2026-11-27, plan-lyrics-timing-repeats-2026-11-27-4c1e).**
+   Syllable ticks are written (notation) ticks; the tick→ms tempo map
+   (`buildTickToMs`) comes from the generated MIDI, whose ticks are
+   playback ticks. Before timing, the syllables are moved onto the
+   playback timeline with the shared `unrollSyllables`
+   (infrastructure.md In-Tab Lyrics Overlay), using the play order from
+   the same `MidiFileGenerator` run (`buildPlaybackOrder`, its
+   `tickLookup.masterBars`). `buildLrc` then writes one entry per run of
+   consecutive placed syllables from the same line, so a line inside a
+   repeated section is written once per pass, and a run also ends where
+   playback jumps back. Previously a line after a repeat sign was timed
+   at its written tick, early by the repeated length (Dirty Little
+   Secret: 3 bars, about 5s, from bar 94 on). Only catalog songs with
+   repeats or directions change; their `.lrc` must be regenerated
+   (Dirty Little Secret is the only one as of 2026-11-27). The line
+   *text* is still the raw GP line (`+` holds, `-` syllable joins); the
+   client cleans it for display (ui.md "Lyrics part selected").
    - If the GP file's lyrics already carry line-break positions, those are
      used directly — lrclib.net is not consulted. **Validated**: this
      placement is not exposed by alphaTab's public API at all — alphaTab
