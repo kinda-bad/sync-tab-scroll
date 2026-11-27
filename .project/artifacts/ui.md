@@ -243,6 +243,26 @@ meaning against the new song) — each participant's `selectedPart`
 reverts to `null` and readiness to `'no-part'`, same as first joining.
 Each participant picks their part and signals readiness.
 
+**During playback** (feedback feedback-song-part-control-during-playb-dba8
+F001/F002) the "Song & part" control stays in the bar and opens the same
+modal; only the automatic open is Lobby-only. Opening it never stops or
+resets anything. A **host** opening it while running **pauses** playback
+(a plain Pause, the same as the bar's own), so they can look without the
+band racing on; closing it doesn't resume, the host presses Resume. A
+**non-host** opening it leaves session playback alone, since only the
+host controls transport. Changing one's **own part** mid-song happens in
+place with no stop: between instrument parts the tab switches track on
+the same engine at the same position, and to or from the Lyrics part the
+participant's own engine is rebuilt and rejoins at the session's current
+position. Choosing a **different song** while playback is running or
+paused needs a full stop and reset for everyone (there is no position to
+resume in another song), so the host first gets an in-modal confirm,
+"Switching to {song} stops playback for everyone and clears every part",
+with Cancel and "Stop and switch"; confirming sends the `song-select`,
+which the server treats as a Stop (infrastructure.md), returning everyone
+to the Lobby. Re-selecting the current song, a server no-op, never asks.
+In the Lobby (stopped), Select sends at once, as before.
+
 **Part-name display rule** (feedback part-name-instrument-ux F001;
 `client/src/part-display-name.ts`): everywhere a part renders — the part
 picker, the Participants list's selected-part sublabel, the Playback

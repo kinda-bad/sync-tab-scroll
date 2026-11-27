@@ -150,6 +150,51 @@ test('playback: the Song & part control stays visible in the bar', async ({ moun
   await expect(songPart).toBeEnabled();
 });
 
+// feedback-song-part-control-during-playb-dba8 F002: opening Song & part
+// mid-song never stops or resets anything. A host opening it while running
+// pauses (so they can look without the band racing on); a non-host, who
+// has no transport control, leaves session playback alone; a host already
+// paused sends nothing.
+const playbackMessages = (page: import('@playwright/test').Page) =>
+  page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-control' || m.type === 'song-select'),
+  );
+
+function asNonHost(session: Session): Session {
+  return {
+    ...session,
+    hostId: 'p2',
+    participants: [
+      ...session.participants.map((p) => ({ ...p, role: 'member' as const })),
+      { id: 'p2', displayName: 'Bob', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1, userId: null },
+    ],
+  };
+}
+
+for (const { name, session, expected } of [
+  { name: 'host, running: pauses', session: instrumentSession('playback'), expected: [{ type: 'playback-control', action: 'pause' }] },
+  {
+    name: 'host, paused: sends nothing',
+    session: { ...instrumentSession('playback'), playbackState: { ...instrumentSession('playback').playbackState, status: 'paused' as const } },
+    expected: [],
+  },
+  { name: 'non-host, running: leaves playback alone', session: asNonHost(instrumentSession('playback')), expected: [] },
+]) {
+  test(`opening Song & part during playback (${name})`, async ({ mount, page }) => {
+    await mount(AppHarness);
+    await setStore(page, 'playback', session);
+    await page.getByRole('button', { name: 'Song & part' }).click();
+
+    await expect(page.getByRole('dialog', { name: 'Song & part' })).toBeVisible();
+    expect(await playbackMessages(page)).toEqual(expected);
+
+    // Closing it doesn't resume or stop either.
+    await page.getByRole('dialog', { name: 'Song & part' }).getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('dialog', { name: 'Song & part' })).toHaveCount(0);
+    expect(await playbackMessages(page)).toEqual(expected);
+  });
+}
+
 // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): icon
 // reassignment. Leave session drops `log-out` (now reserved for the account
 // menu's actual sign-out); the Settings control moves cog -> settings.

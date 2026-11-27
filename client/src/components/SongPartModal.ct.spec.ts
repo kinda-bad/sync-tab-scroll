@@ -121,3 +121,80 @@ test('submitting an activation key sends a keyless catalogue-unlock message', as
   const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
   expect(sent).toContainEqual({ type: 'catalogue-unlock', key: 's3cr3t' });
 });
+
+// feedback-song-part-control-during-playb-dba8 F002: during playback, a
+// different song needs a full stop and reset for everyone (song-select.ts
+// stops playback), so the host confirms first. In the Lobby (stopped)
+// Select still sends at once.
+const twoSongs: CatalogSong[] = [song('creep', 'default'), song('bonus', 'default')];
+const sentSongSelects = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'song-select'));
+
+for (const status of ['running', 'paused'] as const) {
+  test(`host choosing a different song while ${status}: confirm first, Cancel sends nothing`, async ({ mount, page }) => {
+    const component = await mount(SongPartModalHarness, {
+      props: {
+        session: baseSession({ selectedSong: 'creep', playbackState: { status, tickPosition: 5000, bpm: 120, serverTimestamp: 0 } }),
+        selfParticipantId: 'host-1',
+        catalog: twoSongs,
+        catalogues,
+      },
+    });
+
+    await component.getByRole('button', { name: 'Change song' }).click();
+    await component.getByRole('listitem').filter({ hasText: 'bonus' }).getByRole('button', { name: 'Select' }).click();
+
+    await expect(component.getByText(/stops playback for everyone/)).toBeVisible();
+    expect(await sentSongSelects(page)).toEqual([]);
+
+    await component.getByRole('button', { name: 'Cancel' }).click();
+    await expect(component.getByText(/stops playback for everyone/)).toHaveCount(0);
+    expect(await sentSongSelects(page)).toEqual([]);
+  });
+}
+
+test('host confirming a different song during playback sends song-select', async ({ mount, page }) => {
+  const component = await mount(SongPartModalHarness, {
+    props: {
+      session: baseSession({ selectedSong: 'creep', playbackState: { status: 'paused', tickPosition: 5000, bpm: 120, serverTimestamp: 0 } }),
+      selfParticipantId: 'host-1',
+      catalog: twoSongs,
+      catalogues,
+    },
+  });
+
+  await component.getByRole('button', { name: 'Change song' }).click();
+  await component.getByRole('listitem').filter({ hasText: 'bonus' }).getByRole('button', { name: 'Select' }).click();
+  await component.getByRole('button', { name: 'Stop and switch' }).click();
+
+  expect(await sentSongSelects(page)).toEqual([{ type: 'song-select', songId: 'bonus' }]);
+});
+
+test('re-selecting the current song during playback sends at once, with no warning (a server no-op)', async ({ mount, page }) => {
+  const component = await mount(SongPartModalHarness, {
+    props: {
+      session: baseSession({ selectedSong: 'creep', playbackState: { status: 'paused', tickPosition: 5000, bpm: 120, serverTimestamp: 0 } }),
+      selfParticipantId: 'host-1',
+      catalog: twoSongs,
+      catalogues,
+    },
+  });
+
+  await component.getByRole('button', { name: 'Change song' }).click();
+  await component.getByRole('listitem').filter({ hasText: 'creep' }).getByRole('button', { name: 'Select' }).click();
+
+  await expect(component.getByText(/stops playback for everyone/)).toHaveCount(0);
+  expect(await sentSongSelects(page)).toEqual([{ type: 'song-select', songId: 'creep' }]);
+});
+
+test('in the Lobby (stopped) a different song is selected at once, with no confirm', async ({ mount, page }) => {
+  const component = await mount(SongPartModalHarness, {
+    props: { session: baseSession({ selectedSong: 'creep' }), selfParticipantId: 'host-1', catalog: twoSongs, catalogues },
+  });
+
+  await component.getByRole('button', { name: 'Change song' }).click();
+  await component.getByRole('listitem').filter({ hasText: 'bonus' }).getByRole('button', { name: 'Select' }).click();
+
+  await expect(component.getByText(/stops playback for everyone/)).toHaveCount(0);
+  expect(await sentSongSelects(page)).toEqual([{ type: 'song-select', songId: 'bonus' }]);
+});

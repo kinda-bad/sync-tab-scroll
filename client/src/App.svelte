@@ -165,6 +165,14 @@
       songPartModalOpen = false;
     } else {
       songPartModalOpen = true;
+      // Mid-song (feedback feedback-song-part-control-during-playb-dba8
+      // F002): opening never stops or resets anything. A host opening it
+      // while running pauses, so the band isn't racing on while they look;
+      // closing doesn't auto-resume (the host presses Resume). A non-host
+      // has no transport control, so their session playback carries on.
+      if (isHost && $clientStore.view === 'playback' && isRunning) {
+        $clientStore.wsClient?.send({ type: 'playback-control', action: 'pause' });
+      }
     }
   }
 
