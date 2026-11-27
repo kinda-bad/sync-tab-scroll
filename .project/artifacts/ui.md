@@ -676,7 +676,16 @@ identically regardless of which one they're on:
   alphaTab's own native cursor overlay (`.at-cursor-bar`/`.at-cursor-beat`)
   — drawn from the same render pass as the staff itself, not a separately
   computed overlay, so it can't drift out of position relative to the
-  notation the way a precomputed layout-derived cursor could. An optional
+  notation the way a precomputed layout-derived cursor could.
+  **Cursor follow on Start (2026-11-27)**: every Start, the first after
+  loading a part included, scrolls the cursor's row into view at once,
+  with or without a start marker, in synth and recording mode. alphaTab
+  follows the cursor by row and skips a row it believes it already
+  scrolled to; a render after load could leave the parked row marked as
+  scrolled although the page had moved since (the Lobby's content goes
+  at Start), so the first Start didn't scroll until the next row. The
+  engine force-scrolls on each Start with alphaTab's own
+  `scrollToCursor()`, which also clears that memo. An optional
   lyrics overlay can be toggled on as a single-line horizontal ticker
   fixed to the top or bottom of the viewport (per the personal "Lyrics
   ticker position" preference; default bottom), via an icon-only "Toggle lyrics"

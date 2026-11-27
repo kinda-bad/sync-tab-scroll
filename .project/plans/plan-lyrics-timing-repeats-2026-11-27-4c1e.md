@@ -103,6 +103,11 @@ so auto-scroll lands the current row beneath the strip. A ResizeObserver
 keeps both in step with the strip's height. The tab stays in the page's
 own scroll (an inner scroll container would also move the Lobby, which
 shows the tab under its own content). Bottom position unchanged.
+**Phase 7 — First Start scrolls to the cursor (user report, 2026-11-27).**
+Root cause is alphaTab's row memo (BasicScrollHandler `lastScroll`), set
+by any render after the tick cache exists, not the start-marker code, so
+the fix stays on this branch: call `api.scrollToCursor()` when the player
+flips to Playing.
 
 ## Open Questions
 

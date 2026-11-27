@@ -54,6 +54,13 @@ status: completed
   auto-scroll case already passed before the fix (the bar cursor sits a
   little below the row's top there), so it is a guard, not the proof.
 
+## Phase 7: First Start cursor follow (user report)
+
+- [x] T012 [artifacts: ui] Force-scroll to the cursor on every Start.
+  CT spec (`first-play-scroll.ct.spec.ts`, real alphaTab engine): synth
+  and recording, with and without a parked start bar, each red first
+  (cursor thousands of px off screen), green after.
+
 ## Notes (2026-11-27)
 
 - Root causes confirmed. Bug 1: `playerPositionChanged.currentTime` is
