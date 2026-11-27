@@ -14,7 +14,7 @@ export interface LyricsOverlay {
 }
 
 export interface LyricsOverlayOptions {
-  /** Measure-boundary tick data (lyrics-gap-timing.ts's computeMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
+  /** Measure-boundary tick data (lyrics-gap-timing.ts's playbackMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
   measures?: MeasureBoundary[];
 }
 
@@ -22,7 +22,9 @@ export interface LyricsOverlayOptions {
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
  * right now, using brand.md's `.at-highlight` active/base color roles.
  * Driven by `api.playerPositionChanged` (tick position) compared against
- * the flat syllable stream from lyrics-beat-walk.ts, not alphaTab's own
+ * the flat syllable stream from lyrics-beat-walk.ts, already placed on
+ * the playback timeline by the caller (`unrollSyllables`, so a repeated
+ * bar's syllables appear once per pass), not alphaTab's own
  * per-beat SVG groups — toggle-able independent of which track is
  * currently rendered, since the lyrics-bearing track need not be the one
  * on screen (infrastructure.md).

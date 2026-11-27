@@ -1,7 +1,7 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
 import { PlayerMode } from '@coderline/alphatab';
-import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
+import { playbackOrderOf, unrollSyllables, type CatalogSong, type Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
@@ -11,7 +11,9 @@ import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
-import { findLyricGaps, computeMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
+import { findLyricGaps, playbackMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
+import { lrcToTabTime } from './lrc-time-base';
+import { lyricLineDisplayText } from './lyric-line-text';
 
 interface GapIndicatorHandle {
   gap: LyricGap;
@@ -217,15 +219,25 @@ export function ensurePlaybackEngine(
     const lyricsLineIndex = song.lyricsLineIndex;
     const lyricLineBreaks = song.lyricLineBreaks;
     const rawLine = song.lyricsRawLine;
-    api.scoreLoaded.on((score) => {
+    // Built on midiLoad, not scoreLoaded: syllables and measure markers go
+    // on the playback timeline (repeats expanded, infrastructure.md In-Tab
+    // Lyrics Overlay), and alphaTab's playback order (`api.tickCache`) only
+    // exists once the MIDI is generated. Once per engine: a later MIDI
+    // regeneration plays the same score in the same order.
+    api.midiLoad.on(() => {
+      const score = api.score;
+      const tickCache = api.tickCache;
+      if (state!.overlay || !score || !tickCache) return;
       // GP-semantics dispatch from the published raw line when present
       // (feedback F001); per-beat walkSyllables stays the legacy fallback.
       const syllables = rawLine
         ? walkLyricBeatsFromRawLine(score, lyricsTrackIndex, rawLine)
         : walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
-      const lines = groupIntoLines(syllables, lyricLineBreaks);
-      const measures = computeMeasureBoundaries(score);
-      state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer, { measures });
+      const written = groupIntoLines(syllables, lyricLineBreaks).flat();
+      const order = playbackOrderOf(score, tickCache);
+      const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
+      const measures = playbackMeasureBoundaries(order.plays);
+      state!.overlay = createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && song.lyricsLrc) {
@@ -233,7 +245,7 @@ export function ensurePlaybackEngine(
     let lineEls: HTMLElement[] = [];
     let activeLineIndex = -1;
     let gapScore: at.model.Score | undefined; // Set once the headless instance's scoreLoaded fires (may race the .lrc fetch below).
-    let pendingAllLines: LrcLine[] | undefined; // The full (blank-gap-marker-included) parsed list, set once the .lrc fetch resolves.
+    let pendingAllLines: LrcLine[] | undefined; // The full (blank-gap-marker-included) parsed list, set once the .lrc fetch resolves — times as written in the .lrc.
     let gaps: LyricGap[] = [];
     let gapIndicators: GapIndicatorHandle[] = [];
 
@@ -265,9 +277,16 @@ export function ensurePlaybackEngine(
     // score's masterBars/tempo data) — these resolve independently and in
     // no guaranteed order, so this is called from both completion points
     // and only actually computes once both are available.
+    // Also where the .lrc's times move to tab time (infrastructure.md Lyrics
+    // time base): an lrclib .lrc is recording time, converted through the
+    // song's sync points, which needs the score. Both the active-line match
+    // and the gap indicators read the converted list, never the raw one.
     function tryComputeGaps(): void {
       if (!gapScore || !pendingAllLines) return;
-      gaps = findLyricGaps(gapScore, pendingAllLines);
+      const toTabTime = lrcToTabTime(song, gapScore);
+      const timedLines = pendingAllLines.map((line) => ({ ...line, timeMs: toTabTime(line.timeMs) }));
+      lrcLines = timedLines.filter((l) => l.text.length > 0);
+      gaps = findLyricGaps(gapScore, timedLines);
       renderGapIndicators();
     }
 
@@ -355,7 +374,7 @@ export function ensurePlaybackEngine(
         lineEls = lrcLines.map((line) => {
           const el = document.createElement('div');
           el.className = 'lyric-line';
-          el.textContent = line.text;
+          el.textContent = lyricLineDisplayText(song, line.text);
           containers.fullLyricsEl.appendChild(el);
           return el;
         });
