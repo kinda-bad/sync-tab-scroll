@@ -45,6 +45,15 @@ status: completed
   that starts no syllable; held/tied-only bars count as wordless. CT spec
   red first.
 
+## Phase 6: Top ticker space (user request)
+
+- [x] T011 [artifacts: ui] Top ticker reserves its space and offsets
+  alphaTab's auto-scroll (`scrollOffsetY`); strip height follows the font
+  size. CT spec (`lyrics-ticker-top-space.ct.spec.ts`) red first at phone
+  width and for the first bar and huge font; the desktop medium-font
+  auto-scroll case already passed before the fix (the bar cursor sits a
+  little below the row's top there), so it is a guard, not the proof.
+
 ## Notes (2026-11-27)
 
 - Root causes confirmed. Bug 1: `playerPositionChanged.currentTime` is

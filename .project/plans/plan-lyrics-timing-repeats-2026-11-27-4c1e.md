@@ -95,6 +95,14 @@ starts no syllable (no per-syllable end times, per the user: a bar that
 only sustains a held or tied syllable counts as wordless). Bar numbers
 appear only in the in-tab ticker's measure markers; the lyric sheet shows
 none.
+**Phase 6 — Top ticker takes its own space (user request, 2026-11-27).**
+Reserve the strip's space at the top of the tab view (the overlay
+container moves first in the tab view's flow and is sized to the strip's
+bottom edge) and set alphaTab's `player.scrollOffsetY` to minus that edge,
+so auto-scroll lands the current row beneath the strip. A ResizeObserver
+keeps both in step with the strip's height. The tab stays in the page's
+own scroll (an inner scroll container would also move the Lobby, which
+shows the tab under its own content). Bottom position unchanged.
 
 ## Open Questions
 

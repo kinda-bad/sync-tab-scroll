@@ -511,6 +511,19 @@ regardless of whether playback has started:
     persisted client-side like the theme/Metronome choices (default
     **bottom**, today's behavior). Applies to the in-tab lyrics overlay
     ticker only; no effect on the Lyrics part's full lyric sheet.
+    **Top takes its own space (2026-11-27)**: at the top, the strip is
+    no longer laid over the top of the tab. Space for it is reserved at
+    the top of the tab view, so the tab starts beneath it, and
+    auto-scroll (cursor follow, Spotlight's seek alike) brings the
+    current bar's row in just beneath the strip, never behind it —
+    alphaTab's own `player.scrollOffsetY`, kept equal to the strip's
+    bottom edge. Both follow the strip's real height, which grows with
+    the font-size preference (the strip no longer clips the larger
+    desktop sizes). Rows above the current one still pass under the
+    strip as the page scrolls, as under any pinned header. Bottom stays
+    an overlay: auto-scroll aligns the current row to the top of the
+    viewport, so a bottom strip never covers it, and the tab view's
+    reserved bottom padding already lets the last rows clear it.
   - a personal "Measure markers" toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
