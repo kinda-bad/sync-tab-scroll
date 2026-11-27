@@ -109,6 +109,13 @@ export function createLyricsOverlay(
   // Measures in playback order (ui.md "Measure markers"): the word
   // highlight clears at each bar line (below).
   const measures = options.measures ?? [];
+  // Which measures start at least one syllable: measure i spans
+  // [measures[i].tick, measures[i + 1].tick). One that starts none is an
+  // empty bar, which the strip centers on entry (below).
+  const measureStartsSyllable = measures.map((measure, i) => {
+    const end = measures[i + 1]?.tick ?? Infinity;
+    return flat.some((s) => s.tickPosition >= measure.tick && s.tickPosition < end);
+  });
 
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
@@ -129,15 +136,37 @@ export function createLyricsOverlay(
   // again before a previous transition has visually settled — the
   // computed value mid-transition is the actual current interpolated
   // state, unlike a remembered target.
-  function centerActiveSyllable(): void {
-    const activeSpan = activeIndex < 0 ? placeholder : spans[activeIndex];
-    const currentTranslateX = new DOMMatrix(getComputedStyle(track).transform).m41;
+  function centerOnX(untransformedX: number): void {
     const overlayRect = overlay.getBoundingClientRect();
-    const spanRect = activeSpan.getBoundingClientRect();
-    const untransformedSpanCenter = spanRect.left - currentTranslateX + spanRect.width / 2;
     const overlayCenter = overlayRect.left + overlayRect.width / 2;
-    const translateX = overlayCenter - untransformedSpanCenter;
-    track.style.transform = `translateX(${translateX}px)`;
+    track.style.transform = `translateX(${overlayCenter - untransformedX}px)`;
+  }
+  function untransformedLeft(el: HTMLElement): number {
+    return el.getBoundingClientRect().left - new DOMMatrix(getComputedStyle(track).transform).m41;
+  }
+  function centerActiveSyllable(): void {
+    if (centeredEmptyMeasure !== null) {
+      centerEmptyMeasure(centeredEmptyMeasure);
+      return;
+    }
+    const activeSpan = activeIndex < 0 ? placeholder : spans[activeIndex];
+    centerOnX(untransformedLeft(activeSpan) + activeSpan.getBoundingClientRect().width / 2);
+  }
+  // Empty bars (user feedback 2026-11-27: "center empty measures when they
+  // are entered so we can see words coming after a long break"): entering a
+  // bar with no syllable start centers that bar: its marker when markers
+  // are shown, otherwise the boundary before the next word. The words after
+  // the break then sit just right of center. Held until the next syllable
+  // starts, which centers as usual.
+  let centeredEmptyMeasure: number | null = null;
+  function centerEmptyMeasure(measure: number): void {
+    const marker = markerEls[measure];
+    if (measureMarkersVisible && marker) {
+      centerOnX(untransformedLeft(marker) + marker.getBoundingClientRect().width / 2);
+      return;
+    }
+    const next = spans[activeIndex + 1];
+    if (next) centerOnX(untransformedLeft(next));
   }
 
   // T003 (feedback F005): the guard against a `tickPosition === 0` entry
@@ -180,7 +209,13 @@ export function createLyricsOverlay(
       }
       if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
       activeIndex = index;
+      centeredEmptyMeasure = null;
       centerActiveSyllable();
+    }
+    // Before the first syllable the placeholder stays centered.
+    if (activeIndex >= 0 && currentMeasure >= 0 && !measureStartsSyllable[currentMeasure] && centeredEmptyMeasure !== currentMeasure) {
+      centeredEmptyMeasure = currentMeasure;
+      centerEmptyMeasure(currentMeasure);
     }
     // Bar-line clearing (ui.md "Measure markers", user feedback
     // 2026-11-27): a syllable stays highlighted only within the bar it
@@ -266,6 +301,9 @@ export function createLyricsOverlay(
       markerEls.forEach((el) => {
         el.style.display = visible ? '' : 'none';
       });
+      // Markers change the track's widths, and an empty bar centers on its
+      // marker only while markers are shown.
+      centerActiveSyllable();
     },
     destroy() {
       api.playerPositionChanged.off(handler);
