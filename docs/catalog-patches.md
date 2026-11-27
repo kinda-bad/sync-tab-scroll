@@ -7,6 +7,16 @@ This file is the committed record of every such patch, precise enough to
 reapply from scratch. If a listed file is ever regenerated/re-fetched,
 reapply its patches below before running the pipeline.
 
+Re-running `extract-lyrics` into a song's own folder keeps the hand-set
+`meta.json` fields: part names, `name`, `syncPoints`, `defaultStartBar`, and
+`lyricLineBreaks` while they still fit (`.project/artifacts/pipeline.md`,
+"Re-running on an existing song"). The "reapply part names / sync points"
+steps below are only needed when `meta.json` is rebuilt from scratch, for
+example after extracting into an empty directory and copying `meta.json`
+back. A `.gp` patch that moves words between lines but keeps the line count
+and syllable total would keep the old breaks, so delete them first
+(`jq 'del(.lyricLineBreaks)'`) when the patch means to regenerate them.
+
 ## radiohead-creep — `Radiohead-Creep-06-25-2026.gp` (Kinda Bad catalogue)
 
 **Patch 1 — lyric-timing rebalance (applied 2026-07-18).**
@@ -257,8 +267,8 @@ performer.
 to `catalog/`) to its part names in `trackIndex` order. Re-running
 `extract-lyrics` keeps these names as long as the same GP track is still at
 each index (`.project/artifacts/pipeline.md`, "Re-running on an existing
-song"). Reapply only when rebuilding a song's `meta.json` from scratch (e.g.
-after deleting it), or for a track whose GP name changed, from the repo root:
+song"). Reapply only when rebuilding a song's `meta.json` from scratch, or
+for a track whose GP name changed, from the repo root:
 
 ```sh
 k=kinda-bad/radiohead-creep   # the song's key in the map
@@ -328,8 +338,8 @@ and no word is off by more than half a beat. The end point lies past the end of
 the mp3 (193.4 s); the tab's last bar rings out beyond the recording.
 
 *The edit:* `docs/catalog-sync-points.json` maps each song directory to its
-full `syncPoints` array. `extract-lyrics` regenerates the placeholders, so
-after re-running it on a listed song, reapply from the repo root:
+full `syncPoints` array. Re-running `extract-lyrics` keeps them. Reapply only
+when rebuilding a song's `meta.json` from scratch, from the repo root:
 
 ```sh
 k=kinda-bad/radiohead-creep
@@ -403,8 +413,9 @@ pnpm --filter @sync-tab-scroll/pipeline extract-lyrics \
 ```
 
 The patch script rewrites the zip entry by entry, so no AppleDouble `._*`
-entries appear. After `extract-lyrics`, reapply part names (see "Part names"
-below). This song's key there is `kinda-bad-ii/jimmy-eat-world-sweetness`.
+entries appear. `extract-lyrics` keeps the part names. If `meta.json` was
+rebuilt from scratch, reapply them (see "Part names" below). This song's key
+there is `kinda-bad-ii/jimmy-eat-world-sweetness`.
 
 *Verification after reapplying* (2026-11-26):
 - `findLyricsSource` → track 0, line 0.
@@ -568,7 +579,8 @@ pnpm --filter @sync-tab-scroll/pipeline extract-lyrics \
 
 The raw line has more than one line, so `extract-lyrics` takes the line
 breaks from it and does not query lrclib; `lyricLineBreaks` comes out
-unchanged (50 lines, sum 405). It does reset two hand-set fields, so then:
+unchanged (50 lines, sum 405). It keeps the part names and display title.
+If `meta.json` was rebuilt from scratch, restore them:
 
 1. Reapply part names (see "Part names" above), key
    `kinda-bad-ii/arctic-monkeys-do-i-wanna-know`.
@@ -619,8 +631,10 @@ start and end times from these breaks, so `lyrics.lrc` is rebuilt with them:
 the start of lines 5–13, 16 and 18 and the end-gap of lines 4–12, 15 and 17
 move earlier. The text stays the same.
 
-*Reapplying:* `extract-lyrics` recomputes the breaks from lrclib, so after it
-runs (or on the current files), from the repo root:
+*Reapplying:* `extract-lyrics` keeps these breaks while they still fit (same
+number of lrclib lines, summing to the dispatched syllable count). If lrclib's
+lines change, it regenerates them and logs a warning. To set them by hand,
+from the repo root:
 
 ```sh
 d=catalog/kinda-bad-ii/green-day-brain-stew
@@ -636,8 +650,8 @@ jq '.lyricLineBreaks = [8,8,8,8,6,8,8,8,8,6,8,8,8,8,6,8,8,8,8,6]' "$d/meta.json"
 `lyrics.lrc` and doesn't query lrclib. It refuses to run if a line had 0
 syllables (`buildLrc` drops those, so their text can't be recovered) or if the
 breaks don't sum to the dispatched syllable count. Run with the old breaks, it
-reproduces the old `lyrics.lrc` byte for byte. If `extract-lyrics` was re-run,
-reapply part names afterwards (key `kinda-bad-ii/green-day-brain-stew`).
+reproduces the old `lyrics.lrc` byte for byte. If `meta.json` was rebuilt from
+scratch, reapply part names too (key `kinda-bad-ii/green-day-brain-stew`).
 
 *Verification after reapplying* (2026-11-27):
 - 20 lines and 40 LRC entries (start plus end-gap per line), as before, with
@@ -751,12 +765,13 @@ pnpm --filter @sync-tab-scroll/pipeline extract-lyrics \
 The patched `.gp` comes out byte for byte the same every time (sha256
 `c081bf0ac84a9b591f7c10fa4e7acd669c17296d14439f114c8044448014e7c2`). The raw
 line has more than one line, so `extract-lyrics` takes the line breaks from it
-and doesn't query lrclib. It resets two hand-set fields, so reapply both:
+and doesn't query lrclib. It keeps the part names and sync points. The
+syllable total changes, so the old breaks no longer fit and are regenerated
+(with a warning). If `meta.json` was rebuilt from scratch, reapply:
 
 1. Part names (see "Part names" above), key
    `kinda-bad/my-chemical-romance-teenagers`.
 2. Sync points (see "Recording sync points" above), same key.
-   `extract-lyrics` drops `syncPoints` entirely for this song.
 
 After that, `meta.json` differs from the unpatched one only in
 `lyricsRawLine` and `lyricLineBreaks`. The breaks become
@@ -1098,10 +1113,14 @@ pnpm --filter @sync-tab-scroll/pipeline extract-lyrics "$w/$g" "$PWD/catalog/kin
 ```
 
 The result is byte for byte the same every time: `.gp` sha256
-`1311b69196612772fcaf1136555c8597c95d9a60c537e4b2f1804e7387c041ea`. After
-`extract-lyrics`, reapply the part names and sync points as for Patch 1 (key
-`kinda-bad/my-chemical-romance-teenagers`). The sync points don't change in
-this patch.
+`1311b69196612772fcaf1136555c8597c95d9a60c537e4b2f1804e7387c041ea`. This patch
+keeps the line count and the syllable total (355), so `extract-lyrics` would
+keep the Patch 1 breaks: delete them first, before the `extract-lyrics` step
+(`f=catalog/kinda-bad/my-chemical-romance-teenagers/meta.json; jq
+'del(.lyricLineBreaks)' "$f" > "$f.tmp" && mv "$f.tmp" "$f"`). `extract-lyrics`
+keeps the part names and sync points. If `meta.json` was rebuilt from scratch,
+reapply them as for Patch 1 (key `kinda-bad/my-chemical-romance-teenagers`).
+The sync points don't change in this patch.
 
 After that, `meta.json` differs from the Patch 1 one only in `lyricsRawLine`
 and `lyricLineBreaks`. The breaks become

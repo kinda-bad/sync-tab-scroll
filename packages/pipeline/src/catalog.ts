@@ -94,7 +94,37 @@ export function mergeMeta(existing: unknown, generated: CatalogMeta): MergedCata
   };
 }
 
-function readExistingMeta(metaPath: string): unknown {
+/**
+ * Chooses a re-run's `lyricLineBreaks` (pipeline.md "Re-running on an
+ * existing song"). Breaks are often hand-tuned to where lines start in the
+ * recording, so the existing ones are kept while they still fit the
+ * regenerated syllable stream: whole non-negative numbers, one per line of
+ * text, summing to the dispatched syllable count (the stream `buildLrc`
+ * groups). Otherwise the regenerated breaks are used, with a warning when
+ * that discards existing ones.
+ */
+export function keepLineBreaks(
+  existing: unknown,
+  regenerated: number[],
+  shape: { syllableCount: number; lineCount: number; song: string },
+): number[] {
+  const old = isRecord(existing) ? existing.lyricLineBreaks : undefined;
+  if (!Array.isArray(old)) return regenerated;
+
+  const wholeNumbers = old.every((n) => Number.isInteger(n) && n >= 0);
+  const sum = wholeNumbers ? old.reduce((a: number, b: number) => a + b, 0) : NaN;
+  if (wholeNumbers && old.length === shape.lineCount && sum === shape.syllableCount) return old as number[];
+
+  if (JSON.stringify(old) !== JSON.stringify(regenerated)) {
+    console.warn(
+      `[extract-lyrics] ${shape.song}: existing lyricLineBreaks no longer fit (${old.length} lines summing to ${sum}; ` +
+        `now ${shape.lineCount} lines and ${shape.syllableCount} syllables), regenerating them`,
+    );
+  }
+  return regenerated;
+}
+
+export function readExistingMeta(metaPath: string): unknown {
   if (!fs.existsSync(metaPath)) return null;
   try {
     return JSON.parse(fs.readFileSync(metaPath, 'utf8'));

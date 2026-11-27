@@ -4,7 +4,7 @@
 // functions through here rather than reaching into individual pipeline
 // source files directly.
 export { extractLyrics } from './extract-lyrics.js';
-export { publishSong, mergeMeta, slugify } from './catalog.js';
+export { publishSong, mergeMeta, keepLineBreaks, slugify } from './catalog.js';
 export type { CatalogMeta, CatalogPartMeta, MergedCatalogMeta } from './catalog.js';
 export { createCatalogue, rotateCatalogueKey } from './create-catalogue.js';
 export type { CatalogueVisibility } from './create-catalogue.js';

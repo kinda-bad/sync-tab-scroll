@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { mergeMeta, publishSong, type CatalogMeta } from './catalog.js';
+import { keepLineBreaks, mergeMeta, publishSong, type CatalogMeta } from './catalog.js';
 
 function generated(overrides: Partial<CatalogMeta> = {}): CatalogMeta {
   return {
@@ -177,5 +177,46 @@ describe('publishSong', () => {
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
     expect(JSON.parse(fs.readFileSync(metaPath, 'utf8'))).toEqual(generated());
+  });
+});
+
+describe('keepLineBreaks', () => {
+  const regenerated = [3, 4];
+  const shape = { syllableCount: 7, lineCount: 2, song: 'band-song' };
+
+  it('keeps hand-tuned breaks that still fit the regenerated syllables', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(keepLineBreaks({ lyricLineBreaks: [5, 2] }, regenerated, shape)).toEqual([5, 2]);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('regenerates with a warning when the sum no longer matches the syllable count', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(keepLineBreaks({ lyricLineBreaks: [5, 3] }, regenerated, shape)).toEqual([3, 4]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('band-song'));
+    warn.mockRestore();
+  });
+
+  it('regenerates with a warning when the line count changed', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(keepLineBreaks({ lyricLineBreaks: [7] }, regenerated, shape)).toEqual([3, 4]);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('regenerates silently when there were no breaks before', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(keepLineBreaks(null, regenerated, shape)).toEqual([3, 4]);
+    expect(keepLineBreaks({ lyricLineBreaks: null }, regenerated, shape)).toEqual([3, 4]);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('rejects entries that are not whole non-negative numbers', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(keepLineBreaks({ lyricLineBreaks: [7.5, -0.5] }, regenerated, shape)).toEqual([3, 4]);
+    expect(keepLineBreaks({ lyricLineBreaks: ['5', 2] }, regenerated, shape)).toEqual([3, 4]);
+    warn.mockRestore();
   });
 });

@@ -233,10 +233,19 @@ no-longer-used MIDI approach) are the cautionary example this avoids.
 into an existing `meta.json` rather than replacing it (`mergeMeta` in
 `packages/pipeline/src/catalog.ts`):
 - **Regenerated from the `.gp` every run:** `trackNames`,
-  `lyricsTrackIndex`, `lyricsLineIndex`, `lyricLineBreaks`,
-  `lyricsRawLine`, `lyricsRawLineStartBar`. An optional one the new run
-  doesn't produce is removed, not carried over. Lyric fixes go into the
-  `.gp` itself (docs/catalog-patches.md), so regenerating them is correct.
+  `lyricsTrackIndex`, `lyricsLineIndex`, `lyricsRawLine`,
+  `lyricsRawLineStartBar`. An optional one the new run doesn't produce is
+  removed, not carried over. Lyric fixes go into the `.gp` itself
+  (docs/catalog-patches.md), so regenerating them is correct.
+- **`lyricLineBreaks`:** often hand-tuned to where lines start in the
+  recording, so the existing breaks are kept while they still fit the
+  regenerated syllable stream: whole non-negative numbers, one per line of
+  `.lrc` text, summing to the dispatched syllable count (the stream
+  `buildLrc` groups). The `.lrc` is then built from the kept breaks.
+  Otherwise the breaks are regenerated as above and a warning is logged.
+  Hand-tuned breaks that happen to fit a changed raw line are kept too, so a
+  `.gp` patch that means to regenerate them removes `lyricLineBreaks` from
+  `meta.json` first (`keepLineBreaks`, `packages/pipeline/src/catalog.ts`).
 - **Kept when already set:** `name` and `artist` (a non-empty existing
   value wins; they're generated from the filename, which can't hold every
   character, e.g. `?`).
