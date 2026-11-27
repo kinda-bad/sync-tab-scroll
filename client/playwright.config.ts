@@ -52,7 +52,8 @@ export default defineConfig({
         // cheap insurance against stricter autoplay defaults on other
         // platforms/CI. Playwright itself passes no autoplay flag.
         launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
-        ctPort: 3100,
+        // CT_PORT lets several checkouts run CT at once without colliding.
+        ctPort: Number(process.env.CT_PORT ?? 3100),
         ctViteConfig: {
           plugins: [svelte(), alphaTab({ assetOutputDir: false })],
         },
