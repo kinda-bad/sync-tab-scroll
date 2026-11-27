@@ -236,11 +236,12 @@ export interface Session {
   playbackState: PlaybackState;
   countInEnabled: boolean;
   /**
-   * Which audio every participant plays: the alphaTab synth (default) or the
-   * selected song's operator-supplied recording. Host-only toggle, same pattern
-   * as `countInEnabled`/`spotlightMode`. Session-scoped, deliberately not
-   * per-participant (datamodel.md). Resets to `'synth'` when the selected song
-   * changes or the new song isn't recording-capable.
+   * Which audio every participant plays: the alphaTab synth or the selected
+   * song's operator-supplied recording. Host-only toggle, same pattern as
+   * `countInEnabled`/`spotlightMode`. Session-scoped, deliberately not
+   * per-participant (datamodel.md). `'synth'` until a song is picked; a genuine
+   * song change sets it to `'recording'` when the new song is
+   * recording-capable, else `'synth'` (default-to-recording-source).
    */
   playbackSource: 'synth' | 'recording';
   /** MIDI tick position the host is pointing at pre-playback; null once playback starts. Only force-follows participants' views while spotlightMode is true. */
