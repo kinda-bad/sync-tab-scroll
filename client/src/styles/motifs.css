@@ -472,3 +472,16 @@
 .lyrics-measure-marker-number {
   font-size: 0.75em;
 }
+/* The bar playback is in (ui.md "Measure markers", lyrics-overlay.ts
+   updateCurrentMeasure): full-strength --ink instead of the dimmed
+   markers' --ink-dim at 0.7 opacity. --ink is each theme's primary text
+   color, so it is the brightest neutral in every theme; --riot stays
+   reserved for the sung syllable. */
+.lyrics-measure-marker--current {
+  color: var(--ink);
+  opacity: 1;
+  font-weight: 700;
+}
+.lyrics-measure-marker--current .lyrics-measure-marker-line {
+  background: var(--ink);
+}

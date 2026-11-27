@@ -106,12 +106,15 @@ export function createLyricsOverlay(
     return marker;
   });
 
+  const measures = options.measures ?? [];
+
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
     el.style.display = measureMarkersVisible ? '' : 'none';
   });
 
   let activeIndex = -1;
+  let currentMeasure = -1;
 
   // Rect-based (not offsetLeft/clientWidth-based): those turned out to
   // disagree with real screen position by exactly `.lyrics-overlay`'s
@@ -167,15 +170,32 @@ export function createLyricsOverlay(
       if (flat[i].tickPosition <= tickPosition) index = i;
       else break;
     }
-    if (index === activeIndex) return;
-    if (activeIndex < 0 && index >= 0) {
-      placeholder.classList.remove('at-highlight');
-      placeholder.style.display = 'none';
+    updateCurrentMeasure(tickPosition);
+    if (index !== activeIndex) {
+      if (activeIndex < 0 && index >= 0) {
+        placeholder.classList.remove('at-highlight');
+        placeholder.style.display = 'none';
+      }
+      if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
+      activeIndex = index;
+      centerActiveSyllable();
     }
-    if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
-    if (index >= 0) spans[index].classList.add('at-highlight');
-    activeIndex = index;
-    centerActiveSyllable();
+    if (activeIndex >= 0) spans[activeIndex].classList.add('at-highlight');
+  }
+
+  // The measure containing the playback tick gets the current-bar style
+  // (ui.md "Measure markers"). Measures are in playback order, so a
+  // repeated measure's own marker for this pass is the one marked.
+  function updateCurrentMeasure(tickPosition: number): void {
+    let index = -1;
+    for (let i = 0; i < measures.length; i++) {
+      if (measures[i].tick <= tickPosition) index = i;
+      else break;
+    }
+    if (index === currentMeasure) return;
+    if (currentMeasure >= 0) markerEls[currentMeasure].classList.remove('lyrics-measure-marker--current');
+    if (index >= 0) markerEls[index].classList.add('lyrics-measure-marker--current');
+    currentMeasure = index;
   }
 
   // Synchronous initial paint (T005): centered and highlighted before any
