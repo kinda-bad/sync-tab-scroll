@@ -1575,3 +1575,341 @@ Decoded cross-correlation against the original at 5/100/200/300 s gives a
 *Rule for new recordings:* check for a `Xing` header
 (`python3 -c "import sys;print(b'Xing' in open(sys.argv[1],'rb').read(200000))" f.mp3`)
 and re-encode to CBR the same way before fitting sync points.
+
+## kinda-bad-ii/arctic-monkeys-do-i-wanna-know: chorus back on its notes (AFK patch, 2026-11-27)
+
+**Report.** The chorus runs late in bars 30–52.
+
+**Cause.** One word of the first chorus is a single sung syllable, but the raw line writes it as two hyphenated syllables (bar 28). Its second half took the pickup note of the next phrase (29:3.75). Every later word then sat one note late, about an eighth (−350 ms), until the empty skips around bar 51 absorbed the extra syllable. The third chorus repeats the same split at bar 76, but there the second chorus offset it: at 62:3.0 the singer holds the previous word across a legato slide (S2) instead of starting a new one. So bars 61–76 ran one note early (+200 to +430 ms). In the first chorus the same spot is a shift slide, which the dispatcher already skips. The split in the second chorus (bar 60) is fine, since both of its notes are sung there.
+
+**Change.** Raw line only; no .gp note properties changed.
+- **Bar 28:** joined the split word into one syllable (deleted one hyphen, raw offset 484).
+- **Bar 62:** added a `+` hold on 62:3.0 (offset 1219).
+- **Bar 76:** joined the same split word into one syllable (deleted a hyphen, offset 1543).
+- **Line breaks:** `lyricLineBreaks` lines 11 and 44 each lose one syllable (sum 405 → 403).
+- **LRC:** rebuilt; line texts are unchanged.
+
+**Check.**
+- tabcheck reports: 403 of 403 dispatched; no phrase start left empty; no hold on a phrase start; no hyphenated word split across rests; line breaks consistent.
+- I re-aligned the vocal stem against the patched song. Confident words more than 268 ms off: 75 before, 9 after.
+
+| bars | before: median (ms), words > 268 ms off | after |
+|---|---|---|
+| 25–28 | -28, 0 of 10 | -28, 0 of 10 |
+| 29–32 | -359, 11 of 12 | +23, 1 of 12 |
+| 33–36 | -348, 11 of 12 | -77, 0 of 13 |
+| 37–40 | -277, 7 of 12 | -40, 0 of 11 |
+| 41–44 | -228, 4 of 9 | -1, 0 of 10 |
+| 45–48 | -370, 16 of 19 | -14, 0 of 18 |
+| 49–52 | -519, 13 of 17 | +16, 0 of 18 |
+| 53–56 | +26, 1 of 14 | +57, 0 of 13 |
+| 57–60 | +38, 0 of 9 | +38, 0 of 9 |
+| 61–64 | +206, 3 of 11 | +32, 0 of 10 |
+| 65–68 | +270, 4 of 7 | -92, 0 of 8 |
+| 69–72 | +3218, 1 of 1 | +1100, 1 of 1 |
+| 73–76 | +426, 6 of 7 | -42, 0 of 7 |
+| 77–80 | +27, 2 of 13 | +27, 2 of 13 |
+| 81–84 | -66, 2 of 8 | -66, 2 of 8 |
+| 85–88 | -825, 2 of 3 | -825, 2 of 3 |
+
+These words are still off, and I left them alone:
+- **29:4.0 and 77:3.75–4.0:** a phrase's first word, aligned 2.4–2.7 s early. The backing vocal probably overlaps it.
+- **70:1.0:** +1.1 s, the start of a word split across a rest.
+- **Outro, bars 81–88:** two to three weak words.
+
+**Hashes.**
+
+| | before | after |
+|---|---|---|
+| .gp | `487d32628d92c4e2cdd5e408eab5238832feb619c484daa0adcf563c34a39571` | gpif `241958338b611f8a5a0d4766f9825b827d04bcba10525c5cc07f35a9b2c2057f` (the zip isn't byte-reproducible) |
+| meta.json | `a8a1e672ad55bed4a98fc29a271b507d8f4526b2aee39f84d80dd701a5e73221` | `86b64dbb5a3b0e2d4a0591bc1575dca53031efbcb3c56fe69ed1e7c9f3646e24` |
+| lyrics.lrc | `0bc0e3c56455fd3301a536ef6dadf35a0d5f85ac23d13d97a0dccd177b9d6fc0` | `33cb0d1a0502ca2b6eef6e2ee82a2972e8943602ce828296097e6f7d17ac4d1a` |
+
+**Reapply** with `reapply.sh <repo root>`. It checks every input and output hash:
+
+```bash
+#!/usr/bin/env bash
+# Reapply the AFK lyric patch for catalog/kinda-bad-ii/arctic-monkeys-do-i-wanna-know (usage: reapply.sh <repo root>). Refuses unless the song is in its pre-patch state.
+set -euo pipefail
+R=$1; D="$R/catalog/kinda-bad-ii/arctic-monkeys-do-i-wanna-know"; G="Arctic Monkeys-Do I Wanna Know_-11-18-2026.gp"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+h() { shasum -a 256 "$1" | cut -c1-64; }
+chk() { [ "$(h "$1")" = "$2" ] || { echo "hash mismatch: $3"; exit 1; }; }
+chk "$D/$G" 487d32628d92c4e2cdd5e408eab5238832feb619c484daa0adcf563c34a39571 "original .gp"; chk "$D/meta.json" a8a1e672ad55bed4a98fc29a271b507d8f4526b2aee39f84d80dd701a5e73221 "original meta.json"; chk "$D/lyrics.lrc" 0bc0e3c56455fd3301a536ef6dadf35a0d5f85ac23d13d97a0dccd177b9d6fc0 "original lyrics.lrc"
+jq -j .lyricsRawLine "$D/meta.json" > "$W/old.txt"; chk "$W/old.txt" b4b6368c19e5d255aac5a4dfc2ac5338f9551eac66e27726bf8c8fdb21d6e52b "original raw line"
+python3 -I - "$W/old.txt" "$W/new.txt" <<'PY'
+import json, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+for off, n, ins in sorted(json.loads('[[484, 1, ""], [1219, 0, "+ "], [1543, 1, ""]]'), reverse=True):   # [offset, deleted length, inserted syntax]
+    t = t[:off] + ins + t[off + n:]
+open(sys.argv[2], "w", encoding="utf-8").write(t)
+PY
+chk "$W/new.txt" ec6c657f12eb2ef7770dd0e598ef5a7bd2610e8e67bf5be38f5f870e7cfec31b "new raw line"
+cp "$D/$G" "$W/in.gp"
+if [ '-' != '-' ]; then
+python3 -I - '-' "$W/in.gp" "$W/fixed.gp" <<'PY'
+import json, re, sys, zipfile
+WANT = json.loads(sys.argv[1]); src, dst = sys.argv[2:4]
+z = zipfile.ZipFile(src); g = z.read("Content/score.gpif").decode("utf-8")
+users = re.findall(r'<Beat id="(\d+)">(?:(?!</Beat>).)*?<Notes>([^<]*)</Notes>', g, re.S)
+for nid, beats in WANT.items():   # remove the shift slide from each note, which must be used only by these beats
+    assert sorted(b for b, ns in users if nid in ns.split()) == sorted(beats), nid
+    m = re.search(rf'<Note id="{nid}">.*?</Note>', g, re.S); blk = m.group(0)
+    p = re.search(r'\n\s*<Property name="Slide">\s*<Flags>1</Flags>\s*</Property>', blk); assert p, nid
+    g = g[: m.start()] + blk[: p.start()] + blk[p.end():] + g[m.end():]
+with zipfile.ZipFile(dst, "w") as out:
+    for info in z.infolist():
+        if info.filename.startswith("__MACOSX") or "/._" in "/" + info.filename: continue
+        out.writestr(info, g.encode("utf-8") if info.filename == "Content/score.gpif" else z.read(info), compress_type=info.compress_type)
+PY
+else cp "$W/in.gp" "$W/fixed.gp"; fi
+python3 -I "$R/tools/catalog-patches/gp-replace-raw-line.py" "$W/fixed.gp" "$(jq .lyricsTrackIndex "$D/meta.json")" "$W/old.txt" "$W/new.txt" "$W/$G" >/dev/null
+[ "$(unzip -p "$W/$G" Content/score.gpif | shasum -a 256 | cut -c1-64)" = 241958338b611f8a5a0d4766f9825b827d04bcba10525c5cc07f35a9b2c2057f ] || { echo "patched gpif differs"; exit 1; }
+echo '[8, 12, 10, 9, 9, 12, 8, 6, 15, 13, 7, 8, 7, 12, 5, 7, 4, 5, 4, 5, 7, 5, 5, 6, 9, 11, 14, 15, 12, 12, 8, 8, 7, 12, 5, 7, 4, 5, 4, 5, 7, 5, 5, 7, 8, 7, 12, 8, 8, 9]' > "$W/breaks.json"
+jq --rawfile r "$W/new.txt" --slurpfile b "$W/breaks.json" '.lyricsRawLine=$r | .lyricLineBreaks=$b[0]' "$D/meta.json" > "$W/meta.json"
+chk "$W/meta.json" 86b64dbb5a3b0e2d4a0591bc1575dca53031efbcb3c56fe69ed1e7c9f3646e24 "new meta.json"
+cp "$D/lyrics.lrc" "$W/lyrics.in.lrc"
+if [ '-' != '-' ]; then
+python3 -I - "$W/lyrics.in.lrc" '-' <<'PY'
+import re, sys
+p, spec = sys.argv[1], sys.argv[2]; ln, keep = map(int, spec.split(":")); out, n = [], 0
+for l in open(p, encoding="utf-8").read().split("\n"):   # keep only the first `keep` words of the ln-th text line
+    m = re.match(r"^(\[\d+:\d+\.\d+\])(.*)$", l)
+    if m and m.group(2):
+        n += 1
+        if n == ln: l = m.group(1) + " ".join(m.group(2).split(" ")[:keep])
+    out.append(l)
+open(p, "w", encoding="utf-8").write("\n".join(out))
+PY
+fi
+# rebuild-lrc on the patched copy; passes the playback order if the repo's copy predates the 5-argument buildLrc
+mkdir -p "$W/song"; cp "$W/$G" "$W/meta.json" "$W/song/"; cp "$W/lyrics.in.lrc" "$W/song/lyrics.lrc"
+sed -e "s#'../../packages/pipeline/src/#'$R/packages/pipeline/src/#g" "$R/tools/catalog-patches/rebuild-lrc.ts" > "$W/rebuild.ts"
+grep -q buildPlaybackOrder "$W/rebuild.ts" || sed -i.bak -e "s/buildTickToMs } from/buildTickToMs, buildPlaybackOrder } from/" -e "s/buildLrc(lines, breaks, syllables, tickToMs)/buildLrc(lines, breaks, syllables, buildPlaybackOrder(score), tickToMs)/" "$W/rebuild.ts"
+(cd "$R/packages/pipeline" && ./node_modules/.bin/tsx "$W/rebuild.ts" "$W/song" - "$W/lyrics.lrc" >/dev/null)
+chk "$W/lyrics.lrc" 33cb0d1a0502ca2b6eef6e2ee82a2972e8943602ce828296097e6f7d17ac4d1a "new lyrics.lrc"
+cp "$W/$G" "$D/$G"; cp "$W/meta.json" "$D/meta.json"; cp "$W/lyrics.lrc" "$D/lyrics.lrc"
+echo "patched catalog/kinda-bad-ii/arctic-monkeys-do-i-wanna-know"
+```
+
+## kinda-bad-ii/the-all-american-rejects-dirty-little-secret: last chorus and outro (AFK patch, 2026-11-27)
+
+**Report.** Words are misplaced from bar 93 on, especially in bars 95–101. The LRC needed regenerating on the playback (repeat-unrolled) time base.
+
+**What's sung.** The tab repeats bars 90–93, with endings at 93 and 94. In the recording, the two passes of bars 90–92 carry different words:
+- **Pass 1:** the first half of the chorus line.
+- **Pass 2:** the second half, the six words the tab had written after the repeat in bars 94–96.
+
+I aligned the stem against the "sung once" word order and against the tab's unrolled order. The "sung once" order scored better (mean score 0.38 against 0.33 over the last 40 words). Its words in pass 2 of bars 90–91 were confident (0.96 and 0.90), on the same beats as the matching words in bars 86–87.
+
+**Cause.** The tab's lyric line does both things:
+- it puts the second half of the chorus after the repeat, where it isn't sung;
+- it splits the chorus's last word over three syllables, with the second on a shift-slide origin the dispatcher skips (91:4.0).
+
+So bars 93–101 were 0.6–5.4 s late.
+
+**Change.**
+1. **.gp:** removed the shift slide from GPIF note 31. Only beat 326 uses it, at bar 91:4.0. The word's second syllable is sung there, as on the same melody in bar 83.
+2. **Raw line, from bar 90 on:**
+   - The split word now has two syllables, plus a `+` hold on the bar 92 whole note.
+   - The word at 93:3.5–4.0 is now hyphenated over both notes.
+   - Deleted the six words after the repeat (36 characters at offset 1135). The dispatcher can't show them in pass 2 of bars 90–92, and leaving them in pushes the outro late.
+   - Added holds in bars 95–97 and a two-syllable split at 97:3–4, so the outro words land where they're sung.
+3. **meta.json:** `lyricLineBreaks` lines 33 (−6) and 35 (+1); sum 293 → 285.
+4. **LRC:**
+   - Cut line 33's text to its first 10 words, matching the syllables that remain.
+   - Rebuilt the LRC with the current `buildLrc`, which unrolls repeats. Line 33 is now written once per pass, and every timestamp from that line on is on the playback timeline. Lines 1–32 are unchanged.
+
+**Limitation.** In pass 2 of bars 90–92, the tab shows pass 1's words while the singer sings the second half of the line. Showing that would need per-pass lyric lines, an app feature. The `.gp` format has lyric lines 2–5 for this, but the dispatcher and `unrollSyllables` use one line.
+
+**Check.**
+- tabcheck reports: 285 of 285 dispatched; nothing left after the last syllable except two unsung notes in bar 101; line breaks consistent.
+- I re-aligned the stem against the patched song. Confident words more than 268 ms off: 22 before, 8 after. The remaining 8 are the isolated words at bars 13, 22, 30, 33, 41, 48 and 59 that were already listed as aligner misses, and I left them alone.
+
+| bars | before: median (ms), words > 268 ms off | after |
+|---|---|---|
+| 81–84 | +11, 0 of 4 | +11, 0 of 4 |
+| 85–88 | +17, 0 of 6 | +17, 0 of 6 |
+| 89–92 | -22, 1 of 4 | -22, 0 of 4 |
+| 93–96 | -5280, 5 of 5 | +11, 0 of 3 |
+| 97–100 | -844, 7 of 7 | -9, 0 of 8 |
+| 101–101 | -854, 1 of 1 | — |
+
+**Hashes.**
+
+| | before | after |
+|---|---|---|
+| .gp | `a1d10279a5f5eb393e171f7611b8902f9cd3d02cb92ee7eef46fa8a9f4606e96` | gpif `2f2229b460c0cdf521291d39848b4ce7b69263dacd28c3074099d926554aeba7` |
+| meta.json | `19263387cbd1bba96ddb9dbd2433c6f50cb8d52c896f987036605c6c46f24e6d` | `9e81c65b4a0936a83daa58fdba9a4ffe504bdc78f6d5d35e6542a85c28915b6a` |
+| lyrics.lrc | `8de290b136ab3e5d9a7b9c71aa12c4e07fbb2992e06b40e11b7045bfd56be27e` | `b6f9f935685908050fcce89162ce2e12c398d66aecc1aab869a4ad28c4a8a796` |
+
+**Reapply** with `reapply.sh <repo root>`:
+
+```bash
+#!/usr/bin/env bash
+# Reapply the AFK lyric patch for catalog/kinda-bad-ii/the-all-american-rejects-dirty-little-secret (usage: reapply.sh <repo root>). Refuses unless the song is in its pre-patch state.
+set -euo pipefail
+R=$1; D="$R/catalog/kinda-bad-ii/the-all-american-rejects-dirty-little-secret"; G="The All-American Rejects-Dirty Little Secret-10-17-2026.gp"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+h() { shasum -a 256 "$1" | cut -c1-64; }
+chk() { [ "$(h "$1")" = "$2" ] || { echo "hash mismatch: $3"; exit 1; }; }
+chk "$D/$G" a1d10279a5f5eb393e171f7611b8902f9cd3d02cb92ee7eef46fa8a9f4606e96 "original .gp"; chk "$D/meta.json" 19263387cbd1bba96ddb9dbd2433c6f50cb8d52c896f987036605c6c46f24e6d "original meta.json"; chk "$D/lyrics.lrc" 8de290b136ab3e5d9a7b9c71aa12c4e07fbb2992e06b40e11b7045bfd56be27e "original lyrics.lrc"
+jq -j .lyricsRawLine "$D/meta.json" > "$W/old.txt"; chk "$W/old.txt" ad279d1447cf89cba517c1c8e0aeb318598631783b9e6a78113ba11440be155d "original raw line"
+python3 -I - "$W/old.txt" "$W/new.txt" <<'PY'
+import json, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+for off, n, ins in sorted(json.loads('[[1115, 1, ""], [1117, 0, " +"], [1131, 0, "-"], [1135, 36, ""], [1182, 0, "+ + "], [1185, 0, " +"], [1208, 0, "+ "], [1216, 0, "+ + + "], [1218, 0, "-"]]'), reverse=True):   # [offset, deleted length, inserted syntax]
+    t = t[:off] + ins + t[off + n:]
+open(sys.argv[2], "w", encoding="utf-8").write(t)
+PY
+chk "$W/new.txt" f59fa9a9e4c7012f8e87db80203826831eea9a1c1b3944be83b57b94ad918608 "new raw line"
+cp "$D/$G" "$W/in.gp"
+if [ '{"31": ["326"]}' != '-' ]; then
+python3 -I - '{"31": ["326"]}' "$W/in.gp" "$W/fixed.gp" <<'PY'
+import json, re, sys, zipfile
+WANT = json.loads(sys.argv[1]); src, dst = sys.argv[2:4]
+z = zipfile.ZipFile(src); g = z.read("Content/score.gpif").decode("utf-8")
+users = re.findall(r'<Beat id="(\d+)">(?:(?!</Beat>).)*?<Notes>([^<]*)</Notes>', g, re.S)
+for nid, beats in WANT.items():   # remove the shift slide from each note, which must be used only by these beats
+    assert sorted(b for b, ns in users if nid in ns.split()) == sorted(beats), nid
+    m = re.search(rf'<Note id="{nid}">.*?</Note>', g, re.S); blk = m.group(0)
+    p = re.search(r'\n\s*<Property name="Slide">\s*<Flags>1</Flags>\s*</Property>', blk); assert p, nid
+    g = g[: m.start()] + blk[: p.start()] + blk[p.end():] + g[m.end():]
+with zipfile.ZipFile(dst, "w") as out:
+    for info in z.infolist():
+        if info.filename.startswith("__MACOSX") or "/._" in "/" + info.filename: continue
+        out.writestr(info, g.encode("utf-8") if info.filename == "Content/score.gpif" else z.read(info), compress_type=info.compress_type)
+PY
+else cp "$W/in.gp" "$W/fixed.gp"; fi
+python3 -I "$R/tools/catalog-patches/gp-replace-raw-line.py" "$W/fixed.gp" "$(jq .lyricsTrackIndex "$D/meta.json")" "$W/old.txt" "$W/new.txt" "$W/$G" >/dev/null
+[ "$(unzip -p "$W/$G" Content/score.gpif | shasum -a 256 | cut -c1-64)" = 2f2229b460c0cdf521291d39848b4ce7b69263dacd28c3074099d926554aeba7 ] || { echo "patched gpif differs"; exit 1; }
+echo '[7, 7, 8, 7, 8, 8, 6, 4, 10, 15, 6, 11, 7, 7, 7, 7, 8, 8, 6, 4, 10, 14, 6, 11, 6, 6, 6, 6, 6, 4, 10, 14, 14, 6, 7, 8]' > "$W/breaks.json"
+jq --rawfile r "$W/new.txt" --slurpfile b "$W/breaks.json" '.lyricsRawLine=$r | .lyricLineBreaks=$b[0]' "$D/meta.json" > "$W/meta.json"
+chk "$W/meta.json" 9e81c65b4a0936a83daa58fdba9a4ffe504bdc78f6d5d35e6542a85c28915b6a "new meta.json"
+cp "$D/lyrics.lrc" "$W/lyrics.in.lrc"
+if [ '33:10' != '-' ]; then
+python3 -I - "$W/lyrics.in.lrc" '33:10' <<'PY'
+import re, sys
+p, spec = sys.argv[1], sys.argv[2]; ln, keep = map(int, spec.split(":")); out, n = [], 0
+for l in open(p, encoding="utf-8").read().split("\n"):   # keep only the first `keep` words of the ln-th text line
+    m = re.match(r"^(\[\d+:\d+\.\d+\])(.*)$", l)
+    if m and m.group(2):
+        n += 1
+        if n == ln: l = m.group(1) + " ".join(m.group(2).split(" ")[:keep])
+    out.append(l)
+open(p, "w", encoding="utf-8").write("\n".join(out))
+PY
+fi
+# rebuild-lrc on the patched copy; passes the playback order if the repo's copy predates the 5-argument buildLrc
+mkdir -p "$W/song"; cp "$W/$G" "$W/meta.json" "$W/song/"; cp "$W/lyrics.in.lrc" "$W/song/lyrics.lrc"
+sed -e "s#'../../packages/pipeline/src/#'$R/packages/pipeline/src/#g" "$R/tools/catalog-patches/rebuild-lrc.ts" > "$W/rebuild.ts"
+grep -q buildPlaybackOrder "$W/rebuild.ts" || sed -i.bak -e "s/buildTickToMs } from/buildTickToMs, buildPlaybackOrder } from/" -e "s/buildLrc(lines, breaks, syllables, tickToMs)/buildLrc(lines, breaks, syllables, buildPlaybackOrder(score), tickToMs)/" "$W/rebuild.ts"
+(cd "$R/packages/pipeline" && ./node_modules/.bin/tsx "$W/rebuild.ts" "$W/song" - "$W/lyrics.lrc" >/dev/null)
+chk "$W/lyrics.lrc" b6f9f935685908050fcce89162ce2e12c398d66aecc1aab869a4ad28c4a8a796 "new lyrics.lrc"
+cp "$W/$G" "$D/$G"; cp "$W/meta.json" "$D/meta.json"; cp "$W/lyrics.lrc" "$D/lyrics.lrc"
+echo "patched catalog/kinda-bad-ii/the-all-american-rejects-dirty-little-secret"
+```
+
+## kinda-bad/my-chemical-romance-teenagers: last word, and the chorus re-check (AFK patch 3, 2026-11-27, on top of Patch 2)
+
+**Fixed.** The song's last word was never placed. Bar 73 has one note and then rests, so the raw line's final syllable ran out of beats. The original download already had this problem, so Patches 1 and 2 didn't cause it. The 7 phrase-start notes that tabcheck lists as carrying a `+` hold also date from Patch 1. That also left `lyricLineBreaks` summing to 355 against 354 dispatched, so rebuild-lrc refused to run.
+
+**Change:**
+- **Raw line:** the final word is joined onto the note before it, 73:1.0 (the last space becomes `+`, offset 1712).
+- **Line breaks:** the last `lyricLineBreaks` entry goes from 10 to 9 (sum 354).
+- **LRC:** rebuilt; it comes out byte-identical, because the last line's timing doesn't change.
+- **.gp:** no note changes.
+
+**Re-checked and left alone:**
+- **Chorus "me", the end of the first chorus line** (bars 19, 35, 51, 59, 67). It's sung 0.37–0.65 s after the note it's joined to, during the rest at beat 3.5. Bar 51 is the confident one (0.93). The next note is the following bar's beat 1, which would show it 0.8–1.4 s late instead, so the current early placement is the closer one. Fixing it would need a notation change (a note in that rest) or an app feature that shows a syllable over a rest.
+- **"bleed"** (bars 21, 37, 53, 61, 69). All weak scores (0.15–0.28), at ±0.3–0.5 s, and also sung over the rest after the note. No clear direction.
+- **"scare"** (bars 18, 34, 50, 58, 66). Shown 140–300 ms late. Each time it's sung early, toward the held note before it. Only bar 50 is confident (0.54). Under half a beat, so I made no change.
+- **"gun" and "son"** (bars 6–7). +151 ms and +189 ms (0.92 and 0.96) after Patch 2, under half a beat.
+- **Bars 25–40** run a steady +130 to +157 ms (sung later than shown). That's a sync-like offset, not placement.
+- **Bar 4's "out"/"of"** read +417 and +338 ms in this pass. Patch 2's evidence, and the user's ear, put "out" on 4:2.5, so I left it.
+
+**Hashes.**
+
+| | before (Patch 2) | after |
+|---|---|---|
+| .gp | `1311b69196612772fcaf1136555c8597c95d9a60c537e4b2f1804e7387c041ea` | gpif `641cd5c9c8b092affbed8a01ac81639fc8ce13b68623914967bb5d7fd3f74130` |
+| meta.json | `0325809eb865b386a8d127d65474b4f9b8b3980c0ce6381b2e5b2addd12f7516` | `e7e9fa296ef4b1505bdbf9923702e995693264593af6980b44d2e3edf723c2fe` |
+| lyrics.lrc | `c32d2ecc09ae45d10a5542289dba56a24299b3fa855506eb9e99e6f14c5fe5b6` | unchanged |
+
+**Reapply** with `reapply.sh <repo root>`:
+
+```bash
+#!/usr/bin/env bash
+# Reapply the AFK lyric patch for catalog/kinda-bad/my-chemical-romance-teenagers (usage: reapply.sh <repo root>). Refuses unless the song is in its pre-patch state.
+set -euo pipefail
+R=$1; D="$R/catalog/kinda-bad/my-chemical-romance-teenagers"; G="My Chemical Romance-Teenagers-06-02-2026.gp"; W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+h() { shasum -a 256 "$1" | cut -c1-64; }
+chk() { [ "$(h "$1")" = "$2" ] || { echo "hash mismatch: $3"; exit 1; }; }
+chk "$D/$G" 1311b69196612772fcaf1136555c8597c95d9a60c537e4b2f1804e7387c041ea "original .gp"; chk "$D/meta.json" 0325809eb865b386a8d127d65474b4f9b8b3980c0ce6381b2e5b2addd12f7516 "original meta.json"; chk "$D/lyrics.lrc" c32d2ecc09ae45d10a5542289dba56a24299b3fa855506eb9e99e6f14c5fe5b6 "original lyrics.lrc"
+jq -j .lyricsRawLine "$D/meta.json" > "$W/old.txt"; chk "$W/old.txt" 765f4c2666ba149d46472b57b50a2c4ea8e66b1d6ff3f03d32fffce1ba778309 "original raw line"
+python3 -I - "$W/old.txt" "$W/new.txt" <<'PY'
+import json, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+for off, n, ins in sorted(json.loads('[[1712, 1, "+"]]'), reverse=True):   # [offset, deleted length, inserted syntax]
+    t = t[:off] + ins + t[off + n:]
+open(sys.argv[2], "w", encoding="utf-8").write(t)
+PY
+chk "$W/new.txt" 471d5346d37748390016cc3e71f49d083f26b0552f1a617ba0c9a62ed0418faf "new raw line"
+cp "$D/$G" "$W/in.gp"
+if [ '-' != '-' ]; then
+python3 -I - '-' "$W/in.gp" "$W/fixed.gp" <<'PY'
+import json, re, sys, zipfile
+WANT = json.loads(sys.argv[1]); src, dst = sys.argv[2:4]
+z = zipfile.ZipFile(src); g = z.read("Content/score.gpif").decode("utf-8")
+users = re.findall(r'<Beat id="(\d+)">(?:(?!</Beat>).)*?<Notes>([^<]*)</Notes>', g, re.S)
+for nid, beats in WANT.items():   # remove the shift slide from each note, which must be used only by these beats
+    assert sorted(b for b, ns in users if nid in ns.split()) == sorted(beats), nid
+    m = re.search(rf'<Note id="{nid}">.*?</Note>', g, re.S); blk = m.group(0)
+    p = re.search(r'\n\s*<Property name="Slide">\s*<Flags>1</Flags>\s*</Property>', blk); assert p, nid
+    g = g[: m.start()] + blk[: p.start()] + blk[p.end():] + g[m.end():]
+with zipfile.ZipFile(dst, "w") as out:
+    for info in z.infolist():
+        if info.filename.startswith("__MACOSX") or "/._" in "/" + info.filename: continue
+        out.writestr(info, g.encode("utf-8") if info.filename == "Content/score.gpif" else z.read(info), compress_type=info.compress_type)
+PY
+else cp "$W/in.gp" "$W/fixed.gp"; fi
+python3 -I "$R/tools/catalog-patches/gp-replace-raw-line.py" "$W/fixed.gp" "$(jq .lyricsTrackIndex "$D/meta.json")" "$W/old.txt" "$W/new.txt" "$W/$G" >/dev/null
+[ "$(unzip -p "$W/$G" Content/score.gpif | shasum -a 256 | cut -c1-64)" = 641cd5c9c8b092affbed8a01ac81639fc8ce13b68623914967bb5d7fd3f74130 ] || { echo "patched gpif differs"; exit 1; }
+echo '[7, 7, 9, 6, 6, 8, 7, 7, 8, 7, 7, 10, 13, 10, 12, 10, 7, 7, 8, 7, 7, 9, 12, 10, 12, 9, 1, 12, 10, 12, 10, 5, 9, 10, 12, 10, 10, 10, 12, 9]' > "$W/breaks.json"
+jq --rawfile r "$W/new.txt" --slurpfile b "$W/breaks.json" '.lyricsRawLine=$r | .lyricLineBreaks=$b[0]' "$D/meta.json" > "$W/meta.json"
+chk "$W/meta.json" e7e9fa296ef4b1505bdbf9923702e995693264593af6980b44d2e3edf723c2fe "new meta.json"
+cp "$D/lyrics.lrc" "$W/lyrics.in.lrc"
+if [ '-' != '-' ]; then
+python3 -I - "$W/lyrics.in.lrc" '-' <<'PY'
+import re, sys
+p, spec = sys.argv[1], sys.argv[2]; ln, keep = map(int, spec.split(":")); out, n = [], 0
+for l in open(p, encoding="utf-8").read().split("\n"):   # keep only the first `keep` words of the ln-th text line
+    m = re.match(r"^(\[\d+:\d+\.\d+\])(.*)$", l)
+    if m and m.group(2):
+        n += 1
+        if n == ln: l = m.group(1) + " ".join(m.group(2).split(" ")[:keep])
+    out.append(l)
+open(p, "w", encoding="utf-8").write("\n".join(out))
+PY
+fi
+# rebuild-lrc on the patched copy; passes the playback order if the repo's copy predates the 5-argument buildLrc
+mkdir -p "$W/song"; cp "$W/$G" "$W/meta.json" "$W/song/"; cp "$W/lyrics.in.lrc" "$W/song/lyrics.lrc"
+sed -e "s#'../../packages/pipeline/src/#'$R/packages/pipeline/src/#g" "$R/tools/catalog-patches/rebuild-lrc.ts" > "$W/rebuild.ts"
+grep -q buildPlaybackOrder "$W/rebuild.ts" || sed -i.bak -e "s/buildTickToMs } from/buildTickToMs, buildPlaybackOrder } from/" -e "s/buildLrc(lines, breaks, syllables, tickToMs)/buildLrc(lines, breaks, syllables, buildPlaybackOrder(score), tickToMs)/" "$W/rebuild.ts"
+(cd "$R/packages/pipeline" && ./node_modules/.bin/tsx "$W/rebuild.ts" "$W/song" - "$W/lyrics.lrc" >/dev/null)
+chk "$W/lyrics.lrc" c32d2ecc09ae45d10a5542289dba56a24299b3fa855506eb9e99e6f14c5fe5b6 "new lyrics.lrc"
+cp "$W/$G" "$D/$G"; cp "$W/meta.json" "$D/meta.json"; cp "$W/lyrics.lrc" "$D/lyrics.lrc"
+echo "patched catalog/kinda-bad/my-chemical-romance-teenagers"
+```
+
+## kinda-bad/radiohead-creep: "But" and "What" over rests (AFK check, 2026-11-27): no change
+
+**Measured.** In bar 48, "But" is shown 0.54 s after it's sung, and so is "What" in bar 52. The other chorus instances, at bars 24, 28, 80 and 84, are within 0.12 s. In bars 48 and 52, each word is already on the first note after a rest: 48:2.75, joined with the next word, and 52:2.33, joined with the next word. The singer starts it during the rest.
+
+**Why it isn't fixable in the raw line.** A syllable can only sit on a note. Holding it on the preceding note would show it much earlier than it's sung:
+- **"But":** the note before is 47:1.5, a dotted half that ends at 47:4.5. Starting there would show the word about 2.2 s early instead of 0.54 s late.
+- **"What":** the note before is the 51:2.75 tie chain, about 1.1 s early.
+
+The current placement is already the closer one. A real fix would need either a vocal note written into the rest (a .gp rhythm change, not a property change) or an app feature that shows a phrase's first syllable a little ahead of its note.
+
+**Also seen, unchanged.** Bars 38 and 40 are sung about one sixteenth ahead of the tab, 0.2–0.35 s, from the first word of each phrase on. It's the same anticipation over the preceding rest. This isn't the user-verified bridge (bars 62–63), and I made no change.
+
+No files changed.

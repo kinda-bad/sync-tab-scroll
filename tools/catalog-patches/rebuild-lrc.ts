@@ -12,7 +12,7 @@
 // so the script refuses unless the counts match.
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadScore, findLyricsSource, extractSyllables, extractSyllablesFromRawLine, buildTickToMs } from '../../packages/pipeline/src/gp-parser.ts';
+import { loadScore, findLyricsSource, extractSyllables, extractSyllablesFromRawLine, buildTickToMs, buildPlaybackOrder } from '../../packages/pipeline/src/gp-parser.ts';
 import { readRawLyricsLineAuto } from '../../packages/pipeline/src/extract-lyrics.ts';
 import { buildLrc } from '../../packages/pipeline/src/lrc-writer.ts';
 
@@ -40,5 +40,5 @@ if (breaks.length !== lines.length) throw new Error(`breaks has ${breaks.length}
 const sum = breaks.reduce((a, b) => a + b, 0);
 if (sum !== syllables.length) throw new Error(`breaks sum ${sum} != ${syllables.length} dispatched syllables`);
 
-fs.writeFileSync(outPath, buildLrc(lines, breaks, syllables, tickToMs), 'utf8');
+fs.writeFileSync(outPath, buildLrc(lines, breaks, syllables, buildPlaybackOrder(score), tickToMs), 'utf8');
 console.log(`wrote ${outPath}: ${lines.length} lines, ${syllables.length} syllables`);
