@@ -57,3 +57,33 @@ status: completed
       `catalog/kinda-bad-ii/smashing-pumpkins-1979/meta.json` (gitignored data).
 - [x] T009 Add a self-contained "Default start bar" section at the end of
       `docs/catalog-patches.md`; mark the feature implemented.
+
+## Phase 5: Session start marker (revision 2026-11-27)
+
+- [x] T010 [artifacts: datamodel, ui] Specs: `Session.startMarkerBar`, the
+      `start-marker-set` message (infrastructure.md), the "Start marker"
+      Session-tab control, and host clicks while stopped moving everyone.
+- [x] T011 Failing tests in `server/src/handlers/start-marker-set.test.ts`
+      (default null; non-host rejected; host sets and broadcasts; invalid
+      bars rejected; clear while stopped resets the tick to 0, while paused
+      leaves it) and `song-select.test.ts` (genuine change seeds from
+      `defaultStartBar`, null without one; same-song re-select keeps a cleared
+      marker). Then add the field, message, handler and dispatch case.
+- [x] T012 Failing seeder tests (`client/src/default-start.test.ts`) keyed on
+      the session marker: every Stop seeks to it, a cleared marker never
+      seeks, moving the marker while stopped seeks, a bar-1 marker seeks to
+      0. Then rework `createDefaultStartSeeder` and its engine wiring; drop
+      the harness's `defaultStartBar` prop.
+- [x] T013 Found while doing T012: alphaTab emits a late seek event after a
+      Stop's `pause()`, which the edge-triggered park missed and the host
+      re-broadcast. Failing CT and unit tests first, then: a level-triggered
+      park with a 35 ms tolerance, host seeks broadcast only after
+      `beatMouseDown`, and the host holding its clicked tick until echoed.
+      The existing debounce CT test now presses before each synthetic seek.
+- [x] T014 Failing CT test `client/src/start-marker.ct.spec.ts` for the
+      Settings control (host clears, host sets a bar, non-host sees the
+      readout only); then the SettingsModal section. Updated the Session
+      tab's spinbutton-count test.
+- [x] T015 `docs/catalog-patches.md`: the field seeds the session marker;
+      1979 bar 9 confirmed.
+

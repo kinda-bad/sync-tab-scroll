@@ -104,6 +104,40 @@ mid-song start shows the right place without changes. A CT check covers it.
 - [x] Set `defaultStartBar: 9` in 1979's `meta.json` (catalog is gitignored).
 - [x] `docs/catalog-patches.md` section.
 
+## Revision 2026-11-27 — session start marker
+
+User's answers: bar 9 for 1979; "as long as the default start marker hasn't
+been cleared for the session, stop should return there. host should control
+it. it should be clearable." Changes from the approach above:
+
+- **The start position is a session-level start marker,
+  `Session.startMarkerBar`** (a bar, held in server state so every client
+  agrees). A genuine `song-select` sets it from the song's
+  `defaultStartBar` (null when absent); a same-song re-select leaves it, so
+  a cleared marker stays cleared. New host-only `start-marker-set { bar }`
+  sets it (validated: whole number ≥ 1) or clears it; clearing while
+  stopped also resets `playbackState.tickPosition` to 0. Settings → Session
+  tab gets a "Start marker" readout for everyone and host-only
+  input/Set/Clear, mirroring the early-stop control (in bars, not ticks).
+  The early-stop scrim isn't reused: it's a fixed gradient, not positioned
+  at a tick, so it has nothing to offer a marker.
+- **The seeder follows the marker, not the song field**: one seek per
+  (song, marker) per stopped stretch, so song select, every Stop, and a
+  marker change while stopped all move everyone there; a cleared marker
+  never seeks. The "only from tick 0" condition is gone (a marker change
+  must move a non-zero position); the cost is that a host reload while
+  stopped returns to the marker.
+- **The stopped park is level-triggered again**, like the original reset,
+  with a 35 ms tolerance. Edge-triggering missed alphaTab's late seek event
+  after a Stop's `pause()`, which left the cursor (and, broadcast as a host
+  seek, the session's stopped position) on a stray tick. Two companions:
+  - a host seek is broadcast only after alphaTab's `beatMouseDown` (a real
+    click), so internal seek events never reach the server;
+  - the host holds its clicked tick as its local park target until the
+    server echoes it, so the level-triggered park doesn't snap the click back.
+- Host clicks while stopped moving everyone's cursor: kept (the user: "host
+  should control it"); `ui.md` says so.
+
 ## Complexity Tracking
 
 None. One optional field, one helper, a retargeted reset, and a small
@@ -111,6 +145,10 @@ seeding gate; no new messages or session state.
 
 ## Open Questions
 
-- Bar 9 for 1979 is the user's working assumption (feature file); confirm.
-- Stop returns to the default start, not bar 1. Confirm that's wanted.
-- Recording-mode start at bar 9 is unverified until 1979 has a recording.
+- ~~Bar 9 for 1979~~: confirmed by the user (2026-11-27).
+- ~~Stop returns to the default start~~: yes, while the session's start
+  marker is set; once cleared, bar 1 (2026-11-27).
+- Recording-mode start at bar 9 is unverified on 1979 itself until it has a
+  recording (verified on the skewed fixture).
+- Should the pipeline keep hand-set `meta.json` fields (`defaultStartBar`,
+  `syncPoints`) when it regenerates the file? Unanswered.

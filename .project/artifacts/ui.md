@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-11-26
+last_updated: 2026-11-27
 diagram_type: graph TD
 render_section: UI
 diagram_status: current
@@ -455,6 +455,17 @@ regardless of whether playback has started:
     the override ("Pins everyone's row density; participants' own layout
     choice is ignored while this is set."). Clearing it (back to "Auto")
     restores each participant's independent preference immediately.
+  - **Start marker** (`per-song-default-start-point`): the bar every Stop
+    returns to (Default start point and start marker, above), shown to
+    everyone ("Stop returns to bar 9." / "No start marker. Stop returns to
+    bar 1."). For the host only, a wrapping control row with a bar-number
+    input, "Set start marker", and "Clear start marker", writing
+    `Session.startMarkerBar` (datamodel.md; `null` = cleared) — the same
+    input/Set/Clear shape as the early stop point below, but in bars, not
+    ticks. A host-only hint says picking a song sets it from the song's
+    default start bar, and that clicking the tab while stopped moves
+    everyone's cursor without changing the marker. Reset on song change to
+    the new song's `defaultStartBar`.
   - **Early stop point** (`host-set-early-stop-point-for`): a host-only
     control to set an early stopping tick on the current tab — mirroring
     the Lobby cursor's "tick input, Set, Clear" shape above — writing
@@ -595,31 +606,46 @@ dismissible (above), a user who dismisses it while song or part is still
 unset sees these Lobby-body messages directly, with the Bar reachable
 beneath.
 
-### Default start point
+### Default start point and start marker
 
-`per-song-default-start-point` (datamodel.md `CatalogSong.defaultStartBar`).
-A song can name the bar its run-throughs start at, for a band that never
-plays the intro (first user: 1979, bar 9). It applies while stopped, in the
-Lobby, before Start:
+`per-song-default-start-point` (datamodel.md `CatalogSong.defaultStartBar`,
+`Session.startMarkerBar`). A song can name the bar its run-throughs start
+at, for a band that never plays the intro (first user: 1979, bar 9). The
+session holds that as a **start marker**: a host-controlled bar, kept in
+server state so every participant agrees on it. It applies while stopped, in
+the Lobby, before Start:
 
-- **Selecting the song** parks everyone's tab cursor at that bar instead of
-  bar 1, and Start plays from there. The host's client maps the bar to a
-  tick once its engine is ready and sends an ordinary `seek`; the broadcast
-  moves every participant's cursor. A host with no part picked has no
-  engine, so nothing is seeded until they pick one.
-- **Every Stop** (manual, or an early-stop point) returns to the default
-  start bar too, since each run-through starts in the same place.
-- **The host can override it** by clicking anywhere in the tab while
-  stopped, including bar 1 to play the intro. That position sticks until
-  the next Stop or song change; it isn't re-seeded on a part or audio-source
-  switch, or on a host reload while the position is off bar 1.
+- **Selecting a different song** sets the marker from that song's
+  `defaultStartBar` (or clears it when the song has none), parks everyone's
+  tab cursor at the marker instead of bar 1, and Start plays from there.
+  Re-selecting the song that's already selected changes nothing, so a
+  cleared marker stays cleared; to restore it, the host sets it again (or
+  picks another song and comes back).
+- **Every Stop** (manual, or an early-stop point) returns to the marker
+  while it's set. Once the host clears it, Stop returns to bar 1 for the
+  rest of that song in this session.
+- **The host controls the marker** from the Settings modal's Session tab
+  ("Start marker", below): set it to a bar, or clear it. Clearing it while
+  stopped also sends everyone back to bar 1. Setting it while stopped moves
+  everyone there. Non-hosts see where Stop returns to but can't change it.
+- **Host clicks while stopped move everyone.** Clicking anywhere in the tab
+  while stopped (bar 1 included, to play the intro) moves every
+  participant's cursor there, and Start plays from it — the host controls
+  the starting position. It holds until the next Stop or song change and
+  doesn't change the marker. It isn't redone on a part or audio-source
+  switch.
 - **Recording mode** starts the recording at the matching moment: the tick
   is mapped through the song's `syncPoints` by alphaTab.
 - **Lyrics** follow the parked position (both the ticker and the lyrics
   view are position-driven); starting before the first lyric shows the
   usual placeholder until the first syllable.
 
-A song without the field behaves as before (bar 1).
+Mechanics: the server holds the marker as a bar and can't map it to a tick
+(it never parses the `.gp`), so the host's client does, once its engine is
+ready, and sends an ordinary `seek`. A Stop therefore lands on bar 1 for a
+moment, one round trip, before everyone moves to the marker. A host with no
+part picked has no engine, so the marker isn't applied until they pick one.
+A marker past the end of the score is ignored.
 
 ## Playback View
 

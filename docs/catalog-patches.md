@@ -77,10 +77,14 @@ When adding a new song, add its entry to the map in the same form.
 
 *Why:* some songs are never played from bar 1. For 1979 the band skips the
 synth intro, so every run-through used to start with the host scrubbing to
-the same spot. An optional `defaultStartBar` in a song's `meta.json` makes
-selecting the song (and every Stop) park everyone at that bar instead.
-The host can still click anywhere in the tab before Start, bar 1 included.
-See `.project/artifacts/ui.md` "Default start point".
+the same spot. An optional `defaultStartBar` in a song's `meta.json` sets
+the session's start marker when the song is picked, so everyone is parked at
+that bar instead of bar 1, and every Stop returns there. During a session the
+host can move or clear the marker (Settings, Session tab, "Start marker"),
+or click anywhere in the tab before Start, bar 1 included. That never
+changes `meta.json`: the next session, or picking the song again after
+another one, starts from `defaultStartBar` again. See
+`.project/artifacts/ui.md` "Default start point and start marker".
 
 *The value:* a 1-based bar number, as the tab numbers its bars (bar 1 is the
 first bar). It must be a positive integer. Anything else (`0`, `2.5`, `"9"`)
@@ -90,7 +94,7 @@ bar's first time through.
 
 | Song (relative to `catalog/`) | `defaultStartBar` | Lands on |
 |---|---|---|
-| `kinda-bad-ii/smashing-pumpkins-1979` | `9` | "Verse 1", just before the first lyric in bar 11. Bar 5, "Band Entrance", is the other candidate. Bar 9 is a working assumption, pending the user's confirmation. |
+| `kinda-bad-ii/smashing-pumpkins-1979` | `9` | "Verse 1", just before the first lyric in bar 11 (confirmed by the user, 2026-11-27). |
 
 *The edit:* `extract-lyrics` regenerates `meta.json` without this field, so
 reapply it after re-running the pipeline on a listed song (from the repo

@@ -1,7 +1,7 @@
 ---
 name: infrastructure
 status: stable
-last_updated: 2026-11-26
+last_updated: 2026-11-27
 diagram_type: graph TD
 render_section: Infrastructure
 diagram_status: current
@@ -429,6 +429,17 @@ message:
   'running'`, the server transitions `playbackState.status` to `'stopped'`
   and broadcasts it, same as a manual `playback-control stop`. Resets to
   `null` on song change, same lifecycle as `lobbyCursorTick`.
+- **`per-song-default-start-point`**: `start-marker-set { bar: number |
+  null }` sets `Session.startMarkerBar` (datamodel.md), host-only. A bar must
+  be a whole number, 1 or more, or the server answers with an `error` and
+  changes nothing; `null` clears it, and clearing while stopped also resets
+  `playbackState.tickPosition` to 0. A genuine `song-select` sets it from the
+  new song's `CatalogSong.defaultStartBar`. The server holds only the bar: the
+  host's client maps it to a tick and sends a `playback-control seek` after
+  song select, after every Stop, and when the marker changes while stopped.
+  A host's seek is broadcast only when it follows a real click on the tab
+  (alphaTab's `beatMouseDown`), so alphaTab's own late seek event after a
+  Stop's `pause()` can't move the session's stopped position.
 
 ## Input Validation (feedback-input-sanitization-hardening-7a9a)
 
