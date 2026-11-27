@@ -638,9 +638,13 @@ the Lobby, before Start:
   Re-selecting the song that's already selected changes nothing, so a
   cleared marker stays cleared; to restore it, the host sets it again (or
   picks another song and comes back).
-- **Every Stop** (manual, or an early-stop point) returns to the marker
-  while it's set. Once the host clears it, Stop returns to bar 1 for the
+- **Every Stop** (manual, an early-stop point, or the song's end) returns
+  to the marker while it's set. Once the host clears it, Stop returns to bar 1 for the
   rest of that song in this session.
+- **Playback doesn't loop.** When the song reaches its end, the host's
+  client sends the same Stop as the Stop button, and everyone returns to
+  the Lobby. Until that Stop arrives, each participant's tab holds still at
+  the end rather than starting over (user feedback 2026-11-27).
 - **The host controls the marker** from the Settings modal's Session tab
   ("Start marker", below): set it to a bar, or clear it. Clearing it while
   stopped also sends everyone back to bar 1. Setting it while stopped moves
