@@ -106,7 +106,15 @@ export function createLyricsOverlay(
     return marker;
   });
 
+  // Which measures start at least one syllable (wordless-bar clearing,
+  // ui.md "Measure markers"): measure i spans [measures[i].tick,
+  // measures[i + 1].tick). A bar that only sustains the previous syllable
+  // (a `+` hold or a tie) starts none, so it counts as wordless.
   const measures = options.measures ?? [];
+  const measureStartsSyllable = measures.map((measure, i) => {
+    const end = measures[i + 1]?.tick ?? Infinity;
+    return flat.some((s) => s.tickPosition >= measure.tick && s.tickPosition < end);
+  });
 
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
@@ -180,7 +188,13 @@ export function createLyricsOverlay(
       activeIndex = index;
       centerActiveSyllable();
     }
-    if (activeIndex >= 0) spans[activeIndex].classList.add('at-highlight');
+    // Wordless bar (ui.md "Measure markers"): once playback is in a measure
+    // that starts no syllable, the last sung syllable is no longer
+    // highlighted. No per-syllable end times: the highlight clears at the
+    // bar line even if the syllable is still sounding. The strip stays
+    // where it is, and the placeholder is unaffected.
+    const wordless = currentMeasure >= 0 && !measureStartsSyllable[currentMeasure];
+    if (activeIndex >= 0) spans[activeIndex].classList.toggle('at-highlight', !wordless);
   }
 
   // The measure containing the playback tick gets the current-bar style
