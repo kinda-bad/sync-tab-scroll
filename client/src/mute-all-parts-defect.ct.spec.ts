@@ -40,7 +40,7 @@ function trackSession(): Session {
 
 test('the "Mute all" control is queryable by the mute-all-parts-button identifier ui.md documents', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   const muteAll = component.getByTestId('mute-all-parts-button');
   await expect(muteAll).toBeVisible();

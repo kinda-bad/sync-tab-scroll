@@ -66,6 +66,36 @@ export function walkLyricBeatsFromRawLine(score: at.model.Score, lyricsTrackInde
 }
 
 /** Regroups the flat syllable stream into lines using lyricLineBreaks (syllable-count-per-line, datamodel.md) — matches .lrc's line boundaries. */
+/**
+ * Regroups syllables already placed on the playback timeline
+ * (`unrollSyllables`, whose `sourceIndex` points into the flat written
+ * stream `groupIntoLines(...).flat()`) back into the song's lines, for the
+ * ticker's whole-line mode (lyrics-ticker-scroll-modes). A line starts at
+ * each written line break, and again whenever playback jumps back (a
+ * repeat), so a repeated line is its own line on each pass.
+ */
+export function groupPlacedIntoLines<T extends { sourceIndex: number }>(placed: T[], lyricLineBreaks: number[]): T[][] {
+  const lineStarts: number[] = [];
+  let cursor = 0;
+  for (const count of lyricLineBreaks) {
+    lineStarts.push(cursor);
+    cursor += count;
+  }
+  const lineOf = (sourceIndex: number) => {
+    let line = 0;
+    for (let i = 0; i < lineStarts.length; i++) if (lineStarts[i] <= sourceIndex) line = i;
+    return line;
+  };
+  const lines: T[][] = [];
+  let prev: T | undefined;
+  for (const syllable of placed) {
+    if (!prev || lineOf(syllable.sourceIndex) !== lineOf(prev.sourceIndex) || syllable.sourceIndex <= prev.sourceIndex) lines.push([]);
+    lines[lines.length - 1].push(syllable);
+    prev = syllable;
+  }
+  return lines;
+}
+
 export function groupIntoLines(syllables: Syllable[], lyricLineBreaks: number[]): Syllable[][] {
   const lines: Syllable[][] = [];
   let cursor = 0;

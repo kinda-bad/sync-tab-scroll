@@ -4,8 +4,9 @@ import type { Session } from '@sync-tab-scroll/shared';
 import AppHarness from './test-harness/AppHarness.svelte';
 import type { CatalogSong } from '@sync-tab-scroll/shared';
 
-// T019 (host-set-early-stop-point-for): the Session tab's host-only
-// "Early stop point" control sends early-stop-set, and the Playback View
+// T019 (host-set-early-stop-point-for): the Playback tab's host-only
+// "Early stop point" control (in bars since settings-menu-reorganization)
+// sends early-stop-set, and the Playback View
 // visually de-emphasizes tab content past the stop tick for every
 // participant.
 
@@ -32,17 +33,41 @@ function baseSession(overrides: Partial<Session> = {}): Session {
   };
 }
 
-test('Session tab: the host sees an "Early stop point" control that sends early-stop-set', async ({ mount, page }) => {
-  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+const BAR = 3840;
+const EIGHT_BARS = { plays: Array.from({ length: 8 }, (_, i) => ({ bar: i + 1, start: i * BAR, end: (i + 1) * BAR })) };
 
-  await component.getByRole('button', { name: 'Session' }).click();
+test('Playback tab: the host sets the early stop point by bar, sent as the tick where that bar ends', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
+
+  await component.getByRole('button', { name: 'Playback' }).click();
+  await component.getByRole('spinbutton', { name: 'Early stop bar' }).fill('6');
   await component.getByRole('button', { name: 'Set early-stop point' }).click();
 
-  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
-  expect(sent.some((m) => (m as { type: string }).type === 'early-stop-set')).toBe(true);
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages);
+  expect(sent.filter((m) => m.type === 'early-stop-set')).toEqual([{ type: 'early-stop-set', tickPosition: 6 * BAR }]);
 });
 
-test('Session tab: a non-host member does not see the Early stop point control', async ({ mount }) => {
+test('Playback tab: the early stop readout names the bar it stops after', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, {
+    props: { session: baseSession({ earlyStopTick: 6 * BAR }), selfParticipantId: 'host-1', barTicks: EIGHT_BARS },
+  });
+
+  await component.getByRole('button', { name: 'Playback' }).click();
+  await expect(component.getByText('Playback stops after bar 6.')).toBeVisible();
+});
+
+test('Playback tab: a bar past the end of the song sends nothing', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
+
+  await component.getByRole('button', { name: 'Playback' }).click();
+  await component.getByRole('spinbutton', { name: 'Early stop bar' }).fill('9');
+  await component.getByRole('button', { name: 'Set early-stop point' }).click();
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages);
+  expect(sent.filter((m) => m.type === 'early-stop-set')).toEqual([]);
+});
+
+test('Playback tab: a non-host member sees the early stop readout but no control', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: {
       session: { ...baseSession(), participants: [{ id: 'member-1', displayName: 'Member', role: 'member', connectionStatus: 'connected', selectedPart: null, readiness: 'no-part', joinedAt: 1, userId: null }] },
@@ -50,8 +75,10 @@ test('Session tab: a non-host member does not see the Early stop point control',
     },
   });
 
-  await component.getByRole('button', { name: 'Session' }).click();
-  await expect(component.getByText(/Early stop point/)).toHaveCount(0);
+  await component.getByRole('button', { name: 'Playback' }).click();
+  await expect(component.getByText('No early stop point. Playback runs to the end of the song.')).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Set early-stop point' })).toHaveCount(0);
+  await expect(component.getByRole('button', { name: 'Clear early-stop point' })).toHaveCount(0);
 });
 
 const song: CatalogSong = {

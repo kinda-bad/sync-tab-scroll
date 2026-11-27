@@ -88,7 +88,7 @@ test('a session defaulted to recording builds a backing-track engine and ignores
   // The host can still choose the synth for this song.
   await page.getByRole('button', { name: /settings/i }).first().click();
   const settings = page.getByRole('dialog');
-  await settings.getByRole('button', { name: 'Session', exact: true }).click();
+  await settings.getByRole('button', { name: 'Audio', exact: true }).click();
   await expect(settings.getByText('Everyone hears the real recording.')).toBeVisible();
   await settings.getByRole('button', { name: 'Synth' }).click();
   const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-source-set'));

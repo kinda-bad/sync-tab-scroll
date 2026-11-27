@@ -1,6 +1,6 @@
 ---
 slug: settings-menu-reorganization
-status: backlogged
+status: implemented
 logged: 2026-11-27
 ---
 
