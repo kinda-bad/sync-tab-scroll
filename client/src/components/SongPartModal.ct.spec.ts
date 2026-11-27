@@ -165,9 +165,20 @@ test('host confirming a different song during playback sends song-select', async
 
   await component.getByRole('button', { name: 'Change song' }).click();
   await component.getByRole('listitem').filter({ hasText: 'bonus' }).getByRole('button', { name: 'Select' }).click();
+  await page.evaluate(() => {
+    (window as unknown as { __clientStore: { update: (fn: (s: object) => object) => void } }).__clientStore.update((s) => ({ ...s, playbackProgress: 0.6 }));
+  });
   await component.getByRole('button', { name: 'Stop and switch' }).click();
 
   expect(await sentSongSelects(page)).toEqual([{ type: 'song-select', songId: 'bonus' }]);
+  // Same reset as the bar's Stop: the hazard strip's progress goes back to 0.
+  expect(
+    await page.evaluate(() => {
+      let p = -1;
+      (window as unknown as { __clientStore: { subscribe: (fn: (s: { playbackProgress: number }) => void) => () => void } }).__clientStore.subscribe((s) => (p = s.playbackProgress))();
+      return p;
+    }),
+  ).toBe(0);
 });
 
 test('re-selecting the current song during playback sends at once, with no warning (a server no-op)', async ({ mount, page }) => {

@@ -1,5 +1,5 @@
 ---
-status: open
+status: planned      # done directly 2026-11-27 (away-mode), no plan file
 created: 2026-11-26
 plan: null
 ---

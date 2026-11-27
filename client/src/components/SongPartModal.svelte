@@ -78,6 +78,10 @@
   }
 
   function sendSongSelect(songId: string) {
+    // A song switch from Playback is a Stop (song-select.ts), so reset the
+    // hazard strip's progress the way the bar's Stop does (App.svelte
+    // stopPlayback), or the next Start briefly shows the old song's value.
+    if (playbackActive) clientStore.update((s) => ({ ...s, playbackProgress: 0 }));
     wsClient?.send({ type: 'song-select', songId });
     browsingCatalog = false;
     pendingSongId = null;
