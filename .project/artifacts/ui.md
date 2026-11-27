@@ -404,7 +404,7 @@ change it:
 | Theme (family + light/dark) | Settings › View | Anyone | this device |
 | Bars per row — just you | Settings › View | Anyone | this device |
 | Bars per row — for everyone | Settings › View | Host (badge) | session |
-| Lyrics ticker font size, position, measure markers | Settings › Lyrics | Anyone | this device |
+| Lyrics ticker font size, position, scrolling, anchor, measure markers | Settings › Lyrics | Anyone | this device |
 | Audio source (Synth / Recording) | Settings › Audio | Host (badge) | session |
 | Count-in | Settings › Audio | Host (badge) | session |
 | Metronome | Settings › Audio | Anyone | this device |
@@ -593,6 +593,14 @@ The tabs in detail:
     an overlay: auto-scroll aligns the current row to the top of the
     viewport, so a bottom strip never covers it, and the tab view's
     reserved bottom padding already lets the last rows clear it.
+  - **Scrolling** and **Anchor** (`lyrics-ticker-scroll-modes`): personal
+    controls for how the ticker moves — Scrolling: "Every syllable"
+    (default), "At the edges" or "One line at a time"; Anchor: "Center"
+    (default) or "Left" — each in a labeled `role="group"`, persisted
+    client-side (`client/src/lyrics-ticker-motion-preference.ts`) and
+    applied to the live ticker at once. Hints describe the chosen
+    scrolling and say Left shows more of what's coming. Behavior:
+    Playback View, "Scroll modes", below.
   - **Measure markers**: a personal toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
@@ -790,8 +798,9 @@ identically regardless of which one they're on:
   the words, leaving nothing behind. Syllable text and tick position
   are read live off `CatalogSong.lyricsTrackIndex`'s beats (not the
   currently-viewed instrument track's own beats, which is usually a
-  different track entirely), flattened into one continuous stream. The
-  strip never wraps to multiple lines — as syllables advance it scrolls
+  different track entirely), flattened into one continuous stream. By
+  default the strip never wraps to multiple lines (Scroll modes, below,
+  has the alternatives) — as syllables advance it scrolls
   right-to-left, snapping (not continuously gliding) so the currently
   active syllable, styled via alphaTab's `.at-highlight` role, is
   re-centered on each syllable change; the centering uses plain DOM
@@ -857,6 +866,46 @@ identically regardless of which one they're on:
   as usual. A bar whose first syllable starts later in the bar doesn't
   move the strip. This applies whether or not
   the measure markers are shown.
+
+  **Scroll modes (`lyrics-ticker-scroll-modes`, 2026-11-27)**: two
+  personal preferences (Settings › Lyrics, above) change how the strip
+  moves; the defaults (Center, Every syllable) are the behavior described
+  above. Everything here applies to the in-tab ticker only — not the
+  Lyrics part's full lyric sheet, nor the horizontal scroll view, which
+  scrolls lyrics past its own fixed playhead.
+  - **Anchor** — where the highlighted syllable is placed: **Center**
+    (its center on the strip's center line) or **Left** (its left edge
+    15% of the strip's width in from the left edge, leaving room for the
+    word just sung while showing most of a strip of what's coming).
+    Everything that "centers" in the paragraphs above goes to the anchor
+    instead: the pre-singing placeholder, the active syllable, and an
+    empty bar's marker (its left edge with the Left anchor) or the
+    boundary before the next word.
+  - **Scrolling** — **Every syllable** (`constant`): the strip moves to
+    put each new syllable on the anchor, as above. **At the edges**
+    (`edge`): the strip holds still while the highlight walks along it,
+    and pages only when the highlighted syllable comes within 10% of the
+    strip's width of its right edge (or is off its left edge, after a
+    seek back): the strip then slides (the same 0.25s transition) to put
+    that syllable on the anchor. Entering an empty bar still moves the
+    strip, as above — a break is when the reader's eyes are free. A
+    resize, a font-size, position, marker or anchor change re-anchors
+    the current syllable at once. **One line at a time** (`line`): the
+    strip shows only the current lyric line, using the song's own line
+    breaks (`CatalogSong.lyricLineBreaks`, regrouped after repeats are
+    unrolled, so a repeated line is shown again on each pass). The line
+    is laid out rather than scrolled — centered, or left-aligned with the
+    Left anchor — and the highlight moves through it. The next line
+    replaces it when its first syllable starts, or earlier, on entering
+    an empty bar, so the words after a break show during the break. A
+    line too long for one row **wraps** onto more rows (the strip grows;
+    the top position's reserved space follows its real height). Before
+    the first syllable it shows the placeholder followed by the first
+    line.
+  - **Unchanged in every mode**: bar-line highlight clearing, the current
+    bar's marker style, and the placeholder's one-way hiding. In line
+    mode a measure marker shows with the line of the syllable it sits
+    before.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked

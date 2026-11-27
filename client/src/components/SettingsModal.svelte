@@ -16,7 +16,17 @@
     setEngineLyricsTickerFontSize,
     setEngineLyricsTickerPosition,
     setEngineMeasureMarkersVisible,
+    setEngineLyricsTickerAnchor,
+    setEngineLyricsTickerScroll,
   } from '../playback-engine';
+  import {
+    loadStoredLyricsTickerAnchor,
+    loadStoredLyricsTickerScroll,
+    persistLyricsTickerAnchor,
+    persistLyricsTickerScroll,
+    type LyricsTickerAnchor,
+    type LyricsTickerScroll,
+  } from '../lyrics-ticker-motion-preference';
   import {
     loadStoredLyricsTickerPosition,
     persistLyricsTickerPosition,
@@ -71,6 +81,30 @@
   let lyricsTickerPosition: LyricsTickerPosition = loadStoredLyricsTickerPosition();
   const LYRICS_TICKER_FONT_SIZES: LyricsTickerFontSize[] = ['small', 'medium', 'large', 'huge'];
   const LYRICS_TICKER_POSITIONS: LyricsTickerPosition[] = ['top', 'bottom'];
+
+  // How the ticker moves (lyrics-ticker-scroll-modes): personal, this
+  // device only, same persist + apply-live shape as the position above.
+  let lyricsTickerAnchor: LyricsTickerAnchor = loadStoredLyricsTickerAnchor();
+  let lyricsTickerScroll: LyricsTickerScroll = loadStoredLyricsTickerScroll();
+  const LYRICS_TICKER_ANCHORS: { value: LyricsTickerAnchor; label: string }[] = [
+    { value: 'center', label: 'Center' },
+    { value: 'left', label: 'Left' },
+  ];
+  const LYRICS_TICKER_SCROLLS: { value: LyricsTickerScroll; label: string }[] = [
+    { value: 'constant', label: 'Every syllable' },
+    { value: 'edge', label: 'At the edges' },
+    { value: 'line', label: 'One line at a time' },
+  ];
+  function setLyricsTickerAnchor(anchor: LyricsTickerAnchor) {
+    lyricsTickerAnchor = anchor;
+    persistLyricsTickerAnchor(anchor);
+    setEngineLyricsTickerAnchor(anchor);
+  }
+  function setLyricsTickerScroll(scroll: LyricsTickerScroll) {
+    lyricsTickerScroll = scroll;
+    persistLyricsTickerScroll(scroll);
+    setEngineLyricsTickerScroll(scroll);
+  }
 
   // Personal, this-device-only "mute parts" preference (ui.md Preferences
   // tab, track-mute-preference.ts) — keyed per song+track, so recomputed
@@ -482,6 +516,30 @@
         />
       {/each}
     </div>
+
+    <span class="section-label">Scrolling</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker scrolling">
+      {#each LYRICS_TICKER_SCROLLS as option (option.value)}
+        <Button variant={lyricsTickerScroll === option.value ? 'riot' : 'ghost'} label={option.label} onclick={() => setLyricsTickerScroll(option.value)} />
+      {/each}
+    </div>
+    <p class="hint">
+      {#if lyricsTickerScroll === 'constant'}
+        The strip moves with every syllable.
+      {:else if lyricsTickerScroll === 'edge'}
+        The strip holds still and turns a page when the words reach its edge.
+      {:else}
+        Shows one lyric line at a time, and switches when the next line starts.
+      {/if}
+    </p>
+
+    <span class="section-label">Anchor</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker anchor">
+      {#each LYRICS_TICKER_ANCHORS as option (option.value)}
+        <Button variant={lyricsTickerAnchor === option.value ? 'riot' : 'ghost'} label={option.label} onclick={() => setLyricsTickerAnchor(option.value)} />
+      {/each}
+    </div>
+    <p class="hint">Where the current word sits. Left shows more of what's coming.</p>
 
     <span class="section-label">Measure markers</span>
     <div class="control-row">

@@ -6,10 +6,11 @@ import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-rend
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
-import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines } from './lyrics-beat-walk';
+import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines, groupPlacedIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
+import type { LyricsTickerAnchor, LyricsTickerScroll } from './lyrics-ticker-motion-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
 import { findLyricGaps, playbackMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
 import { lrcToTabTime } from './lrc-time-base';
@@ -269,7 +270,10 @@ export function ensurePlaybackEngine(
       const order = playbackOrderOf(score, tickCache);
       const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
       const measures = playbackMeasureBoundaries(order.plays);
-      state!.overlay = createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
+      // The song's own lines, one per pass (whole-line mode,
+      // lyrics-ticker-scroll-modes); the other modes read them flat.
+      const lines = groupPlacedIntoLines(placed, lyricLineBreaks);
+      state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && song.lyricsLrc) {
@@ -838,6 +842,16 @@ export function setEngineLyricsTickerFontSize(size: LyricsTickerFontSize): void 
 /** Applies the personal "Lyrics ticker position" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
 export function setEngineLyricsTickerPosition(position: LyricsTickerPosition): void {
   state?.overlay?.setPosition(position);
+}
+
+/** Applies the personal lyrics ticker anchor (lyrics-ticker-scroll-modes) to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
+export function setEngineLyricsTickerAnchor(anchor: LyricsTickerAnchor): void {
+  state?.overlay?.setAnchor(anchor);
+}
+
+/** Applies the personal lyrics ticker scroll style (lyrics-ticker-scroll-modes) to the live overlay (if one exists); no-op otherwise. */
+export function setEngineLyricsTickerScroll(scroll: LyricsTickerScroll): void {
+  state?.overlay?.setScroll(scroll);
 }
 
 /** Applies the personal "Measure markers" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */

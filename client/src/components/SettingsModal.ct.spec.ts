@@ -323,6 +323,28 @@ test('Lyrics tab: the "Measure markers" toggle defaults off, persists, and sends
   expect(sent).toEqual([]);
 });
 
+// lyrics-ticker-scroll-modes: how the ticker moves, with the other lyrics
+// settings. Personal, this device only; defaults keep today's behavior.
+test('Lyrics tab: the anchor and scrolling controls default to Center / Every syllable, persist, and send nothing', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+  await component.getByRole('button', { name: 'Lyrics', exact: true }).click();
+
+  const anchor = component.getByRole('group', { name: 'Lyrics ticker anchor' });
+  const scrolling = component.getByRole('group', { name: 'Lyrics ticker scrolling' });
+  await expect(anchor.getByRole('button', { name: 'Center' })).toHaveClass(/btn-riot/);
+  await expect(scrolling.getByRole('button', { name: 'Every syllable' })).toHaveClass(/btn-riot/);
+  await expect(scrolling.getByRole('button', { name: 'At the edges' })).toBeVisible();
+
+  await anchor.getByRole('button', { name: 'Left' }).click();
+  await scrolling.getByRole('button', { name: 'One line at a time' }).click();
+  await expect(anchor.getByRole('button', { name: 'Left' })).toHaveClass(/btn-riot/);
+
+  expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-ticker-anchor'))).toBe('left');
+  expect(await page.evaluate(() => localStorage.getItem('sync-tab-scroll:lyrics-ticker-scroll'))).toBe('line');
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toEqual([]);
+});
+
 // --- Audio tab: personal per-part mute controls (T016-T018) ---------------
 
 /**
