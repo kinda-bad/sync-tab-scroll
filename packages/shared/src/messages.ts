@@ -17,6 +17,9 @@ export type ClientMessage =
   | { type: 'spotlight-mode-set'; enabled: boolean }
   | { type: 'bars-per-row-set'; barsPerRow: number | null }
   | { type: 'early-stop-set'; tickPosition: number | null }
+  // Host-only start marker (per-song-default-start-point): a 1-based bar, or
+  // null to clear it so Stop returns to bar 1.
+  | { type: 'start-marker-set'; bar: number | null }
   | { type: 'count-in-set'; enabled: boolean }
   | { type: 'playback-source-set'; source: 'synth' | 'recording' }
   | { type: 'song-select'; songId: string }

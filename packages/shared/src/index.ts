@@ -197,10 +197,9 @@ export interface CatalogSong {
   syncPoints: FlatSyncPoint[] | null;
   /**
    * 1-based bar number a run-through starts at (per-song-default-start-point),
-   * set by hand in `meta.json`. The host's client maps it to a playback tick
-   * and seeds `PlaybackState.tickPosition` with it while stopped, so selecting
-   * the song (and every Stop) parks everyone there instead of bar 1. Omitted
-   * when absent or invalid (datamodel.md CatalogSong).
+   * set by hand in `meta.json`. Selecting the song seeds the session's start
+   * marker (`Session.startMarkerBar`) from it. Omitted when absent or invalid
+   * (datamodel.md CatalogSong).
    */
   defaultStartBar?: number;
 }
@@ -256,4 +255,14 @@ export interface Session {
   hostBarsPerRow: number | null;
   /** Host-set tick position past which playback auto-stops for everyone; `null` means no early-stop point is set. Host-only, same pattern as `countInEnabled`/`spotlightMode`. Resets to `null` when the selected song changes. */
   earlyStopTick: number | null;
+  /**
+   * The session's start marker (per-song-default-start-point): the 1-based bar
+   * every Stop returns to while it's set, and where the Lobby parks before the
+   * first Start. Seeded from the selected song's `CatalogSong.defaultStartBar`
+   * on a genuine song change (null when the song has none); host-only set/clear
+   * (`start-marker-set`), same pattern as `earlyStopTick`. Null means Stop
+   * returns to bar 1. The server holds the bar, not a tick — it never parses the
+   * `.gp` — so the host's client maps it to a tick and seeks there (ui.md).
+   */
+  startMarkerBar: number | null;
 }

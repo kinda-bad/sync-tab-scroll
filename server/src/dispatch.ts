@@ -13,6 +13,7 @@ import { handleLobbyCursorSet } from './handlers/lobby-cursor-set.js';
 import { handleSpotlightModeSet } from './handlers/spotlight-mode-set.js';
 import { handleBarsPerRowSet } from './handlers/bars-per-row-set.js';
 import { handleEarlyStopSet } from './handlers/early-stop-set.js';
+import { handleStartMarkerSet } from './handlers/start-marker-set.js';
 import { handleCountInSet } from './handlers/count-in-set.js';
 import { handlePlaybackSourceSet } from './handlers/playback-source-set.js';
 import { handleSongSelect } from './handlers/song-select.js';
@@ -52,6 +53,8 @@ export function dispatch(ctx: HandlerContext, socket: WebSocket, message: Client
       return handleBarsPerRowSet(ctx, socket, message);
     case 'early-stop-set':
       return handleEarlyStopSet(ctx, socket, message);
+    case 'start-marker-set':
+      return handleStartMarkerSet(ctx, socket, message);
     case 'count-in-set':
       return handleCountInSet(ctx, socket, message);
     case 'playback-source-set':
