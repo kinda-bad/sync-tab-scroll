@@ -27,6 +27,7 @@ import { debounce } from './debounce';
 import { writable } from 'svelte/store';
 import * as atLib from '@coderline/alphatab';
 import { beatAtTick, beatDurationMs } from './beat-clock';
+import { createDefaultStartSeeder, defaultStartTick } from './default-start';
 
 /** Beat state feeding the Bar's beat widget (ui.md Count-In & Metronome Beat Widget) — real beat boundaries, never a fixed-interval timer. */
 export interface BeatWidgetState {
@@ -91,6 +92,16 @@ interface EngineState {
 }
 
 let state: EngineState | undefined;
+
+/** How far a seek event's tick may sit from the tick this module just assigned and still count as that assignment's echo (see the seek-broadcast listener). */
+const PROGRAMMATIC_SEEK_TOLERANCE_TICKS = 10;
+
+/**
+ * One default-start seeder for the page, not per engine
+ * (per-song-default-start-point): an engine rebuild for a part or audio-source
+ * switch must not re-seed over a position the host already moved.
+ */
+const seedDefaultStart = createDefaultStartSeeder();
 
 /**
  * Creates the alphaTab/headless instance the moment a participant's part is
@@ -523,6 +534,25 @@ export function ensurePlaybackEngine(
     }, undefined, isBackingParticipant, spotlightHoldingTick);
     applyPlaybackSettings(api, s.session);
 
+    // Default start point (per-song-default-start-point, ui.md): the host's
+    // client is the only one that can map the song's defaultStartBar to a
+    // tick (the server never parses the .gp), so it seeds
+    // playbackState.tickPosition through the ordinary seek relay. The
+    // broadcast echo then parks every client there (correctDrift's stopped
+    // branch), and Start plays from it, in recording mode too: the running
+    // branch assigns api.tickPosition and alphaTab maps it through the
+    // sync points to the recording's time.
+    if (s.session.selectedSong === song.id) {
+      const seekTo = seedDefaultStart({
+        status: s.session.playbackState.status,
+        songId: song.id,
+        serverTick: s.session.playbackState.tickPosition,
+        isHost,
+        startTick: defaultStartTick(api.score, api.tickCache, song.defaultStartBar),
+      });
+      if (seekTo !== null) wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: seekTo });
+    }
+
     // Spotlight mode (ui.md "lobby cursor"): force this participant's view
     // to follow the host's lobbyCursorTick only while the host-only toggle
     // is on. Guarded on the tick actually changing, not just re-applied
@@ -557,7 +587,12 @@ export function ensurePlaybackEngine(
   api.playerPositionChanged.on((e) => {
     if (!e.isSeek) return;
     if (!api.isReadyForPlayback) return;
-    if (e.currentTick === lastProgrammaticTick) return;
+    // Within a few ticks, not exact: alphaTab's worker settles an assigned
+    // tickPosition near, not on, the value (set 1920, reads back 1921), so
+    // an exact match re-broadcast the host's own stopped-state park
+    // (per-song-default-start-point) as a fresh seek. A real click lands on
+    // a beat, never this close to the tick just applied.
+    if (lastProgrammaticTick !== null && Math.abs(e.currentTick - lastProgrammaticTick) <= PROGRAMMATIC_SEEK_TOLERANCE_TICKS) return;
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
     debouncedSendSeek(e.currentTick);
   });

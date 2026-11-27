@@ -19,6 +19,8 @@
   // recording-capable song variant carries these when switching to recording.
   export let recordingPath: string | null = null;
   export let syncPoints: import('@sync-tab-scroll/shared').FlatSyncPoint[] | null = null;
+  // per-song-default-start-point: the song's 1-based default start bar.
+  export let defaultStartBar: number | undefined = undefined;
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
@@ -59,6 +61,7 @@
       lyricLineBreaks: [6, 7, 6],
       recordingPath: null,
       syncPoints: null,
+      ...(defaultStartBar !== undefined && { defaultStartBar }),
     };
 
     ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);

@@ -34,6 +34,17 @@ const DRIFT_THRESHOLD_MS = 35;
 const STOPPED_RESET_TOLERANCE_TICKS = 2;
 
 /**
+ * The stopped-state park target each engine last applied (or found itself
+ * already at), keyed by its alphaTab api so it dies with the engine. The park
+ * is edge-triggered on this: it fires when `playbackState.tickPosition`
+ * changes while stopped (or on an engine's first ready call), never on every
+ * store update — see correctDrift's stopped branch. Cleared whenever the
+ * session isn't parked (running/paused, or Spotlight holding a tick) so the
+ * next stopped call parks afresh.
+ */
+const stoppedParkTargets = new WeakMap<AlphaTabApi, number>();
+
+/**
  * The recording's effective playback rate (BPM) at a given tick, derived
  * from the stored `FlatSyncPoint[]` rather than the notated tempo
  * (infrastructure.md: a backing-track host advances at the sync-point rate,
@@ -233,14 +244,31 @@ export function correctDrift(
   // Exempting on spotlightMode alone (whenever a tick is actively held)
   // lets a real Stop, unrelated to Spotlight, still reset normally in every
   // other case — including once spotlightMode or lobbyCursorTick clears.
-  if (
-    playbackState.status === 'stopped' &&
-    Math.abs(api.tickPosition) > STOPPED_RESET_TOLERANCE_TICKS &&
-    !spotlightHoldingTick
-  ) {
-    onApply?.(0);
-    api.tickPosition = 0;
-    return 0;
+  //
+  // Park target (per-song-default-start-point): while stopped, every client
+  // parks at `playbackState.tickPosition` rather than literal 0. A Stop still
+  // sets that to 0 server-side, so the reset above is unchanged; but a
+  // seeded default start point, or a host click while stopped (relayed as a
+  // `seek`), now shows on everyone's cursor before Start instead of being
+  // stomped back to bar 1 (Start always played from it anyway, via the
+  // running branch above). The park is edge-triggered — applied only when the
+  // target changes or on this engine's first ready call — not re-checked on
+  // every store update: `playbackProgress` updates the store on every
+  // position event, so a level-triggered park snapped a host's click straight
+  // back before its debounced seek could echo, and a backing track's inexact
+  // tick readback at a mid-song target would re-seek indefinitely.
+  if (playbackState.status === 'stopped' && !spotlightHoldingTick) {
+    const target = playbackState.tickPosition;
+    if (stoppedParkTargets.get(api) !== target) {
+      stoppedParkTargets.set(api, target);
+      if (Math.abs(api.tickPosition - target) > STOPPED_RESET_TOLERANCE_TICKS) {
+        onApply?.(target);
+        api.tickPosition = target;
+        return target;
+      }
+    }
+  } else {
+    stoppedParkTargets.delete(api);
   }
 
   if (isHost) return null;

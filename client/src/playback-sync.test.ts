@@ -171,6 +171,83 @@ describe('correctDrift', () => {
     expect(result).toBeNull();
   });
 
+  // per-song-default-start-point: while stopped, every client parks at
+  // playbackState.tickPosition (0 after a Stop, or a seeded/host-clicked
+  // start point) rather than literal 0 — and only when that target changes,
+  // never on every store update, so a backing track's inexact tick readback
+  // can't loop and a host click isn't snapped back before its seek echoes.
+  describe('stopped-state park', () => {
+    it('parks a stopped client at a non-zero playbackState.tickPosition, host included', () => {
+      for (const isHost of [true, false]) {
+        const api = fakeApi({ tickPosition: 0 });
+        const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), isHost);
+        expect(api.tickPosition).toBe(30720);
+        expect(result).toBe(30720);
+      }
+    });
+
+    it('reports the park through onApply before assigning, like the other programmatic seeks', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      const onApply = vi.fn((tick: number) => expect(api.tickPosition).not.toBe(tick));
+      correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true, onApply);
+      expect(onApply).toHaveBeenCalledWith(30720);
+    });
+
+    it('does not re-seek on later calls once parked, even when the readback is quantized off the target', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      const state = fakePlaybackState({ status: 'stopped', tickPosition: 30720 });
+      correctDrift(api, state, true);
+      api.tickPosition = 30731; // backing-track tick↔time round trip lands near, not on, the target
+      expect(correctDrift(api, state, true)).toBeNull();
+      expect(api.tickPosition).toBe(30731);
+    });
+
+    it('leaves a host click alone until the server echoes a new target, then parks there', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true);
+      api.tickPosition = 0; // host clicks back to bar 1; its debounced seek hasn't echoed yet
+      expect(correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true)).toBeNull();
+      expect(api.tickPosition).toBe(0);
+      // A non-host receiving that echo moves to it.
+      const member = fakeApi({ tickPosition: 30720 });
+      correctDrift(member, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), false);
+      expect(correctDrift(member, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), false)).toBe(0);
+      expect(member.tickPosition).toBe(0);
+    });
+
+    it('re-parks after leaving stopped: a Stop from a mid-song position still lands on 0', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
+      (api as { playerState: at.synth.PlayerState }).playerState = at.synth.PlayerState.Playing;
+      api.tickPosition = 50000;
+      correctDrift(api, fakePlaybackState({ status: 'running', tickPosition: 50000 }), true);
+      const result = correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 0 }), true);
+      expect(api.pause).toHaveBeenCalled();
+      expect(api.tickPosition).toBe(0);
+      expect(result).toBe(0);
+    });
+
+    it('re-parks once Spotlight stops holding a tick', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      const state = fakePlaybackState({ status: 'stopped', tickPosition: 0 });
+      correctDrift(api, state, false);
+      api.tickPosition = 4800; // Spotlight force-follow moved the view
+      expect(correctDrift(api, state, false, undefined, undefined, undefined, true)).toBeNull();
+      expect(api.tickPosition).toBe(4800);
+      expect(correctDrift(api, state, false)).toBe(0);
+      expect(api.tickPosition).toBe(0);
+    });
+
+    it('starts playback from the parked target', () => {
+      const api = fakeApi({ tickPosition: 0 });
+      correctDrift(api, fakePlaybackState({ status: 'stopped', tickPosition: 30720 }), true);
+      api.tickPosition = 30731;
+      correctDrift(api, fakePlaybackState({ status: 'running', tickPosition: 30720 }), true);
+      expect(api.tickPosition).toBe(30720);
+      expect(api.play).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('tempo-invariant drift tolerance', () => {
     // The drift tolerance is a *perceptual* quantity, so it must be an
     // absolute real duration — the same millisecond budget at every tempo.
