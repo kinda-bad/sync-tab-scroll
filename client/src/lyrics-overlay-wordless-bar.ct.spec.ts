@@ -58,3 +58,22 @@ test('keeps the word highlighted through a bar that starts a syllable later in t
   await drive(page, 600);
   await expect(page.locator('.lyric-syllable.at-highlight')).toHaveText('two ');
 });
+
+// User feedback 2026-11-27: clear at every bar boundary. Entering a bar whose
+// first syllable starts later must not bring the previous bar's word back.
+test('clears the word highlight at every bar line until the new bar\'s first syllable', async ({ mount, page }) => {
+  const lines = [[{ text: 'one', tickPosition: 0 }], [{ text: 'late', tickPosition: 1500 }]];
+  const measures = [
+    { tick: 0, number: 1 },
+    { tick: 1000, number: 2 },
+  ];
+  await mount(LyricsOverlayHarness, { props: { lines, measures } });
+  const highlighted = page.locator('.lyric-syllable.at-highlight');
+
+  await drive(page, 500);
+  await expect(highlighted).toHaveText('one ');
+  await drive(page, 1100);
+  await expect(highlighted).toHaveCount(0);
+  await drive(page, 1500);
+  await expect(highlighted).toHaveText('late ');
+});

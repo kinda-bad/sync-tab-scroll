@@ -730,14 +730,17 @@ identically regardless of which one they're on:
   `--riot` stays the sung syllable's color. It follows the playback order,
   so on a repeat's second pass that pass's own marker is the current one.
 
-  **Wordless bars (2026-11-27)**: when playback enters a bar in which no
-  syllable starts, the last sung syllable's highlight clears; it returns
-  with the next syllable. There are no per-syllable end times, so a
-  syllable still being held across the bar line loses its highlight at
-  the bar line: a bar that only sustains a syllable (a `+` hold or a tie)
-  counts as wordless. The strip does not move, and the pre-singing
-  placeholder is unaffected. This applies whether or not the measure
-  markers are shown.
+  **Bar-line clearing (2026-11-27)**: the word highlight clears at every
+  bar line. A syllable stays highlighted only within the bar it starts
+  in, and the next one lights when it starts. So a bar with no syllable
+  start, or one whose first syllable comes later in the bar, shows no
+  highlight until then. There are no per-syllable end times, so a
+  syllable still being held across the bar line loses its highlight
+  there. This replaces the first version, which cleared only in bars with
+  no syllable start, so entering a bar whose first syllable came later
+  re-lit the previous word (user feedback). The strip does not move, and
+  the pre-singing placeholder is unaffected. This applies whether or not
+  the measure markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked

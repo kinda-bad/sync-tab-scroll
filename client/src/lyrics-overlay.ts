@@ -106,15 +106,9 @@ export function createLyricsOverlay(
     return marker;
   });
 
-  // Which measures start at least one syllable (wordless-bar clearing,
-  // ui.md "Measure markers"): measure i spans [measures[i].tick,
-  // measures[i + 1].tick). A bar that only sustains the previous syllable
-  // (a `+` hold or a tie) starts none, so it counts as wordless.
+  // Measures in playback order (ui.md "Measure markers"): the word
+  // highlight clears at each bar line (below).
   const measures = options.measures ?? [];
-  const measureStartsSyllable = measures.map((measure, i) => {
-    const end = measures[i + 1]?.tick ?? Infinity;
-    return flat.some((s) => s.tickPosition >= measure.tick && s.tickPosition < end);
-  });
 
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
@@ -188,13 +182,15 @@ export function createLyricsOverlay(
       activeIndex = index;
       centerActiveSyllable();
     }
-    // Wordless bar (ui.md "Measure markers"): once playback is in a measure
-    // that starts no syllable, the last sung syllable is no longer
-    // highlighted. No per-syllable end times: the highlight clears at the
-    // bar line even if the syllable is still sounding. The strip stays
-    // where it is, and the placeholder is unaffected.
-    const wordless = currentMeasure >= 0 && !measureStartsSyllable[currentMeasure];
-    if (activeIndex >= 0) spans[activeIndex].classList.toggle('at-highlight', !wordless);
+    // Bar-line clearing (ui.md "Measure markers", user feedback
+    // 2026-11-27): a syllable stays highlighted only within the bar it
+    // starts in. At each bar line the highlight clears until that bar's
+    // first syllable starts, whether or not the bar has any. No
+    // per-syllable end times: it clears even if the syllable is still
+    // sounding. The strip stays where it is, and the placeholder is
+    // unaffected.
+    const stale = currentMeasure >= 0 && activeIndex >= 0 && flat[activeIndex].tickPosition < measures[currentMeasure].tick;
+    if (activeIndex >= 0) spans[activeIndex].classList.toggle('at-highlight', !stale);
   }
 
   // The measure containing the playback tick gets the current-bar style
