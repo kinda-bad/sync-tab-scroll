@@ -638,9 +638,13 @@ the Lobby, before Start:
   Re-selecting the song that's already selected changes nothing, so a
   cleared marker stays cleared; to restore it, the host sets it again (or
   picks another song and comes back).
-- **Every Stop** (manual, or an early-stop point) returns to the marker
-  while it's set. Once the host clears it, Stop returns to bar 1 for the
+- **Every Stop** (manual, an early-stop point, or the song's end) returns
+  to the marker while it's set. Once the host clears it, Stop returns to bar 1 for the
   rest of that song in this session.
+- **Playback doesn't loop.** When the song reaches its end, the host's
+  client sends the same Stop as the Stop button, and everyone returns to
+  the Lobby. Until that Stop arrives, each participant's tab holds still at
+  the end rather than starting over (user feedback 2026-11-27).
 - **The host controls the marker** from the Settings modal's Session tab
   ("Start marker", below): set it to a bar, or clear it. Clearing it while
   stopped also sends everyone back to bar 1. Setting it while stopped moves
@@ -760,8 +764,18 @@ identically regardless of which one they're on:
   syllable still being held across the bar line loses its highlight
   there. This replaces the first version, which cleared only in bars with
   no syllable start, so entering a bar whose first syllable came later
-  re-lit the previous word (user feedback). The strip does not move, and
-  the pre-singing placeholder is unaffected. This applies whether or not
+  re-lit the previous word (user feedback). The pre-singing placeholder
+  is unaffected.
+
+  **Empty bars center (2026-11-27)**: entering a bar with no syllable
+  start, after the first syllable has been sung, moves the strip to center
+  that bar, so the words after a long break are visible just right of
+  center (user feedback). With measure markers shown, the bar's marker is
+  centered. Without them, the boundary before the next word is. The strip
+  holds there through any further empty bars (moving marker to marker
+  when markers are shown) until the next syllable starts, which centers
+  as usual. A bar whose first syllable starts later in the bar doesn't
+  move the strip. This applies whether or not
   the measure markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving

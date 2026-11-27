@@ -521,10 +521,23 @@ export function ensurePlaybackEngine(
   let latestSession: Session | null = null;
   let latestSelfId: string | null = null;
 
+  // Song end (user feedback 2026-11-27: playback doesn't loop). alphaTab
+  // finishes and stops on its own, but the session is still 'running', so
+  // correctDrift would call play() and start the song over. The host sends
+  // the same Stop as the Stop button, and every participant holds still at
+  // the end until the session leaves 'running'.
+  let finishedWhileRunning = false;
+  api.playerFinished.on(() => {
+    if (latestSession?.playbackState.status !== 'running') return;
+    finishedWhileRunning = true;
+    if (latestSession.hostId === latestSelfId) wsClient.send({ type: 'playback-control', action: 'stop' });
+  });
+
   clientStore.subscribe((s) => {
     latestSession = s.session;
     latestSelfId = s.selfParticipantId;
     if (!s.session || !api.isReadyForPlayback) return;
+    if (s.session.playbackState.status !== 'running') finishedWhileRunning = false;
 
     // alphaTab's native click-to-seek is already active by default
     // (settings.player.enableUserInteraction) — restrict it to the host,
@@ -575,7 +588,7 @@ export function ensurePlaybackEngine(
       heldClickTick = null;
     }
     const parkState = heldClickTick !== null ? { ...serverState, tickPosition: heldClickTick } : serverState;
-    correctDrift(api, parkState, isHost, (tick) => {
+    if (!finishedWhileRunning) correctDrift(api, parkState, isHost, (tick) => {
       lastProgrammaticTick = tick;
     }, undefined, isBackingParticipant, spotlightHoldingTick);
     applyPlaybackSettings(api, s.session);

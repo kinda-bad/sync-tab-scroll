@@ -77,3 +77,47 @@ test('clears the word highlight at every bar line until the new bar\'s first syl
   await drive(page, 1500);
   await expect(highlighted).toHaveText('late ');
 });
+
+// User feedback 2026-11-27: "the lyrics overlay should center empty measures
+// when they are entered so we can see words coming after a long break".
+// Entering a bar with no syllable start centers that bar (its marker when
+// markers are shown, otherwise the boundary before the next word), so the
+// next words sit just right of center instead of off the right edge.
+const centerOf = (page: Page, selector: string, edge: 'center' | 'left') =>
+  page.evaluate(
+    ([sel, e]) => {
+      const el = document.querySelector(sel)!.getBoundingClientRect();
+      const overlay = document.querySelector('.lyrics-overlay')!.getBoundingClientRect();
+      const x = e === 'left' ? el.left : el.left + el.width / 2;
+      return x - (overlay.left + overlay.width / 2);
+    },
+    [selector, edge] as const,
+  );
+
+test('centers an empty bar on entry, with markers shown', async ({ mount, page }) => {
+  await mountWithMarkers(mount, page);
+  await drive(page, 1200);
+  await drive(page, 2100);
+  await page.waitForTimeout(400);
+  const offset = await centerOf(page, '.lyrics-measure-marker--current', 'center');
+  expect(Math.abs(offset)).toBeLessThanOrEqual(2);
+});
+
+test('centers the boundary before the next word in an empty bar, with markers hidden', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness, { props: { lines: LINES, measures: MEASURES } });
+  await drive(page, 1200);
+  await drive(page, 2100);
+  await page.waitForTimeout(400);
+  // The next word ("again") starts at the center line.
+  const offset = await page.evaluate(() => {
+    const spans = [...document.querySelectorAll('.lyric-syllable:not(.lyrics-placeholder)')];
+    const next = spans.find((s) => s.textContent === 'again ')!.getBoundingClientRect();
+    const overlay = document.querySelector('.lyrics-overlay')!.getBoundingClientRect();
+    return next.left - (overlay.left + overlay.width / 2);
+  });
+  expect(Math.abs(offset)).toBeLessThanOrEqual(2);
+  // And it recenters on that word once it's sung.
+  await drive(page, 3000);
+  await page.waitForTimeout(400);
+  expect(Math.abs(await centerOf(page, '.lyric-syllable.at-highlight', 'center'))).toBeLessThanOrEqual(2);
+});
