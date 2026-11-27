@@ -189,8 +189,39 @@ test('in recording mode, a seeded bar-9 start plays the recording from the sync 
     const api = (window as unknown as { __getApi: () => { player?: { output?: { audioElement?: HTMLAudioElement } } } }).__getApi();
     return api.player!.output!.audioElement!.currentTime * 1000;
   });
+  // The park/start assignments' readback stayed inside the echo tolerance:
+  // no extra seek was broadcast.
+  expect(await seeks(page)).toHaveLength(1);
   // Started at the recording's bar 9 (plus however long the poll took),
   // well short of the notated 16 s.
   expect(audioMs).toBeGreaterThanOrEqual(expectedMs - 50);
   expect(audioMs).toBeLessThan(expectedMs + 1000);
+});
+
+test('a part switch while parked keeps the default start position, and does not re-seed', async ({ mount, page }) => {
+  // Two tracks, two bars: start at bar 2 so there's a track to switch to.
+  // Registered after beforeEach's route, so it takes precedence.
+  const twoTrack = fs.readFileSync(path.resolve(__dirname, '../test-fixtures/two-track-song.gp'));
+  await page.route('**/fixture.gp', (route) => route.fulfill({ body: twoTrack, contentType: 'application/octet-stream' }));
+  await mountReady(mount, page, { defaultStartBar: 2 });
+  const target = await page.evaluate(() => {
+    const api = (window as unknown as Win).__getApi();
+    return api.tickCache.getMasterBarStart(api.score.masterBars[1]);
+  });
+  expect(target).toBe(3840);
+
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: 0 }));
+  await expect.poll(() => seeks(page)).toHaveLength(1);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await expect.poll(() => page.evaluate(() => (window as unknown as Win).__getApi().tickPosition)).toBeGreaterThan(target - 10);
+
+  // Same-api part switch (switchTrack re-renders another track of the same score).
+  await page.evaluate(() => (window as unknown as { __switchPart: (i: number) => void }).__switchPart(1));
+  await page.waitForTimeout(1_500);
+  await pushSession(page, 'host-1', makeSession({ hostId: 'host-1', tickPosition: target }));
+  await page.waitForTimeout(500);
+
+  const after = await page.evaluate(() => (window as unknown as Win).__getApi().tickPosition);
+  expect(Math.abs(after - target)).toBeLessThanOrEqual(10);
+  expect(await seeks(page)).toHaveLength(1);
 });
