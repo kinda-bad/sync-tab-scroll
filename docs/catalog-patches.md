@@ -1913,3 +1913,109 @@ The current placement is already the closer one. A real fix would need either a 
 **Also seen, unchanged.** Bars 38 and 40 are sung about one sixteenth ahead of the tab, 0.2–0.35 s, from the first word of each phrase on. It's the same anticipation over the preceding rest. This isn't the user-verified bridge (bars 62–63), and I made no change.
 
 No files changed.
+
+## Vocal tracks for Low and Lazy Eye: syllable-timed lyrics (2026-11-27)
+
+*Songs:* `kinda-bad-ii/cracker-low` (`Cracker-Low-05-09-2026.gp`) and
+`kinda-bad/silversun-pickups-lazy-eye`
+(`Silversun Pickups-Lazy Eye-06-29-2026.gp`).
+
+*Why:* neither tab has a vocal track, and no instrument track follows the
+sung rhythm closely enough to carry a dispatched lyric line (measured
+earlier the same day: at best 65% of confident words within a 16th for Low,
+81% for Lazy Eye). Both songs therefore had only line-timed lrclib lyrics.
+The user chose to add a vocal track built from the recording.
+
+*The edit:* each `.gp` gets one new track **appended** after the existing
+ones, so no existing `trackIndex` moves: Low track 5 (`David Lowery -
+Vocals`), Lazy Eye track 7 (`Brian - Vocals`). The new track has one plain
+note per sung syllable (no ties, grace notes or slides), rests elsewhere,
+and a raw lyric line with one chunk per note: the existing LRC's lyric
+lines, one raw line each, words cut into syllables with `-`, no `+` or `_`.
+Its sound mirrors the other catalog vocal tracks: Voice Oohs (GM 53), not
+muted, guitar tuning so the tab view shows frets. Nothing else in the file
+changes. Removing the added elements and ids gives back the original
+`score.gpif` byte for byte, and the other zip entries are untouched.
+
+How the notes were made (`tools/catalog-patches/vocal-align.py`,
+`vocal-place.py`, `gp-add-vocal-track.py`; each has a usage docstring):
+1. Syllable starts are found by force-aligning the LRC text against the Demucs
+   vocal stem (wav2vec2, whole song in one pass). Pitch and voicing come from
+   pYIN on the same stem.
+2. Recording ms are mapped to tab ticks through the song's existing
+   `syncPoints` (inverse of the app's mapping). Vowel-initial words are moved
+   140 ms earlier.
+3. Low-score syllables (< 0.3) outside their LRC line's window are
+   interpolated: Low has 2, in bars 54 and 90; Lazy Eye has 1, in bar 64.
+4. Syllables go onto a 16th grid by a monotone DP, so no two share a note.
+   Each note lasts while the voice does, cut to one note value inside the bar.
+5. Pitch is the pYIN median, octave-folded against its neighbors.
+
+Then `extract-lyrics` was run from the patched copy. The raw line has
+several lines, so line breaks come from it (`countSyllables`), no lrclib
+query is made, and `lyrics.lrc` is GP-derived (tab time). `meta.json` gets:
+- `lyricsTrackIndex` 5 / 7;
+- `lyricsRawLine`;
+- `trackNames`;
+- 40 lines / 308 syllables (Low) and 26 lines / 194 syllables (Lazy Eye).
+
+`syncPoints` and every other hand-set key are unchanged. The existing part
+names were reset by the run (neither `meta.json` had `trackNames` yet, and
+the track count changed), so they were restored from the backup. A
+`<Singer> (Vocals)` part was then added. Both are in
+`docs/catalog-part-names.json`.
+
+*Result,* measured the same way as the earlier attempt, against that
+attempt's own alignment. It is the app's shown time (`app-times.ts`) against
+the sung start of each confident word, with the vowel correction:
+
+| Song | Confident | Within a 16th | Beyond an 8th | Max |
+|---|---|---|---|---|
+| Low (16th = 172 ms) | 190 words | 100% | 0% | 86 ms |
+| Lazy Eye (16th = 118 ms) | 91 word starts | 100% | 0% | 92 ms |
+| Lazy Eye, all confident syllables | 118 | 96.6% | 0% | 197 ms |
+
+This bar is close to circular. The notes were placed from the same kind of
+alignment, so it mostly measures quantization. The cross-check is
+independent but weak: how many shown syllables fall within a 16th of an
+onset detected in the vocal stem.
+- Low: 85.7% of all 308 syllables, against 61% by chance.
+- Lazy Eye: 74.2% of all 194, against 55% by chance.
+
+The places most worth checking by ear are where the aligner was unsure:
+- Low, outro bars 82–97;
+- Lazy Eye, bars 92–104 and the last lines, bars 176–179.
+
+*Reapplying:* backups of the three original files are in the gitignored
+`catalog-originals/<collection>/<song>/pre-vocal-2026-11-27/`. The build
+inputs are in `…/vocal-build-2026-11-27/`, local only because they contain
+lyric text: `align.json`, `split-spec.json`, `notes.json`, `raw-line.txt`.
+From the repo root, with `S=kinda-bad-ii/cracker-low`,
+`G=Cracker-Low-05-09-2026.gp`, `N="David Lowery - Vocals"` (or
+`S=kinda-bad/silversun-pickups-lazy-eye`,
+`G="Silversun Pickups-Lazy Eye-06-29-2026.gp"`, `N="Brian - Vocals"`):
+
+```sh
+B=catalog-originals/$S/vocal-build-2026-11-27; W=$(mktemp -d)
+python3 -I tools/catalog-patches/gp-add-vocal-track.py \
+  "catalog-originals/$S/pre-vocal-2026-11-27/$G" $B/notes.json $B/raw-line.txt "$N" "$W/$G"
+pnpm --filter @sync-tab-scroll/pipeline extract-lyrics "$W/$G" "$PWD/catalog/${S%/*}"
+# then reapply the part names (see "Part names" above)
+```
+
+To rebuild `notes.json` and `raw-line.txt` from scratch, use the same LRC,
+spec and stem. This needs the alignment venv; see `tools/timing/README.md`,
+plus `librosa` and `pyphen`.
+- `vocal-align.py <pre-vocal lyrics.lrc> $B/split-spec.json <vocals.wav> align.json`
+- `vocal-place.py align.json <pre-vocal lyrics.lrc> <pre-vocal meta.json> <pre-vocal .gp> <out dir>`
+
+Expected sha256 after the patch:
+
+| File | sha256 |
+|---|---|
+| Low `.gp` | `ca196168f0591fc2315ae724818cc0957f30c5531b116f7bc6ac232e698a56a3` |
+| Low `lyrics.lrc` | `f4209a38805d49981f247357d5e099978e24e2af1920800f0fac72d6b4e8d80c` |
+| Lazy Eye `.gp` | `780a12645e32a7be2d1ba3eb93baee98c5cfa9393773231f46f2e5d6a07d1990` |
+| Lazy Eye `lyrics.lrc` | `7a4f01fd358158fc8b1096ccfda9830db627cdbf743566e604a9db4c26ef8089` |
+
+Originals: Low `.gp` `f8a2c139…5e65`, Lazy Eye `.gp` `f77a3aeb…92ff`.
