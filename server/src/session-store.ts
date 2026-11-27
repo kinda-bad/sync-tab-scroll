@@ -78,6 +78,7 @@ export class SessionStore {
       unlockedCatalogueIds: [],
       hostBarsPerRow: null,
       earlyStopTick: null,
+      startMarkerBar: null,
     };
     this.sessions.set(code, session);
     this.keyUnlocked.set(code, new Set());

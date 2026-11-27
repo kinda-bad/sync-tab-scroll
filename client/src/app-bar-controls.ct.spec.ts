@@ -48,6 +48,7 @@ function instrumentSession(view: 'lobby' | 'playback'): Session {
     unlockedCatalogueIds: [],
     hostBarsPerRow: null,
     earlyStopTick: null,
+    startMarkerBar: null,
   };
 }
 

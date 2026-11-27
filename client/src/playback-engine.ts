@@ -1,7 +1,7 @@
 import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
 import { PlayerMode } from '@coderline/alphatab';
-import type { CatalogSong, Session } from '@sync-tab-scroll/shared';
+import { playbackOrderOf, unrollSyllables, type CatalogSong, type Session } from '@sync-tab-scroll/shared';
 import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
@@ -11,7 +11,9 @@ import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
-import { findLyricGaps, computeMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
+import { findLyricGaps, playbackMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
+import { lrcToTabTime } from './lrc-time-base';
+import { lyricLineDisplayText } from './lyric-line-text';
 
 interface GapIndicatorHandle {
   gap: LyricGap;
@@ -27,6 +29,7 @@ import { debounce } from './debounce';
 import { writable } from 'svelte/store';
 import * as atLib from '@coderline/alphatab';
 import { beatAtTick, beatDurationMs } from './beat-clock';
+import { createDefaultStartSeeder, defaultStartTick } from './default-start';
 
 /** Beat state feeding the Bar's beat widget (ui.md Count-In & Metronome Beat Widget) — real beat boundaries, never a fixed-interval timer. */
 export interface BeatWidgetState {
@@ -91,6 +94,16 @@ interface EngineState {
 }
 
 let state: EngineState | undefined;
+
+/** How far a seek event's tick may sit from the tick this module just assigned and still count as that assignment's echo (see the seek-broadcast listener). */
+const PROGRAMMATIC_SEEK_TOLERANCE_TICKS = 10;
+
+/**
+ * One start-marker seeder for the page, not per engine
+ * (per-song-default-start-point): an engine rebuild for a part or audio-source
+ * switch must not re-seek over a position the host already moved.
+ */
+const seedDefaultStart = createDefaultStartSeeder();
 
 /**
  * Creates the alphaTab/headless instance the moment a participant's part is
@@ -163,6 +176,19 @@ export function ensurePlaybackEngine(
   // so the guard has nothing to protect against.
   if (!isRecording) installCountInCursorGuard(api);
 
+  // Every Start scrolls to the cursor, the first one too (ui.md "Cursor
+  // follow on Start"). alphaTab skips a follow scroll to the row it last
+  // scrolled to, and a render after the tick cache exists records the
+  // parked cursor's row as scrolled even while stopped; if the page moves
+  // after that (the Lobby's content goes at Start, the user scrolls), the
+  // first Start's row is not scrolled to until the next row. (After a Start
+  // and Stop the memo holds a later row, so the second Start worked.)
+  // scrollToCursor() force-scrolls and clears the memo, as alphaTab itself
+  // does on a pause.
+  api.playerStateChanged.on((e) => {
+    if (e.state === atLib.synth.PlayerState.Playing) api.scrollToCursor();
+  });
+
   state = { api, songId: song.id, playbackSource, isLyricsPart, trackIndex, theme, showOverlay: true, scoreLoaded: false, renderedWhileVisible: isLyricsPart };
   // A fresh engine always starts with the overlay shown (matches
   // `showOverlay: true` above) — resets any stale `false` left over from a
@@ -217,15 +243,25 @@ export function ensurePlaybackEngine(
     const lyricsLineIndex = song.lyricsLineIndex;
     const lyricLineBreaks = song.lyricLineBreaks;
     const rawLine = song.lyricsRawLine;
-    api.scoreLoaded.on((score) => {
+    // Built on midiLoad, not scoreLoaded: syllables and measure markers go
+    // on the playback timeline (repeats expanded, infrastructure.md In-Tab
+    // Lyrics Overlay), and alphaTab's playback order (`api.tickCache`) only
+    // exists once the MIDI is generated. Once per engine: a later MIDI
+    // regeneration plays the same score in the same order.
+    api.midiLoad.on(() => {
+      const score = api.score;
+      const tickCache = api.tickCache;
+      if (state!.overlay || !score || !tickCache) return;
       // GP-semantics dispatch from the published raw line when present
       // (feedback F001); per-beat walkSyllables stays the legacy fallback.
       const syllables = rawLine
         ? walkLyricBeatsFromRawLine(score, lyricsTrackIndex, rawLine)
         : walkLyricBeats(score, lyricsTrackIndex, lyricsLineIndex);
-      const lines = groupIntoLines(syllables, lyricLineBreaks);
-      const measures = computeMeasureBoundaries(score);
-      state!.overlay = createLyricsOverlay(api, lines, containers.overlayContainer, { measures });
+      const written = groupIntoLines(syllables, lyricLineBreaks).flat();
+      const order = playbackOrderOf(score, tickCache);
+      const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
+      const measures = playbackMeasureBoundaries(order.plays);
+      state!.overlay = createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && song.lyricsLrc) {
@@ -233,7 +269,7 @@ export function ensurePlaybackEngine(
     let lineEls: HTMLElement[] = [];
     let activeLineIndex = -1;
     let gapScore: at.model.Score | undefined; // Set once the headless instance's scoreLoaded fires (may race the .lrc fetch below).
-    let pendingAllLines: LrcLine[] | undefined; // The full (blank-gap-marker-included) parsed list, set once the .lrc fetch resolves.
+    let pendingAllLines: LrcLine[] | undefined; // The full (blank-gap-marker-included) parsed list, set once the .lrc fetch resolves — times as written in the .lrc.
     let gaps: LyricGap[] = [];
     let gapIndicators: GapIndicatorHandle[] = [];
 
@@ -265,9 +301,16 @@ export function ensurePlaybackEngine(
     // score's masterBars/tempo data) — these resolve independently and in
     // no guaranteed order, so this is called from both completion points
     // and only actually computes once both are available.
+    // Also where the .lrc's times move to tab time (infrastructure.md Lyrics
+    // time base): an lrclib .lrc is recording time, converted through the
+    // song's sync points, which needs the score. Both the active-line match
+    // and the gap indicators read the converted list, never the raw one.
     function tryComputeGaps(): void {
       if (!gapScore || !pendingAllLines) return;
-      gaps = findLyricGaps(gapScore, pendingAllLines);
+      const toTabTime = lrcToTabTime(song, gapScore);
+      const timedLines = pendingAllLines.map((line) => ({ ...line, timeMs: toTabTime(line.timeMs) }));
+      lrcLines = timedLines.filter((l) => l.text.length > 0);
+      gaps = findLyricGaps(gapScore, timedLines);
       renderGapIndicators();
     }
 
@@ -355,7 +398,7 @@ export function ensurePlaybackEngine(
         lineEls = lrcLines.map((line) => {
           const el = document.createElement('div');
           el.className = 'lyric-line';
-          el.textContent = line.text;
+          el.textContent = lyricLineDisplayText(song, line.text);
           containers.fullLyricsEl.appendChild(el);
           return el;
         });
@@ -469,13 +512,32 @@ export function ensurePlaybackEngine(
   let lastAppliedInteraction: boolean | undefined;
   let lastProgrammaticTick: number | null = null;
   let lastAppliedSpotlightTick: number | null = null;
+  // The host's own click while stopped (per-song-default-start-point), held
+  // as its local park target until the server echoes it back as
+  // playbackState.tickPosition — otherwise correctDrift's stopped park would
+  // snap the cursor back to the old position for the length of the debounced
+  // seek's round trip. Cleared on the echo, or once the session leaves stopped.
+  let heldClickTick: number | null = null;
   let latestSession: Session | null = null;
   let latestSelfId: string | null = null;
+
+  // Song end (user feedback 2026-11-27: playback doesn't loop). alphaTab
+  // finishes and stops on its own, but the session is still 'running', so
+  // correctDrift would call play() and start the song over. The host sends
+  // the same Stop as the Stop button, and every participant holds still at
+  // the end until the session leaves 'running'.
+  let finishedWhileRunning = false;
+  api.playerFinished.on(() => {
+    if (latestSession?.playbackState.status !== 'running') return;
+    finishedWhileRunning = true;
+    if (latestSession.hostId === latestSelfId) wsClient.send({ type: 'playback-control', action: 'stop' });
+  });
 
   clientStore.subscribe((s) => {
     latestSession = s.session;
     latestSelfId = s.selfParticipantId;
     if (!s.session || !api.isReadyForPlayback) return;
+    if (s.session.playbackState.status !== 'running') finishedWhileRunning = false;
 
     // alphaTab's native click-to-seek is already active by default
     // (settings.player.enableUserInteraction) — restrict it to the host,
@@ -518,10 +580,39 @@ export function ensurePlaybackEngine(
     // normally in every other case — including once spotlightMode or
     // lobbyCursorTick clears again.
     const spotlightHoldingTick = s.session.spotlightMode && s.session.lobbyCursorTick !== null;
-    correctDrift(api, s.session.playbackState, isHost, (tick) => {
+    const serverState = s.session.playbackState;
+    if (
+      heldClickTick !== null &&
+      (!isHost || serverState.status !== 'stopped' || Math.abs(serverState.tickPosition - heldClickTick) <= PROGRAMMATIC_SEEK_TOLERANCE_TICKS)
+    ) {
+      heldClickTick = null;
+    }
+    const parkState = heldClickTick !== null ? { ...serverState, tickPosition: heldClickTick } : serverState;
+    if (!finishedWhileRunning) correctDrift(api, parkState, isHost, (tick) => {
       lastProgrammaticTick = tick;
     }, undefined, isBackingParticipant, spotlightHoldingTick);
     applyPlaybackSettings(api, s.session);
+
+    // Start marker (per-song-default-start-point, ui.md): the server holds
+    // Session.startMarkerBar as a bar, and the host's client is the only one
+    // that can map it to a tick (the server never parses the .gp), so it
+    // moves playbackState.tickPosition there through the ordinary seek relay.
+    // The broadcast echo then parks every client there (correctDrift's
+    // stopped branch), and Start plays from it, in recording mode too: the
+    // running branch assigns api.tickPosition and alphaTab maps it through
+    // the sync points to the recording's time.
+    if (s.session.selectedSong === song.id) {
+      const markerBar = s.session.startMarkerBar ?? null;
+      const seekTo = seedDefaultStart({
+        status: s.session.playbackState.status,
+        songId: song.id,
+        markerBar,
+        serverTick: s.session.playbackState.tickPosition,
+        isHost,
+        startTick: defaultStartTick(api.score, api.tickCache, markerBar ?? undefined),
+      });
+      if (seekTo !== null) wsClient.send({ type: 'playback-control', action: 'seek', tickPosition: seekTo });
+    }
 
     // Spotlight mode (ui.md "lobby cursor"): force this participant's view
     // to follow the host's lobbyCursorTick only while the host-only toggle
@@ -554,11 +645,31 @@ export function ensurePlaybackEngine(
   const debouncedSendSeek = debounce((tickPosition: number) => {
     wsClient.send({ type: 'playback-control', action: 'seek', tickPosition });
   }, 150);
+  //
+  // Only a seek that follows a real click on the tab is broadcast
+  // (per-song-default-start-point): alphaTab's beatMouseDown fires on the
+  // press, and click-to-seek assigns the tick on the release. Without this
+  // gate, alphaTab's own late seek event after a Stop's pause() — landing on
+  // some earlier position, not the park target — went out as a host seek,
+  // moving the session's stopped position (and so where Start plays from,
+  // and where the start marker's seek had just put everyone) to a stray tick.
+  let clickSeekArmed = false;
+  api.beatMouseDown.on(() => {
+    clickSeekArmed = true;
+  });
   api.playerPositionChanged.on((e) => {
     if (!e.isSeek) return;
     if (!api.isReadyForPlayback) return;
-    if (e.currentTick === lastProgrammaticTick) return;
+    // Within a few ticks, not exact: alphaTab's worker settles an assigned
+    // tickPosition near, not on, the value (set 1920, reads back 1921), so
+    // an exact match re-broadcast the host's own stopped-state park
+    // (per-song-default-start-point) as a fresh seek. A real click lands on
+    // a beat, never this close to the tick just applied.
+    if (lastProgrammaticTick !== null && Math.abs(e.currentTick - lastProgrammaticTick) <= PROGRAMMATIC_SEEK_TOLERANCE_TICKS) return;
     if (!latestSession || latestSession.hostId !== latestSelfId) return;
+    if (!clickSeekArmed) return;
+    clickSeekArmed = false;
+    if (latestSession.playbackState.status === 'stopped') heldClickTick = e.currentTick;
     debouncedSendSeek(e.currentTick);
   });
 

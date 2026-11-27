@@ -492,10 +492,14 @@ test('debounces rapid host seeks into a single broadcast carrying the last tick'
 
   await page.evaluate(() => {
     const api = (window as unknown as {
-      __getApi: () => { playerPositionChanged: { trigger: (e: unknown) => void } };
+      __getApi: () => { playerPositionChanged: { trigger: (e: unknown) => void }; beatMouseDown: { trigger: (beat: unknown) => void } };
     }).__getApi();
-    const trigger = (currentTick: number) =>
+    // Each synthetic seek follows a click press, as a real click-to-seek does
+    // (only click-originated seeks are broadcast).
+    const trigger = (currentTick: number) => {
+      api.beatMouseDown.trigger(null);
       api.playerPositionChanged.trigger({ currentTime: 0, endTime: 10, currentTick, endTick: 0, isSeek: true, originalTempo: 120, modifiedTempo: 120 });
+    };
     trigger(100);
     trigger(200);
     trigger(300);

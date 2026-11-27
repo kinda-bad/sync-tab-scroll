@@ -1,7 +1,9 @@
 ---
 slug: per-song-default-start-point
-status: backlogged
+status: implemented
 logged: 2026-11-26
+plan: plan-per-song-default-start-point-2026-11-26-5e1d.md
+tasks: tasks-per-song-default-start-point-5e1d.md
 ---
 
 Let a song carry a default start point, so selecting it puts the lobby
@@ -26,3 +28,8 @@ ticker need anything for a mid-song start, such as showing the upcoming
 line straight away?
 Why: the band never plays 1979's intro, so every run-through starts with
 the host scrubbing to the same spot.
+Resolved 2026-11-27 (user): bar 9 for 1979. "As long as the default start
+marker hasn't been cleared for the session, stop should return there. Host
+should control it. It should be clearable." Built as a session start marker
+(`Session.startMarkerBar`) seeded from `defaultStartBar` (ui.md Default start
+point and start marker).

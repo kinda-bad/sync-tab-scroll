@@ -1,5 +1,6 @@
 import type { WebSocket } from 'ws';
 import type { ClientMessage } from '@sync-tab-scroll/shared';
+import { isRecordingCapable } from '@sync-tab-scroll/shared';
 import type { HandlerContext } from './context.js';
 
 export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message: Extract<ClientMessage, { type: 'song-select' }>): void {
@@ -38,17 +39,26 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
   if (session.selectedSong !== song.id) {
     session.selectedSong = song.id;
     session.availableParts = song.parts;
-    // A different song resets the audio source to synth (datamodel.md
-    // Session.playbackSource): the previous song's recording has no bearing on
-    // the new one, and the new song may not be recording-capable at all. An
-    // unconditional reset subsumes both "song changed" and "new song isn't
-    // recording-capable" — a song can't become non-recording-capable without a
-    // song change.
-    session.playbackSource = 'synth';
+    // A different song sets the audio source from the new song alone
+    // (datamodel.md Session.playbackSource, default-to-recording-source): its
+    // recording when it ships one, the synth otherwise. The previous song's
+    // source, including a host's switch to synth, has no bearing on the new
+    // song, and a song can't become non-recording-capable without a song
+    // change. The host can still switch this song to synth afterward.
+    session.playbackSource = isRecordingCapable(song) ? 'recording' : 'synth';
     // Host-mandated bars-per-row pin and early-stop point are per-song
     // settings (datamodel.md), same reset-on-song-change pattern.
     session.hostBarsPerRow = null;
     session.earlyStopTick = null;
+    // The start marker is seeded from the new song's own defaultStartBar
+    // (null when it has none). A same-song re-select skips this whole block,
+    // so a marker the host cleared stays cleared (per-song-default-start-point).
+    session.startMarkerBar = song.defaultStartBar ?? null;
+    // The start position is per-song too: a tick seeded or clicked on the old
+    // song means nothing in the new one. The host's client seeks to the new
+    // start marker, if any, from this 0.
+    session.playbackState.tickPosition = 0;
+    session.playbackState.serverTimestamp = Date.now();
     // Selecting a genuinely different song resets every participant's
     // part/readiness — a part id/index from the old song's parts has no
     // guaranteed meaning against the new song's parts.

@@ -151,6 +151,17 @@
     wsClient?.send({ type: 'early-stop-set', tickPosition: null });
   }
 
+  // Start marker (per-song-default-start-point): the bar every Stop returns
+  // to while it's set. Same host-only WS set/clear shape as the early-stop
+  // point above; the server validates the bar (a whole number, 1 or more).
+  let startMarkerInput = 1;
+  function setStartMarker() {
+    wsClient?.send({ type: 'start-marker-set', bar: startMarkerInput });
+  }
+  function clearStartMarker() {
+    wsClient?.send({ type: 'start-marker-set', bar: null });
+  }
+
   // Personal, this-device-only (ui.md Preferences tab): persists like the
   // theme choice and applies to the live engine immediately; never a WS send.
   // feedback-recording-mode-metronome-lock-reconsidered-c415 F001: no longer
@@ -321,6 +332,22 @@
     {/if}
   {:else if activeTab === 'session'}
     {#if session}
+      <!-- Start marker: the readout is for everyone, the controls host-only. -->
+      <span class="section-label">Start marker</span>
+      {#if session.startMarkerBar !== null}
+        <p class="hint">Stop returns to bar {session.startMarkerBar}.</p>
+      {:else}
+        <p class="hint">No start marker. Stop returns to bar 1.</p>
+      {/if}
+      {#if isHost}
+        <div class="control-row">
+          <input type="number" min="1" step="1" bind:value={startMarkerInput} class="start-marker-input" aria-label="Start marker bar" />
+          <Button variant="ghost" label="Set start marker" onclick={setStartMarker} />
+          <Button variant="ghost" label="Clear start marker" onclick={clearStartMarker} />
+        </div>
+        <p class="hint">Picking a song sets this from the song's default start bar, if it has one. Clicking the tab while stopped moves everyone's cursor for the next Start, without changing the marker.</p>
+      {/if}
+
       <span class="section-label">Lobby cursor</span>
       {#if session.lobbyCursorTick !== null}
         <p class="hint">Host is pointing at tick {session.lobbyCursorTick}.</p>
@@ -553,7 +580,8 @@
   }
 
   .cursor-input,
-  .early-stop-input {
+  .early-stop-input,
+  .start-marker-input {
     font-family: var(--font-mono);
     background: var(--surface);
     border: 1px solid var(--border);

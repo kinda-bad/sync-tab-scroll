@@ -14,7 +14,7 @@ export interface LyricsOverlay {
 }
 
 export interface LyricsOverlayOptions {
-  /** Measure-boundary tick data (lyrics-gap-timing.ts's computeMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
+  /** Measure-boundary tick data (lyrics-gap-timing.ts's playbackMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
   measures?: MeasureBoundary[];
 }
 
@@ -22,7 +22,9 @@ export interface LyricsOverlayOptions {
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
  * right now, using brand.md's `.at-highlight` active/base color roles.
  * Driven by `api.playerPositionChanged` (tick position) compared against
- * the flat syllable stream from lyrics-beat-walk.ts, not alphaTab's own
+ * the flat syllable stream from lyrics-beat-walk.ts, already placed on
+ * the playback timeline by the caller (`unrollSyllables`, so a repeated
+ * bar's syllables appear once per pass), not alphaTab's own
  * per-beat SVG groups — toggle-able independent of which track is
  * currently rendered, since the lyrics-bearing track need not be the one
  * on screen (infrastructure.md).
@@ -104,12 +106,24 @@ export function createLyricsOverlay(
     return marker;
   });
 
+  // Measures in playback order (ui.md "Measure markers"): the word
+  // highlight clears at each bar line (below).
+  const measures = options.measures ?? [];
+  // Which measures start at least one syllable: measure i spans
+  // [measures[i].tick, measures[i + 1].tick). One that starts none is an
+  // empty bar, which the strip centers on entry (below).
+  const measureStartsSyllable = measures.map((measure, i) => {
+    const end = measures[i + 1]?.tick ?? Infinity;
+    return flat.some((s) => s.tickPosition >= measure.tick && s.tickPosition < end);
+  });
+
   let measureMarkersVisible = loadStoredMeasureMarkers();
   markerEls.forEach((el) => {
     el.style.display = measureMarkersVisible ? '' : 'none';
   });
 
   let activeIndex = -1;
+  let currentMeasure = -1;
 
   // Rect-based (not offsetLeft/clientWidth-based): those turned out to
   // disagree with real screen position by exactly `.lyrics-overlay`'s
@@ -122,15 +136,37 @@ export function createLyricsOverlay(
   // again before a previous transition has visually settled — the
   // computed value mid-transition is the actual current interpolated
   // state, unlike a remembered target.
-  function centerActiveSyllable(): void {
-    const activeSpan = activeIndex < 0 ? placeholder : spans[activeIndex];
-    const currentTranslateX = new DOMMatrix(getComputedStyle(track).transform).m41;
+  function centerOnX(untransformedX: number): void {
     const overlayRect = overlay.getBoundingClientRect();
-    const spanRect = activeSpan.getBoundingClientRect();
-    const untransformedSpanCenter = spanRect.left - currentTranslateX + spanRect.width / 2;
     const overlayCenter = overlayRect.left + overlayRect.width / 2;
-    const translateX = overlayCenter - untransformedSpanCenter;
-    track.style.transform = `translateX(${translateX}px)`;
+    track.style.transform = `translateX(${overlayCenter - untransformedX}px)`;
+  }
+  function untransformedLeft(el: HTMLElement): number {
+    return el.getBoundingClientRect().left - new DOMMatrix(getComputedStyle(track).transform).m41;
+  }
+  function centerActiveSyllable(): void {
+    if (centeredEmptyMeasure !== null) {
+      centerEmptyMeasure(centeredEmptyMeasure);
+      return;
+    }
+    const activeSpan = activeIndex < 0 ? placeholder : spans[activeIndex];
+    centerOnX(untransformedLeft(activeSpan) + activeSpan.getBoundingClientRect().width / 2);
+  }
+  // Empty bars (user feedback 2026-11-27: "center empty measures when they
+  // are entered so we can see words coming after a long break"): entering a
+  // bar with no syllable start centers that bar: its marker when markers
+  // are shown, otherwise the boundary before the next word. The words after
+  // the break then sit just right of center. Held until the next syllable
+  // starts, which centers as usual.
+  let centeredEmptyMeasure: number | null = null;
+  function centerEmptyMeasure(measure: number): void {
+    const marker = markerEls[measure];
+    if (measureMarkersVisible && marker) {
+      centerOnX(untransformedLeft(marker) + marker.getBoundingClientRect().width / 2);
+      return;
+    }
+    const next = spans[activeIndex + 1];
+    if (next) centerOnX(untransformedLeft(next));
   }
 
   // T003 (feedback F005): the guard against a `tickPosition === 0` entry
@@ -165,15 +201,46 @@ export function createLyricsOverlay(
       if (flat[i].tickPosition <= tickPosition) index = i;
       else break;
     }
-    if (index === activeIndex) return;
-    if (activeIndex < 0 && index >= 0) {
-      placeholder.classList.remove('at-highlight');
-      placeholder.style.display = 'none';
+    updateCurrentMeasure(tickPosition);
+    if (index !== activeIndex) {
+      if (activeIndex < 0 && index >= 0) {
+        placeholder.classList.remove('at-highlight');
+        placeholder.style.display = 'none';
+      }
+      if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
+      activeIndex = index;
+      centeredEmptyMeasure = null;
+      centerActiveSyllable();
     }
-    if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
-    if (index >= 0) spans[index].classList.add('at-highlight');
-    activeIndex = index;
-    centerActiveSyllable();
+    // Before the first syllable the placeholder stays centered.
+    if (activeIndex >= 0 && currentMeasure >= 0 && !measureStartsSyllable[currentMeasure] && centeredEmptyMeasure !== currentMeasure) {
+      centeredEmptyMeasure = currentMeasure;
+      centerEmptyMeasure(currentMeasure);
+    }
+    // Bar-line clearing (ui.md "Measure markers", user feedback
+    // 2026-11-27): a syllable stays highlighted only within the bar it
+    // starts in. At each bar line the highlight clears until that bar's
+    // first syllable starts, whether or not the bar has any. No
+    // per-syllable end times: it clears even if the syllable is still
+    // sounding. The strip stays where it is, and the placeholder is
+    // unaffected.
+    const stale = currentMeasure >= 0 && activeIndex >= 0 && flat[activeIndex].tickPosition < measures[currentMeasure].tick;
+    if (activeIndex >= 0) spans[activeIndex].classList.toggle('at-highlight', !stale);
+  }
+
+  // The measure containing the playback tick gets the current-bar style
+  // (ui.md "Measure markers"). Measures are in playback order, so a
+  // repeated measure's own marker for this pass is the one marked.
+  function updateCurrentMeasure(tickPosition: number): void {
+    let index = -1;
+    for (let i = 0; i < measures.length; i++) {
+      if (measures[i].tick <= tickPosition) index = i;
+      else break;
+    }
+    if (index === currentMeasure) return;
+    if (currentMeasure >= 0) markerEls[currentMeasure].classList.remove('lyrics-measure-marker--current');
+    if (index >= 0) markerEls[index].classList.add('lyrics-measure-marker--current');
+    currentMeasure = index;
   }
 
   // Synchronous initial paint (T005): centered and highlighted before any
@@ -192,9 +259,33 @@ export function createLyricsOverlay(
   const resizeHandler = () => centerActiveSyllable();
   window.addEventListener('resize', resizeHandler);
 
+  // Top position takes its own space (ui.md "Lyrics ticker position"):
+  // the container — first in the tab view's flow (App.svelte) — is given
+  // the strip's bottom edge (its height plus the hazard-strip clearance it
+  // is pinned below) as its height, so the tab starts beneath it even at
+  // the very top of the page, and alphaTab's own
+  // `player.scrollOffsetY` shifts every auto-scroll down by the strip's
+  // bottom edge, so the current bar's row lands beneath it rather than
+  // behind it. alphaTab's scroll handlers read the setting at scroll time,
+  // so no updateSettings() (and no re-render) is needed. A ResizeObserver
+  // keeps both in step with the strip's real height (font-size preference,
+  // desktop breakpoint). Bottom stays an overlay: auto-scroll aligns the
+  // current row to the top, so a bottom strip never covers it, and the
+  // tab view's padding-bottom already clears its last rows.
+  function applyTopReserve(): void {
+    const isTop = overlay.classList.contains('lyrics-overlay--top') && overlay.style.display !== 'none';
+    const rect = overlay.getBoundingClientRect();
+    container.style.height = isTop ? `${Math.ceil(rect.bottom)}px` : '';
+    if (api.settings) api.settings.player.scrollOffsetY = isTop ? -Math.ceil(rect.bottom) : 0;
+  }
+  const reserveObserver = new ResizeObserver(() => applyTopReserve());
+  reserveObserver.observe(overlay);
+  applyTopReserve();
+
   return {
     setVisible(visible: boolean) {
       overlay.style.display = visible ? '' : 'none';
+      applyTopReserve();
     },
     setFontSize(size: LyricsTickerFontSize) {
       overlay.dataset.lyricsSize = size;
@@ -203,16 +294,23 @@ export function createLyricsOverlay(
       overlay.classList.toggle('lyrics-overlay--top', position === 'top');
       // The strip's pixel geometry moved — recenter against the new rect.
       centerActiveSyllable();
+      applyTopReserve();
     },
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;
       markerEls.forEach((el) => {
         el.style.display = visible ? '' : 'none';
       });
+      // Markers change the track's widths, and an empty bar centers on its
+      // marker only while markers are shown.
+      centerActiveSyllable();
     },
     destroy() {
       api.playerPositionChanged.off(handler);
       window.removeEventListener('resize', resizeHandler);
+      reserveObserver.disconnect();
+      container.style.height = '';
+      if (api.settings) api.settings.player.scrollOffsetY = 0;
       overlay.remove();
     },
   };

@@ -268,6 +268,42 @@ jq --slurpfile map docs/catalog-part-names.json --arg k "$k" \
 
 When adding a new song, add its entry to the map in the same form.
 
+## Default start bar — `defaultStartBar` in `meta.json` (applied 2026-11-26)
+
+*Why:* some songs are never played from bar 1. For 1979 the band skips the
+synth intro, so every run-through used to start with the host scrubbing to
+the same spot. An optional `defaultStartBar` in a song's `meta.json` sets
+the session's start marker when the song is picked, so everyone is parked at
+that bar instead of bar 1, and every Stop returns there. During a session the
+host can move or clear the marker (Settings, Session tab, "Start marker"),
+or click anywhere in the tab before Start, bar 1 included. That never
+changes `meta.json`: the next session, or picking the song again after
+another one, starts from `defaultStartBar` again. See
+`.project/artifacts/ui.md` "Default start point and start marker".
+
+*The value:* a 1-based bar number, as the tab numbers its bars (bar 1 is the
+first bar). It must be a positive integer. Anything else (`0`, `2.5`, `"9"`)
+is logged at server startup and ignored, and the song still loads. A bar
+past the end of the score is ignored too. With repeats, the start is the
+bar's first time through.
+
+| Song (relative to `catalog/`) | `defaultStartBar` | Lands on |
+|---|---|---|
+| `kinda-bad-ii/smashing-pumpkins-1979` | `9` | "Verse 1", just before the first lyric in bar 11 (confirmed by the user, 2026-11-27). |
+
+*The edit:* `extract-lyrics` regenerates `meta.json` without this field, so
+reapply it after re-running the pipeline on a listed song (from the repo
+root):
+
+```sh
+f=catalog/kinda-bad-ii/smashing-pumpkins-1979/meta.json
+jq '.defaultStartBar = 9' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+```
+
+To remove it: `jq 'del(.defaultStartBar)'`. The server reads `meta.json` at
+startup (and on an authoring rescan), so restart it after an edit. On the
+Railway deployment, the volume's copy of the file needs the same edit.
+
 ## Recording sync points — Creep, Last Nite, Teenagers `meta.json` (applied 2026-11-26)
 
 *Why:* these recordings had only two placeholder sync points (bar 1 at the

@@ -236,6 +236,10 @@
 </div>
 
 <div class="engine-containers" class:visible={hasPart && !isLyricsPart} class:lyrics-overlay-hidden={!$clientStore.lyricsOverlayVisible}>
+  <!-- First in flow: with the ticker at the top, lyrics-overlay.ts sizes
+       this container to the strip so the tab starts beneath it (ui.md
+       "Lyrics ticker position"). Empty-height otherwise. -->
+  <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
   <div bind:this={tabContainer} class="tab-container"></div>
   {#if session?.earlyStopTick !== null && session?.earlyStopTick !== undefined}
     <!-- Host early-stop point (host-set-early-stop-point-for): a visual cue,
@@ -253,7 +257,6 @@
          judgment. -->
     <div class="early-stop-dimmed" aria-hidden="true"></div>
   {/if}
-  <div bind:this={overlayContainer} class="lyrics-overlay-container"></div>
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart}></div>
 

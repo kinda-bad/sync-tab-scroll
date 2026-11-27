@@ -1,6 +1,7 @@
 export * from './messages.js';
 export * from './lyrics-walk.js';
 export * from './lyrics-dispatch.js';
+export * from './lyrics-unroll.js';
 
 // --- Recording sync anchors (datamodel.md FlatSyncPoint) ---
 // alphaTab's OWN named type, re-exported rather than redefined (constitution
@@ -195,6 +196,13 @@ export interface CatalogSong {
    * (datamodel.md CatalogSong; T009).
    */
   syncPoints: FlatSyncPoint[] | null;
+  /**
+   * 1-based bar number a run-through starts at (per-song-default-start-point),
+   * set by hand in `meta.json`. Selecting the song seeds the session's start
+   * marker (`Session.startMarkerBar`) from it. Omitted when absent or invalid
+   * (datamodel.md CatalogSong).
+   */
+  defaultStartBar?: number;
 }
 
 /**
@@ -229,11 +237,12 @@ export interface Session {
   playbackState: PlaybackState;
   countInEnabled: boolean;
   /**
-   * Which audio every participant plays: the alphaTab synth (default) or the
-   * selected song's operator-supplied recording. Host-only toggle, same pattern
-   * as `countInEnabled`/`spotlightMode`. Session-scoped, deliberately not
-   * per-participant (datamodel.md). Resets to `'synth'` when the selected song
-   * changes or the new song isn't recording-capable.
+   * Which audio every participant plays: the alphaTab synth or the selected
+   * song's operator-supplied recording. Host-only toggle, same pattern as
+   * `countInEnabled`/`spotlightMode`. Session-scoped, deliberately not
+   * per-participant (datamodel.md). `'synth'` until a song is picked; a genuine
+   * song change sets it to `'recording'` when the new song is
+   * recording-capable, else `'synth'` (default-to-recording-source).
    */
   playbackSource: 'synth' | 'recording';
   /** MIDI tick position the host is pointing at pre-playback; null once playback starts. Only force-follows participants' views while spotlightMode is true. */
@@ -248,4 +257,14 @@ export interface Session {
   hostBarsPerRow: number | null;
   /** Host-set tick position past which playback auto-stops for everyone; `null` means no early-stop point is set. Host-only, same pattern as `countInEnabled`/`spotlightMode`. Resets to `null` when the selected song changes. */
   earlyStopTick: number | null;
+  /**
+   * The session's start marker (per-song-default-start-point): the 1-based bar
+   * every Stop returns to while it's set, and where the Lobby parks before the
+   * first Start. Seeded from the selected song's `CatalogSong.defaultStartBar`
+   * on a genuine song change (null when the song has none); host-only set/clear
+   * (`start-marker-set`), same pattern as `earlyStopTick`. Null means Stop
+   * returns to bar 1. The server holds the bar, not a tick — it never parses the
+   * `.gp` — so the host's client maps it to a tick and seeks there (ui.md).
+   */
+  startMarkerBar: number | null;
 }
