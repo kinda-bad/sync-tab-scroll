@@ -31,6 +31,7 @@
 
     let handler: ((e: { currentTick: number }) => void) | undefined;
     const fakeApi = {
+      settings: { player: { scrollOffsetY: 0 } },
       playerPositionChanged: {
         on: (cb: (e: { currentTick: number }) => void) => {
           handler = cb;

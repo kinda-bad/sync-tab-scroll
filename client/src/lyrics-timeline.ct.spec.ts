@@ -81,7 +81,7 @@ test("ticker shows a repeated bar's syllables again on the second pass, and late
 });
 
 test('measure markers follow the playback order (bar numbers repeat on the second pass)', async ({ mount, page }) => {
-  await page.addInitScript(() => localStorage.setItem('sync-tab-scroll:lyrics-measure-markers', 'on'));
+  await page.evaluate(() => localStorage.setItem('sync-tab-scroll:lyrics-measure-markers', 'on'));
   await mount(PlaybackEngineHarness, {
     props: { gpFilePath: '/repeat.gp', trackIndex: 0, songOverrides: { lyricLineBreaks: [8] } },
   });

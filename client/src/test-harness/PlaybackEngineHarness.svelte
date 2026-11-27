@@ -117,6 +117,8 @@
   });
 </script>
 
+<!-- Same order as App.svelte: the overlay container comes first so a top
+     ticker's reserved space sits above the tab. -->
+<div bind:this={overlayContainer} data-testid="overlay-container" class="lyrics-overlay-container"></div>
 <div bind:this={tabContainer} data-testid="tab-container" style={startHidden ? 'display: none' : ''}></div>
-<div bind:this={overlayContainer} data-testid="overlay-container"></div>
 <div bind:this={fullLyricsEl} data-testid="full-lyrics" class="full-lyrics-view" class:visible={isLyricsPart}></div>

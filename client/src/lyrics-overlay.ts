@@ -224,9 +224,33 @@ export function createLyricsOverlay(
   const resizeHandler = () => centerActiveSyllable();
   window.addEventListener('resize', resizeHandler);
 
+  // Top position takes its own space (ui.md "Lyrics ticker position"):
+  // the container — first in the tab view's flow (App.svelte) — is given
+  // the strip's bottom edge (its height plus the hazard-strip clearance it
+  // is pinned below) as its height, so the tab starts beneath it even at
+  // the very top of the page, and alphaTab's own
+  // `player.scrollOffsetY` shifts every auto-scroll down by the strip's
+  // bottom edge, so the current bar's row lands beneath it rather than
+  // behind it. alphaTab's scroll handlers read the setting at scroll time,
+  // so no updateSettings() (and no re-render) is needed. A ResizeObserver
+  // keeps both in step with the strip's real height (font-size preference,
+  // desktop breakpoint). Bottom stays an overlay: auto-scroll aligns the
+  // current row to the top, so a bottom strip never covers it, and the
+  // tab view's padding-bottom already clears its last rows.
+  function applyTopReserve(): void {
+    const isTop = overlay.classList.contains('lyrics-overlay--top') && overlay.style.display !== 'none';
+    const rect = overlay.getBoundingClientRect();
+    container.style.height = isTop ? `${Math.ceil(rect.bottom)}px` : '';
+    if (api.settings) api.settings.player.scrollOffsetY = isTop ? -Math.ceil(rect.bottom) : 0;
+  }
+  const reserveObserver = new ResizeObserver(() => applyTopReserve());
+  reserveObserver.observe(overlay);
+  applyTopReserve();
+
   return {
     setVisible(visible: boolean) {
       overlay.style.display = visible ? '' : 'none';
+      applyTopReserve();
     },
     setFontSize(size: LyricsTickerFontSize) {
       overlay.dataset.lyricsSize = size;
@@ -235,6 +259,7 @@ export function createLyricsOverlay(
       overlay.classList.toggle('lyrics-overlay--top', position === 'top');
       // The strip's pixel geometry moved — recenter against the new rect.
       centerActiveSyllable();
+      applyTopReserve();
     },
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;
@@ -245,6 +270,9 @@ export function createLyricsOverlay(
     destroy() {
       api.playerPositionChanged.off(handler);
       window.removeEventListener('resize', resizeHandler);
+      reserveObserver.disconnect();
+      container.style.height = '';
+      if (api.settings) api.settings.player.scrollOffsetY = 0;
       overlay.remove();
     },
   };
