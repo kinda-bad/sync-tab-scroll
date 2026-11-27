@@ -702,9 +702,13 @@ identically regardless of which one they're on:
   never absent**: when no ticker is available it renders disabled with the
   reason carried in its accessible name/title — "Lyrics part shows the
   full sheet" for a participant on the tab-less Lyrics part (the full
-  sheet replaces the ticker for them), or "No lyrics for this song" when
-  the song has no GP-sourced lyrics track (`CatalogSong.lyricsTrackIndex`
-  absent). This reverses the earlier "absent entirely for a participant
+  sheet replaces the ticker for them), or, when the song has no
+  GP-sourced lyrics track (`CatalogSong.lyricsTrackIndex` absent), "No
+  in-tab lyrics for this song (use the Lyrics part)" if it still has a
+  line-timed `.lrc` (so the Lyrics part is offered), else "No lyrics for
+  this song" (feedback feedback-song-part-control-during-playb-dba8
+  F004: the ticker needs per-syllable timing, which an `.lrc` alone
+  doesn't give). This reverses the earlier "absent entirely for a participant
   on the tab-less Lyrics part" decision — confirmed reversal, feedback
   feedback-icon-refresh-a11y-39d8 F006: a control that vanishes reads as
   a bug; disabled-with-reason keeps the affordance discoverable.

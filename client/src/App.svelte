@@ -132,12 +132,17 @@
   // the source GP file (lyricsTrackIndex) — the tab-less Lyrics part shows
   // the full sheet instead, and a song without a lyrics track has nothing
   // to tick. The bar control stays visible in every case; when unavailable
-  // it is disabled with one of these reasons.
+  // it is disabled with one of these reasons. A song with a line-timed .lrc
+  // but no lyrics track still offers the Lyrics part, so its reason points
+  // there rather than claiming the song has no lyrics (feedback
+  // feedback-song-part-control-during-playb-dba8 F004).
   $: lyricsTickerAvailable = hasPart && !isLyricsPart && catalogSong?.lyricsTrackIndex != null;
   $: lyricsToggleReason = isLyricsPart
     ? 'Lyrics part shows the full sheet'
     : catalogSong?.lyricsTrackIndex == null
-      ? 'No lyrics for this song'
+      ? catalogSong?.lyricsLrc
+        ? 'No in-tab lyrics for this song (use the Lyrics part)'
+        : 'No lyrics for this song'
       : 'Pick a part first';
 
   // Song/part selection lives in a modal (ui.md Lobby View), not inline —

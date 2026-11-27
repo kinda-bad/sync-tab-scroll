@@ -230,6 +230,29 @@ test('song without a lyrics track: Toggle lyrics is present but disabled, with t
   await expect(toggle).toHaveAttribute('aria-label', /No lyrics for this song/);
 });
 
+// feedback-song-part-control-during-playb-dba8 F004: a song with a
+// line-timed .lrc (so the Lyrics part is offered) but no GP lyrics track
+// has no in-tab ticker. "No lyrics for this song" contradicted the Lyrics
+// part sitting right there, so the reason says what's actually missing.
+test('song with an .lrc but no lyrics track: the disabled reason points at the Lyrics part', async ({ mount, page }) => {
+  await mount(AppHarness);
+  const lrcOnlySong: CatalogSong = { ...song, lyricsTrackIndex: null };
+  const session = instrumentSession('lobby');
+  await page.evaluate(
+    ({ session, song, view }) => {
+      const store = (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore;
+      const wsClient = (window as unknown as { __wsClient: unknown }).__wsClient;
+      store.update((s) => ({ ...(s as object), view, session, selfParticipantId: 'p1', catalog: [song], wsClient }));
+    },
+    { session, song: lrcOnlySong, view: 'lobby' },
+  );
+
+  const toggle = page.getByRole('button', { name: /Toggle lyrics/ });
+  await expect(toggle).toBeDisabled();
+  await expect(toggle).toHaveAttribute('aria-label', /No in-tab lyrics for this song \(use the Lyrics part\)/);
+  await expect(toggle).not.toHaveAttribute('aria-label', /No lyrics for this song/);
+});
+
 test('lyrics available + instrument part: Toggle lyrics is enabled with no reason suffix', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'lobby', instrumentSession('lobby'));
