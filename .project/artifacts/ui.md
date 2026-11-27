@@ -764,8 +764,18 @@ identically regardless of which one they're on:
   syllable still being held across the bar line loses its highlight
   there. This replaces the first version, which cleared only in bars with
   no syllable start, so entering a bar whose first syllable came later
-  re-lit the previous word (user feedback). The strip does not move, and
-  the pre-singing placeholder is unaffected. This applies whether or not
+  re-lit the previous word (user feedback). The pre-singing placeholder
+  is unaffected.
+
+  **Empty bars center (2026-11-27)**: entering a bar with no syllable
+  start, after the first syllable has been sung, moves the strip to center
+  that bar, so the words after a long break are visible just right of
+  center (user feedback). With measure markers shown, the bar's marker is
+  centered. Without them, the boundary before the next word is. The strip
+  holds there through any further empty bars (moving marker to marker
+  when markers are shown) until the next syllable starts, which centers
+  as usual. A bar whose first syllable starts later in the bar doesn't
+  move the strip. This applies whether or not
   the measure markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
