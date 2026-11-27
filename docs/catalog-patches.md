@@ -1468,3 +1468,35 @@ cp "$W/lyrics.lrc" "$D/lyrics.lrc"; echo "1979 patch applied"
 | 221 | 134 → 133 | -2659 | -533 | 0.31 |
 | 222 | 134 → 133 | -1919 | -29 | 0.58 |
 
+
+## Recording sync points — Last Nite `meta.json` (re-measured 2026-11-27)
+
+*Why:* the tab cursor ran slightly behind the recording. The earlier points
+came from a fit to word onsets, and the onset aligner and the singer's
+phrasing both sit a little behind the beat. The points are now measured
+from the instruments. Only `syncPoints` changed.
+
+*How the points were measured:*
+- **Instruments.** The tab's note onsets were cross-correlated with Demucs
+  drum, bass and guitar stems in 8-bar windows. The record holds 104.00 bpm.
+  Window-to-window wobble stays within ±18 ms, with no trend.
+- **The ending.** The windows covering bars 77–85 were left out. The
+  recording (193.4 s) ends during bar 84, before the tab does, so those
+  windows run past the audio.
+- **Offset.** The window line puts bar 1 at about 430 ms. A further 10 ms
+  shift brings the drum hit check's median offset to within ±10 ms in every
+  8-bar block.
+- **Drum check.** 83–95% of the tab's drum hits fall within 35 ms of a
+  recording onset in every block. The old points managed 9–81%.
+- **alphaTab replay.** `Score.applyFlatSyncPoints` followed by
+  `MidiFileGenerator.generateSyncPoints` reproduces the intended map to
+  within 0.01 ms.
+
+*The points* (written bars, `barOccurence` 0):
+
+| Point | Old (ms) | New (ms) |
+|---|---|---|
+| Start of bar 1 | 450.2 | 419.6 |
+| End of bar 85 | 196628.2 | 196581.0 |
+
+The old points were 31 ms late at bar 1 and 47 ms late at the end.
