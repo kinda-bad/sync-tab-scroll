@@ -23,4 +23,4 @@ plan: null
   [artifacts: ui]
 
 ## Reconsidered
-- [ ] F003 Change the "Leave session" bar icon from the bone to lucide's `Power` icon. This reverses the earlier icon-refresh decision recorded in `ui.md`'s "Bar controls are icon-based" paragraph ("Leave session" as a `Bone` icon), which itself replaced a log-out icon. Code: `client/src/App.svelte`, the `Bone` import (`./components/icons/BoneFracture.svelte`, a hand-made icon component that becomes unused) and the "Leave session" `Button` in the Bar's `controls` snippet. The accessible name "Leave session" stays. [artifacts: ui]
+- [x] F003 Change the "Leave session" bar icon from the bone to lucide's `Power` icon. This reverses the earlier icon-refresh decision recorded in `ui.md`'s "Bar controls are icon-based" paragraph ("Leave session" as a `Bone` icon), which itself replaced a log-out icon. Code: `client/src/App.svelte`, the `Bone` import (`./components/icons/BoneFracture.svelte`, a hand-made icon component that becomes unused) and the "Leave session" `Button` in the Bar's `controls` snippet. The accessible name "Leave session" stays. [artifacts: ui]

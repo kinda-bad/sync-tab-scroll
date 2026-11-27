@@ -2,7 +2,7 @@
   import type { AccountStatus } from '../account';
   // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001): the account
   // actions carry the door icons — Sign out gets `log-out` (freed up from
-  // the Bar's Leave session, now `bone`), Sign in gets `log-in`. Decorative
+  // the Bar's Leave session, now `power`), Sign in gets `log-in`. Decorative
   // (aria-hidden): the visible text remains the accessible name.
   import LogIn from '@lucide/svelte/icons/log-in';
   import LogOut from '@lucide/svelte/icons/log-out';

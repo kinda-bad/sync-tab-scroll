@@ -26,13 +26,14 @@
   // feedback-bottom-bar-icons-3a15 F003-F006) — lucide-svelte, adopted per
   // Principle V rather than hand-rolled inline SVGs.
   // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): Settings
-  // moved cog → settings; Leave session moved log-out → bone ("breaking up
-  // the band" — log-out now belongs to the account menu's actual Sign out).
+  // moved cog → settings; Leave session moved log-out → bone (log-out now
+  // belongs to the account menu's actual Sign out), then bone → power
+  // (feedback-song-part-control-during-playb-dba8 F003).
   import Settings from '@lucide/svelte/icons/settings';
   import Play from '@lucide/svelte/icons/play';
   import Pause from '@lucide/svelte/icons/pause';
   import Square from '@lucide/svelte/icons/square';
-  import Bone from './components/icons/BoneFracture.svelte';
+  import Power from '@lucide/svelte/icons/power';
   import MicVocal from '@lucide/svelte/icons/mic-vocal';
   import ListMusic from '@lucide/svelte/icons/list-music';
   import Clock from '@lucide/svelte/icons/clock';
@@ -317,7 +318,7 @@
           <Button variant="ghost" label="Stop" iconOnly icon={Square} onclick={stopPlayback} />
         {/if}
       {/if}
-      <Button variant="ghost" label="Leave session" iconOnly icon={Bone} onclick={leaveSession} />
+      <Button variant="ghost" label="Leave session" iconOnly icon={Power} onclick={leaveSession} />
     {/snippet}
     {#snippet status()}
       {#if participant}

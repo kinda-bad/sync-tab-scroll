@@ -315,10 +315,11 @@ space in the persistent bar: "Song & part" renders as a `ListMusic` icon,
 the settings control as a `Settings` (gear) icon (was a cog — feedback
 feedback-icon-refresh-a11y-39d8 F004), the in-tab lyrics toggle as a
 `MicVocal` icon (Playback View, below — also reachable from the Lobby,
-not just Playback, once a part is picked), "Leave session" as a `Bone`
-icon ("breaking up the band" — the exit-door `LogOut`/`LogIn` pair moved
-to the account menu's actual Sign out/Sign in actions, rendered as
-decorative icons beside their text; feedback F001), and the host's
+not just Playback, once a part is picked), "Leave session" as a `Power`
+icon (feedback-song-part-control-during-playb-dba8 F003, replacing an
+earlier `Bone`; the exit-door `LogOut`/`LogIn` pair moved to the account
+menu's actual Sign out/Sign in actions, rendered as decorative icons
+beside their text; feedback F001), and the host's
 transport controls (Playback View, below) as tape-recorder-style symbols
 (play/pause/square). In the Participants list, the host designation
 renders as a `Crown` icon in place of the former "HOST" text badge, with

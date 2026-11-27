@@ -139,15 +139,17 @@ test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render i
 
 // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): icon
 // reassignment. Leave session drops `log-out` (now reserved for the account
-// menu's actual sign-out) for lucide `bone` — "breaking up the band"; the
-// Settings control moves cog → settings.
-test('bar icons: Leave session renders lucide bone, Settings renders lucide settings', async ({ mount, page }) => {
+// menu's actual sign-out); the Settings control moves cog -> settings.
+// feedback-song-part-control-during-playb-dba8 F003: Leave session moves
+// from the bone to lucide `power`.
+test('bar icons: Leave session renders lucide power, Settings renders lucide settings', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'lobby', instrumentSession('lobby'));
 
   const leave = page.getByRole('button', { name: 'Leave session' });
   const settings = page.getByRole('button', { name: 'Settings' });
-  await expect(leave.locator('svg.lucide-bone-fracture')).toBeVisible();
+  await expect(leave.locator('svg.lucide-power')).toBeVisible();
+  await expect(leave.locator('svg.lucide-bone-fracture')).toHaveCount(0);
   await expect(leave.locator('svg.lucide-log-out')).toHaveCount(0);
   await expect(settings.locator('svg.lucide-settings')).toBeVisible();
   await expect(settings.locator('svg.lucide-cog')).toHaveCount(0);
