@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alignLinesByTimestamp } from './line-breaks.js';
+import { alignLinesByTimestamp, countSyllables } from './line-breaks.js';
 import type { Syllable } from './gp-parser.js';
 
 describe('alignLinesByTimestamp', () => {
@@ -67,5 +67,20 @@ describe('alignLinesByTimestamp', () => {
     ];
 
     expect(alignLinesByTimestamp(syllables, timedLines, msToTick)).toEqual([2, 3]);
+  });
+});
+
+describe('countSyllables', () => {
+  it('counts hyphen-separated syllables and skips standalone "+" merge markers', () => {
+    expect(countSyllables('be-fore the + night')).toBe(4);
+  });
+
+  it('counts a "--" melisma as one syllable break, not several', () => {
+    expect(countSyllables('oh--oh la')).toBe(3);
+    expect(countSyllables('a---ah')).toBe(2);
+  });
+
+  it('ignores empty pieces from leading or trailing hyphens', () => {
+    expect(countSyllables('-oh hold-')).toBe(2);
   });
 });
