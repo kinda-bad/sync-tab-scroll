@@ -1189,3 +1189,22 @@ vocal phrase starts, every one of the 36 lines is 2.2–3.0 s early (median
 2.48 s). This is one offset for the whole file, not individual lines out of
 place. It is probably timed to a release with a shorter intro. Shifting
 every line by about +2.45 s would fix it. The file was not changed.
+
+## Supermassive Black Hole: lrclib lyrics shifted +2.45 s (2026-11-27)
+
+*Why:* the lyrics are lrclib line times (`lyricsTrackIndex` null), which the
+client reads as recording time and converts to tab time through `syncPoints`
+in synth mode. Against the album `recording.mp3`, all 36 lines were 2.2–3.0 s
+early (median 2.48 s): the vocal stem's first sound is at 35.25 s, but the
+first line was stamped 32.81 s. lrclib probably timed a release with a
+shorter intro. Before the song had sync points, synth used the times as tab
+time and was only about 0.3 s late, so the error appeared when the recording
+was installed.
+
+*The edit:* every timestamp +2450 ms; text unchanged. The first line moves
+32.81 → 35.26 s, which is tab time 32.52 s, against the tab's first vocal
+note at 32.50 s.
+
+*Reapply:* `python3 -I tools/catalog-patches/lrc-shift.py
+catalog/muse-supermassive-black-hole/lyrics.lrc 2450`. Result md5
+`53069a97dba235c247611b81c7380e2b`. Tracked in the catalog repo.
