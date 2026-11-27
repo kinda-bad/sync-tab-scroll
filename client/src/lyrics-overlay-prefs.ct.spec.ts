@@ -131,3 +131,34 @@ test('ticker font size scales up at the desktop breakpoint and steps stay distin
   expect(desktopLarge).toBeGreaterThan(desktopMedium);
   expect(desktopHuge).toBeGreaterThan(desktopLarge);
 });
+
+// User feedback 2026-11-27: "huge" doubled (phone 2rem -> 4rem, desktop
+// 3.5rem -> 7rem), "small" unchanged, and medium/large re-spaced so each
+// step up is roughly the same ratio.
+test('ticker font steps: small unchanged, huge doubled, even ratios between', async ({ mount, page }) => {
+  await mount(LyricsOverlayHarness);
+  const overlay = page.locator('.lyrics-overlay');
+  const remOf = () =>
+    overlay.evaluate((el) => parseFloat(getComputedStyle(el).fontSize) / parseFloat(getComputedStyle(document.documentElement).fontSize));
+  const steps = async () => {
+    const out: number[] = [];
+    for (const size of ['small', 'medium', 'large', 'huge'] as const) {
+      await setFontSize(page, size);
+      out.push(await remOf());
+    }
+    return out;
+  };
+
+  for (const [width, small, huge] of [
+    [800, 0.85, 4],
+    [1280, 1.5, 7],
+  ] as const) {
+    await page.setViewportSize({ width, height: 800 });
+    const s = await steps();
+    expect(s[0]).toBeCloseTo(small, 2);
+    expect(s[3]).toBeCloseTo(huge, 2);
+    const ratios = [s[1] / s[0], s[2] / s[1], s[3] / s[2]];
+    const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    for (const r of ratios) expect(Math.abs(r - mean) / mean).toBeLessThan(0.05);
+  }
+});

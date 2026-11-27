@@ -498,7 +498,11 @@ regardless of whether playback has started:
     (`client/src/lyrics-ticker-font-size-preference.ts`, default
     **medium**, matching the in-tab lyrics overlay's existing fixed size).
     Each step is a clearly noticeable jump from its neighbor, not a subtle
-    scale. Applies to the in-tab lyrics overlay's syllable text (Playback
+    scale. The steps run in even ratios (about 1.68× each) from small to
+    huge: 0.85 / 1.425 / 2.385 / 4rem on small screens and 1.5 / 2.505 /
+    4.19 / 7rem at ≥1024px. Huge was doubled and the middle steps
+    re-spaced on user feedback (2026-11-27), so medium, the default, is
+    larger than before. Applies to the in-tab lyrics overlay's syllable text (Playback
     View, below) — has no effect on the tab-less Lyrics part's full lyric
     sheet, which uses its own fixed reading size.
   - a personal "Lyrics ticker position" toggle
@@ -507,6 +511,19 @@ regardless of whether playback has started:
     persisted client-side like the theme/Metronome choices (default
     **bottom**, today's behavior). Applies to the in-tab lyrics overlay
     ticker only; no effect on the Lyrics part's full lyric sheet.
+    **Top takes its own space (2026-11-27)**: at the top, the strip is
+    no longer laid over the top of the tab. Space for it is reserved at
+    the top of the tab view, so the tab starts beneath it, and
+    auto-scroll (cursor follow, Spotlight's seek alike) brings the
+    current bar's row in just beneath the strip, never behind it —
+    alphaTab's own `player.scrollOffsetY`, kept equal to the strip's
+    bottom edge. Both follow the strip's real height, which grows with
+    the font-size preference (the strip no longer clips the larger
+    desktop sizes). Rows above the current one still pass under the
+    strip as the page scrolls, as under any pinned header. Bottom stays
+    an overlay: auto-scroll aligns the current row to the top of the
+    viewport, so a bottom strip never covers it, and the tab view's
+    reserved bottom padding already lets the last rows clear it.
   - a personal "Measure markers" toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
@@ -621,9 +638,13 @@ the Lobby, before Start:
   Re-selecting the song that's already selected changes nothing, so a
   cleared marker stays cleared; to restore it, the host sets it again (or
   picks another song and comes back).
-- **Every Stop** (manual, or an early-stop point) returns to the marker
-  while it's set. Once the host clears it, Stop returns to bar 1 for the
+- **Every Stop** (manual, an early-stop point, or the song's end) returns
+  to the marker while it's set. Once the host clears it, Stop returns to bar 1 for the
   rest of that song in this session.
+- **Playback doesn't loop.** When the song reaches its end, the host's
+  client sends the same Stop as the Stop button, and everyone returns to
+  the Lobby. Until that Stop arrives, each participant's tab holds still at
+  the end rather than starting over (user feedback 2026-11-27).
 - **The host controls the marker** from the Settings modal's Session tab
   ("Start marker", below): set it to a bar, or clear it. Clearing it while
   stopped also sends everyone back to bar 1. Setting it while stopped moves
@@ -659,7 +680,16 @@ identically regardless of which one they're on:
   alphaTab's own native cursor overlay (`.at-cursor-bar`/`.at-cursor-beat`)
   — drawn from the same render pass as the staff itself, not a separately
   computed overlay, so it can't drift out of position relative to the
-  notation the way a precomputed layout-derived cursor could. An optional
+  notation the way a precomputed layout-derived cursor could.
+  **Cursor follow on Start (2026-11-27)**: every Start, the first after
+  loading a part included, scrolls the cursor's row into view at once,
+  with or without a start marker, in synth and recording mode. alphaTab
+  follows the cursor by row and skips a row it believes it already
+  scrolled to; a render after load could leave the parked row marked as
+  scrolled although the page had moved since (the Lobby's content goes
+  at Start), so the first Start didn't scroll until the next row. The
+  engine force-scrolls on each Start with alphaTab's own
+  `scrollToCursor()`, which also clears that memo. An optional
   lyrics overlay can be toggled on as a single-line horizontal ticker
   fixed to the top or bottom of the viewport (per the personal "Lyrics
   ticker position" preference; default bottom), via an icon-only "Toggle lyrics"
@@ -713,6 +743,40 @@ identically regardless of which one they're on:
   personal orientation aid — it does not affect syllable
   highlighting/centering, which continues to index only the real
   syllable stream.
+
+  **Repeats (2026-11-27)**: the strip follows the playback order, not
+  the notation. A repeated section's syllables (and measure markers,
+  with their notated numbers) appear again for each pass, and everything
+  after a repeat sign activates when it is actually played
+  (infrastructure.md In-Tab Lyrics Overlay).
+
+  **Current bar (2026-11-27)**: the marker of the bar playback is in is
+  shown brighter than the others — full-strength `--ink` (bold, full
+  opacity) instead of the markers' dimmed `--ink-dim` — in every theme;
+  `--riot` stays the sung syllable's color. It follows the playback order,
+  so on a repeat's second pass that pass's own marker is the current one.
+
+  **Bar-line clearing (2026-11-27)**: the word highlight clears at every
+  bar line. A syllable stays highlighted only within the bar it starts
+  in, and the next one lights when it starts. So a bar with no syllable
+  start, or one whose first syllable comes later in the bar, shows no
+  highlight until then. There are no per-syllable end times, so a
+  syllable still being held across the bar line loses its highlight
+  there. This replaces the first version, which cleared only in bars with
+  no syllable start, so entering a bar whose first syllable came later
+  re-lit the previous word (user feedback). The pre-singing placeholder
+  is unaffected.
+
+  **Empty bars center (2026-11-27)**: entering a bar with no syllable
+  start, after the first syllable has been sung, moves the strip to center
+  that bar, so the words after a long break are visible just right of
+  center (user feedback). With measure markers shown, the bar's marker is
+  centered. Without them, the boundary before the next word is. The strip
+  holds there through any further empty bars (moving marker to marker
+  when markers are shown) until the next syllable starts, which centers
+  as usual. A bar whose first syllable starts later in the bar doesn't
+  move the strip. This applies whether or not
+  the measure markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked
@@ -733,6 +797,17 @@ identically regardless of which one they're on:
   hidden — alphaTab lays lyric text out as part of its normal paginated
   bar-by-bar score grid, which would produce small per-bar lyric
   fragments wrapping across rows, not a single readable scrolling sheet.
+
+  **Line text and timing (2026-11-27)**: when a line's text is the raw
+  GP lyric line (a tab-sourced song whose raw lyrics carry their own line
+  breaks, pipeline.md), it is shown without GP's dispatch markup: `+`
+  holds are dropped, a `+` joining two words reads as a space, and `-`
+  syllable splits are joined back into words. lrclib line text is shown
+  as written. Line times are compared on the tab's own timeline: an
+  lrclib `.lrc` (recording time) is converted through the song's sync
+  points when it has them (infrastructure.md Lyrics time base); a song
+  with neither a lyric track nor a recording keeps its lrclib times as
+  they are.
 
   **Gap timing indicator (2026-07-06)**: `CatalogSong.lyricsLrc`'s blank
   "gap" lines (pipeline.md — a blank-text line marking a real line's end

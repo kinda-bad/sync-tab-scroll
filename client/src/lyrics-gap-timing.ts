@@ -1,5 +1,6 @@
 import type * as at from '@coderline/alphatab';
 import type { LrcLine } from './lrc-parser';
+import type { MasterBarPlay } from '@sync-tab-scroll/shared';
 import { localTempoAtTick, ticksToMs } from './tempo-lookup';
 
 export interface GapTimingResult {
@@ -71,29 +72,21 @@ export function computeGapTiming(score: at.model.Score, startMs: number, endMs: 
 }
 
 export interface MeasureBoundary {
-  /** MIDI tick (same tick space as Syllable.tickPosition) where this measure begins. */
+  /** Playback (MIDI) tick where this pass of the measure begins — same tick space as the ticker's placed syllables (`unrollSyllables`). */
   tick: number;
-  /** 1-based measure number, in score order. */
+  /** 1-based measure number as notated; a repeated measure appears once per pass with the same number. */
   number: number;
 }
 
 /**
- * Derives each masterBar's start tick and 1-based measure number from the
- * score (ui.md "Measure markers" preference, in-tab lyrics ticker) — reuses
- * the same masterBar walk as computeGapTiming above, but ticks (unlike ms)
- * are already tempo-independent (`MasterBar.calculateDuration()` returns
- * ticks directly), so no tempo/bpm math is needed here at all.
+ * One marker per played measure (ui.md "Measure markers" preference, in-tab
+ * lyrics ticker), in playback order: alphaTab's playback order
+ * (`playbackOrderOf`, from `api.tickCache`) already expands repeats, so a
+ * repeated measure's marker shows again on each pass, at the tick where that
+ * pass starts.
  */
-export function computeMeasureBoundaries(score: at.model.Score): MeasureBoundary[] {
-  const boundaries: MeasureBoundary[] = [];
-  let cumulativeTicks = 0;
-  let number = 1;
-  for (const masterBar of score.masterBars) {
-    boundaries.push({ tick: cumulativeTicks, number });
-    cumulativeTicks += masterBar.calculateDuration();
-    number++;
-  }
-  return boundaries;
+export function playbackMeasureBoundaries(plays: MasterBarPlay[]): MeasureBoundary[] {
+  return plays.map((play) => ({ tick: play.playbackStart, number: play.masterBarIndex + 1 }));
 }
 
 export interface LyricGap {

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as at from '@coderline/alphatab';
-import { walkSyllables, dispatchLyrics, type Syllable, type DispatchBeat } from '@sync-tab-scroll/shared';
+import { walkSyllables, dispatchLyrics, playbackOrderOf, type Syllable, type DispatchBeat, type PlaybackOrder } from '@sync-tab-scroll/shared';
 
 export type LyricsSource = { trackIndex: number; lineIndex: number };
 
@@ -100,10 +100,26 @@ interface TempoSegment {
  * `buildMsToTick` (constitution Principle II) — one MIDI tempo-map walk, not
  * two duplicated ones.
  */
-function buildTempoSegments(score: at.model.Score): TempoSegment[] {
+function generateMidi(score: at.model.Score): { midiFile: at.midi.MidiFile; tickLookup: at.midi.MidiTickLookup } {
   const midiFile = new at.midi.MidiFile();
   const handler = new at.midi.AlphaSynthMidiFileHandler(midiFile);
-  new at.midi.MidiFileGenerator(score, new at.Settings(), handler).generate();
+  const generator = new at.midi.MidiFileGenerator(score, new at.Settings(), handler);
+  generator.generate();
+  return { midiFile, tickLookup: generator.tickLookup };
+}
+
+/**
+ * The score's playback order (repeats, alternate endings and directions
+ * expanded) from the same MIDI generation alphaTab plays — the input
+ * `unrollSyllables` needs to move written-tick syllables onto the playback
+ * timeline that `buildTickToMs`'s tempo map is in (pipeline.md Repeats).
+ */
+export function buildPlaybackOrder(score: at.model.Score): PlaybackOrder {
+  return playbackOrderOf(score, generateMidi(score).tickLookup);
+}
+
+function buildTempoSegments(score: at.model.Score): TempoSegment[] {
+  const { midiFile } = generateMidi(score);
 
   const division = midiFile.division;
   const tempoEvents = midiFile.tracks
@@ -130,6 +146,9 @@ function buildTempoSegments(score: at.model.Score): TempoSegment[] {
 
 /**
  * Builds a tick -> milliseconds converter from the score's own tempo map.
+ * The tempo map comes from the generated MIDI, so its ticks are playback
+ * (repeat-expanded) ticks: pass syllables through `unrollSyllables` first,
+ * not raw written ticks.
  */
 export function buildTickToMs(score: at.model.Score): (tick: number) => number {
   const segments = buildTempoSegments(score);

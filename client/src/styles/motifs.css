@@ -374,7 +374,11 @@
   left: 0;
   right: 0;
   bottom: calc(var(--bar-height, 0px) + var(--space-4));
-  height: var(--lyrics-strip-height);
+  /* A floor, not a fixed height: the larger font-size steps (desktop
+     large/huge) are taller than 3rem and used to be clipped. The top
+     position's reserved space follows the real height (lyrics-overlay.ts
+     applyTopReserve). */
+  min-height: var(--lyrics-strip-height);
   display: flex;
   align-items: center;
   white-space: nowrap;
@@ -398,18 +402,19 @@
 }
 /* Font-size steps (lyrics-ticker-font-size-preference.ts, keyed by the
    data-lyrics-size attribute lyrics-overlay.ts sets). Small-screen values
-   are the original four. */
+   run from the original "small" to double the original "huge", in even
+   ratio steps (~1.68x each; user feedback 2026-11-27). */
 .lyrics-overlay[data-lyrics-size='small'] {
   --lyrics-ticker-font-size: 0.85rem;
 }
 .lyrics-overlay[data-lyrics-size='medium'] {
-  --lyrics-ticker-font-size: 1.125rem;
+  --lyrics-ticker-font-size: 1.425rem;
 }
 .lyrics-overlay[data-lyrics-size='large'] {
-  --lyrics-ticker-font-size: 1.5rem;
+  --lyrics-ticker-font-size: 2.385rem;
 }
 .lyrics-overlay[data-lyrics-size='huge'] {
-  --lyrics-ticker-font-size: 2rem;
+  --lyrics-ticker-font-size: 4rem;
 }
 /* T006 (feedback F007): on desktop viewports the ticker was dispro-
    portionately small against the much larger tab canvas — scale the four
@@ -420,13 +425,13 @@
     --lyrics-ticker-font-size: 1.5rem;
   }
   .lyrics-overlay[data-lyrics-size='medium'] {
-    --lyrics-ticker-font-size: 2rem;
+    --lyrics-ticker-font-size: 2.505rem;
   }
   .lyrics-overlay[data-lyrics-size='large'] {
-    --lyrics-ticker-font-size: 2.75rem;
+    --lyrics-ticker-font-size: 4.19rem;
   }
   .lyrics-overlay[data-lyrics-size='huge'] {
-    --lyrics-ticker-font-size: 3.5rem;
+    --lyrics-ticker-font-size: 7rem;
   }
 }
 
@@ -471,4 +476,17 @@
 }
 .lyrics-measure-marker-number {
   font-size: 0.75em;
+}
+/* The bar playback is in (ui.md "Measure markers", lyrics-overlay.ts
+   updateCurrentMeasure): full-strength --ink instead of the dimmed
+   markers' --ink-dim at 0.7 opacity. --ink is each theme's primary text
+   color, so it is the brightest neutral in every theme; --riot stays
+   reserved for the sung syllable. */
+.lyrics-measure-marker--current {
+  color: var(--ink);
+  opacity: 1;
+  font-weight: 700;
+}
+.lyrics-measure-marker--current .lyrics-measure-marker-line {
+  background: var(--ink);
 }
