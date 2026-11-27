@@ -1,0 +1,438 @@
+{
+  "kinda-bad/radiohead-creep": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 1110.0
+    },
+    {
+      "barIndex": 12,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 31507.6
+    },
+    {
+      "barIndex": 20,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 52182.5
+    },
+    {
+      "barIndex": 28,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 73175.6
+    },
+    {
+      "barIndex": 36,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 94023.5
+    },
+    {
+      "barIndex": 44,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 115389.2
+    },
+    {
+      "barIndex": 52,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 136510.0
+    },
+    {
+      "barIndex": 76,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 197698.6
+    },
+    {
+      "barIndex": 84,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 218853.6
+    },
+    {
+      "barIndex": 90,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 236930.3
+    }
+  ],
+  "kinda-bad/the-strokes-last-nite": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 419.6
+    },
+    {
+      "barIndex": 84,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 196581
+    }
+  ],
+  "kinda-bad/my-chemical-romance-teenagers": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0.5166,
+      "millisecondOffset": 0.0
+    },
+    {
+      "barIndex": 4,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 7516.6
+    },
+    {
+      "barIndex": 12,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 24975.2
+    },
+    {
+      "barIndex": 20,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 42332.8
+    },
+    {
+      "barIndex": 28,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 59401.7
+    },
+    {
+      "barIndex": 36,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 76467.7
+    },
+    {
+      "barIndex": 52,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 110435.3
+    },
+    {
+      "barIndex": 60,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 127330.1
+    },
+    {
+      "barIndex": 68,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 144523.0
+    },
+    {
+      "barIndex": 73,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 157469.8
+    }
+  ],
+  "kinda-bad/silversun-pickups-lazy-eye": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 78.0
+    },
+    {
+      "barIndex": 186,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 352344.2
+    }
+  ],
+  "kinda-bad-ii/cracker-low": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 390.0
+    },
+    {
+      "barIndex": 4,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 9369.6
+    },
+    {
+      "barIndex": 8,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 20357.2
+    },
+    {
+      "barIndex": 12,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 31410.1
+    },
+    {
+      "barIndex": 16,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 42592.0
+    },
+    {
+      "barIndex": 20,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 53676.4
+    },
+    {
+      "barIndex": 24,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 64705.3
+    },
+    {
+      "barIndex": 28,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 75808.0
+    },
+    {
+      "barIndex": 32,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 86884.5
+    },
+    {
+      "barIndex": 36,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 97927.6
+    },
+    {
+      "barIndex": 40,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 109051.5
+    },
+    {
+      "barIndex": 44,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 120107.0
+    },
+    {
+      "barIndex": 48,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 131119.2
+    },
+    {
+      "barIndex": 52,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 142066.0
+    },
+    {
+      "barIndex": 56,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 153035.4
+    },
+    {
+      "barIndex": 60,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 163896.9
+    },
+    {
+      "barIndex": 64,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 174816.9
+    },
+    {
+      "barIndex": 68,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 185809.8
+    },
+    {
+      "barIndex": 72,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 196813.1
+    },
+    {
+      "barIndex": 76,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 207785.2
+    },
+    {
+      "barIndex": 80,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 218732.2
+    },
+    {
+      "barIndex": 84,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 229623.0
+    },
+    {
+      "barIndex": 88,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 240526.7
+    },
+    {
+      "barIndex": 92,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 251385.3
+    },
+    {
+      "barIndex": 96,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 262273.6
+    },
+    {
+      "barIndex": 98,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 270439.8
+    }
+  ],
+  "kinda-bad-ii/arctic-monkeys-do-i-wanna-know": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 167.4
+    },
+    {
+      "barIndex": 92,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 262746.7
+    }
+  ],
+  "kinda-bad-ii/green-day-brain-stew": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 100
+    },
+    {
+      "barIndex": 8,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 25556.3
+    },
+    {
+      "barIndex": 16,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 50943.4
+    },
+    {
+      "barIndex": 24,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 76500.1
+    },
+    {
+      "barIndex": 32,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 101517.6
+    },
+    {
+      "barIndex": 40,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 126695.7
+    },
+    {
+      "barIndex": 48,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 151869
+    },
+    {
+      "barIndex": 62,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 195928.3
+    }
+  ],
+  "kinda-bad-ii/jimmy-eat-world-sweetness": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 306.4
+    },
+    {
+      "barIndex": 17,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 29385
+    },
+    {
+      "barIndex": 119,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 212264
+    }
+  ],
+  "kinda-bad-ii/smashing-pumpkins-1979": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 463.4
+    },
+    {
+      "barIndex": 137,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 261180.3
+    }
+  ],
+  "kinda-bad-ii/the-all-american-rejects-dirty-little-secret": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 1246.1
+    },
+    {
+      "barIndex": 108,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 188153.9
+    }
+  ],
+  "muse-supermassive-black-hole": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 2744
+    },
+    {
+      "barIndex": 103,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 210744.7
+    }
+  ]
+}
