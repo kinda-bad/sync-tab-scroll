@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { ensurePlaybackEngine, renderNowVisible, setEngineTrackMute, setEngineEarlyStop, __getEngineStateForTesting } from '../playback-engine';
   import { clientStore } from '../store';
+  import { barTickMap } from '../bar-tick';
+  import { get } from 'svelte/store';
   import type { CatalogSong } from '@sync-tab-scroll/shared';
   import type { WsClient } from '../ws-client';
 
@@ -49,6 +51,9 @@
     // reactive block (App.svelte's own tick()+rAF safety net isn't present here).
     (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible = renderNowVisible;
     (window as unknown as { __setEarlyStop: (tick: number | null) => void }).__setEarlyStop = setEngineEarlyStop;
+    // settings-menu-reorganization: the loaded song's bars, published for the
+    // Settings modal's bar inputs.
+    (window as unknown as { __getBarTickMap: () => unknown }).__getBarTickMap = () => get(barTickMap);
     // Test-only hook for T002 (tasks-part-mute-toggle-f0d4.md): lets a CT
     // test call the real setEngineTrackMute against this harness's engine.
     (window as unknown as { __setEngineTrackMute: (trackIndex: number, muted: boolean) => void }).__setEngineTrackMute = setEngineTrackMute;

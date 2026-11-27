@@ -4,19 +4,38 @@ import type { MeasureBoundary } from './lyrics-gap-timing';
 import { loadStoredLyricsTickerFontSize, type LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import { loadStoredLyricsTickerPosition, type LyricsTickerPosition } from './lyrics-ticker-position-preference';
 import { loadStoredMeasureMarkers } from './lyrics-measure-markers-preference';
+import {
+  loadStoredLyricsTickerAnchor,
+  loadStoredLyricsTickerScroll,
+  type LyricsTickerAnchor,
+  type LyricsTickerScroll,
+} from './lyrics-ticker-motion-preference';
 
 export interface LyricsOverlay {
   setVisible(visible: boolean): void;
   setFontSize(size: LyricsTickerFontSize): void;
   setPosition(position: LyricsTickerPosition): void;
   setMeasureMarkersVisible(visible: boolean): void;
+  setAnchor(anchor: LyricsTickerAnchor): void;
+  setScroll(scroll: LyricsTickerScroll): void;
   destroy(): void;
 }
 
 export interface LyricsOverlayOptions {
   /** Measure-boundary tick data (lyrics-gap-timing.ts's playbackMeasureBoundaries), for the "Measure markers" preference (T003/T004). Omitted/empty means no markers ever render. */
   measures?: MeasureBoundary[];
+  /** Initial anchor / scroll style (lyrics-ticker-scroll-modes); omitted means the stored personal preference. */
+  anchor?: LyricsTickerAnchor;
+  scroll?: LyricsTickerScroll;
 }
+
+/**
+ * Where a left-anchored syllable sits, as a fraction of the strip's width:
+ * near the left edge, with room for the word just sung.
+ */
+const LEFT_ANCHOR = 0.15;
+/** Edge scrolling pages once the highlight comes within this fraction of the strip's width of an edge. */
+const EDGE_MARGIN = 0.1;
 
 /**
  * The in-tab lyrics overlay (ui.md): highlights the syllable being played
@@ -36,6 +55,14 @@ export function createLyricsOverlay(
   options: LyricsOverlayOptions = {},
 ): LyricsOverlay {
   const flat = lines.flat();
+  // The song's own lines (lyrics-ticker-scroll-modes whole-line mode):
+  // line index of each syllable in `flat`.
+  const lineOf: number[] = lines.flatMap((line, li) => line.map(() => li));
+  let anchor: LyricsTickerAnchor = options.anchor ?? loadStoredLyricsTickerAnchor();
+  let scroll: LyricsTickerScroll = options.scroll ?? loadStoredLyricsTickerScroll();
+  // The line whole-line mode shows: the active syllable's, or the next one's
+  // from the start of an empty bar.
+  let shownLine = 0;
   const overlay = document.createElement('div');
   overlay.className = 'lyrics-overlay';
   // T006 (feedback F007): the step's rem value is no longer set inline
@@ -47,6 +74,11 @@ export function createLyricsOverlay(
   // or bottom of the viewport per the personal preference — a class toggle
   // (motifs.css `.lyrics-overlay--top`), bottom being the class-less default.
   overlay.classList.toggle('lyrics-overlay--top', loadStoredLyricsTickerPosition() === 'top');
+  function applyModeClasses(): void {
+    overlay.classList.toggle('lyrics-overlay--line', scroll === 'line');
+    overlay.classList.toggle('lyrics-overlay--anchor-left', anchor === 'left');
+  }
+  applyModeClasses();
   container.appendChild(overlay);
 
   const track = document.createElement('div');
@@ -80,6 +112,9 @@ export function createLyricsOverlay(
   // arrays stay syllable-only so activeIndex/updateActiveSyllable/
   // centerActiveSyllable's indexing is entirely unaffected by markers
   // existing or not.
+  // The line each marker shows with in whole-line mode: the line of the
+  // syllable it sits before (the last line when it trails every syllable).
+  const markerLine: number[] = [];
   const markerEls: HTMLElement[] = (options.measures ?? []).map((measure) => {
     const marker = document.createElement('span');
     marker.className = 'lyrics-measure-marker';
@@ -100,8 +135,10 @@ export function createLyricsOverlay(
     // syllable) still reads as "ahead of" that syllable, not after it. No
     // match means the marker belongs after every syllable (end of the
     // track).
-    const beforeSpan = spans[flat.findIndex((s) => s.tickPosition >= measure.tick)];
+    const beforeIndex = flat.findIndex((s) => s.tickPosition >= measure.tick);
+    const beforeSpan = spans[beforeIndex];
     track.insertBefore(marker, beforeSpan ?? null);
+    markerLine.push(beforeIndex >= 0 ? lineOf[beforeIndex] : lines.length - 1);
 
     return marker;
   });
@@ -118,12 +155,26 @@ export function createLyricsOverlay(
   });
 
   let measureMarkersVisible = loadStoredMeasureMarkers();
-  markerEls.forEach((el) => {
-    el.style.display = measureMarkersVisible ? '' : 'none';
-  });
 
   let activeIndex = -1;
   let currentMeasure = -1;
+
+  // Which syllables and markers are displayed: all of them, except in
+  // whole-line mode, where only the shown line's. The pre-singing
+  // placeholder shows until the first syllable, in every mode, and never
+  // again after it (one-way, even after a seek back).
+  let sung = false;
+  function applyVisibility(): void {
+    const lineMode = scroll === 'line';
+    spans.forEach((span, i) => {
+      span.style.display = !lineMode || lineOf[i] === shownLine ? '' : 'none';
+    });
+    markerEls.forEach((el, i) => {
+      el.style.display = measureMarkersVisible && (!lineMode || markerLine[i] === shownLine) ? '' : 'none';
+    });
+    placeholder.style.display = sung ? 'none' : '';
+  }
+  applyVisibility();
 
   // Rect-based (not offsetLeft/clientWidth-based): those turned out to
   // disagree with real screen position by exactly `.lyrics-overlay`'s
@@ -136,37 +187,73 @@ export function createLyricsOverlay(
   // again before a previous transition has visually settled — the
   // computed value mid-transition is the actual current interpolated
   // state, unlike a remembered target.
-  function centerOnX(untransformedX: number): void {
+  // The anchor point in screen coordinates: the strip's center, or near
+  // its left edge (lyrics-ticker-scroll-modes).
+  function anchorX(): number {
     const overlayRect = overlay.getBoundingClientRect();
-    const overlayCenter = overlayRect.left + overlayRect.width / 2;
-    track.style.transform = `translateX(${overlayCenter - untransformedX}px)`;
+    return overlayRect.left + overlayRect.width * (anchor === 'left' ? LEFT_ANCHOR : 0.5);
+  }
+  function placeAt(untransformedX: number): void {
+    track.style.transform = `translateX(${anchorX() - untransformedX}px)`;
   }
   function untransformedLeft(el: HTMLElement): number {
     return el.getBoundingClientRect().left - new DOMMatrix(getComputedStyle(track).transform).m41;
   }
-  function centerActiveSyllable(): void {
+  // The point of an element that goes on the anchor: its center when
+  // centered, its left edge when left-anchored.
+  function anchorPointOf(el: HTMLElement): number {
+    const left = untransformedLeft(el);
+    return anchor === 'left' ? left : left + el.getBoundingClientRect().width / 2;
+  }
+  function nearEdge(el: HTMLElement): boolean {
+    const r = el.getBoundingClientRect();
+    const o = overlay.getBoundingClientRect();
+    const margin = o.width * EDGE_MARGIN;
+    return r.right > o.right - margin || r.left < o.left;
+  }
+  // Moves the strip to follow the highlight. `force` re-anchors even in
+  // edge mode (first paint, resize, a settings change); otherwise edge mode
+  // moves only when the highlight nears an edge, then pages it to the
+  // anchor. Whole-line mode never translates: the line is laid out in the
+  // strip (centered or left-aligned per the anchor, wrapping if long).
+  function followHighlight(force: boolean): void {
+    if (scroll === 'line') {
+      track.style.transform = '';
+      applyVisibility();
+      return;
+    }
     if (centeredEmptyMeasure !== null) {
       centerEmptyMeasure(centeredEmptyMeasure);
       return;
     }
     const activeSpan = activeIndex < 0 ? placeholder : spans[activeIndex];
-    centerOnX(untransformedLeft(activeSpan) + activeSpan.getBoundingClientRect().width / 2);
+    if (scroll === 'edge' && !force && !nearEdge(activeSpan)) return;
+    placeAt(anchorPointOf(activeSpan));
+  }
+  function centerActiveSyllable(): void {
+    followHighlight(true);
   }
   // Empty bars (user feedback 2026-11-27: "center empty measures when they
   // are entered so we can see words coming after a long break"): entering a
-  // bar with no syllable start centers that bar: its marker when markers
-  // are shown, otherwise the boundary before the next word. The words after
-  // the break then sit just right of center. Held until the next syllable
-  // starts, which centers as usual.
+  // bar with no syllable start moves that bar to the anchor: its marker when
+  // markers are shown, otherwise the boundary before the next word. The
+  // words after the break then sit just past the anchor. Held until the next
+  // syllable starts. Edge mode moves here too (a break is the natural moment
+  // to page); whole-line mode shows the next line instead.
   let centeredEmptyMeasure: number | null = null;
   function centerEmptyMeasure(measure: number): void {
+    if (scroll === 'line') {
+      if (activeIndex + 1 < flat.length) shownLine = lineOf[activeIndex + 1];
+      applyVisibility();
+      return;
+    }
     const marker = markerEls[measure];
     if (measureMarkersVisible && marker) {
-      centerOnX(untransformedLeft(marker) + marker.getBoundingClientRect().width / 2);
+      placeAt(anchorPointOf(marker));
       return;
     }
     const next = spans[activeIndex + 1];
-    if (next) centerOnX(untransformedLeft(next));
+    if (next) placeAt(untransformedLeft(next));
   }
 
   // T003 (feedback F005): the guard against a `tickPosition === 0` entry
@@ -206,11 +293,13 @@ export function createLyricsOverlay(
       if (activeIndex < 0 && index >= 0) {
         placeholder.classList.remove('at-highlight');
         placeholder.style.display = 'none';
+        sung = true;
       }
       if (activeIndex >= 0) spans[activeIndex].classList.remove('at-highlight');
       activeIndex = index;
       centeredEmptyMeasure = null;
-      centerActiveSyllable();
+      shownLine = activeIndex >= 0 ? lineOf[activeIndex] : 0;
+      followHighlight(false);
     }
     // Before the first syllable the placeholder stays centered.
     if (activeIndex >= 0 && currentMeasure >= 0 && !measureStartsSyllable[currentMeasure] && centeredEmptyMeasure !== currentMeasure) {
@@ -296,11 +385,20 @@ export function createLyricsOverlay(
       centerActiveSyllable();
       applyTopReserve();
     },
+    setAnchor(value: LyricsTickerAnchor) {
+      anchor = value;
+      applyModeClasses();
+      centerActiveSyllable();
+    },
+    setScroll(value: LyricsTickerScroll) {
+      scroll = value;
+      applyModeClasses();
+      applyVisibility();
+      centerActiveSyllable();
+    },
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;
-      markerEls.forEach((el) => {
-        el.style.display = visible ? '' : 'none';
-      });
+      applyVisibility();
       // Markers change the track's widths, and an empty bar centers on its
       // marker only while markers are shown.
       centerActiveSyllable();

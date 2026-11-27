@@ -202,6 +202,11 @@ export function createHorizontalLyricsBand(
       // The band has its own place above the tab; the ticker's top/bottom
       // preference doesn't apply to it.
     },
+    setAnchor() {
+      // The ticker's Anchor and Scrolling modes (lyrics-ticker-scroll-modes)
+      // are the ticker's only: the band always glides past the fixed playhead.
+    },
+    setScroll() {},
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;
       applyMarkerVisibility();

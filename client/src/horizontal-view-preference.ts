@@ -1,6 +1,6 @@
 /**
  * The horizontal view is a personal, this-device-only preference (ui.md
- * Preferences tab; feature horizontal-scroll-view): the tab shows as one
+ * View tab; feature horizontal-scroll-view): the tab shows as one
  * long staff scrolling right to left past a fixed playhead, with the lyrics
  * in their own band above it, instead of wrapped rows scrolling down the
  * page. Same localStorage pattern as metronome-preference.ts; the server

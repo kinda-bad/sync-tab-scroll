@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Personal, this-device-only (ui.md Preferences tab, feature
+  // Personal, this-device-only (ui.md Settings View tab, feature
   // horizontal-scroll-view). One self-contained row so the Settings modal
   // only has to place it. Flipping it rebuilds this participant's engine in
   // the other layout (App.svelte reacts to horizontalViewStore).

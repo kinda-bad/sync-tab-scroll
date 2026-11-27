@@ -457,6 +457,24 @@
   gap: 0 0.25em;
   transition: transform 0.25s ease;
 }
+/* Whole-line mode (lyrics-ticker-scroll-modes, lyrics-overlay.ts): the
+   strip shows one lyric line, laid out rather than translated — centered,
+   or left-aligned with the left anchor — and a line too long for one row
+   wraps onto more rows (the strip grows; the top position's reserved space
+   follows its real height). */
+.lyrics-overlay--line {
+  white-space: normal;
+}
+.lyrics-overlay--line .lyrics-track {
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+  white-space: normal;
+  transition: none;
+}
+.lyrics-overlay--line.lyrics-overlay--anchor-left .lyrics-track {
+  justify-content: flex-start;
+}
 .lyric-syllable.at-highlight {
   color: var(--riot);
   font-weight: 700;

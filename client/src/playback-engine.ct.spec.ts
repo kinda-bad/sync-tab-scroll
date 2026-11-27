@@ -32,6 +32,21 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', (err) => pageErrors.push(err.message));
 });
 
+// settings-menu-reorganization: the Settings modal's Lobby cursor and Early
+// stop inputs take bars, converted against the bars this engine publishes.
+for (const isLyricsPart of [false, true]) {
+  test(`publishes the loaded song's bars in playback order (${isLyricsPart ? 'headless lyrics part' : 'tab part'})`, async ({ mount, page }) => {
+    await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0, isLyricsPart } });
+
+    await expect
+      .poll(() => page.evaluate(() => ((window as unknown as { __getBarTickMap: () => { plays: unknown[] } | null }).__getBarTickMap()?.plays.length ?? 0)), { timeout: 20_000 })
+      .toBeGreaterThan(0);
+    const plays = await page.evaluate(() => (window as unknown as { __getBarTickMap: () => { plays: { bar: number; start: number; end: number }[] } }).__getBarTickMap().plays);
+    expect(plays[0]).toMatchObject({ bar: 1, start: 0 });
+    for (const p of plays) expect(p.end).toBeGreaterThan(p.start);
+  });
+}
+
 /**
  * SCOPE NOTE (rewritten 2026-07-04): this file previously documented that
  * `api.isReadyForPlayback` "never becomes true under browser automation"

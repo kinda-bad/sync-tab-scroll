@@ -6,11 +6,12 @@ import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-rend
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
-import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines } from './lyrics-beat-walk';
+import { walkLyricBeats, walkLyricBeatsFromRawLine, groupIntoLines, groupPlacedIntoLines } from './lyrics-beat-walk';
 import { createLyricsOverlay, type LyricsOverlay } from './lyrics-overlay';
 import { createHorizontalLyricsBand } from './horizontal-lyrics-band';
 import type { LyricsTickerFontSize } from './lyrics-ticker-font-size-preference';
 import type { LyricsTickerPosition } from './lyrics-ticker-position-preference';
+import type { LyricsTickerAnchor, LyricsTickerScroll } from './lyrics-ticker-motion-preference';
 import { parseLrc, type LrcLine } from './lrc-parser';
 import { findLyricGaps, playbackMeasureBoundaries, type LyricGap } from './lyrics-gap-timing';
 import { lrcToTabTime } from './lrc-time-base';
@@ -31,6 +32,7 @@ import { writable } from 'svelte/store';
 import * as atLib from '@coderline/alphatab';
 import { beatAtTick, beatDurationMs } from './beat-clock';
 import { createDefaultStartSeeder, defaultStartTick } from './default-start';
+import { barTickMap, barTickMapFromLookup, barTickMapFromScore } from './bar-tick';
 
 /** Beat state feeding the Bar's beat widget (ui.md Count-In & Metronome Beat Widget) — real beat boundaries, never a fixed-interval timer. */
 export interface BeatWidgetState {
@@ -309,9 +311,16 @@ export function ensurePlaybackEngine(
   // without reloading the GP file, and snapshots whether the container was
   // actually visible *at this exact moment* — `scoreLoaded` becoming `true`
   // doesn't by itself mean a real (non-zero-width) render happened.
+  api.midiLoad.on(() => {
+    if (api.tickCache) barTickMap.set(barTickMapFromLookup(api.tickCache));
+  });
+
   api.scoreLoaded.on((score) => {
     state!.scoreLoaded = true;
     state!.score = score;
+    // Bars for the Settings modal's bar inputs (bar-tick.ts): written bar
+    // starts until the MIDI exists, then the playback order below.
+    if (!api.tickCache) barTickMap.set(barTickMapFromScore(score));
     if (!isLyricsPart) state!.renderedWhileVisible = containers.tabContainer.clientWidth > 0;
 
     // Personal "mute this part" preference (ui.md Preferences tab,
@@ -353,9 +362,12 @@ export function ensurePlaybackEngine(
       const placed = unrollSyllables(written, order.masterBarStarts, order.plays);
       const measures = playbackMeasureBoundaries(order.plays);
       // The horizontal view's lyrics band (above the tab) replaces the
-      // single-line ticker, from the same placed syllable stream. No
-      // syllables, no band: the tab keeps the whole height.
+      // single-line ticker, from the same placed syllable stream; the
+      // ticker's scroll modes don't apply to it. No syllables, no band:
+      // the tab keeps the whole height.
       if (horizontal && placed.length === 0) return;
+      // The song's own lines, one per pass (whole-line mode,
+      // lyrics-ticker-scroll-modes); the other modes read them flat.
       state!.overlay = horizontal
         ? createHorizontalLyricsBand(
             api,
@@ -363,7 +375,7 @@ export function ensurePlaybackEngine(
             containers.overlayContainer,
             { unit: 'tick', measures, followFontSizePreference: true },
           )
-        : createLyricsOverlay(api, [placed], containers.overlayContainer, { measures });
+        : createLyricsOverlay(api, groupPlacedIntoLines(placed, lyricLineBreaks), containers.overlayContainer, { measures });
       state!.overlay.setVisible(state!.showOverlay);
     });
   } else if (isLyricsPart && horizontal) {
@@ -872,6 +884,7 @@ function destroyEngine(): void {
   state.disposeHorizontal?.();
   state.api.destroy();
   state = undefined;
+  barTickMap.set(null);
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
   beatWidgetState.set(IDLE_BEAT_STATE);
 }
@@ -1014,6 +1027,16 @@ export function setEngineLyricsTickerFontSize(size: LyricsTickerFontSize): void 
 /** Applies the personal "Lyrics ticker position" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
 export function setEngineLyricsTickerPosition(position: LyricsTickerPosition): void {
   state?.overlay?.setPosition(position);
+}
+
+/** Applies the personal lyrics ticker anchor (lyrics-ticker-scroll-modes) to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */
+export function setEngineLyricsTickerAnchor(anchor: LyricsTickerAnchor): void {
+  state?.overlay?.setAnchor(anchor);
+}
+
+/** Applies the personal lyrics ticker scroll style (lyrics-ticker-scroll-modes) to the live overlay (if one exists); no-op otherwise. */
+export function setEngineLyricsTickerScroll(scroll: LyricsTickerScroll): void {
+  state?.overlay?.setScroll(scroll);
 }
 
 /** Applies the personal "Measure markers" preference to the live overlay (if one exists); no-op otherwise — same contract as setEngineMetronome. */

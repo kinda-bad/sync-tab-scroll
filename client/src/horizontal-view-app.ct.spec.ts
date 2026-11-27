@@ -8,7 +8,7 @@ import AppHarness from './test-harness/AppHarness.svelte';
 
 /**
  * The horizontal view through the real App (feature horizontal-scroll-view):
- * the personal Settings → Preferences row, the band layout it switches to,
+ * the personal Settings → View row, the band layout it switches to,
  * and the "rotate your phone" prompt for phones in portrait.
  */
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -67,14 +67,14 @@ async function enterPlayback(page: Page) {
 
 async function turnOnHorizontalView(page: Page) {
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await page.getByRole('button', { name: 'View', exact: true }).click();
   await page.getByRole('button', { name: 'Horizontal view: Off' }).click();
   await expect(page.getByRole('button', { name: 'Horizontal view: On' })).toBeVisible();
   await page.locator('.modal-backdrop').click({ position: { x: 5, y: 40 } });
   await expect(page.locator('.modal-backdrop')).toHaveCount(0);
 }
 
-test('the Preferences row turns the horizontal view on, persisted on this device only, and the tab rebuilds as one line', async ({
+test('the View tab row turns the horizontal view on, persisted on this device only, and the tab rebuilds as one line', async ({
   mount,
   page,
 }) => {
