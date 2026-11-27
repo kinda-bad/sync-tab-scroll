@@ -523,7 +523,9 @@ regardless of whether playback has started:
     strip as the page scrolls, as under any pinned header. Bottom stays
     an overlay: auto-scroll aligns the current row to the top of the
     viewport, so a bottom strip never covers it, and the tab view's
-    reserved bottom padding already lets the last rows clear it.
+    reserved bottom padding lets the last rows clear it at the end of a
+    song. That padding also follows the strip's real height (plus the
+    bar and gap beneath it), so it holds at the larger font sizes.
   - a personal "Measure markers" toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker

@@ -416,8 +416,11 @@
   }
   .engine-containers.visible {
     /* Reserves scroll room so the tab's last rows can clear the fixed
-       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). */
-    padding-bottom: calc(var(--lyrics-strip-height) * 2);
+       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). The strip's
+       real height varies with the font-size preference, so
+       lyrics-overlay.ts (applyReserve) sets the exact reserve; the
+       fallback covers the moment before it runs. */
+    padding-bottom: var(--lyrics-strip-bottom-reserve, calc(var(--lyrics-strip-height) * 2));
   }
   /*
    * T004 (tasks-bottom-bar-icons-47a6.md, feedback F001): toggling the
