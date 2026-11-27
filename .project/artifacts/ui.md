@@ -667,6 +667,21 @@ identically regardless of which one they're on:
   with their notated numbers) appear again for each pass, and everything
   after a repeat sign activates when it is actually played
   (infrastructure.md In-Tab Lyrics Overlay).
+
+  **Current bar (2026-11-27)**: the marker of the bar playback is in is
+  shown brighter than the others — full-strength `--ink` (bold, full
+  opacity) instead of the markers' dimmed `--ink-dim` — in every theme;
+  `--riot` stays the sung syllable's color. It follows the playback order,
+  so on a repeat's second pass that pass's own marker is the current one.
+
+  **Wordless bars (2026-11-27)**: when playback enters a bar in which no
+  syllable starts, the last sung syllable's highlight clears; it returns
+  with the next syllable. There are no per-syllable end times, so a
+  syllable still being held across the bar line loses its highlight at
+  the bar line: a bar that only sustains a syllable (a `+` hold or a tie)
+  counts as wordless. The strip does not move, and the pre-singing
+  placeholder is unaffected. This applies whether or not the measure
+  markers are shown.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked

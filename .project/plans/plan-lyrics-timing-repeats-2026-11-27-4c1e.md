@@ -88,6 +88,13 @@ in the linked tasks file.
 **Phase 2 — lrclib time base** (client lyric sheet + gaps).
 **Phase 3 — Raw-line text cleanup** (client lyric sheet).
 **Phase 4 — Specs and verification.**
+**Phase 5 — Ticker follow-ups (user request, 2026-11-27).** Highlight the
+current bar's measure marker (brighter, `--ink`), following the playback
+order; clear the sung syllable's highlight when playback enters a bar that
+starts no syllable (no per-syllable end times, per the user: a bar that
+only sustains a held or tied syllable counts as wordless). Bar numbers
+appear only in the in-tab ticker's measure markers; the lyric sheet shows
+none.
 
 ## Open Questions
 

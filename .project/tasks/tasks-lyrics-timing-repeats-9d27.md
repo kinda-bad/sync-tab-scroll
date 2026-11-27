@@ -36,6 +36,15 @@ status: completed
 - [x] T008 `pnpm check`, all unit suites, client CT. Record which catalog
   songs need their `.lrc` regenerated.
 
+## Phase 5: Ticker follow-ups (user request)
+
+- [x] T009 [artifacts: ui, brand] Current bar's measure marker highlighted
+  (`.lyrics-measure-marker--current`, `--ink`), following the playback
+  order through repeats. CT spec red first, checked in all four themes.
+- [x] T010 [artifacts: ui] Clear the sung syllable's highlight in a bar
+  that starts no syllable; held/tied-only bars count as wordless. CT spec
+  red first.
+
 ## Notes (2026-11-27)
 
 - Root causes confirmed. Bug 1: `playerPositionChanged.currentTime` is
