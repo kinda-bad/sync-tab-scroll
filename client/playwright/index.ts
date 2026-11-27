@@ -9,3 +9,4 @@ import '../src/styles/motifs.css';
 // so a CT test asserting on that class's computed style needs it loaded,
 // same as main.ts's own bootstrap does.
 import '../src/lyrics.css';
+import '../src/styles/horizontal-view.css';
