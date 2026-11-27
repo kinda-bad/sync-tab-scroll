@@ -466,6 +466,11 @@ jq --slurpfile m docs/catalog-sync-points.json --arg k "$k" \
 
 ## silversun-pickups-lazy-eye — `lyrics.lrc` (Kinda Bad catalogue)
 
+> **Superseded (2026-11-27)** by "Vocal tracks for Low and Lazy Eye" below:
+> `lyrics.lrc` is now GP-derived from the new vocal track. The re-timed LRC
+> is kept in `catalog-originals/<collection>/<song>/pre-vocal-2026-11-27/`;
+> don't reapply a re-time on top of the current file.
+
 **Patch 1 — line start times re-timed against the vocal stem (applied 2026-11-27).**
 
 *Why:* the tab has no lyrics, so `lyrics.lrc` is lrclib's synced LRC passed
@@ -1196,6 +1201,8 @@ and 0.8 s (Lazy Eye) late. The scripts now use
   best shifts of up to ±245 ms.
 
 *Unchanged:* both songs' `lyrics.lrc`.
+(Both have since been replaced by GP-derived files; see "Vocal tracks for
+Low and Lazy Eye" below.)
 - Lazy Eye's LRC is in recording time, taken from the wav2vec2 vocal
   alignment, whose frame time is computed from the clip length. The frame bug
   doesn't touch it.
@@ -1932,6 +1939,9 @@ Vocals`), Lazy Eye track 7 (`Brian - Vocals`). The new track has one plain
 note per sung syllable (no ties, grace notes or slides), rests elsewhere,
 and a raw lyric line with one chunk per note: the existing LRC's lyric
 lines, one raw line each, words cut into syllables with `-`, no `+` or `_`.
+A hyphen already in the LRC text (Low's repeated interjections) is written
+as a space instead, because the app joins `-` pieces back into one word
+when it shows a raw line.
 Its sound mirrors the other catalog vocal tracks: Voice Oohs (GM 53), not
 muted, guitar tuning so the tab view shows frets. Nothing else in the file
 changes. Removing the added elements and ids gives back the original
@@ -2013,8 +2023,8 @@ Expected sha256 after the patch:
 
 | File | sha256 |
 |---|---|
-| Low `.gp` | `ca196168f0591fc2315ae724818cc0957f30c5531b116f7bc6ac232e698a56a3` |
-| Low `lyrics.lrc` | `f4209a38805d49981f247357d5e099978e24e2af1920800f0fac72d6b4e8d80c` |
+| Low `.gp` | `7df28b4538e60d496d73bd7541cd0d35d73c397247189c6108f74867521c0678` |
+| Low `lyrics.lrc` | `b57121b5900a943a8539800eeb8aaaec78283a9cfe7e66d00237df03b3ae797b` |
 | Lazy Eye `.gp` | `780a12645e32a7be2d1ba3eb93baee98c5cfa9393773231f46f2e5d6a07d1990` |
 | Lazy Eye `lyrics.lrc` | `7a4f01fd358158fc8b1096ccfda9830db627cdbf743566e604a9db4c26ef8089` |
 

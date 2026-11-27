@@ -5,7 +5,7 @@ Usage: vocal-place.py <align.json> <lyrics.lrc> <meta.json> <song.gp> <out-dir>
 Writes <out-dir>/notes.json (the notes gp-add-vocal-track.py writes into the
 .gp) and <out-dir>/raw-line.txt (the raw lyric line to dispatch onto them:
 one line per LRC lyric line, words cut with `-` exactly where vocal-align.py
-cut them, so there is one chunk per note and no `+` or `_`).
+cut them (a hyphen already in the LRC becomes a space), so there is one chunk per note and no `+` or `_`).
 
 Method:
 - Recording ms -> tab tick: the inverse of the song's `syncPoints` mapping
@@ -226,7 +226,18 @@ for fl in sorted(by_line):
     words = []
     for wi in sorted(by_line[fl]):
         pieces = by_line[fl][wi]
-        words.append("".join(p if p.endswith("-") or j == len(pieces) - 1 else p + "-" for j, p in enumerate(pieces)))
+        # A hyphen already in the LRC token (a repeated interjection) becomes a
+        # word break: the app joins `-` pieces back into one word when it
+        # shows a raw line (client/src/lyric-line-text.ts).
+        word = ""
+        for j, p in enumerate(pieces):
+            if p.endswith("-"):
+                words.append(word + p[:-1])
+                word = ""
+            else:
+                word += p if j == len(pieces) - 1 else p + "-"
+        if word:
+            words.append(word)
     lines.append(" ".join(words))
 open(os.path.join(out_dir, "raw-line.txt"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 

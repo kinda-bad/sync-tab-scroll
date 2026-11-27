@@ -1,6 +1,6 @@
 ---
 slug: syllable-timed-lyrics-for-kinda-bad
-status: backlogged
+status: implemented
 logged: 2026-11-26
 ---
 
@@ -19,3 +19,8 @@ and record each `.gp` edit in `docs/catalog-patches.md`, since `catalog/`
 is gitignored.
 Why: the eight songs that have syllable timing from the tab's own vocal
 track follow the tab exactly; these three don't.
+
+Done: Sweetness got a raw lyric line on its existing Lead Vocals track
+(2026-11-26). Low and Lazy Eye got an appended vocal track built from the
+recording's vocal stem, with the line dispatched onto it (2026-11-27). See
+`docs/catalog-patches.md` for both.
