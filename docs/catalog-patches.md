@@ -1149,3 +1149,43 @@ and 0.8 s (Lazy Eye) late. The scripts now use
 *The edit:* the two songs' entries in `docs/catalog-sync-points.json`.
 Reapply them the same way as the other songs' points (see "Recording sync
 points" above).
+
+## Recording sync points — Supermassive Black Hole `meta.json` (applied 2026-11-27)
+
+*Why:* the song had no recording. The album track (supplied 2026-11-27) is
+now `catalog/muse-supermassive-black-hole/recording.mp3` (gitignored, like
+the other recordings), and `meta.json` gained a `syncPoints` array. Nothing
+else in the meta changed, and `lyrics.lrc` was not edited.
+
+*The tab:* 104 bars of 4/4 at a constant 120 bpm, with no repeats or other
+jumps, so written bars and played bars are the same.
+
+*How the points were measured:*
+- **Instruments.** The tab's note onsets were cross-correlated with Demucs
+  drum, bass and guitar stems in 8-bar windows. All 51 windows agree on one
+  straight line at exactly 120.000 bpm (rms 1.2 ms, worst 3.3 ms). The
+  record does not drift from the click.
+- **Bar 1.** The window fit puts bar 1 at 2755 ms. The opening kick and bass
+  onset is at 2744 ms, and 2744 ms leaves the drum hit check with a median
+  offset of 0 to −2 ms in every 8-bar block. 2744 ms was used.
+- **Drum check.** 88–100% of the tab's drum hits fall within 35 ms of a
+  recording drum onset in every 8-bar block.
+- **alphaTab replay.** `Score.applyFlatSyncPoints` followed by
+  `MidiFileGenerator.generateSyncPoints` reproduces the intended map to
+  within 0.01 ms at every bar.
+
+*The points* (written bars, `barOccurence` 0):
+
+| Point | ms |
+|---|---|
+| Start of bar 1 | 2744.0 |
+| End of bar 104 | 210744.7 |
+
+*Lyrics (`lyrics.lrc`, lrclib, line-timed):* every line starts about
+2.4 s before the singing on this recording. The first sung phrase starts at
+35.2 s, which is also where the tab's first vocal note falls through these
+points, but the first LRC line is stamped 32.8 s. Matched against the tab's
+vocal phrase starts, every one of the 36 lines is 2.2–3.0 s early (median
+2.48 s). This is one offset for the whole file, not individual lines out of
+place. It is probably timed to a release with a shorter intro. Shifting
+every line by about +2.45 s would fix it. The file was not changed.

@@ -420,5 +420,19 @@
       "barPosition": 1,
       "millisecondOffset": 188153.9
     }
+  ],
+  "muse-supermassive-black-hole": [
+    {
+      "barIndex": 0,
+      "barOccurence": 0,
+      "barPosition": 0,
+      "millisecondOffset": 2744
+    },
+    {
+      "barIndex": 103,
+      "barOccurence": 0,
+      "barPosition": 1,
+      "millisecondOffset": 210744.7
+    }
   ]
 }
