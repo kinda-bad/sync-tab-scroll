@@ -26,31 +26,67 @@ function baseSession(overrides: Partial<Session> = {}): Session {
   };
 }
 
+// A loaded song's bars as playback-engine.ts would publish them (bar-tick.ts):
+// eight 4/4 bars at 960 ticks per quarter, no repeats.
+const BAR = 3840;
+const EIGHT_BARS = { plays: Array.from({ length: 8 }, (_, i) => ({ bar: i + 1, start: i * BAR, end: (i + 1) * BAR })) };
+
 // ---------------------------------------------------------------------------
-// Tab structure (plan-1619-2026-07-17-39c6.md T016-T018): four semantic
-// tabs — Participants (list + host transfer), Session (host-broadcast
-// controls: lobby cursor, Spotlight, playback audio), Preferences (personal,
-// this-device settings: theme), and Tracks (personal per-part mute
-// controls, moved out of Preferences into its own tab — one row per part).
+// Tab structure (settings-menu-reorganization): five tabs by what the user
+// is trying to do — People (list + host transfer), Playback (start marker,
+// early stop, lobby cursor), View (theme, bars per row), Lyrics (the lyrics
+// ticker) and Audio (audio source, count-in, metronome, tracks). Who can
+// change a control is shown on it (a "Host" badge), not by its tab.
 // ---------------------------------------------------------------------------
 
-test('the modal has Participants, Session, Preferences, and Tracks tabs, defaulting to Participants', async ({ mount }) => {
+const TABS = ['People', 'Playback', 'View', 'Lyrics', 'Audio'];
+
+test('the modal has People, Playback, View, Lyrics and Audio tabs, defaulting to People', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await expect(component.getByRole('button', { name: 'Participants' })).toBeVisible();
-  await expect(component.getByRole('button', { name: 'Session' })).toBeVisible();
-  await expect(component.getByRole('button', { name: 'Preferences' })).toBeVisible();
-  await expect(component.getByRole('button', { name: 'Tracks' })).toBeVisible();
+  for (const tab of TABS) await expect(component.getByRole('button', { name: tab, exact: true })).toBeVisible();
+  for (const old of ['Participants', 'Session', 'Preferences', 'Tracks']) {
+    await expect(component.getByRole('button', { name: old, exact: true })).toHaveCount(0);
+  }
 
-  // Participants content renders by default; Session content does not.
+  // People content renders by default; Playback content does not.
   await expect(component.getByText('Member')).toBeVisible();
   await expect(component.getByText(/lobby cursor/i)).toHaveCount(0);
 });
 
-test('the Preferences tab holds two orthogonal theme controls, for any participant', async ({ mount }) => {
+test('no section label repeats across tabs (one home per setting)', async ({ mount }) => {
+  const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Guitar' }] });
+  const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1', catalog: [recordingSong()], barTicks: EIGHT_BARS } });
+
+  const labels: string[] = [];
+  for (const tab of TABS) {
+    await component.getByRole('button', { name: tab, exact: true }).click();
+    labels.push(...(await component.locator('.section-label').evaluateAll((els) => els.map((e) => e.firstChild?.textContent?.trim() ?? ''))));
+  }
+  expect(labels.length).toBeGreaterThan(8);
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(labels).not.toContain('Playback audio');
+});
+
+test('host-only sections carry a "Host" badge, shown to non-hosts too', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1', barTicks: EIGHT_BARS } });
+
+  await component.getByRole('button', { name: 'Playback', exact: true }).click();
+  for (const name of ['Start marker', 'Early stop point', 'Lobby cursor']) {
+    await expect(component.locator('.section-label', { hasText: name }).locator('.host-badge')).toHaveText('Host');
+  }
+  await expect(component.getByText('Only the host can change this.')).toHaveCount(3);
+
+  await component.getByRole('button', { name: 'Audio', exact: true }).click();
+  await expect(component.locator('.section-label', { hasText: 'Count-in' }).locator('.host-badge')).toHaveText('Host');
+  // Personal settings carry no badge.
+  await expect(component.locator('.section-label', { hasText: 'Metronome' }).locator('.host-badge')).toHaveCount(0);
+});
+
+test('the View tab holds two orthogonal theme controls, for any participant', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'View' }).click();
   await expect(component.getByText(/Theme: Riot|Theme: Cyberpunk/)).toBeVisible();
   await expect(component.getByText(/Light mode|Dark mode/)).toBeVisible();
 });
@@ -84,7 +120,7 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
       document.documentElement.dataset.theme = 'dark';
     });
     const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Preferences' }).click();
+    await component.getByRole('button', { name: 'View' }).click();
 
     if (family === 'Cyberpunk') {
       await component.getByText('Theme: Riot').click();
@@ -115,7 +151,7 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
       document.documentElement.dataset.theme = t ?? 'dark';
     }, reloadedTheme);
     const component2 = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
-    await component2.getByRole('button', { name: 'Preferences' }).click();
+    await component2.getByRole('button', { name: 'View' }).click();
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
   });
 }
@@ -123,7 +159,7 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
 test('the theme-family picker and light/dark toggle act independently: switching mode does not reset family', async ({ mount, page }) => {
   await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'cyberpunk-dark'));
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'View' }).click();
 
   await expect(component.getByText('Theme: Cyberpunk')).toBeVisible();
   await component.getByText('Light mode').click();
@@ -132,35 +168,72 @@ test('the theme-family picker and light/dark toggle act independently: switching
   await expect(component.getByText('Theme: Cyberpunk')).toBeVisible();
 });
 
-// --- Session tab: host-broadcast controls ---------------------------------
+// --- Playback tab: host-broadcast run-through controls ---------------------
 
-test('Session tab: a member sees the lobby-cursor readout but no host controls', async ({ mount }) => {
+test('Playback tab: a member sees the lobby cursor as a bar, and no control they could act on', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, {
-    props: { session: baseSession({ lobbyCursorTick: 960 }), selfParticipantId: 'member-1' },
+    props: { session: baseSession({ lobbyCursorTick: 2 * BAR + 960, spotlightMode: true }), selfParticipantId: 'member-1', barTicks: EIGHT_BARS },
   });
 
-  await component.getByRole('button', { name: 'Session' }).click();
-  await expect(component.getByText(/pointing at tick 960/)).toBeVisible();
-  await expect(component.getByText('Set lobby cursor')).toHaveCount(0);
-  await expect(component.getByText(/Spotlight mode/)).toHaveCount(0);
-  await expect(component.getByText('Count-in:')).toHaveCount(0);
+  await component.getByRole('button', { name: 'Playback' }).click();
+  await expect(component.getByText('Host is pointing at bar 3.')).toBeVisible();
+  await expect(component.getByText("Spotlight is on: your view follows the host's cursor.")).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Set lobby cursor' })).toHaveCount(0);
+  await expect(component.getByRole('button', { name: /Spotlight mode/ })).toHaveCount(0);
+  await expect(component.getByRole('spinbutton')).toHaveCount(0);
+
+  await component.getByRole('button', { name: 'Audio' }).click();
+  await expect(component.getByText('Count-in is off for everyone. Only the host can change this.')).toBeVisible();
+  await expect(component.getByRole('button', { name: /Count-in:/ })).toHaveCount(0);
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
+  expect(sent).toEqual([]);
 });
 
-test('Session tab: the host sees lobby-cursor, Spotlight, and Count-in controls (metronome is personal, not here)', async ({ mount }) => {
-  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+test('Playback tab: the host sees lobby-cursor and Spotlight controls; Count-in and Metronome sit together under Audio', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
 
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
   await expect(component.getByText('Set lobby cursor')).toBeVisible();
   await expect(component.getByText('Clear', { exact: true })).toBeVisible();
   await expect(component.getByText(/Spotlight mode:/)).toBeVisible();
+  await expect(component.getByText(/Count-in:/)).toHaveCount(0);
+
+  await component.getByRole('button', { name: 'Audio' }).click();
   await expect(component.getByText(/Count-in:/)).toBeVisible();
-  await expect(component.getByText(/Metronome:/)).toHaveCount(0);
+  await expect(component.getByText(/Metronome:/)).toBeVisible();
 });
 
-test('Session tab: the Spotlight hint copy renders for the host', async ({ mount }) => {
+test('Playback tab: the host sets the lobby cursor by bar, sent as that bar\'s start tick', async ({ mount, page }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
+  await component.getByRole('button', { name: 'Playback' }).click();
+
+  await component.getByRole('spinbutton', { name: 'Lobby cursor bar' }).fill('5');
+  await component.getByRole('button', { name: 'Set lobby cursor' }).click();
+  await page.waitForTimeout(300);
+
+  const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages);
+  expect(sent.filter((m) => m.type === 'lobby-cursor-set')).toEqual([{ type: 'lobby-cursor-set', tickPosition: 4 * BAR }]);
+});
+
+test('Playback tab: with no song loaded on this device, the bar inputs are disabled and say why', async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession({ lobbyCursorTick: 960 }), selfParticipantId: 'host-1' } });
+  await component.getByRole('button', { name: 'Playback' }).click();
+
+  await expect(component.getByRole('spinbutton', { name: 'Lobby cursor bar' })).toBeDisabled();
+  await expect(component.getByRole('button', { name: 'Set lobby cursor' })).toBeDisabled();
+  await expect(component.getByRole('button', { name: 'Set early-stop point' })).toBeDisabled();
+  await expect(component.getByText(/Pick your part first/).first()).toBeVisible();
+  // The readout can't name a bar yet, but still says a cursor is set.
+  await expect(component.getByText('The host is pointing at a spot in the song.')).toBeVisible();
+  // Clearing needs no bars.
+  await expect(component.getByRole('button', { name: 'Clear', exact: true })).toBeEnabled();
+});
+
+test('Playback tab: the Spotlight hint copy renders for the host', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
 
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
   await expect(
     component.getByText(
       "Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.",
@@ -173,16 +246,16 @@ test('button label reflects countInEnabled', async ({ mount }) => {
     props: { session: baseSession({ countInEnabled: true }), selfParticipantId: 'host-1' },
   });
 
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
   await expect(component.getByText('Count-in: On')).toBeVisible();
 });
 
-// --- Preferences tab: personal, this-device settings -----------------------
+// --- Audio tab: personal metronome -----------------------------------------
 
-test('Preferences tab: any participant sees the personal metronome toggle; clicking it persists locally and sends nothing', async ({ mount, page }) => {
+test('Audio tab: any participant sees the personal metronome toggle; clicking it persists locally and sends nothing', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
   await expect(component.getByText('Metronome: Off')).toBeVisible();
 
   await component.getByText('Metronome: Off').click();
@@ -195,15 +268,15 @@ test('Preferences tab: any participant sees the personal metronome toggle; click
   expect(sent).toEqual([]);
 });
 
-// --- Preferences tab: lyrics ticker font size + measure markers (T002/T004) ---
+// --- Lyrics tab: every lyrics ticker setting in one place (T002/T004) -------
 
-test('Preferences tab: the lyrics ticker font size control renders all four options and selecting one persists it', async ({
+test('Lyrics tab: the lyrics ticker font size control renders all four options and selecting one persists it', async ({
   mount,
   page,
 }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Lyrics' }).click();
   await expect(component.getByRole('button', { name: 'Small' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Medium' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Large' })).toBeVisible();
@@ -219,13 +292,13 @@ test('Preferences tab: the lyrics ticker font size control renders all four opti
 // lyrics-ticker-position-preference): personal Preferences control for the
 // ticker's viewport position — Top | Bottom, default bottom, persisted
 // client-side like the font-size steps.
-test('Preferences tab: the lyrics ticker position control renders Top/Bottom and selecting Top persists it', async ({
+test('Lyrics tab: the lyrics ticker position control renders Top/Bottom and selecting Top persists it', async ({
   mount,
   page,
 }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Lyrics' }).click();
   await expect(component.getByRole('button', { name: 'Top' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Bottom' })).toBeVisible();
 
@@ -234,10 +307,10 @@ test('Preferences tab: the lyrics ticker position control renders Top/Bottom and
   expect(stored).toBe('top');
 });
 
-test('Preferences tab: the "Measure markers" toggle defaults off, persists, and sends nothing', async ({ mount, page }) => {
+test('Lyrics tab: the "Measure markers" toggle defaults off, persists, and sends nothing', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Lyrics' }).click();
   await expect(component.getByText('Measure markers: Off')).toBeVisible();
 
   await component.getByText('Measure markers: Off').click();
@@ -250,7 +323,7 @@ test('Preferences tab: the "Measure markers" toggle defaults off, persists, and 
   expect(sent).toEqual([]);
 });
 
-// --- Tracks tab: personal per-part mute controls (T016-T018, own 4th tab) --
+// --- Audio tab: personal per-part mute controls (T016-T018) ---------------
 
 /**
  * T004 (tasks-part-mute-toggle-f0d4.md), moved to its own Tracks tab by
@@ -275,7 +348,7 @@ test('Tracks tab: a mute toggle renders per available part, reflecting stored mu
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: 'Mute Lead Guitar' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Unmute Bass' })).toBeVisible();
@@ -299,7 +372,7 @@ test('Tracks tab: clicking a mute toggle persists via track-mute-preference (rou
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
   await component.getByRole('button', { name: 'Mute Lead Guitar' }).click();
   await expect(component.getByRole('button', { name: 'Unmute Lead Guitar' })).toBeVisible();
 
@@ -328,7 +401,7 @@ test('Tracks tab: a participant can mute their own currently-selected part (no r
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   // member-1's own selectedPart is trackIndex 0 ("Lead Guitar") — muting it
   // must succeed exactly like muting any other part.
@@ -344,7 +417,7 @@ test('Tracks tab: shows the personal-scope hint below the per-part mute rows', a
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
   await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toBeVisible();
 });
 
@@ -363,7 +436,7 @@ test('Tracks tab: each part renders in its own row', async ({ mount, page }) => 
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   const rowCount = await page.evaluate(() => document.querySelectorAll('.track-row').length);
   // One .track-row per part -- not one shared row wrapping every part's
@@ -391,7 +464,7 @@ test('Tracks tab: clicking "Solo" on a part mutes every other part, leaves it un
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: 'Mute Lead Guitar' })).toBeVisible();
   await expect(component.getByRole('button', { name: 'Mute Bass' })).toBeVisible();
@@ -412,11 +485,11 @@ test('Tracks tab: clicking "Solo" on a part mutes every other part, leaves it un
   expect(storedDrums).toBe('on');
 });
 
-test('Preferences tab: no longer renders any mute-parts controls (moved to the Tracks tab)', async ({ mount }) => {
+test('View tab: renders no mute-parts controls (they live under Audio)', async ({ mount }) => {
   const session = baseSession({ selectedSong: 'creep', availableParts: [{ trackIndex: 0, instrumentName: 'Lead Guitar' }] });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
 
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'View' }).click();
 
   await expect(component.getByText(/Lead Guitar:/)).toHaveCount(0);
   await expect(component.getByText("Only you don't hear muted parts — everyone else still does.")).toHaveCount(0);
@@ -427,7 +500,7 @@ test('clicking Count-in sends count-in-set with the flipped value', async ({ mou
     props: { session: baseSession({ countInEnabled: true }), selfParticipantId: 'host-1' },
   });
 
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
   await component.getByText('Count-in: On').click();
 
   const sent = await page.evaluate(() => (window as unknown as { __sentMessages: unknown[] }).__sentMessages);
@@ -522,7 +595,7 @@ test('a row shows "Lyrics" for a participant on the tab-less lyrics part', async
   });
   const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'host-1' } });
 
-  await expect(component.getByText('Lyrics')).toBeVisible();
+  await expect(component.locator('.row').getByText('Lyrics')).toBeVisible();
 });
 
 // T003 (tasks-icons-a11y-ticker-a10d.md, feedback F002): the "HOST" text
@@ -577,14 +650,14 @@ test('a non-host, non-requesting viewer sees a plain pending label on the reques
   await expect(component.getByText('Requesting host')).toBeVisible();
 });
 
-test("the host's Session tab number inputs each have an accessible name", async ({ mount }) => {
-  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+test("the host's Playback tab bar inputs each have an accessible name", async ({ mount }) => {
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
+  await component.getByRole('button', { name: 'Playback' }).click();
 
   await expect(component.getByRole('spinbutton')).toHaveCount(3);
   await expect(component.getByRole('spinbutton', { name: 'Start marker bar' })).toBeVisible();
-  await expect(component.getByRole('spinbutton', { name: 'Lobby cursor tick' })).toBeVisible();
-  await expect(component.getByRole('spinbutton', { name: 'Early stop tick' })).toBeVisible();
+  await expect(component.getByRole('spinbutton', { name: 'Lobby cursor bar' })).toBeVisible();
+  await expect(component.getByRole('spinbutton', { name: 'Early stop bar' })).toBeVisible();
 });
 
 /**
@@ -595,24 +668,24 @@ test("the host's Session tab number inputs each have an accessible name", async 
  * one broadcast per click.
  */
 test('rapidly clicking "Set lobby cursor" debounces to a single lobby-cursor-set send with the last value', async ({ mount, page }) => {
-  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
+  await component.getByRole('button', { name: 'Playback' }).click();
 
-  const input = component.getByRole('spinbutton', { name: 'Lobby cursor tick' });
+  const input = component.getByRole('spinbutton', { name: 'Lobby cursor bar' });
   const setButton = component.getByRole('button', { name: 'Set lobby cursor' });
 
-  await input.fill('100');
+  await input.fill('2');
   await setButton.click();
-  await input.fill('200');
+  await input.fill('3');
   await setButton.click();
-  await input.fill('300');
+  await input.fill('4');
   await setButton.click();
 
   await page.waitForTimeout(300);
 
   const sent = await page.evaluate(() => (window as unknown as { __sentMessages: { type: string; tickPosition?: number }[] }).__sentMessages);
   const cursorSets = sent.filter((m) => m.type === 'lobby-cursor-set');
-  expect(cursorSets).toEqual([{ type: 'lobby-cursor-set', tickPosition: 300 }]);
+  expect(cursorSets).toEqual([{ type: 'lobby-cursor-set', tickPosition: 3 * BAR }]);
 });
 
 /**
@@ -622,7 +695,7 @@ test('rapidly clicking "Set lobby cursor" debounces to a single lobby-cursor-set
  */
 test('shows a Spotlight-mode hint under the Lobby cursor group', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
 
   await expect(
     component.getByText('Spotlight mode forces every participant\'s view to follow the lobby cursor', { exact: false }),
@@ -634,11 +707,18 @@ test('shows a Spotlight-mode hint under the Lobby cursor group', async ({ mount 
 test.describe('phone width', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('no tab of the modal needs horizontal scrolling at 390px', async ({ mount, page }) => {
-    const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
+  for (const width of [390, 360]) test(`no tab of the modal needs horizontal scrolling at ${width}px, and the tab strip stays one line`, async ({ mount, page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1', barTicks: EIGHT_BARS } });
 
-    for (const tab of ['Participants', 'Session', 'Preferences', 'Tracks']) {
-      await component.getByRole('button', { name: tab }).click();
+    const tabTops = await component.locator('.tab-strip .btn').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+    expect(new Set(tabTops).size).toBe(1);
+    for (const el of await component.locator('.tab-strip .btn').all()) {
+      expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+    }
+
+    for (const tab of TABS) {
+      await component.getByRole('button', { name: tab, exact: true }).click();
       const scrollers = await page.evaluate(() => {
         const out: string[] = [];
         for (const el of Array.from(document.querySelectorAll('*'))) {
@@ -680,7 +760,7 @@ test.describe('Tracks tab redesign (T004)', () => {
 
   test('each part renders as a single-line row with a display-only, instrument-prominent label', async ({ mount, page }) => {
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     await expect(component.locator('.track-row')).toHaveCount(3);
 
@@ -705,7 +785,7 @@ test.describe('Tracks tab redesign (T004)', () => {
     page,
   }) => {
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     const bassRow = component.locator('.track-row', { hasText: 'Bass' });
     const muteButton = bassRow.getByRole('button', { name: 'Mute Bass · Chris' });
@@ -724,7 +804,7 @@ test.describe('Tracks tab redesign (T004)', () => {
 
   test('Solo stays a text button on the redesigned rows', async ({ mount, page }) => {
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     const bassRow = component.locator('.track-row', { hasText: 'Bass' });
     const solo = bassRow.getByRole('button', { name: 'Solo' });
@@ -752,7 +832,7 @@ test.describe('Tracks tab redesign (T004)', () => {
     });
     await page.setViewportSize({ width: 420, height: 800 });
     const component = await mount(SettingsModalHarness, { props: { session, selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     const shortMarquee = component.locator('.track-row').nth(0).getByTestId('track-marquee');
     const longMarquee = component.locator('.track-row').nth(1).getByTestId('track-marquee');
@@ -778,7 +858,7 @@ test.describe('Tracks tab redesign (T004)', () => {
     page,
   }) => {
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     const muteAll = component.getByRole('button', { name: 'Mute all' });
     await expect(muteAll).toBeVisible({ timeout: 3000 });
@@ -801,7 +881,7 @@ test.describe('Tracks tab redesign (T004)', () => {
   test('"Mute all" never touches count-in/metronome (no WS sends, metronome preference untouched)', async ({ mount, page }) => {
     await page.evaluate(() => localStorage.setItem('sync-tab-scroll:metronome', 'on'));
     const component = await mount(SettingsModalHarness, { props: { session: trackSession(), selfParticipantId: 'member-1' } });
-    await component.getByRole('button', { name: 'Tracks' }).click();
+    await component.getByRole('button', { name: 'Audio' }).click();
 
     const muteAll = component.getByRole('button', { name: 'Mute all' });
     await expect(muteAll).toBeVisible({ timeout: 3000 });
@@ -817,7 +897,7 @@ test.describe('Tracks tab redesign (T004)', () => {
   });
 });
 
-// --- Session tab: T017 host-only "Audio source" control --------------------
+// --- Audio tab: T017 host-only "Audio source" control --------------------
 
 import type { CatalogSong } from '@sync-tab-scroll/shared';
 
@@ -834,11 +914,11 @@ function synthOnlySong(): CatalogSong {
   return { ...recordingSong(), recordingPath: null, syncPoints: null };
 }
 
-test('Session tab: host sees the Audio source control for a recording-capable song and switching sends playback-source-set', async ({ mount, page }) => {
+test('Audio tab: host sees the Audio source control for a recording-capable song and switching sends playback-source-set', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: baseSession({ selectedSong: 'creep', playbackSource: 'synth' }), selfParticipantId: 'host-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByText('Audio source')).toBeVisible();
   await component.getByRole('button', { name: 'Recording' }).click();
@@ -847,34 +927,34 @@ test('Session tab: host sees the Audio source control for a recording-capable so
   expect(sent).toContainEqual({ type: 'playback-source-set', source: 'recording' });
 });
 
-test('Session tab: the Audio source control is absent for a non-recording song', async ({ mount }) => {
+test('Audio tab: the Audio source control is absent for a non-recording song', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: baseSession({ selectedSong: 'creep' }), selfParticipantId: 'host-1', catalog: [synthOnlySong()] },
   });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByText('Audio source')).toHaveCount(0);
 });
 
-test('Session tab: a non-host sees the current audio source read-only (no switch buttons)', async ({ mount }) => {
+test('Audio tab: a non-host sees the current audio source read-only (no switch buttons)', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: baseSession({ selectedSong: 'creep', playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByText('Audio source: Recording (set by host).')).toBeVisible();
   await expect(component.getByRole('button', { name: 'Synth' })).toHaveCount(0);
   await expect(component.getByRole('button', { name: 'Recording' })).toHaveCount(0);
 });
 
-test('Session tab: host Audio source buttons are disabled while playback is running', async ({ mount }) => {
+test('Audio tab: host Audio source buttons are disabled while playback is running', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: {
       session: baseSession({ selectedSong: 'creep', playbackSource: 'synth', playbackState: { status: 'running', tickPosition: 0, bpm: 120, serverTimestamp: 0 } }),
       selfParticipantId: 'host-1', catalog: [recordingSong()],
     },
   });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: 'Recording' })).toBeDisabled();
   await expect(component.getByText('Stop playback to change the audio source.')).toBeVisible();
@@ -895,11 +975,11 @@ function withParts(overrides: Partial<Session> = {}): Session {
   });
 }
 
-test('Tracks tab: recording mode disables mute-all, per-part mute, and solo, with an explanatory reason', async ({ mount }) => {
+test('Audio tab: recording mode disables mute-all, per-part mute, and solo, with an explanatory reason', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: 'Mute all' })).toBeDisabled();
   await expect(component.getByRole('button', { name: 'Mute Guitar' })).toBeDisabled();
@@ -907,11 +987,11 @@ test('Tracks tab: recording mode disables mute-all, per-part mute, and solo, wit
   await expect(component.getByText(RECORDING_REASON)).toBeVisible();
 });
 
-test('Tracks tab: synth mode leaves mute/solo enabled', async ({ mount }) => {
+test('Audio tab: synth mode leaves mute/solo enabled', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: withParts({ playbackSource: 'synth' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Tracks' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: 'Mute all' })).toBeEnabled();
   await expect(component.getByRole('button', { name: 'Mute Guitar' })).toBeEnabled();
@@ -921,11 +1001,11 @@ test('Tracks tab: synth mode leaves mute/solo enabled', async ({ mount }) => {
 // (see recording-metronome-unlock.ct.spec.ts, T021/T022): the toggle stays
 // enabled in recording mode — it still drives the beat widget visually, even
 // though alphaTab can't mix an audible click over a playing recording.
-test('Preferences tab: the metronome toggle stays enabled in recording mode, with an inline note about the audio limitation', async ({ mount }) => {
+test('Audio tab: the metronome toggle stays enabled in recording mode, with an inline note about the audio limitation', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   await expect(component.getByRole('button', { name: /Metronome:/ })).toBeEnabled();
   await expect(component.getByText(/can't mix an audible click/)).toBeVisible();

@@ -50,16 +50,17 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   await memberPage.getByRole('button', { name: 'Select' }).last().click(); // Lyrics — a different part than the host's, auto-closes the modal
 
   // Lobby cursor / Spotlight controls live behind the settings-cog modal's
-  // Session tab (SettingsModal.svelte), not inline in the Lobby body.
+  // Playback tab (SettingsModal.svelte), not inline in the Lobby body. The
+  // cursor is set and shown in bars (converted against the loaded song).
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Session', exact: true }).click();
-  await page.getByRole('spinbutton', { name: 'Lobby cursor tick' }).fill('500');
+  await page.getByRole('button', { name: 'Playback', exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Lobby cursor bar' }).fill('2');
   await page.getByRole('button', { name: 'Set lobby cursor' }).click();
 
-  await expect(page.getByText('Host is pointing at tick 500')).toBeVisible();
+  await expect(page.getByText('Host is pointing at bar 2.')).toBeVisible();
   await memberPage.getByRole('button', { name: 'Settings' }).click();
-  await memberPage.getByRole('button', { name: 'Session', exact: true }).click();
-  await expect(memberPage.getByText('Host is pointing at tick 500')).toBeVisible({ timeout: 10_000 });
+  await memberPage.getByRole('button', { name: 'Playback', exact: true }).click();
+  await expect(memberPage.getByText('Host is pointing at bar 2.')).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Spotlight mode:/ }).click();
   await expect(page.getByRole('button', { name: 'Spotlight mode: on' })).toBeVisible();
@@ -79,7 +80,7 @@ test('Spotlight mode: lobby cursor readout syncs to the member, and both fields 
   await page.waitForTimeout(500);
 
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Session', exact: true }).click();
+  await page.getByRole('button', { name: 'Playback', exact: true }).click();
   await expect(page.getByText('No lobby cursor set.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Spotlight mode: off' })).toBeVisible();
 

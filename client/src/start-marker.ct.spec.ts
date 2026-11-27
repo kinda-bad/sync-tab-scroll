@@ -40,7 +40,7 @@ function sentMarkerMessages(page: import('@playwright/test').Page) {
 
 test('the host sees the marker and can clear it', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'host-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
 
   await expect(component.getByText('Stop returns to bar 9.')).toBeVisible();
   await component.getByRole('button', { name: 'Clear start marker' }).click();
@@ -50,7 +50,7 @@ test('the host sees the marker and can clear it', async ({ mount, page }) => {
 
 test('the host can set the marker to a bar', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession({ startMarkerBar: null }), selfParticipantId: 'host-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
 
   await expect(component.getByText('No start marker. Stop returns to bar 1.')).toBeVisible();
   await component.getByLabel('Start marker bar').fill('5');
@@ -61,7 +61,7 @@ test('the host can set the marker to a bar', async ({ mount, page }) => {
 
 test('a non-host sees the marker but no controls', async ({ mount }) => {
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
-  await component.getByRole('button', { name: 'Session' }).click();
+  await component.getByRole('button', { name: 'Playback' }).click();
 
   await expect(component.getByText('Stop returns to bar 9.')).toBeVisible();
   await expect(component.getByRole('button', { name: 'Clear start marker' })).toHaveCount(0);

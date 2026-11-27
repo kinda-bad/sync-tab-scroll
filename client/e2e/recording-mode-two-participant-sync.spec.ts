@@ -65,7 +65,7 @@ test('recording mode: two independent participants stay within the 50ms bar acro
   // Host-only: switch the session's audio source to the real recording
   // (T012/T017) before anyone joins/readies up.
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Session', exact: true }).click();
+  await page.getByRole('button', { name: 'Audio', exact: true }).click();
   await page.getByRole('button', { name: 'Recording' }).click();
   await expect(page.getByText('Everyone hears the real recording.')).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();

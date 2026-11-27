@@ -53,7 +53,7 @@
   {:else}
     <div class="help-about-panel">
       <p>Create or join a session from the landing screen, pick a song and your part, and hit Start once everyone's ready.</p>
-      <p>Use the "Song & part" nav control to change your song or part, and Settings for personal preferences and session controls.</p>
+      <p>Use the "Song & part" nav control to change your song or part, and Settings for everything else: People, Playback, View, Lyrics and Audio. Controls only the host can change are marked "Host".</p>
     </div>
   {/if}
 </Modal>

@@ -30,6 +30,7 @@ import { writable } from 'svelte/store';
 import * as atLib from '@coderline/alphatab';
 import { beatAtTick, beatDurationMs } from './beat-clock';
 import { createDefaultStartSeeder, defaultStartTick } from './default-start';
+import { barTickMap, barTickMapFromLookup, barTickMapFromScore } from './bar-tick';
 
 /** Beat state feeding the Bar's beat widget (ui.md Count-In & Metronome Beat Widget) — real beat boundaries, never a fixed-interval timer. */
 export interface BeatWidgetState {
@@ -218,9 +219,16 @@ export function ensurePlaybackEngine(
   // without reloading the GP file, and snapshots whether the container was
   // actually visible *at this exact moment* — `scoreLoaded` becoming `true`
   // doesn't by itself mean a real (non-zero-width) render happened.
+  api.midiLoad.on(() => {
+    if (api.tickCache) barTickMap.set(barTickMapFromLookup(api.tickCache));
+  });
+
   api.scoreLoaded.on((score) => {
     state!.scoreLoaded = true;
     state!.score = score;
+    // Bars for the Settings modal's bar inputs (bar-tick.ts): written bar
+    // starts until the MIDI exists, then the playback order below.
+    if (!api.tickCache) barTickMap.set(barTickMapFromScore(score));
     if (!isLyricsPart) state!.renderedWhileVisible = containers.tabContainer.clientWidth > 0;
 
     // Personal "mute this part" preference (ui.md Preferences tab,
@@ -718,6 +726,7 @@ function destroyEngine(): void {
   state.overlay?.destroy();
   state.api.destroy();
   state = undefined;
+  barTickMap.set(null);
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
   beatWidgetState.set(IDLE_BEAT_STATE);
 }
