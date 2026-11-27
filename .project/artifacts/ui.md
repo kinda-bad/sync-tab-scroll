@@ -498,7 +498,11 @@ regardless of whether playback has started:
     (`client/src/lyrics-ticker-font-size-preference.ts`, default
     **medium**, matching the in-tab lyrics overlay's existing fixed size).
     Each step is a clearly noticeable jump from its neighbor, not a subtle
-    scale. Applies to the in-tab lyrics overlay's syllable text (Playback
+    scale. The steps run in even ratios (about 1.68× each) from small to
+    huge: 0.85 / 1.425 / 2.385 / 4rem on small screens and 1.5 / 2.505 /
+    4.19 / 7rem at ≥1024px. Huge was doubled and the middle steps
+    re-spaced on user feedback (2026-11-27), so medium, the default, is
+    larger than before. Applies to the in-tab lyrics overlay's syllable text (Playback
     View, below) — has no effect on the tab-less Lyrics part's full lyric
     sheet, which uses its own fixed reading size.
   - a personal "Lyrics ticker position" toggle

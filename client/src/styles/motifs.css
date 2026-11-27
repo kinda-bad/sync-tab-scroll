@@ -398,18 +398,19 @@
 }
 /* Font-size steps (lyrics-ticker-font-size-preference.ts, keyed by the
    data-lyrics-size attribute lyrics-overlay.ts sets). Small-screen values
-   are the original four. */
+   run from the original "small" to double the original "huge", in even
+   ratio steps (~1.68x each; user feedback 2026-11-27). */
 .lyrics-overlay[data-lyrics-size='small'] {
   --lyrics-ticker-font-size: 0.85rem;
 }
 .lyrics-overlay[data-lyrics-size='medium'] {
-  --lyrics-ticker-font-size: 1.125rem;
+  --lyrics-ticker-font-size: 1.425rem;
 }
 .lyrics-overlay[data-lyrics-size='large'] {
-  --lyrics-ticker-font-size: 1.5rem;
+  --lyrics-ticker-font-size: 2.385rem;
 }
 .lyrics-overlay[data-lyrics-size='huge'] {
-  --lyrics-ticker-font-size: 2rem;
+  --lyrics-ticker-font-size: 4rem;
 }
 /* T006 (feedback F007): on desktop viewports the ticker was dispro-
    portionately small against the much larger tab canvas — scale the four
@@ -420,13 +421,13 @@
     --lyrics-ticker-font-size: 1.5rem;
   }
   .lyrics-overlay[data-lyrics-size='medium'] {
-    --lyrics-ticker-font-size: 2rem;
+    --lyrics-ticker-font-size: 2.505rem;
   }
   .lyrics-overlay[data-lyrics-size='large'] {
-    --lyrics-ticker-font-size: 2.75rem;
+    --lyrics-ticker-font-size: 4.19rem;
   }
   .lyrics-overlay[data-lyrics-size='huge'] {
-    --lyrics-ticker-font-size: 3.5rem;
+    --lyrics-ticker-font-size: 7rem;
   }
 }
 
