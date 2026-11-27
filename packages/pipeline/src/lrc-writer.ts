@@ -1,3 +1,4 @@
+import { unrollSyllables, type PlacedSyllable, type PlaybackOrder } from '@sync-tab-scroll/shared';
 import type { Syllable } from './gp-parser.js';
 
 function formatTimestamp(ms: number): string {
@@ -13,23 +14,46 @@ function formatTimestamp(ms: number): string {
  * of that line's last syllable — GP syllable timing is why .lrc is generated
  * from GP rather than taken from lrclib directly (pipeline.md): it lets each
  * line carry an accurate *end* timestamp, not just a start.
+ *
+ * `syllables` are written-order (notation-tick) syllables; `lyricLineBreaks`
+ * groups them into `lines`. They are moved onto the playback timeline with
+ * the shared `unrollSyllables` (pipeline.md Repeats) before timing, so a line
+ * after a repeat sign lands where it is actually played, and a line inside a
+ * repeated section is written once per pass. A line entry is one run of
+ * consecutive placed syllables from the same line; a run also ends where
+ * playback jumps back (a repeat entirely inside one line sings it twice).
  */
-export function buildLrc(lines: string[], lyricLineBreaks: number[], syllables: Syllable[], tickToMs: (tick: number) => number): string {
+export function buildLrc(
+  lines: string[],
+  lyricLineBreaks: number[],
+  syllables: Syllable[],
+  playbackOrder: PlaybackOrder,
+  tickToMs: (tick: number) => number,
+): string {
+  const lineOfSyllable: number[] = [];
+  lyricLineBreaks.forEach((count, line) => {
+    for (let i = 0; i < count; i++) lineOfSyllable.push(line);
+  });
+
+  const placed = unrollSyllables(syllables, playbackOrder.masterBarStarts, playbackOrder.plays);
   const out: string[] = [];
-  let cursor = 0;
+  let run: PlacedSyllable[] = [];
+  const flush = () => {
+    if (run.length === 0) return;
+    const line = lineOfSyllable[run[0].sourceIndex];
+    out.push(`[${formatTimestamp(tickToMs(run[0].tickPosition))}]${lines[line]}`);
+    out.push(`[${formatTimestamp(tickToMs(run[run.length - 1].tickPosition))}]`);
+    run = [];
+  };
 
-  for (let i = 0; i < lines.length; i++) {
-    const count = lyricLineBreaks[i] ?? 0;
-    const lineSyllables = syllables.slice(cursor, cursor + count);
-    cursor += count;
-    if (lineSyllables.length === 0) continue;
-
-    const startMs = tickToMs(lineSyllables[0].tickPosition);
-    const endMs = tickToMs(lineSyllables[lineSyllables.length - 1].tickPosition);
-
-    out.push(`[${formatTimestamp(startMs)}]${lines[i]}`);
-    out.push(`[${formatTimestamp(endMs)}]`);
+  for (const syllable of placed) {
+    const line = lineOfSyllable[syllable.sourceIndex];
+    if (line === undefined) continue; // past the last line break: not part of any line
+    const previous = run[run.length - 1];
+    if (previous && (lineOfSyllable[previous.sourceIndex] !== line || syllable.sourceIndex <= previous.sourceIndex)) flush();
+    run.push(syllable);
   }
+  flush();
 
   return out.join('\n') + '\n';
 }
