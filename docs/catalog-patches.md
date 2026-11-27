@@ -59,9 +59,11 @@ tab named the gear — the comma part renders on the detail line after the
 performer.
 
 *The edit:* `docs/catalog-part-names.json` maps each song directory (relative
-to `catalog/`) to its part names in `trackIndex` order. `extract-lyrics`
-regenerates `meta.json` from the `.gp` track names, so after re-running it on
-a listed song, reapply from the repo root:
+to `catalog/`) to its part names in `trackIndex` order. Re-running
+`extract-lyrics` keeps these names as long as the same GP track is still at
+each index (`.project/artifacts/pipeline.md`, "Re-running on an existing
+song"). Reapply only when rebuilding a song's `meta.json` from scratch (e.g.
+after deleting it), or for a track whose GP name changed, from the repo root:
 
 ```sh
 k=kinda-bad/radiohead-creep   # the song's key in the map
@@ -96,9 +98,8 @@ bar's first time through.
 |---|---|---|
 | `kinda-bad-ii/smashing-pumpkins-1979` | `9` | "Verse 1", just before the first lyric in bar 11 (confirmed by the user, 2026-11-27). |
 
-*The edit:* `extract-lyrics` regenerates `meta.json` without this field, so
-reapply it after re-running the pipeline on a listed song (from the repo
-root):
+*The edit:* re-running `extract-lyrics` keeps this field. Reapply it only
+when rebuilding the song's `meta.json` from scratch (from the repo root):
 
 ```sh
 f=catalog/kinda-bad-ii/smashing-pumpkins-1979/meta.json

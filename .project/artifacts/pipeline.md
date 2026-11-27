@@ -218,13 +218,42 @@ not kept as a fallback or alternate path.
 containing the source `.gp` file — which is what gets published/served
 as-is, no separate transformed copy — together with its generated `.lrc`
 and a small metadata file (e.g. `meta.json`) holding `lyricsTrackIndex`,
-`lyricsLineIndex`, `lyricLineBreaks`, and (when a raw track-level lyric
+`lyricsLineIndex`, `lyricLineBreaks`, `trackNames` (the GP track names as
+read, in track order; pipeline-only, not part of `CatalogSong`), and (when a raw track-level lyric
 line exists) `lyricsRawLine` / `lyricsRawLineStartBar`. "What's the current output for
 song X" is just "look in that song's directory"; adding or removing a
 song is one directory operation, not a cross-reference between separate
 input and output trees. No intermediate/scratch output is written to this
 tree — the prior pipeline's stale leftover `.mid` files (from the
 no-longer-used MIDI approach) are the cautionary example this avoids.
+
+**Re-running on an existing song** (`fix/pipeline-keep-hand-set-fields`,
+2026-11-27). `meta.json` also holds fields set by hand after extraction
+(`syncPoints`, `defaultStartBar`, hand-named parts), so publishing merges
+into an existing `meta.json` rather than replacing it (`mergeMeta` in
+`packages/pipeline/src/catalog.ts`):
+- **Regenerated from the `.gp` every run:** `trackNames`,
+  `lyricsTrackIndex`, `lyricsLineIndex`, `lyricLineBreaks`,
+  `lyricsRawLine`, `lyricsRawLineStartBar`. An optional one the new run
+  doesn't produce is removed, not carried over. Lyric fixes go into the
+  `.gp` itself (docs/catalog-patches.md), so regenerating them is correct.
+- **Kept when already set:** `name` and `artist` (a non-empty existing
+  value wins; they're generated from the filename, which can't hold every
+  character, e.g. `?`).
+- **Part names:** a part keeps its existing `instrumentName` when the same
+  GP track is still at that `trackIndex`, meaning the old `trackNames[i]`
+  equals the new GP track name. For a `meta.json` written before
+  `trackNames` existed, the test is "the track count is unchanged". Otherwise
+  the part gets the new GP track name. `trackNames` is the record of what the
+  pipeline read, which is what lets a re-run tell a hand name from a track
+  renamed in the `.gp`.
+- **Everything else** in the existing file is kept as-is.
+- An existing `meta.json` that isn't valid JSON is logged and replaced
+  with a fresh one.
+
+The in-app upload route (infrastructure.md) is unaffected: it extracts into
+an empty staging directory and replaces the song directory wholesale, so a
+re-upload is still a full replace.
 
 **Optional recording assets** (`sync-tabs-to-real-audio`). A song
 directory may additionally hold a `recording.mp3` — an operator-supplied

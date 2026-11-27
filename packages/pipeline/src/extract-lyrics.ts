@@ -53,6 +53,7 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
     name: title,
     artist,
     parts,
+    trackNames: score.tracks.map((track) => track.name),
     lyricsTrackIndex: null,
     lyricsLineIndex: null,
     lyricLineBreaks: null,
