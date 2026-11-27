@@ -1208,3 +1208,263 @@ note at 32.50 s.
 *Reapply:* `python3 -I tools/catalog-patches/lrc-shift.py
 catalog/muse-supermassive-black-hole/lyrics.lrc 2450`. Result md5
 `53069a97dba235c247611b81c7380e2b`. Tracked in the catalog repo.
+
+## kinda-bad-ii/smashing-pumpkins-1979: bars 45 to the end (2026-11-27)
+
+**Report.** From bar 46 on, words are shown late: a full bar behind from bar 47 to about bar 90, then further behind. "below" (bar 50) appears after the bars 51–56 gap.
+
+**Cause.** No offset, repeat or start-bar problem: the raw line's start bar (`<Offset>`) is 0, the score has no repeats or jumps, and the sync points fit. Bars 1–44 are right. After bar 44, 13 singable notes got no syllable, so every later word slid onto a later note:
+
+- **7 shift-slide origins** (bars 46:4.5, 72:3.5, 78:4.5, 80:3.5, 83:4.5, 87:4.5, 122:4.5). The dispatcher skips these, as in Teenagers bar 4, but the singer puts a syllable on each.
+- **15 `_` empty skips** after bar 44. Each one burns a beat. Six of them landed on singable notes (bars 47:4.5, 86:4.5, 89:4.5, 94:4.5, 126:4.0, 129:4.0; confirmed by replaying the old chunks against the beats); the rest landed on ties or rests.
+
+Most phrases in this song are two eighth notes at 4.0 and 4.5. So two lost notes push a phrase back a full bar, which is what the user heard: bar 46:4.5 plus bar 47:4.5 put it one bar behind from bar 47, and the losses around bars 78–94 put it further behind. The tab also has two-syllable words on single notes in bars 85 and 89, which the old line split across two notes. In total 271 syllables competed for 256 dispatchable notes, and the last 15 were dropped.
+
+**Fix.**
+
+1. **.gp note properties.** Removed the shift slide (`<Property name="Slide"><Flags>1</Flags>`) from five track-0 GPIF notes. Each note is shared only by the beats listed:
+
+   | GPIF note | Beats | Bars |
+   |---|---|---|
+   | 46 | 140, 249 | 46:4.5 and 78:4.5 |
+   | 51 | 222, 256 | 72:3.5 and 80:3.5 |
+   | 64 | 269 | 83:4.5 |
+   | 68 | 281 | 87:4.5 |
+   | 82 | 399 | 122:4.5 |
+
+2. **Raw line, from bar 45 on.** Tokens 0–78 (through bar 44) are byte-identical. The changes:
+   - Dropped all 15 `_` skips after bar 44.
+   - Merged the two-syllable words at bars 85:1 and 89:1 into one chunk each.
+   - Added one `+` hold at bar 86:4.5.
+   - Joined two words onto bar 89:4.5.
+
+   Result: 270 chunks, 268 syllables, all dispatched, none dropped. The line went from 1262 to 1230 characters.
+3. **meta.json.** Changed only `lyricsRawLine` and `lyricLineBreaks`, to `[8,7,10,4,7,9,12,12,9,15,9,9,10,12,12,4,7,7,6,5,6,7,7,9,11,12,10,15,9,8]` (sum 268). The first 9 entries are unchanged. `syncPoints` and `defaultStartBar` are untouched.
+4. **lyrics.lrc.** Rebuilt with `tools/catalog-patches/rebuild-lrc.ts`. Lines 1–19 are unchanged; only timestamps changed, no line text.
+
+**Check.** tabcheck now reports:
+- 268 of 268 dispatched;
+- no singable notes after the last syllable;
+- no phrase-start note without a syllable;
+- no hold on a phrase start;
+- no hyphenated word split across rests;
+- 30 lines that sum to 268, with no mid-word line splits.
+
+Bars 1–44 syllables are identical in text and tick. Bars 113–126 (the second verse ending and its repeat of the bars 45–50 phrase) now have the same syllable text and the same note positions as the approved bars 37–50, and the note structure matches bar for bar.
+
+Confident words (aligner score ≥ 0.3) more than 268 ms off, song-wide: 100 before, 12 after.
+
+| bar | sung − shown (ms) | score | verdict |
+|---|---|---|---|
+| 16 | +394 | 0.30 | untouched (bars 1–44, approved) |
+| 33 | −310 | 0.50 | untouched (bars 1–44, approved) |
+| 46 ("I") | +472 | 0.79 | likely aligner: vowel-initial (about +150 bias); strongest vocal onset at 46:2.88; 46:3.0 is the only singable note before 46:4.5 |
+| 48 | +291 | 0.56 | borderline, one eighth |
+| 72 | +457 | 0.75 | vowel-initial, about +300 net; singer's phrasing |
+| 77 | +814 | 0.30 | weak score; kept in order between confident neighbors |
+| 93 | −434 | 0.32 | weak score |
+| 94 | +818 | 0.41 | last note before the bars 95–96 rest; nowhere later to go |
+| 105 | +354 | 0.94 | vowel-initial, about +200 net |
+| 118 | −770 | 0.48 | mirrors approved bar 42 (−65 there); kept |
+| 122 ("I") | +488 | 0.50 | same case as bar 46 |
+| 133 | −533 | 0.31 | weak score |
+
+Hand choices that rest on weaker evidence:
+- the single-chunk two-syllable words at 85:1 and 89:1;
+- the join on 89:4.5;
+- the hold on 86:4.5;
+- the slide removals at bars 78, 80, 83 and 87. These follow from note sharing (notes 46 and 51) and from the phrase pattern, more than from confident aligner words on those notes.
+
+**Hashes.**
+
+| | before | after |
+|---|---|---|
+| .gp file | `522d3b3a499d57cf402fb68e99bd53b4d78a8109d21133de9b418dc3f2207742` | `88a0a4d3e554c7eb3ff831e19071b1f5fe370098f1f284c7bda44b8890d10575` (the zip is not byte-reproducible; check the gpif instead) |
+| Content/score.gpif | — | `c18f6f7aed061aca55b4252b15b81cbc2a4576117648d4bb86395a530cf42dad` |
+| raw line | `afeb131698801a543c3ee621b1c7a3022e36d77347435ee57d1ea847dbef8fb0` | `959b9b88e465e038575ede295266449f3d91a6cae91bd92048abf9c10ae96ecd` |
+| meta.json | `4f185e3007dd8483fd90350cfbfe76bfc82a0fb34f55b1208d77f4a3f1c820e9` | `29d9eab543c770111db0b9340764e87315948e19eb5caf671e53742eb29b7d0a` |
+| lyrics.lrc | `9adcb3b3…` | `30ba2bb16ad38d2a8bd82b54420ac81d3d4382a205c494a20d189a8ccaaec35d` |
+
+recording.mp3 (`00d91b2c…`) and consent.json (`c3e2f35e…`) are unchanged.
+
+**Reapply.** Save the three files below in one directory, then run `reapply.sh <repo root> <that dir>`. The script refuses to run unless the song is in its original state, and it checks every intermediate and output hash.
+
+`slides-off.py`:
+
+```python
+"""slides-off.py <in.gp> <out.gp>: remove the shift slide (Slide Flags 1) from the 1979 lead-vocal notes 46, 51, 64, 68, 82.
+Each note must be used only by the expected track-0 beats (bars 46+78, 72+80, 83, 87, 122)."""
+import re, sys, zipfile
+src, dst = sys.argv[1:3]
+WANT = {"46": ["140", "249"], "51": ["222", "256"], "64": ["269"], "68": ["281"], "82": ["399"]}
+z = zipfile.ZipFile(src); g = z.read("Content/score.gpif").decode("utf-8")
+users = re.findall(r'<Beat id="(\d+)">(?:(?!</Beat>).)*?<Notes>([^<]*)</Notes>', g, re.S)
+n0 = g.count('name="Slide"')
+for nid, beats in WANT.items():
+    assert sorted(b for b, ns in users if nid in ns.split()) == sorted(beats), f"note {nid} used elsewhere"
+    m = re.search(rf'<Note id="{nid}">.*?</Note>', g, re.S); blk = m.group(0)
+    p = re.search(r'\n\s*<Property name="Slide">\s*<Flags>1</Flags>\s*</Property>', blk)
+    assert p and blk.count('name="Slide"') == 1, f"note {nid}: not the unpatched slide"
+    g = g[: m.start()] + blk[: p.start()] + blk[p.end():] + g[m.end():]
+assert g.count('name="Slide"') == n0 - len(WANT)
+with zipfile.ZipFile(dst, "w") as out:
+    for info in z.infolist():
+        if info.filename.startswith("__MACOSX") or "/._" in "/" + info.filename: continue
+        out.writestr(info, g.encode("utf-8") if info.filename == "Content/score.gpif" else z.read(info), compress_type=info.compress_type)
+print(f"patched {dst}")
+```
+
+`build-raw.py`:
+
+```python
+"""build-raw.py <old-raw.txt> <new-raw.txt>: rebuild the 1979 raw line from bar 45 on.
+Tokens are the old line split on single spaces; tokens 0-78 (through bar 44) stay as they are."""
+import sys
+t = open(sys.argv[1], encoding="utf-8").read().split(" ")
+assert len(t) == 287 and t[79] == t[80] == "_" and t[172] == t[182] == "_"
+assert t[171].endswith("-") and t[181].endswith("-")
+out, skip = [], {173, 183, 186}
+for i, x in enumerate(t):
+    if i in skip or (i > 78 and x == "_"): continue   # drop all 15 empty skips after bar 44
+    if i in (171, 181): x = x[:-1] + t[i + 2]          # bars 85, 89: two-syllable word on one note
+    if i == 185: x = x + "+" + t[186]                  # bar 89:4.5 carries two words (join)
+    out.append(x)
+    if i == 176: out.append("+")                       # bar 86:4.5 hold on the sustained word
+open(sys.argv[2], "w", encoding="utf-8").write(" ".join(out))
+
+```
+
+`reapply.sh`:
+
+```bash
+#!/usr/bin/env bash
+# Reapply the 1979 bar-45-on patch. Usage: reapply.sh <repo root> <dir with slides-off.py and build-raw.py>
+set -euo pipefail
+R=$1; T=$2; D=$R/catalog/kinda-bad-ii/smashing-pumpkins-1979; G="Smashing Pumpkins-1979-11-15-2026.gp"
+W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+h() { shasum -a 256 "$1" | cut -c1-64; }
+[ "$(h "$D/$G")" = 522d3b3a499d57cf402fb68e99bd53b4d78a8109d21133de9b418dc3f2207742 ] || { echo ".gp is not the original"; exit 1; }
+[ "$(h "$D/meta.json")" = 4f185e3007dd8483fd90350cfbfe76bfc82a0fb34f55b1208d77f4a3f1c820e9 ] || { echo "meta.json is not the original"; exit 1; }
+jq -j .lyricsRawLine "$D/meta.json" > "$W/old.txt"
+[ "$(h "$W/old.txt")" = afeb131698801a543c3ee621b1c7a3022e36d77347435ee57d1ea847dbef8fb0 ] || { echo "raw line differs"; exit 1; }
+python3 -I "$T/build-raw.py" "$W/old.txt" "$W/new.txt"
+[ "$(h "$W/new.txt")" = 959b9b88e465e038575ede295266449f3d91a6cae91bd92048abf9c10ae96ecd ] || { echo "new raw line differs"; exit 1; }
+cp "$D/$G" "$W/orig.gp"
+python3 -I "$T/slides-off.py" "$W/orig.gp" "$W/slid.gp"
+python3 -I "$R/tools/catalog-patches/gp-replace-raw-line.py" "$W/slid.gp" 0 "$W/old.txt" "$W/new.txt" "$W/$G"
+[ "$(unzip -p "$W/$G" Content/score.gpif | shasum -a 256 | cut -c1-64)" = c18f6f7aed061aca55b4252b15b81cbc2a4576117648d4bb86395a530cf42dad ] || { echo "patched gpif differs"; exit 1; }
+echo '[8,7,10,4,7,9,12,12,9,15,9,9,10,12,12,4,7,7,6,5,6,7,7,9,11,12,10,15,9,8]' > "$W/breaks.json"
+jq --rawfile r "$W/new.txt" --slurpfile b "$W/breaks.json" '.lyricsRawLine=$r | .lyricLineBreaks=$b[0]' "$D/meta.json" > "$W/meta.json"
+[ "$(h "$W/meta.json")" = 29d9eab543c770111db0b9340764e87315948e19eb5caf671e53742eb29b7d0a ] || { echo "meta differs"; exit 1; }
+cp "$W/$G" "$D/$G"; cp "$W/meta.json" "$D/meta.json"
+(cd "$R/packages/pipeline" && ./node_modules/.bin/tsx ../../tools/catalog-patches/rebuild-lrc.ts "$D" - "$W/lyrics.lrc")
+[ "$(h "$W/lyrics.lrc")" = 30ba2bb16ad38d2a8bd82b54420ac81d3d4382a205c494a20d189a8ccaaec35d ] || { echo "lrc differs"; exit 1; }
+cp "$W/lyrics.lrc" "$D/lyrics.lrc"; echo "1979 patch applied"
+```
+
+**Sung minus shown, confident words, bar 44 to the end** (word # is the index in the full lyric sequence; negative means the tab showed the word late; vowel-initial words read about 150 ms high, so the "I" rows are not regressions):
+
+| word # | bar before → after | sung − shown before (ms) | after (ms) | score |
+|---|---|---|---|---|
+| 63 | 44 → 44 | +175 | +175 | 0.57 |
+| 66 | 44 → 44 | -61 | -61 | 0.45 |
+| 67 | 45 → 45 | -33 | -33 | 0.65 |
+| 69 | 46 → 46 | +472 | +472 | 0.79 |
+| 70 | 47 → 46 | -1650 | +3 | 0.74 |
+| 71 | 48 → 47 | -917 | -209 | 0.35 |
+| 72 | 48 → 48 | -653 | +291 | 0.56 |
+| 74 | 49 → 49 | -501 | -29 | 0.9 |
+| 75 | 50 → 49 | -1834 | +56 | 0.44 |
+| 79 | 57 → 57 | -745 | -36 | 0.95 |
+| 80 | 58 → 57 | -677 | +32 | 0.69 |
+| 81 | 58 → 57 | -949 | -5 | 0.63 |
+| 82 | 58 → 58 | -733 | +212 | 0.6 |
+| 83 | 61 → 58 | -4920 | +40 | 0.54 |
+| 84 | 61 → 58 | -4736 | -13 | 0.35 |
+| 89 | 62 → 61 | -941 | +3 | 0.89 |
+| 90 | 62 → 62 | -932 | +12 | 0.88 |
+| 91 | 62 → 62 | -1005 | -60 | 0.9 |
+| 92 | 65 → 62 | -4812 | +148 | 0.8 |
+| 93 | 65 → 62 | -5023 | -64 | 0.37 |
+| 94 | 65 → 65 | -1249 | -68 | 0.42 |
+| 96 | 66 → 66 | -1097 | -152 | 0.59 |
+| 97 | 67 → 66 | -1709 | -56 | 0.41 |
+| 98 | 67 → 67 | -484 | -12 | 0.91 |
+| 100 | 68 → 67 | -1973 | -84 | 0.56 |
+| 102 | 69 → 68 | -1922 | -32 | 0.93 |
+| 103 | 70 → 69 | -1400 | +17 | 0.39 |
+| 107 | 72 → 71 | -941 | +4 | 0.37 |
+| 108 | 73 → 72 | -2377 | +220 | 0.93 |
+| 109 | 73 → 72 | -2314 | +48 | 0.87 |
+| 110 | 74 → 72 | -2613 | +457 | 0.75 |
+| 111 | 74 → 73 | -2181 | -55 | 0.47 |
+| 112 | 75 → 73 | -3338 | -32 | 0.31 |
+| 115 | 76 → 75 | -900 | +44 | 0.99 |
+| 116 | 76 → 75 | -937 | +8 | 0.94 |
+| 117 | 76 → 75 | -972 | -27 | 0.98 |
+| 118 | 76 → 76 | -824 | +121 | 0.44 |
+| 120 | 77 → 76 | -2629 | -32 | 0.53 |
+| 121 | 78 → 76 | -3085 | -15 | 0.43 |
+| 122 | 79 → 77 | -2965 | +814 | 0.3 |
+| 126 | 81 → 80 | -2400 | +197 | 0.44 |
+| 128 | 83 → 81 | -4078 | -63 | 0.7 |
+| 129 | 85 → 81 | -6139 | +1 | 0.48 |
+| 130 | 85 → 81 | -7356 | -36 | 0.4 |
+| 131 | 85 → 82 | -5851 | +53 | 0.77 |
+| 132 | 86 → 82 | -7364 | -43 | 0.65 |
+| 133 | 87 → 83 | -7592 | -35 | 0.32 |
+| 134 | 89 → 85 | -9089 | -115 | 0.39 |
+| 137 | 92 → 86 | -11450 | +121 | 0.41 |
+| 140 | 94 → 89 | -10870 | -6 | 0.36 |
+| 144 | 98 → 91 | -12555 | -39 | 0.34 |
+| 145 | 98 → 91 | -12768 | -15 | 0.47 |
+| 147 | 101 → 93 | -15076 | -434 | 0.32 |
+| 148 | 101 → 93 | -15185 | -71 | 0.36 |
+| 149 | 102 → 94 | -13115 | +818 | 0.41 |
+| 151 | 102 → 97 | -10198 | -43 | 0.61 |
+| 152 | 104 → 97 | -12991 | -3 | 0.88 |
+| 153 | 105 → 98 | -12995 | -6 | 0.9 |
+| 154 | 105 → 98 | -12987 | +1 | 0.69 |
+| 155 | 105 → 98 | -13235 | -10 | 0.62 |
+| 156 | 106 → 101 | -9244 | -34 | 0.92 |
+| 157 | 106 → 101 | -9216 | -6 | 0.84 |
+| 158 | 106 → 101 | -8989 | -15 | 0.84 |
+| 159 | 106 → 102 | -8980 | -6 | 0.61 |
+| 160 | 109 → 102 | -13027 | -38 | 0.56 |
+| 161 | 109 → 102 | -12562 | +190 | 0.65 |
+| 162 | 109 → 102 | -12558 | -42 | 0.35 |
+| 163 | 109 → 104 | -9725 | -42 | 0.7 |
+| 165 | 110 → 105 | -9761 | -78 | 0.38 |
+| 166 | 110 → 105 | -9092 | +354 | 0.94 |
+| 167 | 111 → 106 | -10165 | -10 | 0.67 |
+| 168 | 111 → 106 | -9940 | -22 | 0.8 |
+| 169 | 112 → 106 | -11133 | -34 | 0.49 |
+| 172 | 113 → 109 | -8316 | -50 | 0.85 |
+| 173 | 114 → 109 | -8755 | -18 | 0.58 |
+| 179 | 116 → 111 | -9500 | -54 | 0.49 |
+| 181 | 117 → 112 | -9528 | -81 | 0.79 |
+| 182 | 118 → 113 | -8967 | +6 | 0.35 |
+| 184 | 119 → 114 | -9484 | -38 | 0.44 |
+| 186 | 120 → 115 | -8587 | -85 | 0.93 |
+| 187 | 120 → 116 | -8479 | +23 | 0.43 |
+| 190 | 122 → 117 | -8919 | +54 | 0.84 |
+| 191 | 123 → 117 | -11101 | -2 | 0.87 |
+| 193 | 124 → 118 | -10689 | -770 | 0.48 |
+| 195 | 124 → 119 | -9051 | -77 | 0.59 |
+| 196 | 124 → 120 | -8803 | +171 | 0.52 |
+| 197 | 125 → 120 | -9859 | +59 | 0.32 |
+| 199 | 125 → 120 | -9472 | -25 | 0.61 |
+| 202 | 129 → 122 | -12265 | +488 | 0.5 |
+| 203 | 129 → 122 | -12557 | -41 | 0.49 |
+| 205 | 130 → 124 | -11601 | +207 | 0.41 |
+| 207 | 133 → 125 | -14635 | +7 | 0.86 |
+| 208 | 133 → 125 | -14570 | +71 | 0.69 |
+| 210 | 133 → 126 | -13458 | +3 | 0.36 |
+| 212 | 134 → 129 | -10764 | -137 | 0.94 |
+| 213 | 134 → 129 | -10225 | -69 | 0.64 |
+| 214 | 134 → 129 | -9724 | -41 | 0.75 |
+| 215 | 134 → 129 | -9224 | +223 | 0.54 |
+| 217 | 134 → 130 | -7563 | -5 | 0.99 |
+| 221 | 134 → 133 | -2659 | -533 | 0.31 |
+| 222 | 134 → 133 | -1919 | -29 | 0.58 |
+
