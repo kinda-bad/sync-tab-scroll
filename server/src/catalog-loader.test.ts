@@ -234,6 +234,41 @@ describe('loadCatalog recording discovery (T008/T009)', () => {
     expect(songs[0].recordingPath).toBeNull();
   });
 
+  describe('defaultStartBar (per-song-default-start-point)', () => {
+    it('passes a positive integer through as a 1-based bar number', () => {
+      writeSong('creep', { meta: metaWith({ defaultStartBar: 9 }) });
+
+      const { songs } = loadCatalog(catalogRoot);
+
+      expect(songs[0].defaultStartBar).toBe(9);
+    });
+
+    it('omits the field when meta.json has none', () => {
+      writeSong('creep');
+
+      const { songs } = loadCatalog(catalogRoot);
+
+      expect(songs[0]).not.toHaveProperty('defaultStartBar');
+    });
+
+    it.each([0, -1, 2.5, '9', null])('drops an invalid value (%j) with a warning naming the song, and still loads the song', (value) => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        writeSong('creep', { meta: metaWith({ defaultStartBar: value }) });
+
+        const { songs } = loadCatalog(catalogRoot);
+
+        expect(songs).toHaveLength(1);
+        expect(songs[0]).not.toHaveProperty('defaultStartBar');
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0].join(' ')).toContain('creep');
+        expect(warn.mock.calls[0].join(' ')).toContain('defaultStartBar');
+      } finally {
+        warn.mockRestore();
+      }
+    });
+  });
+
   it('T009: treats a recording.mp3 with no sync points as recording-less (recordingPath null) and warns naming the song', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {

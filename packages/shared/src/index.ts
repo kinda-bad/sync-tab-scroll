@@ -195,6 +195,14 @@ export interface CatalogSong {
    * (datamodel.md CatalogSong; T009).
    */
   syncPoints: FlatSyncPoint[] | null;
+  /**
+   * 1-based bar number a run-through starts at (per-song-default-start-point),
+   * set by hand in `meta.json`. The host's client maps it to a playback tick
+   * and seeds `PlaybackState.tickPosition` with it while stopped, so selecting
+   * the song (and every Stop) parks everyone there instead of bar 1. Omitted
+   * when absent or invalid (datamodel.md CatalogSong).
+   */
+  defaultStartBar?: number;
 }
 
 /**

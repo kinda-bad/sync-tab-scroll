@@ -131,6 +131,37 @@ describe('song-select', () => {
 
     expect(session.earlyStopTick).toBeNull();
   });
+
+  // per-song-default-start-point: the start position is per-song. Without a
+  // reset, a position seeded (or clicked) on the previous song would carry
+  // over, and the new song would start mid-way at a meaningless tick.
+  it('resets playbackState.tickPosition to 0 on a genuine song change', () => {
+    const ctx = makeCtx([fakeSong('creep'), fakeSong('bonus')]);
+    const session = ctx.sessionStore.create('host-1');
+    session.selectedSong = 'bonus';
+    session.playbackState.tickPosition = 30720;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+    expect(session.playbackState.tickPosition).toBe(0);
+  });
+
+  it('leaves playbackState.tickPosition alone when re-selecting the same song', () => {
+    const ctx = makeCtx([fakeSong('creep')]);
+    const session = ctx.sessionStore.create('host-1');
+    session.selectedSong = 'creep';
+    session.playbackState.tickPosition = 30720;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+    expect(session.playbackState.tickPosition).toBe(30720);
+  });
 });
 
 describe('song-select catalogue-unlock guard', () => {

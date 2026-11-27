@@ -49,6 +49,11 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     // settings (datamodel.md), same reset-on-song-change pattern.
     session.hostBarsPerRow = null;
     session.earlyStopTick = null;
+    // The start position is per-song too: a tick seeded or clicked on the old
+    // song means nothing in the new one. The host's client re-seeds the new
+    // song's defaultStartBar, if any, from this 0 (per-song-default-start-point).
+    session.playbackState.tickPosition = 0;
+    session.playbackState.serverTimestamp = Date.now();
     // Selecting a genuinely different song resets every participant's
     // part/readiness — a part id/index from the old song's parts has no
     // guaranteed meaning against the new song's parts.
