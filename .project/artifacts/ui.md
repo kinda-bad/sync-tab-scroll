@@ -1,7 +1,7 @@
 ---
 name: ui
 status: stable
-last_updated: 2026-07-23
+last_updated: 2026-11-26
 diagram_type: graph TD
 render_section: UI
 diagram_status: current
@@ -595,6 +595,32 @@ dismissible (above), a user who dismisses it while song or part is still
 unset sees these Lobby-body messages directly, with the Bar reachable
 beneath.
 
+### Default start point
+
+`per-song-default-start-point` (datamodel.md `CatalogSong.defaultStartBar`).
+A song can name the bar its run-throughs start at, for a band that never
+plays the intro (first user: 1979, bar 9). It applies while stopped, in the
+Lobby, before Start:
+
+- **Selecting the song** parks everyone's tab cursor at that bar instead of
+  bar 1, and Start plays from there. The host's client maps the bar to a
+  tick once its engine is ready and sends an ordinary `seek`; the broadcast
+  moves every participant's cursor. A host with no part picked has no
+  engine, so nothing is seeded until they pick one.
+- **Every Stop** (manual, or an early-stop point) returns to the default
+  start bar too, since each run-through starts in the same place.
+- **The host can override it** by clicking anywhere in the tab while
+  stopped, including bar 1 to play the intro. That position sticks until
+  the next Stop or song change; it isn't re-seeded on a part or audio-source
+  switch, or on a host reload while the position is off bar 1.
+- **Recording mode** starts the recording at the matching moment: the tick
+  is mapped through the song's `syncPoints` by alphaTab.
+- **Lyrics** follow the parked position (both the ticker and the lyrics
+  view are position-driven); starting before the first lyric shows the
+  usual placeholder until the first syllable.
+
+A song without the field behaves as before (bar 1).
+
 ## Playback View
 
 Two renderings depending on the participant's selected part, both backed by
@@ -770,7 +796,9 @@ whether or not the participant's alphaTab instance has a visible staff.
 Host controls start/pause/resume/seek via the persistent bar's icon-only
 tape-recorder-style transport controls (play/pause/square — see above); a
 count-in countdown can precede playback start. The host's view exposes
-seek (click-to-position) when paused; participants' views don't.
+seek (click-to-position) when paused or stopped (in the Lobby, before
+Start); participants' views don't. While stopped, every participant's
+cursor parks at the host's chosen position (Default start point, above).
 
 The settings-gear control (Lobby View, above) remains in the persistent
 nav bar here too, so the Preferences tab's theme toggle stays reachable

@@ -72,3 +72,35 @@ jq --slurpfile map docs/catalog-part-names.json --arg k "$k" \
 ```
 
 When adding a new song, add its entry to the map in the same form.
+
+## Default start bar — `defaultStartBar` in `meta.json` (applied 2026-11-26)
+
+*Why:* some songs are never played from bar 1. For 1979 the band skips the
+synth intro, so every run-through used to start with the host scrubbing to
+the same spot. An optional `defaultStartBar` in a song's `meta.json` makes
+selecting the song (and every Stop) park everyone at that bar instead.
+The host can still click anywhere in the tab before Start, bar 1 included.
+See `.project/artifacts/ui.md` "Default start point".
+
+*The value:* a 1-based bar number, as the tab numbers its bars (bar 1 is the
+first bar). It must be a positive integer. Anything else (`0`, `2.5`, `"9"`)
+is logged at server startup and ignored, and the song still loads. A bar
+past the end of the score is ignored too. With repeats, the start is the
+bar's first time through.
+
+| Song (relative to `catalog/`) | `defaultStartBar` | Lands on |
+|---|---|---|
+| `kinda-bad-ii/smashing-pumpkins-1979` | `9` | "Verse 1", just before the first lyric in bar 11. Bar 5, "Band Entrance", is the other candidate. Bar 9 is a working assumption, pending the user's confirmation. |
+
+*The edit:* `extract-lyrics` regenerates `meta.json` without this field, so
+reapply it after re-running the pipeline on a listed song (from the repo
+root):
+
+```sh
+f=catalog/kinda-bad-ii/smashing-pumpkins-1979/meta.json
+jq '.defaultStartBar = 9' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+```
+
+To remove it: `jq 'del(.defaultStartBar)'`. The server reads `meta.json` at
+startup (and on an authoring rescan), so restart it after an edit. On the
+Railway deployment, the volume's copy of the file needs the same edit.

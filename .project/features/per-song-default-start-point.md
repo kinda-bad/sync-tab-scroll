@@ -1,7 +1,9 @@
 ---
 slug: per-song-default-start-point
-status: backlogged
+status: implemented
 logged: 2026-11-26
+plan: plan-per-song-default-start-point-2026-11-26-5e1d.md
+tasks: tasks-per-song-default-start-point-5e1d.md
 ---
 
 Let a song carry a default start point, so selecting it puts the lobby
