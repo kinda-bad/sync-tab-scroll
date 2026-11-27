@@ -867,7 +867,8 @@ below). infrastructure.md Tab Rendering has the alphaTab settings.
   each written bar out once (alphaTab has no unrolled layout), so the
   sheet jumps back to the repeat's start when playback does.
 - **Phones in portrait**: the view needs landscape. On a phone-width
-  screen in portrait a prompt covers the tab area ("Turn your phone
+  screen in portrait, in the Playback View (the Lobby stays usable), a
+  prompt covers the tab area ("Turn your phone
   sideways for the horizontal view."), never the Bar, with a "Use the
   paged view instead" button that turns the preference off. The client
   also asks for a landscape lock (`screen.orientation.lock`), which most

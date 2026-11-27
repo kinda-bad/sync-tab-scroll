@@ -673,8 +673,13 @@ is alphaTab's own horizontal layout and scroll mode, not a custom renderer
 - The beat cursor is hidden (the app's playhead line stands in for it;
   alphaTab notes that its cursor and scroll animations drift slightly);
   the bar highlight stays.
-- The render scale shrinks (once per render, to no less than 60% of the
-  start scale) until the staff fits the tab band's height.
+- The render scale fits the staff to the tab band's height, between 60%
+  of the start scale and the start scale, re-fitted after each render and
+  whenever the band resizes (a phone turned from portrait; the horizontal
+  layout doesn't re-render on a resize by itself). Changes under 0.02 are
+  ignored, so a fit can't loop.
+- The early-stop dim is placed after each render and once the MIDI (tick
+  cache) exists.
 - The lyrics band (`horizontal-lyrics-band.ts`) reuses the ticker's
   placed syllable stream on the playback timeline. Items sit at
   `position × scale` (about four characters per quarter note), pushed

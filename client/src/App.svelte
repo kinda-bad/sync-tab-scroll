@@ -309,9 +309,10 @@
   {/if}
 </div>
 <div bind:this={fullLyricsEl} class="full-lyrics-view" class:visible={hasPart && isLyricsPart} class:horizontal={$horizontalViewStore && isLyricsPart}></div>
-{#if horizontalActive && showBar}
+{#if horizontalActive && $clientStore.view === 'playback'}
   <!-- Shown only on a phone in portrait (styles/horizontal-view.css media
-       query); covers the tab area, never the Bar. -->
+       query), and only in the Playback view, so the Lobby stays usable;
+       covers the tab area, never the Bar. -->
   <div class="hview-rotate-prompt" role="status">
     <p>Turn your phone sideways for the horizontal view.</p>
     <Button variant="ghost" label="Use the paged view instead" onclick={() => persistHorizontalView(false)} />

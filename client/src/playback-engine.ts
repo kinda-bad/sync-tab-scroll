@@ -78,6 +78,8 @@ interface EngineState {
   horizontal: boolean;
   /** The horizontal view's tab band (EngineContainers.tabScrollEl), where the early-stop scrim goes. */
   tabScrollEl?: HTMLElement;
+  /** Stops the horizontal view's band observer. */
+  disposeHorizontal?: () => void;
   overlay?: LyricsOverlay;
   isLyricsPart: boolean;
   trackIndex: number;
@@ -225,26 +227,41 @@ export function ensurePlaybackEngine(
   // sheet scrolls so the parked beat sits under the playhead. alphaTab
   // itself only scrolls while playing. Two frames later, so alphaTab has
   // moved its cursor to the new beat first (it does so on its own frame).
+  let disposeHorizontal: (() => void) | undefined;
   if (horizontal && !isLyricsPart) {
     const scrollToCursorSoon = () => requestAnimationFrame(() => requestAnimationFrame(() => api.scrollToCursor()));
     api.postRenderFinished.on(scrollToCursorSoon);
     // Fit the staff to the tab band's height: on a phone in landscape the
     // band is short, and a staff taller than it would need scrolling up and
-    // down. Only ever shrinks (to no less than 60% of the starting scale),
-    // re-rendering once per fit, so it can't loop.
+    // down. Between 60% of the starting scale and the starting scale itself,
+    // re-fitted after each render and whenever the band resizes (a phone
+    // turned from portrait, where the engine is often built under the
+    // rotate prompt; alphaTab's horizontal layout doesn't re-render on a
+    // resize). A change under 0.02 is ignored, so a fit can't loop.
     const tabScrollEl = containers.tabScrollEl!;
-    const minScale = api.settings.display.scale * 0.6;
-    api.postRenderFinished.on(() => {
+    const baseScale = api.settings.display.scale;
+    const minScale = baseScale * 0.6;
+    const fitStaffToBand = () => {
       const staffHeight = api.canvasElement.height;
       const room = tabScrollEl.clientHeight;
-      if (staffHeight <= 0 || room <= 0 || staffHeight <= room) return;
-      const scale = Math.max(minScale, api.settings.display.scale * (room / staffHeight) * 0.98);
-      if (scale >= api.settings.display.scale - 0.01) return;
+      if (staffHeight <= 0 || room <= 0) return;
+      const current = api.settings.display.scale;
+      const scale = Math.min(baseScale, Math.max(minScale, current * (room / staffHeight) * 0.98));
+      if (Math.abs(scale - current) < 0.02) return;
       api.settings.display.scale = scale;
       api.updateSettings();
       api.render();
-    });
+    };
+    api.postRenderFinished.on(fitStaffToBand);
+    const refitOnResize = debounce(() => {
+      if (state?.api === api) fitStaffToBand();
+    }, 150);
+    const bandObserver = new ResizeObserver(() => refitOnResize());
+    bandObserver.observe(tabScrollEl);
+    disposeHorizontal = () => bandObserver.disconnect();
     api.postRenderFinished.on(() => placeEarlyStopScrim());
+    // The scrim needs the tick cache, which may arrive after the first render.
+    api.midiLoad.on(() => placeEarlyStopScrim());
     api.playerPositionChanged.on((e) => {
       if (e.isSeek && api.playerState !== atLib.synth.PlayerState.Playing) scrollToCursorSoon();
     });
@@ -256,6 +273,7 @@ export function ensurePlaybackEngine(
     playbackSource,
     horizontal,
     tabScrollEl: horizontal ? containers.tabScrollEl : undefined,
+    disposeHorizontal,
     isLyricsPart,
     trackIndex,
     theme,
@@ -851,6 +869,7 @@ function destroyEngine(): void {
   // (observed live during the F001 fix verification).
   state.overlay?.destroy();
   state.tabScrollEl?.querySelector('.hview-early-stop')?.remove();
+  state.disposeHorizontal?.();
   state.api.destroy();
   state = undefined;
   clientStore.update((s) => (s.engineReady ? { ...s, engineReady: false } : s));
