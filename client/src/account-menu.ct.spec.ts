@@ -83,7 +83,7 @@ test('clicking "My catalogues" calls onOpenAuthoring', async ({ mount }) => {
 
 // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001): the account menu's
 // own actions carry the door icons — Sign out gets lucide `log-out` (freed
-// up from Leave session, which is now `bone`), Sign in gets `log-in`. The
+// up from Leave session, which is now `power`), Sign in gets `log-in`. The
 // icons are decorative (aria-hidden) — the visible text stays the name.
 test('Sign out renders a lucide log-out icon (decorative)', async ({ mount }) => {
   const menu = await mount(AccountMenu, { props: { status: 'signed-in', displayName: 'Ada' } });

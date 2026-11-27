@@ -375,9 +375,9 @@
   right: 0;
   bottom: calc(var(--bar-height, 0px) + var(--space-4));
   /* A floor, not a fixed height: the larger font-size steps (desktop
-     large/huge) are taller than 3rem and used to be clipped. The top
-     position's reserved space follows the real height (lyrics-overlay.ts
-     applyTopReserve). */
+     large/huge) are taller than 3rem and used to be clipped. The reserved
+     space, at either position, follows the real height (lyrics-overlay.ts
+     applyReserve). */
   min-height: var(--lyrics-strip-height);
   display: flex;
   align-items: center;

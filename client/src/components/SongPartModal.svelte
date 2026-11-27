@@ -20,6 +20,13 @@
   // back at the "song selected" summary rather than wherever it was left.
   let browsingCatalog = false;
 
+  // A different song mid-song (playback running or paused) is a full stop
+  // and reset for everyone (song-select.ts stops playback; there is no
+  // position to resume in the new song), so the host confirms first. Holds
+  // the song awaiting that confirm; local-only, cleared on any outcome.
+  // Feedback feedback-song-part-control-during-playb-dba8 F002.
+  let pendingSongId: string | null = null;
+
   // Host-only standalone activation-key entry: whether the key field is open,
   // and its in-progress value. Not attached to any catalogue group — the host
   // no longer picks which locked catalogue to unlock (locked catalogues are
@@ -58,9 +65,26 @@
     songs: catalog.filter((s) => s.catalogueId === c.id),
   }));
 
+  $: playbackActive = session?.playbackState.status !== undefined && session.playbackState.status !== 'stopped';
+  $: pendingSong = catalog.find((s) => s.id === pendingSongId);
+
   function selectSong(songId: string) {
+    // Re-selecting the current song is a server no-op, so it never warns.
+    if (playbackActive && songId !== session?.selectedSong) {
+      pendingSongId = songId;
+      return;
+    }
+    sendSongSelect(songId);
+  }
+
+  function sendSongSelect(songId: string) {
+    // A song switch from Playback is a Stop (song-select.ts), so reset the
+    // hazard strip's progress the way the bar's Stop does (App.svelte
+    // stopPlayback), or the next Start briefly shows the old song's value.
+    if (playbackActive) clientStore.update((s) => ({ ...s, playbackProgress: 0 }));
     wsClient?.send({ type: 'song-select', songId });
     browsingCatalog = false;
+    pendingSongId = null;
   }
 
   function submitUnlock() {
@@ -82,13 +106,22 @@
 
   function handleClose() {
     browsingCatalog = false;
+    pendingSongId = null;
     onClose?.();
   }
 </script>
 
 <Modal {open} {dismissible} onClose={handleClose} title="Song & part">
   {#if session}
-    {#if !session.selectedSong || browsingCatalog}
+    {#if pendingSongId}
+      <div class="confirm-switch" role="alert">
+        <p>Switching to <strong>{pendingSong?.name ?? pendingSongId}</strong> stops playback for everyone and clears every part.</p>
+        <div class="confirm-actions">
+          <Button variant="ghost" label="Cancel" onclick={() => (pendingSongId = null)} />
+          <Button variant="riot" label="Stop and switch" onclick={() => sendSongSelect(pendingSongId!)} />
+        </div>
+      </div>
+    {:else if !session.selectedSong || browsingCatalog}
       {#if !grouped}
         <span class="section-label">Catalog</span>
         <ul class="list">
@@ -218,6 +251,16 @@
 
   .unlock-control {
     margin-top: var(--space-4);
+  }
+
+  .confirm-switch p {
+    margin: 0 0 var(--space-4);
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
   }
 
   .unlock-form {

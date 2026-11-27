@@ -76,14 +76,15 @@ export function readRawLyricsLine(gpFilePath: string, trackIndex: number, lineIn
  * Counts syllables in a GP-authored lyric line using GP's own hyphen/plus
  * conventions: hyphens mark syllable breaks within a word ("be-fore"), and a
  * standalone "+" is a merge marker joining adjacent words onto the same beat
- * rather than a new syllable. This is a first-pass heuristic, not a proven
+ * rather than a new syllable. A run of hyphens ("oh--oh", a melisma) is one
+ * break, and empty pieces from a leading or trailing hyphen don't count. This is a first-pass heuristic, not a proven
  * replica of alphaTab's internal chunk-dispatch algorithm (Lyrics._prepareChunk) —
  * validated against GP's own line-break placement when present; melisma-style
  * edge cases (e.g. repeated "+" padding) may need refinement later.
  */
 export function countSyllables(line: string): number {
   const words = line.split(/\s+/).filter((w) => w.length > 0 && w !== '+');
-  return words.reduce((count, word) => count + word.split('-').length, 0);
+  return words.reduce((count, word) => count + word.split(/-+/).filter((piece) => piece.length > 0).length, 0);
 }
 
 /**

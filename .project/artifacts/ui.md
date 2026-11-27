@@ -243,6 +243,26 @@ meaning against the new song) — each participant's `selectedPart`
 reverts to `null` and readiness to `'no-part'`, same as first joining.
 Each participant picks their part and signals readiness.
 
+**During playback** (feedback feedback-song-part-control-during-playb-dba8
+F001/F002) the "Song & part" control stays in the bar and opens the same
+modal; only the automatic open is Lobby-only. Opening it never stops or
+resets anything. A **host** opening it while running **pauses** playback
+(a plain Pause, the same as the bar's own), so they can look without the
+band racing on; closing it doesn't resume, the host presses Resume. A
+**non-host** opening it leaves session playback alone, since only the
+host controls transport. Changing one's **own part** mid-song happens in
+place with no stop: between instrument parts the tab switches track on
+the same engine at the same position, and to or from the Lyrics part the
+participant's own engine is rebuilt and rejoins at the session's current
+position. Choosing a **different song** while playback is running or
+paused needs a full stop and reset for everyone (there is no position to
+resume in another song), so the host first gets an in-modal confirm,
+"Switching to {song} stops playback for everyone and clears every part",
+with Cancel and "Stop and switch"; confirming sends the `song-select`,
+which the server treats as a Stop (infrastructure.md), returning everyone
+to the Lobby. Re-selecting the current song, a server no-op, never asks.
+In the Lobby (stopped), Select sends at once, as before.
+
 **Part-name display rule** (feedback part-name-instrument-ux F001;
 `client/src/part-display-name.ts`): everywhere a part renders — the part
 picker, the Participants list's selected-part sublabel, the Playback
@@ -315,10 +335,11 @@ space in the persistent bar: "Song & part" renders as a `ListMusic` icon,
 the settings control as a `Settings` (gear) icon (was a cog — feedback
 feedback-icon-refresh-a11y-39d8 F004), the in-tab lyrics toggle as a
 `MicVocal` icon (Playback View, below — also reachable from the Lobby,
-not just Playback, once a part is picked), "Leave session" as a `Bone`
-icon ("breaking up the band" — the exit-door `LogOut`/`LogIn` pair moved
-to the account menu's actual Sign out/Sign in actions, rendered as
-decorative icons beside their text; feedback F001), and the host's
+not just Playback, once a part is picked), "Leave session" as a `Power`
+icon (feedback-song-part-control-during-playb-dba8 F003, replacing an
+earlier `Bone`; the exit-door `LogOut`/`LogIn` pair moved to the account
+menu's actual Sign out/Sign in actions, rendered as decorative icons
+beside their text; feedback F001), and the host's
 transport controls (Playback View, below) as tape-recorder-style symbols
 (play/pause/square). In the Participants list, the host designation
 renders as a `Crown` icon in place of the former "HOST" text badge, with
@@ -523,7 +544,9 @@ regardless of whether playback has started:
     strip as the page scrolls, as under any pinned header. Bottom stays
     an overlay: auto-scroll aligns the current row to the top of the
     viewport, so a bottom strip never covers it, and the tab view's
-    reserved bottom padding already lets the last rows clear it.
+    reserved bottom padding lets the last rows clear it at the end of a
+    song. That padding also follows the strip's real height (plus the
+    bar and gap beneath it), so it holds at the larger font sizes.
   - a personal "Measure markers" toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
@@ -699,9 +722,13 @@ identically regardless of which one they're on:
   never absent**: when no ticker is available it renders disabled with the
   reason carried in its accessible name/title — "Lyrics part shows the
   full sheet" for a participant on the tab-less Lyrics part (the full
-  sheet replaces the ticker for them), or "No lyrics for this song" when
-  the song has no GP-sourced lyrics track (`CatalogSong.lyricsTrackIndex`
-  absent). This reverses the earlier "absent entirely for a participant
+  sheet replaces the ticker for them), or, when the song has no
+  GP-sourced lyrics track (`CatalogSong.lyricsTrackIndex` absent), "No
+  in-tab lyrics for this song (use the Lyrics part)" if it still has a
+  line-timed `.lrc` (so the Lyrics part is offered), else "No lyrics for
+  this song" (feedback feedback-song-part-control-during-playb-dba8
+  F004: the ticker needs per-syllable timing, which an `.lrc` alone
+  doesn't give). This reverses the earlier "absent entirely for a participant
   on the tab-less Lyrics part" decision — confirmed reversal, feedback
   feedback-icon-refresh-a11y-39d8 F006: a control that vanishes reads as
   a bug; disabled-with-reason keeps the affordance discoverable.
