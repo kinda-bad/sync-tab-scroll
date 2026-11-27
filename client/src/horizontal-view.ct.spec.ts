@@ -149,9 +149,12 @@ test('a seek while stopped (start marker, Spotlight, click) brings that beat to 
   await page.evaluate((tick) => {
     (window as unknown as Win).__getApi().tickPosition = tick;
   }, BAR * 12);
+  // Bar 13 is far right of the start: wait for the sheet to get there
+  // first (the first beat already sat on the playhead before the seek).
+  await expect
+    .poll(() => page.evaluate(() => (document.querySelector('.tab-scroll') as HTMLElement).scrollLeft), { timeout: 5_000 })
+    .toBeGreaterThan(500);
   await expect.poll(() => cursorOffsetFromPlayhead(page).then(Math.abs), { timeout: 5_000 }).toBeLessThan(6);
-  const left = await page.evaluate(() => (document.querySelector('.tab-scroll') as HTMLElement).scrollLeft);
-  expect(left).toBeGreaterThan(500);
 });
 
 test('click-to-seek works on the one-line staff', async ({ mount, page }) => {
