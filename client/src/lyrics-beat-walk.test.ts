@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupIntoLines, walkLyricBeats, walkLyricBeatsFromRawLine } from './lyrics-beat-walk';
+import { groupIntoLines, groupPlacedIntoLines, walkLyricBeats, walkLyricBeatsFromRawLine } from './lyrics-beat-walk';
 
 // T004 (tasks-7f0f-4f2d.md, feedback F001): `absolutePlaybackStart` is a
 // distinct alphaTab-computed value from `masterBar.start + playbackStart` —
@@ -252,5 +252,27 @@ describe('walkLyricBeatsFromRawLine', () => {
       { text: 'one', tickPosition: 0 },
       { text: 'two', tickPosition: 20 },
     ]);
+  });
+});
+
+// lyrics-ticker-scroll-modes (whole-line mode): the ticker gets the song's
+// own lines back after the syllables were unrolled onto the playback
+// timeline, one line per pass when a repeat plays a line again.
+describe('groupPlacedIntoLines', () => {
+  const placed = (sourceIndex: number, tickPosition: number) => ({ text: String(sourceIndex), tickPosition, sourceIndex });
+
+  it('splits at the written line breaks', () => {
+    const syllables = [placed(0, 0), placed(1, 1), placed(2, 2), placed(3, 3), placed(4, 4)];
+    expect(groupPlacedIntoLines(syllables, [2, 3])).toEqual([syllables.slice(0, 2), syllables.slice(2)]);
+  });
+
+  it('starts a new line when a repeat plays the same line again', () => {
+    // A one-line verse (written syllables 0-2) played twice.
+    const syllables = [placed(0, 0), placed(1, 1), placed(2, 2), placed(0, 10), placed(1, 11), placed(2, 12)];
+    expect(groupPlacedIntoLines(syllables, [3])).toEqual([syllables.slice(0, 3), syllables.slice(3)]);
+  });
+
+  it('returns no lines for no syllables', () => {
+    expect(groupPlacedIntoLines([], [2])).toEqual([]);
   });
 });

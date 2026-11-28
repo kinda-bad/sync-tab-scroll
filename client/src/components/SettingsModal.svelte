@@ -16,7 +16,17 @@
     setEngineLyricsTickerFontSize,
     setEngineLyricsTickerPosition,
     setEngineMeasureMarkersVisible,
+    setEngineLyricsTickerAnchor,
+    setEngineLyricsTickerScroll,
   } from '../playback-engine';
+  import {
+    loadStoredLyricsTickerAnchor,
+    loadStoredLyricsTickerScroll,
+    persistLyricsTickerAnchor,
+    persistLyricsTickerScroll,
+    type LyricsTickerAnchor,
+    type LyricsTickerScroll,
+  } from '../lyrics-ticker-motion-preference';
   import {
     loadStoredLyricsTickerPosition,
     persistLyricsTickerPosition,
@@ -30,16 +40,27 @@
   import { loadStoredMeasureMarkers, persistMeasureMarkers } from '../lyrics-measure-markers-preference';
   import { partDisplayNames, formatPartDisplayName } from '../part-display-name';
   import { isRecordingCapable } from '@sync-tab-scroll/shared';
+  import { barTickMap, barAtTick, barCount, barEndTick, barStartTick } from '../bar-tick';
 
   export let open: boolean;
   export let onClose: (() => void) | undefined = undefined;
 
-  // Four semantic tabs (ui.md): Participants (who's here + host transfer),
-  // Session (host-broadcast controls everyone is affected by), Preferences
-  // (personal, this-device-only settings), Tracks (personal per-part mute
-  // controls, moved out of Preferences into its own tab, one row per part).
-  let activeTab: 'participants' | 'session' | 'preferences' | 'tracks' = 'participants';
-  let lobbyCursorInput = 0;
+  // Five tabs by what the user is trying to do (ui.md Settings,
+  // settings-menu-reorganization): People (who's here + host transfer),
+  // Playback (where a run-through starts, stops and points), View (how the
+  // tab looks), Lyrics (the in-tab lyrics ticker) and Audio (what you hear).
+  // Who can change a control is shown on the control itself (a "Host"
+  // badge), not by which tab it's in.
+  type SettingsTab = 'people' | 'playback' | 'view' | 'lyrics' | 'audio';
+  const TABS: { id: SettingsTab; label: string }[] = [
+    { id: 'people', label: 'People' },
+    { id: 'playback', label: 'Playback' },
+    { id: 'view', label: 'View' },
+    { id: 'lyrics', label: 'Lyrics' },
+    { id: 'audio', label: 'Audio' },
+  ];
+  let activeTab: SettingsTab = 'people';
+  let lobbyCursorInput = 1;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
 
   // Two orthogonal controls (ui.md Preferences, brand.md Themes) combine
@@ -60,6 +81,30 @@
   let lyricsTickerPosition: LyricsTickerPosition = loadStoredLyricsTickerPosition();
   const LYRICS_TICKER_FONT_SIZES: LyricsTickerFontSize[] = ['small', 'medium', 'large', 'huge'];
   const LYRICS_TICKER_POSITIONS: LyricsTickerPosition[] = ['top', 'bottom'];
+
+  // How the ticker moves (lyrics-ticker-scroll-modes): personal, this
+  // device only, same persist + apply-live shape as the position above.
+  let lyricsTickerAnchor: LyricsTickerAnchor = loadStoredLyricsTickerAnchor();
+  let lyricsTickerScroll: LyricsTickerScroll = loadStoredLyricsTickerScroll();
+  const LYRICS_TICKER_ANCHORS: { value: LyricsTickerAnchor; label: string }[] = [
+    { value: 'center', label: 'Center' },
+    { value: 'left', label: 'Left' },
+  ];
+  const LYRICS_TICKER_SCROLLS: { value: LyricsTickerScroll; label: string }[] = [
+    { value: 'constant', label: 'Every syllable' },
+    { value: 'edge', label: 'At the edges' },
+    { value: 'line', label: 'One line at a time' },
+  ];
+  function setLyricsTickerAnchor(anchor: LyricsTickerAnchor) {
+    lyricsTickerAnchor = anchor;
+    persistLyricsTickerAnchor(anchor);
+    setEngineLyricsTickerAnchor(anchor);
+  }
+  function setLyricsTickerScroll(scroll: LyricsTickerScroll) {
+    lyricsTickerScroll = scroll;
+    persistLyricsTickerScroll(scroll);
+    setEngineLyricsTickerScroll(scroll);
+  }
 
   // Personal, this-device-only "mute parts" preference (ui.md Preferences
   // tab, track-mute-preference.ts) — keyed per song+track, so recomputed
@@ -122,8 +167,19 @@
     wsClient?.send({ type: 'lobby-cursor-set', tickPosition });
   }, 150);
 
+  // The Lobby cursor and Early stop point take bars, like the Start marker;
+  // the wire stays in ticks (bar-tick.ts, converted against the song this
+  // device has loaded). Null until a song is loaded here.
+  $: bars = $barTickMap;
+  $: lastBar = bars ? barCount(bars) : 0;
+  $: lobbyCursorBar = bars && session?.lobbyCursorTick != null ? barAtTick(bars, session.lobbyCursorTick) : null;
+  // The early stop tick is the END of its bar ("stop after bar N"), so the
+  // bar it names is the one playing just before it.
+  $: earlyStopBar = bars && session?.earlyStopTick != null ? barAtTick(bars, session.earlyStopTick - 1) : null;
+
   function setLobbyCursor() {
-    debouncedSetLobbyCursor(lobbyCursorInput);
+    const tick = bars ? barStartTick(bars, lobbyCursorInput) : null;
+    if (tick !== null) debouncedSetLobbyCursor(tick);
   }
 
   function clearLobbyCursor() {
@@ -143,9 +199,10 @@
 
   // Host early-stop point (host-set-early-stop-point-for): same host-only
   // WS-set pattern, mirroring lobby cursor's debounced-input/set/clear shape.
-  let earlyStopInput = 0;
+  let earlyStopInput = 1;
   function setEarlyStop() {
-    wsClient?.send({ type: 'early-stop-set', tickPosition: earlyStopInput });
+    const tick = bars ? barEndTick(bars, earlyStopInput) : null;
+    if (tick !== null) wsClient?.send({ type: 'early-stop-set', tickPosition: tick });
   }
   function clearEarlyStop() {
     wsClient?.send({ type: 'early-stop-set', tickPosition: null });
@@ -162,7 +219,7 @@
     wsClient?.send({ type: 'start-marker-set', bar: null });
   }
 
-  // Personal, this-device-only (ui.md Preferences tab): persists like the
+  // Personal, this-device-only (ui.md Settings): persists like the
   // theme choice and applies to the live engine immediately; never a WS send.
   // feedback-recording-mode-metronome-lock-reconsidered-c415 F001: no longer
   // force-disabled in recording mode — the toggle still drives the beat
@@ -176,11 +233,11 @@
     setEngineMetronome(metronome);
   }
 
-  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // Personal, this-device-only (ui.md Settings): mirrors
   // toggleMetronome's two-call shape exactly, but keyed per (songId,
   // trackIndex) — a mute choice for one song's track must not carry over
   // to a different song's differently-indexed track.
-  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // Personal, this-device-only (ui.md Settings): mirrors
   // toggleMetronome's two-call shape, but with a 4-way value instead of a
   // boolean.
   function setLyricsTickerFontSize(size: LyricsTickerFontSize) {
@@ -189,7 +246,7 @@
     setEngineLyricsTickerFontSize(size);
   }
 
-  // Personal, this-device-only (ui.md Preferences tab, T005 feature
+  // Personal, this-device-only (ui.md Settings, T005 feature
   // lyrics-ticker-position-preference): mirrors setLyricsTickerFontSize's
   // shape — a 2-way value instead of 4-way.
   function setLyricsTickerPosition(position: LyricsTickerPosition) {
@@ -198,7 +255,7 @@
     setEngineLyricsTickerPosition(position);
   }
 
-  // Personal, this-device-only (ui.md Preferences tab): mirrors
+  // Personal, this-device-only (ui.md Settings): mirrors
   // toggleMetronome's two-call shape exactly.
   function toggleMeasureMarkers() {
     measureMarkers = !measureMarkers;
@@ -287,13 +344,12 @@
 
 <Modal {open} {onClose} title="Settings">
   <div class="tab-strip">
-    <Button variant={activeTab === 'participants' ? 'riot' : 'ghost'} label="Participants" onclick={() => (activeTab = 'participants')} />
-    <Button variant={activeTab === 'session' ? 'riot' : 'ghost'} label="Session" onclick={() => (activeTab = 'session')} />
-    <Button variant={activeTab === 'preferences' ? 'riot' : 'ghost'} label="Preferences" onclick={() => (activeTab = 'preferences')} />
-    <Button variant={activeTab === 'tracks' ? 'riot' : 'ghost'} label="Tracks" onclick={() => (activeTab = 'tracks')} />
+    {#each TABS as tab (tab.id)}
+      <Button variant={activeTab === tab.id ? 'riot' : 'ghost'} label={tab.label} onclick={() => (activeTab = tab.id)} />
+    {/each}
   </div>
 
-  {#if activeTab === 'participants'}
+  {#if activeTab === 'people'}
     {#if session}
       <span class="section-label">Participants</span>
       <ul class="list">
@@ -330,10 +386,10 @@
     {:else}
       <p class="hint">Connecting…</p>
     {/if}
-  {:else if activeTab === 'session'}
+  {:else if activeTab === 'playback'}
     {#if session}
       <!-- Start marker: the readout is for everyone, the controls host-only. -->
-      <span class="section-label">Start marker</span>
+      <span class="section-label">Start marker <span class="host-badge" title="Only the host can change this">Host</span></span>
       {#if session.startMarkerBar !== null}
         <p class="hint">Stop returns to bar {session.startMarkerBar}.</p>
       {:else}
@@ -341,23 +397,46 @@
       {/if}
       {#if isHost}
         <div class="control-row">
-          <input type="number" min="1" step="1" bind:value={startMarkerInput} class="start-marker-input" aria-label="Start marker bar" />
+          <input type="number" min="1" step="1" bind:value={startMarkerInput} class="bar-input" aria-label="Start marker bar" />
           <Button variant="ghost" label="Set start marker" onclick={setStartMarker} />
           <Button variant="ghost" label="Clear start marker" onclick={clearStartMarker} />
         </div>
         <p class="hint">Picking a song sets this from the song's default start bar, if it has one. Clicking the tab while stopped moves everyone's cursor for the next Start, without changing the marker.</p>
+      {:else}
+        <p class="hint host-only-hint">Only the host can change this.</p>
       {/if}
 
-      <span class="section-label">Lobby cursor</span>
-      {#if session.lobbyCursorTick !== null}
-        <p class="hint">Host is pointing at tick {session.lobbyCursorTick}.</p>
+      <span class="section-label">Early stop point <span class="host-badge" title="Only the host can change this">Host</span></span>
+      {#if session.earlyStopTick === null}
+        <p class="hint">No early stop point. Playback runs to the end of the song.</p>
+      {:else if earlyStopBar !== null}
+        <p class="hint">Playback stops after bar {earlyStopBar}.</p>
       {:else}
-        <p class="hint">No lobby cursor set.</p>
+        <p class="hint">The host has set an early stop point.</p>
       {/if}
       {#if isHost}
         <div class="control-row">
-          <input type="number" bind:value={lobbyCursorInput} class="cursor-input" aria-label="Lobby cursor tick" />
-          <Button variant="ghost" label="Set lobby cursor" onclick={setLobbyCursor} />
+          <input type="number" min="1" max={lastBar || undefined} step="1" bind:value={earlyStopInput} class="bar-input" aria-label="Early stop bar" disabled={!bars} />
+          <Button variant="ghost" label="Set early-stop point" disabled={!bars} onclick={setEarlyStop} />
+          <Button variant="ghost" label="Clear early-stop point" onclick={clearEarlyStop} />
+        </div>
+        <p class="hint">Everyone stops at the end of this bar, and the tab past it is dimmed.{#if !bars} Pick your part first, so the song is loaded and bars can be counted.{/if}</p>
+      {:else}
+        <p class="hint host-only-hint">Only the host can change this.</p>
+      {/if}
+
+      <span class="section-label">Lobby cursor <span class="host-badge" title="Only the host can change this">Host</span></span>
+      {#if session.lobbyCursorTick === null}
+        <p class="hint">No lobby cursor set.</p>
+      {:else if lobbyCursorBar !== null}
+        <p class="hint">Host is pointing at bar {lobbyCursorBar}.</p>
+      {:else}
+        <p class="hint">The host is pointing at a spot in the song.</p>
+      {/if}
+      {#if isHost}
+        <div class="control-row">
+          <input type="number" min="1" max={lastBar || undefined} step="1" bind:value={lobbyCursorInput} class="bar-input" aria-label="Lobby cursor bar" disabled={!bars} />
+          <Button variant="ghost" label="Set lobby cursor" disabled={!bars} onclick={setLobbyCursor} />
           <Button variant="ghost" label="Clear" onclick={clearLobbyCursor} />
           <Button
             variant={session.spotlightMode ? 'riot' : 'ghost'}
@@ -366,31 +445,144 @@
           />
         </div>
         <p class="hint">
-          Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.
+          Spotlight mode forces every participant's view to follow the lobby cursor. Off: it's just a marker — cursor position and Spotlight state both reset when playback starts.{#if !bars} Pick your part first, so the song is loaded and bars can be counted.{/if}
         </p>
-
-        <span class="section-label">Layout</span>
-        <div class="control-row">
-          <Button variant={session.hostBarsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setHostBarsPerRow(null)} />
-          {#each BARS_PER_ROW_OPTIONS as n (n)}
-            <Button variant={session.hostBarsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setHostBarsPerRow(n)} />
-          {/each}
-        </div>
-        <p class="hint">Pins every participant's tab layout to a fixed number of bars per row, overriding each participant's own preference. "Auto" lets alphaTab wrap naturally.</p>
-
-        <span class="section-label">Early stop point</span>
-        {#if session.earlyStopTick !== null}
-          <p class="hint">Playback will auto-stop at tick {session.earlyStopTick}.</p>
-        {:else}
-          <p class="hint">No early-stop point set.</p>
+      {:else}
+        {#if session.spotlightMode}
+          <p class="hint">Spotlight is on: your view follows the host's cursor.</p>
         {/if}
-        <div class="control-row">
-          <input type="number" bind:value={earlyStopInput} class="early-stop-input" aria-label="Early stop tick" />
-          <Button variant="ghost" label="Set early-stop point" onclick={setEarlyStop} />
-          <Button variant="ghost" label="Clear early-stop point" onclick={clearEarlyStop} />
-        </div>
+        <p class="hint host-only-hint">Only the host can change this.</p>
+      {/if}
+    {:else}
+      <p class="hint">Connecting…</p>
+    {/if}
+  {:else if activeTab === 'view'}
+    <span class="section-label">Theme</span>
+    <div class="control-row">
+      <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
+      <Button variant="ghost" label={themeMode === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleThemeMode} />
+    </div>
 
-        <span class="section-label">Playback audio</span>
+    <!-- Bars per row: the personal choice and the host's pin for everyone,
+         in one group (host-mandated-bars-per-row-layout). -->
+    <span class="section-label">Bars per row</span>
+    <span class="sub-label">Just you</span>
+    <div class="control-row" role="group" aria-label="Your bars per row">
+      <Button variant={barsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setBarsPerRow(null)} />
+      {#each BARS_PER_ROW_OPTIONS as n (n)}
+        <Button variant={barsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setBarsPerRow(n)} />
+      {/each}
+    </div>
+    {#if session && session.hostBarsPerRow !== null}
+      <p class="hint">
+        {isHost ? "You've" : 'The host has'} pinned everyone to {session.hostBarsPerRow} bars per row. Your own choice comes back once {isHost ? 'you clear it' : 'they clear it'}.
+      </p>
+    {:else}
+      <p class="hint">Only your tab layout changes.</p>
+    {/if}
+    {#if session && isHost}
+      <span class="sub-label">For everyone <span class="host-badge" title="Only the host can change this">Host</span></span>
+      <div class="control-row" role="group" aria-label="Everyone's bars per row">
+        <Button variant={session.hostBarsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setHostBarsPerRow(null)} />
+        {#each BARS_PER_ROW_OPTIONS as n (n)}
+          <Button variant={session.hostBarsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setHostBarsPerRow(n)} />
+        {/each}
+      </div>
+      <p class="hint">Pins every participant's tab layout to a fixed number of bars per row, overriding each participant's own choice. "Auto" gives everyone their own choice back.</p>
+    {/if}
+
+    <!-- More personal view settings (e.g. Horizontal view) go below this line. -->
+  {:else if activeTab === 'lyrics'}
+    <p class="hint">How the lyrics ticker over your tab looks and moves. Only your screen changes; the Lyrics part's full lyric sheet keeps its own layout.</p>
+
+    <span class="section-label">Font size</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker font size">
+      {#each LYRICS_TICKER_FONT_SIZES as size (size)}
+        <Button
+          variant={lyricsTickerFontSize === size ? 'riot' : 'ghost'}
+          label={size[0].toUpperCase() + size.slice(1)}
+          onclick={() => setLyricsTickerFontSize(size)}
+        />
+      {/each}
+    </div>
+
+    <span class="section-label">Position</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker position">
+      {#each LYRICS_TICKER_POSITIONS as position (position)}
+        <Button
+          variant={lyricsTickerPosition === position ? 'riot' : 'ghost'}
+          label={position[0].toUpperCase() + position.slice(1)}
+          onclick={() => setLyricsTickerPosition(position)}
+        />
+      {/each}
+    </div>
+
+    <span class="section-label">Scrolling</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker scrolling">
+      {#each LYRICS_TICKER_SCROLLS as option (option.value)}
+        <Button variant={lyricsTickerScroll === option.value ? 'riot' : 'ghost'} label={option.label} onclick={() => setLyricsTickerScroll(option.value)} />
+      {/each}
+    </div>
+    <p class="hint">
+      {#if lyricsTickerScroll === 'constant'}
+        The strip moves with every syllable.
+      {:else if lyricsTickerScroll === 'edge'}
+        The strip holds still and turns a page when the words reach its edge.
+      {:else}
+        Shows one lyric line at a time, and switches when the next line starts.
+      {/if}
+    </p>
+
+    <span class="section-label">Anchor</span>
+    <div class="control-row" role="group" aria-label="Lyrics ticker anchor">
+      {#each LYRICS_TICKER_ANCHORS as option (option.value)}
+        <Button variant={lyricsTickerAnchor === option.value ? 'riot' : 'ghost'} label={option.label} onclick={() => setLyricsTickerAnchor(option.value)} />
+      {/each}
+    </div>
+    <p class="hint">Where the current word sits. Left shows more of what's coming.</p>
+
+    <span class="section-label">Measure markers</span>
+    <div class="control-row">
+      <Button
+        variant={measureMarkers ? 'riot' : 'ghost'}
+        label={measureMarkers ? 'Measure markers: On' : 'Measure markers: Off'}
+        onclick={toggleMeasureMarkers}
+      />
+    </div>
+    <p class="hint">Shows measure-boundary lines and numbers in the lyrics ticker.</p>
+  {:else}
+    {#if session && recordingCapable}
+      <span class="section-label">Audio source <span class="host-badge" title="Only the host can change this">Host</span></span>
+      {#if isHost}
+        <div class="control-row">
+          <Button
+            variant={session.playbackSource === 'synth' ? 'riot' : 'ghost'}
+            label="Synth"
+            disabled={playbackRunning}
+            onclick={() => setPlaybackSource('synth')}
+          />
+          <Button
+            variant={session.playbackSource === 'recording' ? 'riot' : 'ghost'}
+            label="Recording"
+            disabled={playbackRunning}
+            onclick={() => setPlaybackSource('recording')}
+          />
+        </div>
+        <p class="hint">
+          {#if playbackRunning}
+            Stop playback to change the audio source.
+          {:else}
+            Everyone hears the {session.playbackSource === 'recording' ? 'real recording' : 'synthesizer'}.
+          {/if}
+        </p>
+      {:else}
+        <p class="hint">Audio source: {session.playbackSource === 'recording' ? 'Recording' : 'Synth'} (set by host).</p>
+      {/if}
+    {/if}
+
+    {#if session}
+      <span class="section-label">Count-in <span class="host-badge" title="Only the host can change this">Host</span></span>
+      {#if isHost}
         <div class="control-row">
           <Button
             variant={session.countInEnabled ? 'riot' : 'ghost'}
@@ -398,56 +590,13 @@
             onclick={toggleCountIn}
           />
         </div>
+        <p class="hint">Everyone hears a bar of clicks before playback starts.</p>
+      {:else}
+        <p class="hint">Count-in is {session.countInEnabled ? 'on' : 'off'} for everyone. Only the host can change this.</p>
       {/if}
-
-      {#if recordingCapable}
-        <span class="section-label">Audio source</span>
-        {#if isHost}
-          <div class="control-row">
-            <Button
-              variant={session.playbackSource === 'synth' ? 'riot' : 'ghost'}
-              label="Synth"
-              disabled={playbackRunning}
-              onclick={() => setPlaybackSource('synth')}
-            />
-            <Button
-              variant={session.playbackSource === 'recording' ? 'riot' : 'ghost'}
-              label="Recording"
-              disabled={playbackRunning}
-              onclick={() => setPlaybackSource('recording')}
-            />
-          </div>
-          <p class="hint">
-            {#if playbackRunning}
-              Stop playback to change the audio source.
-            {:else}
-              Everyone hears the {session.playbackSource === 'recording' ? 'real recording' : 'synthesizer'}.
-            {/if}
-          </p>
-        {:else}
-          <p class="hint">Audio source: {session.playbackSource === 'recording' ? 'Recording' : 'Synth'} (set by host).</p>
-        {/if}
-      {/if}
-    {:else}
-      <p class="hint">Connecting…</p>
     {/if}
-  {:else if activeTab === 'preferences'}
-    <span class="section-label">Theme</span>
-    <div class="control-row">
-      <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
-      <Button variant="ghost" label={themeMode === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleThemeMode} />
-    </div>
 
-    <span class="section-label">Bars per row</span>
-    <div class="control-row">
-      <Button variant={barsPerRow === null ? 'riot' : 'ghost'} label="Auto" onclick={() => setBarsPerRow(null)} />
-      {#each BARS_PER_ROW_OPTIONS as n (n)}
-        <Button variant={barsPerRow === n ? 'riot' : 'ghost'} label={String(n)} onclick={() => setBarsPerRow(n)} />
-      {/each}
-    </div>
-    <p class="hint">Your personal layout preference — overridden while the host has pinned a layout (Session tab).</p>
-
-    <span class="section-label">Playback audio</span>
+    <span class="section-label">Metronome</span>
     <div class="control-row">
       <Button
         variant={metronome ? 'riot' : 'ghost'}
@@ -461,38 +610,6 @@
       <p class="hint">Only you hear your metronome.</p>
     {/if}
 
-    <span class="section-label">Lyrics ticker font size</span>
-    <div class="control-row">
-      {#each LYRICS_TICKER_FONT_SIZES as size (size)}
-        <Button
-          variant={lyricsTickerFontSize === size ? 'riot' : 'ghost'}
-          label={size[0].toUpperCase() + size.slice(1)}
-          onclick={() => setLyricsTickerFontSize(size)}
-        />
-      {/each}
-    </div>
-
-    <span class="section-label">Lyrics ticker position</span>
-    <div class="control-row">
-      {#each LYRICS_TICKER_POSITIONS as position (position)}
-        <Button
-          variant={lyricsTickerPosition === position ? 'riot' : 'ghost'}
-          label={position[0].toUpperCase() + position.slice(1)}
-          onclick={() => setLyricsTickerPosition(position)}
-        />
-      {/each}
-    </div>
-
-    <span class="section-label">Measure markers</span>
-    <div class="control-row">
-      <Button
-        variant={measureMarkers ? 'riot' : 'ghost'}
-        label={measureMarkers ? 'Measure markers: On' : 'Measure markers: Off'}
-        onclick={toggleMeasureMarkers}
-      />
-    </div>
-    <p class="hint">Shows measure-boundary lines and numbers in the lyrics ticker.</p>
-  {:else}
     {#if session && session.availableParts.length > 0}
       <span class="section-label">Tracks</span>
       <div class="control-row">
@@ -525,18 +642,20 @@
 <style>
   .tab-strip {
     display: flex;
-    gap: var(--space-2);
+    gap: var(--space-1);
     margin-bottom: var(--space-4);
   }
 
-  /* Equal-width cells so the strip reads as one segmented control; the
-     section-label type size keeps all four labels on one line down to
+  /* Cells grow to fill the row, each sized from its own label (five
+     labels don't fit in equal fifths at 360px, "Playback" being the
+     longest), so the strip reads as one segmented control; the
+     section-label type size keeps all five labels on one line down to
      360px-wide screens. Targets .btn-wrap (Button.svelte's outer span,
      the actual flex item since it wraps every .btn) for sizing, and the
      nested .btn for padding/font-size — .btn itself is a grandchild now,
      not a direct child of .tab-strip. */
   .tab-strip > :global(.btn-wrap) {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
   }
   .tab-strip > :global(.btn-wrap) > :global(.btn) {
@@ -560,6 +679,30 @@
     margin-top: 0;
   }
 
+  /* A sub-group inside a section (Bars per row › For everyone). */
+  .sub-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: var(--space-3) 0 var(--space-2);
+  }
+
+  /* Host-only marker on a section label (settings-menu-reorganization):
+     who can change a control is shown on the control, for everyone. */
+  .host-badge {
+    display: inline-block;
+    margin-left: var(--space-2);
+    padding: 0 var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+  }
+
   .list {
     list-style: none;
     margin: 0;
@@ -579,9 +722,7 @@
     align-items: center;
   }
 
-  .cursor-input,
-  .early-stop-input,
-  .start-marker-input {
+  .bar-input {
     font-family: var(--font-mono);
     background: var(--surface);
     border: 1px solid var(--border);

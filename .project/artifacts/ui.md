@@ -266,7 +266,7 @@ In the Lobby (stopped), Select sends at once, as before.
 **Part-name display rule** (feedback part-name-instrument-ux F001;
 `client/src/part-display-name.ts`): everywhere a part renders — the part
 picker, the Participants list's selected-part sublabel, the Playback
-View's "Playing: X" label, and the Tracks tab — the raw GP part name is
+View's "Playing: X" label, and the Settings Audio tab's Tracks group — the raw GP part name is
 mapped to an `{instrument, detail}` pair with the **instrument extracted
 and prominent** and the detail **de-emphasized** (smaller/dimmer, kept
 not dropped). "Name (Instrument)" puts the performer in the detail
@@ -314,7 +314,7 @@ modal) with three tabs:
 
 All three tabs are static content, no server round-trip — content
 authored at implementation time, not modeled data. The tab strip follows
-the same equal-width segmented-row idiom the settings modal's four tabs
+the same segmented-row idiom the settings modal's tabs
 use (above).
 
 The persistent nav bar also always carries a "Leave session" control
@@ -366,20 +366,84 @@ applied uniformly to every icon-only bar control listed above.
 A second, separate modal — opened via a settings-gear control in the
 persistent nav bar — holds everything that used to render inline in the
 Lobby body. Unlike the song/part modal, it's a plain freely-openable/
-dismissible modal with no forced-open gating, and it has four tabs,
-split by who a control affects: **Participants** (who's here + host
-transfer), **Session** (host-broadcast controls everyone is affected
-by), **Preferences** (personal, this-device-only settings), and
-**Tracks** (personal per-part mute controls, moved out of Preferences —
-below). The tab strip renders as an equal-width segmented row at the
-section-label type size, so all four tabs fit on one line down to
-360px-wide screens. The
-cog itself is reachable from both the Lobby view (alongside "Song &
-part") and the Playback view (see Playback View, below) — the settings
-modal, and its theme toggle in particular, needs to be reachable
-regardless of whether playback has started:
+dismissible modal with no forced-open gating. The cog itself is reachable
+from both the Lobby view (alongside "Song & part") and the Playback view
+(see Playback View, below) — the settings modal, and its theme toggle in
+particular, needs to be reachable regardless of whether playback has
+started.
 
-- **Participants**: the live participant list with readiness state and
+**Organized by what you're trying to do** (`settings-menu-reorganization`,
+user 2026-11-27: "pick categories and tabs that actually make sense and
+make sure settings are easy to find"). Five tabs, each named for a goal
+rather than for who may change it: **People** (who's here, host
+transfer), **Playback** (where a run-through starts, stops and points),
+**View** (how the tab looks), **Lyrics** (the in-tab lyrics ticker) and
+**Audio** (what you hear). The tab strip renders as a segmented row
+at the section-label type size, each cell growing from its own label's
+width (equal fifths don't fit "Playback" at 360px), so all five tabs fit
+on one line down to 360px-wide screens. People is the default tab.
+
+**Who can change a control is shown on the control**, not by which tab
+it sits in: every host-only section label carries a small **"Host"**
+badge (`.host-badge`, titled "Only the host can change this"), shown to
+everyone. Non-hosts see the section's current value as a readout plus
+"Only the host can change this." (or an equivalent sentence), never a
+control they can't use, and never nothing — so a non-host looking for
+Count-in finds it, sees it's on, and sees why they can't flip it.
+Personal sections carry no badge; their hints keep the personal scope
+plain ("Only you hear your metronome.").
+
+**Bars, not ticks.** The Lobby cursor and Early stop point take and show
+bars, like the Start marker. The server never parses the score, so the
+client converts: `client/src/bar-tick.ts` holds the loaded song's bars in
+playback order (alphaTab's own `api.tickCache.masterBars`, repeats
+expanded — Principle V; written bar starts until the MIDI exists),
+published by `playback-engine.ts` once a score loads on this device and
+cleared when the engine is torn down. The wire stays in ticks. A bar
+names its first pass, the same rule as the Start marker. Until a song is
+loaded on this device (the host hasn't picked a part yet), the bar input
+and its Set button are disabled with the hint "Pick your part first, so
+the song is loaded and bars can be counted.", Clear stays enabled, and
+readouts fall back to "The host is pointing at a spot in the song." /
+"The host has set an early stop point."
+
+**No search box.** With about fifteen settings across five goal-named
+tabs, a search field would cost more space than it saves (guess,
+2026-11-27; revisit if the list grows much past this).
+
+**Inventory** — every setting and control, where it lives, and who can
+change it:
+
+| Control | Where | Who can change it | Scope |
+| --- | --- | --- | --- |
+| Participant list, readiness | Settings › People | — (readout) | everyone sees |
+| Make host / Remove / Decline request | Settings › People | Host | session |
+| Request to become host | Settings › People | Non-host, own row | session |
+| Start marker | Settings › Playback | Host (badge) | session |
+| Early stop point (bar) | Settings › Playback | Host (badge) | session |
+| Lobby cursor (bar) + Spotlight mode | Settings › Playback | Host (badge) | session |
+| Theme (family + light/dark) | Settings › View | Anyone | this device |
+| Bars per row — just you | Settings › View | Anyone | this device |
+| Bars per row — for everyone | Settings › View | Host (badge) | session |
+| Lyrics ticker font size, position, scrolling, anchor, measure markers | Settings › Lyrics | Anyone | this device |
+| Audio source (Synth / Recording) | Settings › Audio | Host (badge) | session |
+| Count-in | Settings › Audio | Host (badge) | session |
+| Metronome | Settings › Audio | Anyone | this device |
+| Tracks: mute, solo, mute all | Settings › Audio | Anyone | this device |
+| Join code (copy) | Bar, identity | Anyone | — |
+| Beat widget | Bar | — (readout) | — |
+| Song & part | Bar (Lobby) | Song: host; part: anyone | session / own part |
+| Toggle lyrics | Bar | Anyone | this device |
+| Settings, Help & About | Bar | Anyone | — |
+| Start / Pause / Resume / Stop | Bar | Host | session |
+| Leave session | Bar | Anyone | own membership |
+| Ready / un-ready | Bar, status | Anyone, own | own readiness |
+| Sign in / Sign out / My catalogues | Bar and Landing (`AccountMenu`) | Anyone; My catalogues for owners | account |
+| About / Info / Help tabs | Help & About modal | — (static) | — |
+
+The tabs in detail:
+
+- **People**: the live participant list (section label "Participants") with readiness state and
   Host Transfer controls (infrastructure.md), which differ by viewer and
   by row:
   - **Every row** shows which part that participant currently has
@@ -432,16 +496,41 @@ regardless of whether playback has started:
     broadcast arrives — no local optimistic update needed on any of these
     actions.
 
-  This is the default tab, and it holds only the participant list — the
-  lobby-cursor and audio controls that used to sit below it moved to the
-  Session tab.
-- **Session**: host-controlled *session* settings broadcast to everyone
-  (not personal display preferences — those are Preferences, below), in
-  two labeled groups:
-  - **Lobby cursor**: the readout (lets the host point at a position in
-    the score for others to see before playback starts — visible to every
-    participant) and, for the host only, a wrapping control row: tick
-    input, "Set lobby cursor", "Clear", and the "Spotlight mode" toggle.
+  This is the default tab, and it holds only the participant list.
+- **Playback**: host-controlled run-through settings broadcast to everyone,
+  each with a Host badge and a readout for everyone:
+  - **Start marker** (`per-song-default-start-point`, Host badge): the bar every Stop
+    returns to (Default start point and start marker, above), shown to
+    everyone ("Stop returns to bar 9." / "No start marker. Stop returns to
+    bar 1."). For the host only, a wrapping control row with a bar-number
+    input, "Set start marker", and "Clear start marker", writing
+    `Session.startMarkerBar` (datamodel.md; `null` = cleared) — the same
+    input/Set/Clear shape as the early stop point and lobby cursor below. A host-only hint says picking a song sets it from the song's
+    default start bar, and that clicking the tab while stopped moves
+    everyone's cursor without changing the marker. Reset on song change to
+    the new song's `defaultStartBar`.
+  - **Early stop point** (`host-set-early-stop-point-for`, Host badge): a
+    host-only control to stop early, after a chosen bar — a bar input,
+    "Set early-stop point" and "Clear early-stop point" — writing
+    `Session.earlyStopTick` (datamodel.md; `null` = no stop point set) as
+    the tick where that bar's first pass **ends** ("stop after bar N"). The
+    readout, shown to everyone, reads "Playback stops after bar 16." or
+    "No early stop point. Playback runs to the end of the song."
+    While set, any tab content past that point renders visually
+    de-emphasized (dimmed) for every participant, and playback
+    automatically stops there for everyone the same way a manual host
+    Stop does (infrastructure.md), rather than continuing to the song's
+    actual end. Clearing it restores normal full-song playback and
+    removes the de-emphasis. Resets to `null` on song change, same
+    lifecycle as the lobby cursor/Spotlight mode.
+  - **Lobby cursor** (Host badge): the readout (lets the host point at a
+    bar for others to see before playback starts — visible to every
+    participant, "Host is pointing at bar 12.") and, for the host only, a
+    wrapping control row: bar input, "Set lobby cursor", "Clear", and the
+    "Spotlight mode" toggle. The bar is sent as the tick where its first
+    pass starts (the same first-pass rule as the Start marker). Non-hosts
+    also see "Spotlight is on: your view follows the host's cursor." while
+    it's on.
     While Spotlight mode is on, the lobby cursor forces every
     participant's view to follow it; while off, each participant is free
     to browse their own rendered tab independently, and the lobby
@@ -453,67 +542,47 @@ regardless of whether playback has started:
     participant's view to follow the lobby cursor. Off: it's just a
     marker — cursor position and Spotlight state both reset when playback
     starts.").
-  - **Playback audio**: the host-only "Count-in" toggle, setting
-    `Session.countInEnabled` (datamodel.md; wired to alphaTab's
-    `countInVolume` in `playback-sync.ts`, infrastructure.md). Visible
-    and interactive only for the host, with no separate readout shown to
-    non-host participants — the audible effect itself (or its absence)
-    is every participant's confirmation that the setting took. The
-    metronome is deliberately *not* here — it's a personal preference
-    (Preferences, below), a user-confirmed reversal (2026-07-04) of the
-    original host-controlled `Session.metronomeEnabled` design: each
-    participant's own alphaTab instance generates the clicks locally, so
-    nobody else is affected and the server has no reason to know.
-  - **Layout** (`host-mandated-bars-per-row-layout`): a host-only
-    "Bars per row" control — an "Auto" default plus a small set of fixed
-    counts (implementation-time judgment on the exact steps) — setting
-    `Session.hostBarsPerRow` (datamodel.md; `null` = auto/unset). When
-    set, it pins `settings.display.barsPerRow` (infrastructure.md's Tab
-    Rendering) for every participant's alphaTab instance, overriding each
-    participant's own layout-density preference (below) while active — a
-    session-wide mandate, not a suggestion, same host-controlled-setting
-    shape as Count-in/Spotlight/Audio source. A host-only hint explains
-    the override ("Pins everyone's row density; participants' own layout
-    choice is ignored while this is set."). Clearing it (back to "Auto")
-    restores each participant's independent preference immediately.
-  - **Start marker** (`per-song-default-start-point`): the bar every Stop
-    returns to (Default start point and start marker, above), shown to
-    everyone ("Stop returns to bar 9." / "No start marker. Stop returns to
-    bar 1."). For the host only, a wrapping control row with a bar-number
-    input, "Set start marker", and "Clear start marker", writing
-    `Session.startMarkerBar` (datamodel.md; `null` = cleared) — the same
-    input/Set/Clear shape as the early stop point below, but in bars, not
-    ticks. A host-only hint says picking a song sets it from the song's
-    default start bar, and that clicking the tab while stopped moves
-    everyone's cursor without changing the marker. Reset on song change to
-    the new song's `defaultStartBar`.
-  - **Early stop point** (`host-set-early-stop-point-for`): a host-only
-    control to set an early stopping tick on the current tab — mirroring
-    the Lobby cursor's "tick input, Set, Clear" shape above — writing
-    `Session.earlyStopTick` (datamodel.md; `null` = no stop point set).
-    While set, any tab content past that point renders visually
-    de-emphasized (dimmed) for every participant, and playback
-    automatically stops there for everyone the same way a manual host
-    Stop does (infrastructure.md), rather than continuing to the song's
-    actual end. Clearing it restores normal full-song playback and
-    removes the de-emphasis. Resets to `null` on song change, same
-    lifecycle as the lobby cursor/Spotlight mode.
-- **Preferences**: personal, this-device-only settings, none of which
-  touch the server:
-  - two orthogonal theme controls (`client/src/theme.ts`), per
+- **View**: how the tab looks, personal except the host's layout pin:
+  - **Theme**: two orthogonal theme controls (`client/src/theme.ts`), per
     `brand.md`'s Themes section: a **theme** picker (`riot` — the
     default — or `cyberpunk`) and the existing dark/light toggle,
     combining into one of four `data-theme` values (`dark`, `light`,
     `cyberpunk-dark`, `cyberpunk-light`). Changing either control
     switches the app's CSS palette and the tab notation's colors
     together, and both choices persist across a refresh.
-  - a personal "Metronome" toggle, visible to **every** participant (not
-    host-gated): persisted client-side like the theme choice
-    (`client/src/metronome-preference.ts`, default off), applied to this
-    participant's own alphaTab instance immediately (`metronomeVolume`)
-    whether visible or headless, with a hint making the scope plain
-    ("Only you hear your metronome.").
-  - a personal "Lyrics ticker font size" control, visible to **every**
+  - **Bars per row**: one group holding both the personal choice and the
+    host's pin for everyone, so the two no longer live on different tabs.
+    Each row is a labeled `role="group"` ("Your bars per row",
+    "Everyone's bars per row").
+    - **Just you** (sub-label): a personal control (`host-mandated-bars-per-row-layout`),
+      visible to **every** participant (not host-gated): the same "Auto" +
+      fixed-count choices as the host's pin below, persisted
+      client-side (`client/src/bars-per-row-preference.ts`, default
+      **Auto**), applied to this participant's own alphaTab instance only.
+      **Overridden while `Session.hostBarsPerRow` is set** (below) — a hint
+      explains this ("The host has pinned everyone to 4 bars per row. Your
+      own choice comes back once they clear it."), otherwise "Only your tab
+      layout changes."; the
+      preference itself is never cleared by the override, only shadowed,
+      so it resumes the moment the host's pin is lifted.
+    - **For everyone** (`host-mandated-bars-per-row-layout`, Host badge,
+      host only): the host's "Bars per row" pin — an "Auto" default plus a small set of fixed
+      counts (implementation-time judgment on the exact steps) — setting
+      `Session.hostBarsPerRow` (datamodel.md; `null` = auto/unset). When
+      set, it pins `settings.display.barsPerRow` (infrastructure.md's Tab
+      Rendering) for every participant's alphaTab instance, overriding each
+      participant's own layout-density preference (below) while active — a
+      session-wide mandate, not a suggestion, same host-controlled-setting
+      shape as Count-in/Spotlight/Audio source. A host-only hint explains
+      the override ("Pins every participant's tab layout to a fixed number
+      of bars per row, overriding each participant's own choice."). Clearing it (back to "Auto")
+      restores each participant's independent preference immediately.
+  - Further personal view settings (the horizontal scroll view,
+    `horizontal-scroll-view.md`) are added to this tab, below Bars per row.
+- **Lyrics**: every lyrics ticker setting in one place, all personal and
+  this-device-only, under a hint that only your screen changes and the
+  Lyrics part's full lyric sheet keeps its own layout:
+  - **Font size**: a personal lyrics ticker font size control, visible to **every**
     participant (not host-gated): four steps — small / medium / large /
     huge — persisted client-side like the theme/Metronome choices
     (`client/src/lyrics-ticker-font-size-preference.ts`, default
@@ -526,7 +595,7 @@ regardless of whether playback has started:
     larger than before. Applies to the in-tab lyrics overlay's syllable text (Playback
     View, below) — has no effect on the tab-less Lyrics part's full lyric
     sheet, which uses its own fixed reading size.
-  - a personal "Lyrics ticker position" toggle
+  - **Position**: a personal lyrics ticker position toggle
     (`lyrics-ticker-position-preference`), visible to **every**
     participant (not host-gated): top or bottom of the viewport,
     persisted client-side like the theme/Metronome choices (default
@@ -547,78 +616,97 @@ regardless of whether playback has started:
     reserved bottom padding lets the last rows clear it at the end of a
     song. That padding also follows the strip's real height (plus the
     bar and gap beneath it), so it holds at the larger font sizes.
-  - a personal "Measure markers" toggle, visible to **every** participant
+  - **Scrolling** and **Anchor** (`lyrics-ticker-scroll-modes`): personal
+    controls for how the ticker moves — Scrolling: "Every syllable"
+    (default), "At the edges" or "One line at a time"; Anchor: "Center"
+    (default) or "Left" — each in a labeled `role="group"`, persisted
+    client-side (`client/src/lyrics-ticker-motion-preference.ts`) and
+    applied to the live ticker at once. Hints describe the chosen
+    scrolling and say Left shows more of what's coming. Behavior:
+    Playback View, "Scroll modes", below.
+  - **Measure markers**: a personal toggle, visible to **every** participant
     (not host-gated): persisted client-side like the theme/Metronome
     choices (default **off**). When on, the in-tab lyrics overlay ticker
     (Playback View, below) additionally renders a vertical line and
     measure number at each measure boundary, interleaved into the
     syllable strip. Has no effect on the tab-less Lyrics part's full
     lyric sheet.
-  - a personal "Bars per row" control (`host-mandated-bars-per-row-layout`),
-    visible to **every** participant (not host-gated): the same "Auto" +
-    fixed-count choices as the host's Layout control above, persisted
-    client-side (`client/src/bars-per-row-preference.ts`, default
-    **Auto**), applied to this participant's own alphaTab instance only.
-    **Overridden while `Session.hostBarsPerRow` is set** (Session tab,
-    above) — a hint explains this ("The host has pinned everyone's row
-    density; your own choice resumes once they clear it."); the
-    preference itself is never cleared by the override, only shadowed,
-    so it resumes the moment the host's pin is lifted.
-- **Tracks**: a dedicated 4th tab for personal per-part mute controls,
-  visible to **every** participant (not host-gated) — moved out of
-  Preferences into its own tab so each part gets its own row rather than
-  sharing one flex-wrapped row of buttons. **Each part row is exactly one
-  line** (`TrackRow.svelte`; feedback settings-tracks-rows F001/F002),
-  listing every part in `Session.availableParts` rendered through the
-  part-name display rule (Lobby View, above — instrument prominent,
-  detail de-emphasized): a **display-only label** (not a
-  button/interactive element) that **never wraps** — when its content
-  overflows the row it scrolls marquee-style in a **bounce** pattern
-  (scroll to the end, pause, return; less distracting in a settings list
-  than a continuous loop), with the animation active only when DOM
-  measurement shows real overflow (content vs. container via
-  `getBoundingClientRect`, the same plain-DOM idiom the lyrics ticker's
-  centering uses) — a fitting label never animates; a **small icon-only
-  mute button** — lucide `volume-2` while audible, `volume-off` while
-  muted — using `Button.svelte`'s existing iconOnly + tooltip idiom (the
-  full "Mute/Unmute «part»" wording stays as the accessible name); and
-  "Solo", which **stays a text button** (user decision). Muting a part calls
-  alphaTab's own `api.changeTrackMute()` against that participant's
-  already-loaded full mix (Playback View, above) — nothing is added to or
-  removed from what's loaded, only which already-loaded tracks are
-  audible. **Personal and client-local only**, same reasoning as the
-  Metronome toggle in Preferences: every participant's mix is fully
-  independent, so a mute choice can only ever affect that one
-  participant, never anyone else's — there is no session-level mute.
-  Persisted like the theme/metronome choices, but keyed per song *and*
-  track (a mute choice for "Bass" on one song must not silently carry
-  over to a different song's differently-indexed "Bass"). A participant
-  **may** mute their own currently-selected/rendered part — no
-  restriction; some practice workflows want to hear only the backing
-  while reading their own tab. Hint text makes the personal scope plain
-  ("Only you don't hear muted parts — everyone else still does.").
-  Each row also carries a "Solo" control alongside its mute toggle:
-  clicking it mutes every other available part except that one (calling
-  `api.changeTrackMute()` per part, same mechanism as the individual mute
-  toggles), leaving only the soloed part audible. Personal and
-  client-local only, same scope/persistence as the mute toggles above —
-  not a session-level solo. Soloing one part doesn't touch the mute
-  toggles' own persisted state for parts other than the ones it silences;
-  un-soloing (clicking "Solo" again, or muting/unmuting individual parts
-  afterward) is a plain mute-state change like any other, not a tracked
-  "solo mode" the UI has to remember separately.
-  The tab also carries a **"Mute all"** control
-  (`mute-all-parts-button`): one action muting every part's MIDI audio
-  at once while the count-in and metronome clicks stay audible (those
-  come from alphaTab's `countInVolume`/`metronomeVolume`, not track
-  channels, so track-muting never silences them). Same
-  personal/client-local scope and per-(song, track) persistence as the
-  per-part toggles; mechanically it's the same batch
-  `api.changeTrackMute()` application the Solo button already uses,
-  applied to all parts — not a new mute state. Un-muting afterward is a
-  plain per-part change (or pressing the control again toggles all back
-  on) — exact affordance is implementation-time judgment, consistent
-  with the single-line row layout below.
+- **Audio**: what you hear. The session's sound first (host), then your
+  own mix (personal):
+  - **Audio source** (Host badge): shown only for a recording-capable song
+    — Synth or Recording for the host (disabled while playback runs,
+    "Stop playback to change the audio source."), a read-only "Audio
+    source: Recording (set by host)." for everyone else.
+  - **Count-in** (Host badge): the host-only "Count-in" toggle, setting
+    `Session.countInEnabled` (datamodel.md; wired to alphaTab's
+    `countInVolume` in `playback-sync.ts`, infrastructure.md), with the
+    hint "Everyone hears a bar of clicks before playback starts."
+    Non-hosts see a readout instead ("Count-in is on for everyone. Only
+    the host can change this."). The metronome sits next to it but is a
+    personal preference (below), a user-confirmed reversal (2026-07-04) of the
+    original host-controlled `Session.metronomeEnabled` design: each
+    participant's own alphaTab instance generates the clicks locally, so
+    nobody else is affected and the server has no reason to know.
+  - **Metronome**: a personal toggle, visible to **every** participant (not
+    host-gated): persisted client-side like the theme choice
+    (`client/src/metronome-preference.ts`, default off), applied to this
+    participant's own alphaTab instance immediately (`metronomeVolume`)
+    whether visible or headless, with a hint making the scope plain
+    ("Only you hear your metronome.").
+  - **Tracks**: personal per-part mute controls, visible to **every**
+    participant (not host-gated), each part on its own row rather than
+    sharing one flex-wrapped row of buttons. **Each part row is exactly one
+    line** (`TrackRow.svelte`; feedback settings-tracks-rows F001/F002),
+    listing every part in `Session.availableParts` rendered through the
+    part-name display rule (Lobby View, above — instrument prominent,
+    detail de-emphasized): a **display-only label** (not a
+    button/interactive element) that **never wraps** — when its content
+    overflows the row it scrolls marquee-style in a **bounce** pattern
+    (scroll to the end, pause, return; less distracting in a settings list
+    than a continuous loop), with the animation active only when DOM
+    measurement shows real overflow (content vs. container via
+    `getBoundingClientRect`, the same plain-DOM idiom the lyrics ticker's
+    centering uses) — a fitting label never animates; a **small icon-only
+    mute button** — lucide `volume-2` while audible, `volume-off` while
+    muted — using `Button.svelte`'s existing iconOnly + tooltip idiom (the
+    full "Mute/Unmute «part»" wording stays as the accessible name); and
+    "Solo", which **stays a text button** (user decision). Muting a part calls
+    alphaTab's own `api.changeTrackMute()` against that participant's
+    already-loaded full mix (Playback View, above) — nothing is added to or
+    removed from what's loaded, only which already-loaded tracks are
+    audible. **Personal and client-local only**, same reasoning as the
+    Metronome toggle in Preferences: every participant's mix is fully
+    independent, so a mute choice can only ever affect that one
+    participant, never anyone else's — there is no session-level mute.
+    Persisted like the theme/metronome choices, but keyed per song *and*
+    track (a mute choice for "Bass" on one song must not silently carry
+    over to a different song's differently-indexed "Bass"). A participant
+    **may** mute their own currently-selected/rendered part — no
+    restriction; some practice workflows want to hear only the backing
+    while reading their own tab. Hint text makes the personal scope plain
+    ("Only you don't hear muted parts — everyone else still does.").
+    Each row also carries a "Solo" control alongside its mute toggle:
+    clicking it mutes every other available part except that one (calling
+    `api.changeTrackMute()` per part, same mechanism as the individual mute
+    toggles), leaving only the soloed part audible. Personal and
+    client-local only, same scope/persistence as the mute toggles above —
+    not a session-level solo. Soloing one part doesn't touch the mute
+    toggles' own persisted state for parts other than the ones it silences;
+    un-soloing (clicking "Solo" again, or muting/unmuting individual parts
+    afterward) is a plain mute-state change like any other, not a tracked
+    "solo mode" the UI has to remember separately.
+    The group also carries a **"Mute all"** control
+    (`mute-all-parts-button`): one action muting every part's MIDI audio
+    at once while the count-in and metronome clicks stay audible (those
+    come from alphaTab's `countInVolume`/`metronomeVolume`, not track
+    channels, so track-muting never silences them). Same
+    personal/client-local scope and per-(song, track) persistence as the
+    per-part toggles; mechanically it's the same batch
+    `api.changeTrackMute()` application the Solo button already uses,
+    applied to all parts — not a new mute state. Un-muting afterward is a
+    plain per-part change (or pressing the control again toggles all back
+    on) — exact affordance is implementation-time judgment, consistent
+    with the single-line row layout below.
 
 Clicking "Start" closes both the song/part modal and this settings modal
 if either is open (not the lyrics overlay, a separate on-tab toggle
@@ -668,7 +756,7 @@ the Lobby, before Start:
   client sends the same Stop as the Stop button, and everyone returns to
   the Lobby. Until that Stop arrives, each participant's tab holds still at
   the end rather than starting over (user feedback 2026-11-27).
-- **The host controls the marker** from the Settings modal's Session tab
+- **The host controls the marker** from the Settings modal's Playback tab
   ("Start marker", below): set it to a bar, or clear it. Clearing it while
   stopped also sends everyone back to bar 1. Setting it while stopped moves
   everyone there. Non-hosts see where Stop returns to but can't change it.
@@ -737,8 +825,9 @@ identically regardless of which one they're on:
   the words, leaving nothing behind. Syllable text and tick position
   are read live off `CatalogSong.lyricsTrackIndex`'s beats (not the
   currently-viewed instrument track's own beats, which is usually a
-  different track entirely), flattened into one continuous stream. The
-  strip never wraps to multiple lines — as syllables advance it scrolls
+  different track entirely), flattened into one continuous stream. By
+  default the strip never wraps to multiple lines (Scroll modes, below,
+  has the alternatives) — as syllables advance it scrolls
   right-to-left, snapping (not continuously gliding) so the currently
   active syllable, styled via alphaTab's `.at-highlight` role, is
   re-centered on each syllable change; the centering uses plain DOM
@@ -757,7 +846,7 @@ identically regardless of which one they're on:
   participant is viewing.
 
   **Measure markers (personal preference, default off — Lobby View
-  Preferences tab, above)**: when enabled, a vertical line and measure
+  Settings Lyrics tab, above)**: when enabled, a vertical line and measure
   number are interleaved into the syllable strip at each measure
   boundary, reusing the local-tempo/time-signature measure-duration math
   the Gap timing indicator (below) already computes from the headless/
@@ -804,6 +893,46 @@ identically regardless of which one they're on:
   as usual. A bar whose first syllable starts later in the bar doesn't
   move the strip. This applies whether or not
   the measure markers are shown.
+
+  **Scroll modes (`lyrics-ticker-scroll-modes`, 2026-11-27)**: two
+  personal preferences (Settings › Lyrics, above) change how the strip
+  moves; the defaults (Center, Every syllable) are the behavior described
+  above. Everything here applies to the in-tab ticker only — not the
+  Lyrics part's full lyric sheet, nor the horizontal scroll view, which
+  scrolls lyrics past its own fixed playhead.
+  - **Anchor** — where the highlighted syllable is placed: **Center**
+    (its center on the strip's center line) or **Left** (its left edge
+    15% of the strip's width in from the left edge, leaving room for the
+    word just sung while showing most of a strip of what's coming).
+    Everything that "centers" in the paragraphs above goes to the anchor
+    instead: the pre-singing placeholder, the active syllable, and an
+    empty bar's marker (its left edge with the Left anchor) or the
+    boundary before the next word.
+  - **Scrolling** — **Every syllable** (`constant`): the strip moves to
+    put each new syllable on the anchor, as above. **At the edges**
+    (`edge`): the strip holds still while the highlight walks along it,
+    and pages only when the highlighted syllable comes within 10% of the
+    strip's width of its right edge (or is off its left edge, after a
+    seek back): the strip then slides (the same 0.25s transition) to put
+    that syllable on the anchor. Entering an empty bar still moves the
+    strip, as above — a break is when the reader's eyes are free. A
+    resize, a font-size, position, marker or anchor change re-anchors
+    the current syllable at once. **One line at a time** (`line`): the
+    strip shows only the current lyric line, using the song's own line
+    breaks (`CatalogSong.lyricLineBreaks`, regrouped after repeats are
+    unrolled, so a repeated line is shown again on each pass). The line
+    is laid out rather than scrolled — centered, or left-aligned with the
+    Left anchor — and the highlight moves through it. The next line
+    replaces it when its first syllable starts, or earlier, on entering
+    an empty bar, so the words after a break show during the break. A
+    line too long for one row **wraps** onto more rows (the strip grows;
+    the top position's reserved space follows its real height). Before
+    the first syllable it shows the placeholder followed by the first
+    line.
+  - **Unchanged in every mode**: bar-line highlight clearing, the current
+    bar's marker style, and the placeholder's one-way hiding. In line
+    mode a measure marker shows with the line of the syllable it sits
+    before.
 - **Lyrics part selected**: no tab is rendered — this participant's
   alphaTab instance runs **headless** (no visible staff at all), driving
   only audio (metronome/count-in) and the shared clock. **Reworked
@@ -936,7 +1065,7 @@ Start); participants' views don't. While stopped, every participant's
 cursor parks at the host's chosen position (Default start point, above).
 
 The settings-gear control (Lobby View, above) remains in the persistent
-nav bar here too, so the Preferences tab's theme toggle stays reachable
+nav bar here too, so the View tab's theme toggle stays reachable
 without stopping playback — the app's theme control isn't gated to any
 one view. "Leave session" (Lobby View, above) is likewise always present.
 

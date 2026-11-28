@@ -25,6 +25,11 @@
     { tick: 300, number: 2 },
   ];
 
+  // lyrics-ticker-scroll-modes: omitted means the stored preference
+  // (center / constant by default), as in the app.
+  export let anchor: 'center' | 'left' | undefined = undefined;
+  export let scroll: 'constant' | 'edge' | 'line' | undefined = undefined;
+
   let container: HTMLDivElement;
 
   onMount(() => {
@@ -42,7 +47,7 @@
       },
     } as unknown as AlphaTabApi;
 
-    const overlay = createLyricsOverlay(fakeApi, lines, container, { measures });
+    const overlay = createLyricsOverlay(fakeApi, lines, container, { measures, anchor, scroll });
 
     (window as unknown as { __drive: (tick: number) => void }).__drive = (tick: number) => handler?.({ currentTick: tick });
     (window as unknown as { __setVisible: (visible: boolean) => void }).__setVisible = (visible: boolean) => overlay.setVisible(visible);
@@ -52,6 +57,8 @@
       overlay.setMeasureMarkersVisible(visible);
     (window as unknown as { __setPosition: (position: string) => void }).__setPosition = (position: string) =>
       overlay.setPosition(position as never);
+    (window as unknown as { __setAnchor: (anchor: string) => void }).__setAnchor = (value: string) => overlay.setAnchor(value as never);
+    (window as unknown as { __setScroll: (scroll: string) => void }).__setScroll = (value: string) => overlay.setScroll(value as never);
   });
 </script>
 

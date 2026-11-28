@@ -119,16 +119,16 @@ test('sweep: Bar, settings modal (all four tabs), and part picker have no unname
   expect(await sweep(page)).toEqual([]);
   await page.getByRole('button', { name: 'Close' }).click();
 
-  // Settings modal, every tab (Participants incl. crown, Session,
-  // Preferences, Tracks incl. TrackRow's icon-only mute buttons).
+  // Settings modal, every tab (People incl. crown, Playback, View, Lyrics,
+  // Audio incl. TrackRow's icon-only mute buttons).
   await page.getByRole('button', { name: 'Settings' }).click();
-  for (const tab of ['Participants', 'Session', 'Preferences', 'Tracks']) {
+  for (const tab of ['People', 'Playback', 'View', 'Lyrics', 'Audio']) {
     await page.getByRole('button', { name: tab, exact: true }).click();
     expect(await sweep(page), `tab: ${tab}`).toEqual([]);
   }
 
   // Targeted: the crown is decorative with SR-only "Host" text adjacent.
-  await page.getByRole('button', { name: 'Participants' }).click();
+  await page.getByRole('button', { name: 'People', exact: true }).click();
   const crown = page.locator('.row svg.lucide-crown');
   await expect(crown).toBeVisible();
   await expect(crown).toHaveAttribute('aria-hidden', 'true');
@@ -139,7 +139,7 @@ test('targeted: TrackRow mute button keeps the full Mute wording as its accessib
   await mount(AppHarness);
   await setStore(page);
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Tracks' }).click();
+  await page.getByRole('button', { name: 'Audio', exact: true }).click();
 
   const mute = page.getByRole('button', { name: /^Mute Guitar/ });
   await expect(mute).toBeVisible();

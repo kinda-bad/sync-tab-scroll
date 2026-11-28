@@ -1,6 +1,6 @@
 ---
 slug: lyrics-ticker-scroll-modes
-status: backlogged
+status: implemented
 logged: 2026-11-27
 ---
 

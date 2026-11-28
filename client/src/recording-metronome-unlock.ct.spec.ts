@@ -49,11 +49,11 @@ function recordingSong(): CatalogSong {
   };
 }
 
-test('Preferences tab: the Metronome toggle stays enabled and interactive during recording-mode playback', async ({ mount, page }) => {
+test('Audio tab: the Metronome toggle stays enabled and interactive during recording-mode playback', async ({ mount, page }) => {
   const component = await mount(SettingsModalHarness, {
     props: { session: withParts({ playbackSource: 'recording' }), selfParticipantId: 'member-1', catalog: [recordingSong()] },
   });
-  await component.getByRole('button', { name: 'Preferences' }).click();
+  await component.getByRole('button', { name: 'Audio' }).click();
 
   const toggle = component.getByRole('button', { name: /Metronome:/ });
   await expect(toggle).toBeEnabled();
