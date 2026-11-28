@@ -186,6 +186,16 @@ see connectivity changes right away rather than waiting for the next
 periodic `PlaybackState` broadcast to happen to carry the updated
 participant list along with it.
 
+A genuine `song-select` (a different song from the one selected) is a full
+stop as well as a reset: besides clearing every participant's part and
+readiness and the per-song settings, it sets `playbackState.status` to
+`'stopped'` with `tickPosition` 0, exactly as a host `playback-control
+stop` does, so every client returns to the Lobby. The host can send it
+mid-song (the "Song & part" control stays usable during playback, ui.md),
+and nothing of the old song's position carries over. A re-select of the
+current song stays a no-op and leaves playback alone. `part-select` has
+no playback guard: a participant may change their own part mid-song.
+
 ## Reconnect By Identity
 
 A client persists `{code, displayName, participantId}` (e.g. to

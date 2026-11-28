@@ -58,6 +58,12 @@ export function handleSongSelect(ctx: HandlerContext, socket: WebSocket, message
     // song means nothing in the new one. The host's client seeks to the new
     // start marker, if any, from this 0.
     session.playbackState.tickPosition = 0;
+    // A different song is a full stop, the same as the host's Stop: sent
+    // mid-song (the host's Song & part control works during playback), it
+    // would otherwise leave everyone in Playback with no part and nothing
+    // to resume. 'stopped' sends every client back to the Lobby
+    // (ws-client.ts). The client warns the host first (SongPartModal).
+    session.playbackState.status = 'stopped';
     session.playbackState.serverTimestamp = Date.now();
     // Selecting a genuinely different song resets every participant's
     // part/readiness — a part id/index from the old song's parts has no

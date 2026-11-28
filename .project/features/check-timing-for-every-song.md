@@ -1,6 +1,6 @@
 ---
 slug: check-timing-for-every-song
-status: backlogged
+status: implemented
 logged: 2026-11-26
 ---
 
@@ -17,3 +17,16 @@ catalogue's Supermassive Black Hole. The six Kinda Bad II songs added on
 Why: timing has only been ear-verified song by song as problems were
 found (Creep, 2026-07-18); there's been no full pass, and the catalog
 just doubled.
+
+Done 2026-11-27. Fixes are recorded in `docs/catalog-patches.md`:
+- sync points from recordings, for all 12 songs;
+- lyric patches for Creep, Teenagers, 1979, Do I Wanna Know, Dirty Little
+  Secret, Sweetness and Brain Stew;
+- CBR re-encodes, which fix inaccurate seeking.
+
+Known leftovers, accepted for now:
+- Creep "But"/"What" are sung over rests.
+- Dirty Little Secret's pass 2 of bars 90–92 shows pass 1's words, which
+  would need per-pass lyrics.
+- Steady offsets in Time Is Running Out bars 85–97 and Teenagers bars 25–40
+  may be a sync check.

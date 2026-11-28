@@ -91,3 +91,26 @@ function parseTimestamp(lrcLine: string): number {
   const m = lrcLine.match(/^\[(\d+):(\d+\.\d+)\]/)!;
   return (Number(m[1]) * 60 + Number(m[2])) * 1000;
 }
+
+describe.skipIf(!hasTiro)('extractLyrics keeps hand-tuned lyricLineBreaks on a re-run', () => {
+  it('keeps breaks that still sum to the syllable count, and builds the .lrc from them', async () => {
+    const catalogRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tiro-breaks-'));
+    await extractLyrics(TIRO_GP, catalogRoot);
+    const songDir = path.join(catalogRoot, fs.readdirSync(catalogRoot)[0]);
+    const metaPath = path.join(songDir, 'meta.json');
+    const first = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    const firstLrc = fs.readFileSync(path.join(songDir, 'lyrics.lrc'), 'utf8');
+
+    // Move one syllable from line 2 to line 1: same sum, same line count.
+    const tuned = [...first.lyricLineBreaks];
+    const i = tuned.findIndex((n: number, k: number) => k > 0 && n > 1);
+    tuned[i - 1] += 1;
+    tuned[i] -= 1;
+    fs.writeFileSync(metaPath, JSON.stringify({ ...first, lyricLineBreaks: tuned }));
+
+    await extractLyrics(TIRO_GP, catalogRoot);
+    const second = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    expect(second.lyricLineBreaks).toEqual(tuned);
+    expect(fs.readFileSync(path.join(songDir, 'lyrics.lrc'), 'utf8')).not.toBe(firstLrc);
+  });
+});

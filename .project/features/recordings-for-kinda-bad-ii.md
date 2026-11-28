@@ -1,6 +1,6 @@
 ---
 slug: recordings-for-kinda-bad-ii
-status: backlogged
+status: implemented
 logged: 2026-11-26
 ---
 

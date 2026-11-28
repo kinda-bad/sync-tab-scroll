@@ -149,6 +149,44 @@ describe('song-select', () => {
     expect(session.playbackState.tickPosition).toBe(0);
   });
 
+  // feedback-song-part-control-during-playb-dba8 F002: a different song is a
+  // full stop for everyone (nothing of the old song's position carries
+  // over), even when sent while playback is running or paused, so every
+  // client returns to the Lobby (ws-client.ts keys that off 'stopped').
+  for (const status of ['running', 'paused'] as const) {
+    it(`stops playback when a different song is selected while ${status}`, () => {
+      const ctx = makeCtx([fakeSong('creep'), fakeSong('bonus')]);
+      const session = ctx.sessionStore.create('host-1');
+      session.selectedSong = 'bonus';
+      session.playbackState.status = status;
+      session.playbackState.tickPosition = 30720;
+      const hostSocket = fakeSocket();
+      ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+      ctx.connections.broadcast = () => {};
+
+      handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+      expect(session.playbackState.status).toBe('stopped');
+      expect(session.playbackState.tickPosition).toBe(0);
+    });
+  }
+
+  it('leaves running playback alone when re-selecting the same song', () => {
+    const ctx = makeCtx([fakeSong('creep')]);
+    const session = ctx.sessionStore.create('host-1');
+    session.selectedSong = 'creep';
+    session.playbackState.status = 'running';
+    session.playbackState.tickPosition = 30720;
+    const hostSocket = fakeSocket();
+    ctx.connections.attach(hostSocket, { sessionCode: session.code, participantId: 'host-1' });
+    ctx.connections.broadcast = () => {};
+
+    handleSongSelect(ctx, hostSocket, { type: 'song-select', songId: 'creep' });
+
+    expect(session.playbackState.status).toBe('running');
+    expect(session.playbackState.tickPosition).toBe(30720);
+  });
+
   // The start marker is seeded from the newly selected song's own
   // defaultStartBar on a genuine change (null when it has none), and a
   // same-song re-select leaves it alone — including a marker the host
