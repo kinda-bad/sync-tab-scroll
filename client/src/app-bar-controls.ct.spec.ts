@@ -137,17 +137,77 @@ test('playback (instrument part): Pause/Resume, Stop, and Toggle lyrics render i
   await expect(page.locator('.playback-controls button')).toHaveCount(0);
 });
 
+// feedback-song-part-control-during-playb-dba8 F001: the "Song & part"
+// control stays in the bar through playback (ui.md: present in both Lobby
+// and Playback), not just in the Lobby.
+test('playback: the Song & part control stays visible in the bar', async ({ mount, page }) => {
+  await mount(AppHarness);
+  await setStore(page, 'playback', instrumentSession('playback'));
+
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  const songPart = page.getByRole('button', { name: 'Song & part' });
+  await expect(songPart).toBeVisible();
+  await expect(songPart).toBeEnabled();
+});
+
+// feedback-song-part-control-during-playb-dba8 F002: opening Song & part
+// mid-song never stops or resets anything. A host opening it while running
+// pauses (so they can look without the band racing on); a non-host, who
+// has no transport control, leaves session playback alone; a host already
+// paused sends nothing.
+const playbackMessages = (page: import('@playwright/test').Page) =>
+  page.evaluate(() =>
+    (window as unknown as { __sentMessages: { type: string }[] }).__sentMessages.filter((m) => m.type === 'playback-control' || m.type === 'song-select'),
+  );
+
+function asNonHost(session: Session): Session {
+  return {
+    ...session,
+    hostId: 'p2',
+    participants: [
+      ...session.participants.map((p) => ({ ...p, role: 'member' as const })),
+      { id: 'p2', displayName: 'Bob', role: 'host', connectionStatus: 'connected', selectedPart: 0, readiness: 'ready', joinedAt: 1, userId: null },
+    ],
+  };
+}
+
+for (const { name, session, expected } of [
+  { name: 'host, running: pauses', session: instrumentSession('playback'), expected: [{ type: 'playback-control', action: 'pause' }] },
+  {
+    name: 'host, paused: sends nothing',
+    session: { ...instrumentSession('playback'), playbackState: { ...instrumentSession('playback').playbackState, status: 'paused' as const } },
+    expected: [],
+  },
+  { name: 'non-host, running: leaves playback alone', session: asNonHost(instrumentSession('playback')), expected: [] },
+]) {
+  test(`opening Song & part during playback (${name})`, async ({ mount, page }) => {
+    await mount(AppHarness);
+    await setStore(page, 'playback', session);
+    await page.getByRole('button', { name: 'Song & part' }).click();
+
+    await expect(page.getByRole('dialog', { name: 'Song & part' })).toBeVisible();
+    expect(await playbackMessages(page)).toEqual(expected);
+
+    // Closing it doesn't resume or stop either.
+    await page.getByRole('dialog', { name: 'Song & part' }).getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('dialog', { name: 'Song & part' })).toHaveCount(0);
+    expect(await playbackMessages(page)).toEqual(expected);
+  });
+}
+
 // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): icon
 // reassignment. Leave session drops `log-out` (now reserved for the account
-// menu's actual sign-out) for lucide `bone` — "breaking up the band"; the
-// Settings control moves cog → settings.
-test('bar icons: Leave session renders lucide bone, Settings renders lucide settings', async ({ mount, page }) => {
+// menu's actual sign-out); the Settings control moves cog -> settings.
+// feedback-song-part-control-during-playb-dba8 F003: Leave session moves
+// from the bone to lucide `power`.
+test('bar icons: Leave session renders lucide power, Settings renders lucide settings', async ({ mount, page }) => {
   await mount(AppHarness);
   await setStore(page, 'lobby', instrumentSession('lobby'));
 
   const leave = page.getByRole('button', { name: 'Leave session' });
   const settings = page.getByRole('button', { name: 'Settings' });
-  await expect(leave.locator('svg.lucide-bone-fracture')).toBeVisible();
+  await expect(leave.locator('svg.lucide-power')).toBeVisible();
+  await expect(leave.locator('svg.lucide-bone-fracture')).toHaveCount(0);
   await expect(leave.locator('svg.lucide-log-out')).toHaveCount(0);
   await expect(settings.locator('svg.lucide-settings')).toBeVisible();
   await expect(settings.locator('svg.lucide-cog')).toHaveCount(0);
@@ -226,6 +286,29 @@ test('song without a lyrics track: Toggle lyrics is present but disabled, with t
   await expect(toggle).toBeVisible();
   await expect(toggle).toBeDisabled();
   await expect(toggle).toHaveAttribute('aria-label', /No lyrics for this song/);
+});
+
+// feedback-song-part-control-during-playb-dba8 F004: a song with a
+// line-timed .lrc (so the Lyrics part is offered) but no GP lyrics track
+// has no in-tab ticker. "No lyrics for this song" contradicted the Lyrics
+// part sitting right there, so the reason says what's actually missing.
+test('song with an .lrc but no lyrics track: the disabled reason points at the Lyrics part', async ({ mount, page }) => {
+  await mount(AppHarness);
+  const lrcOnlySong: CatalogSong = { ...song, lyricsTrackIndex: null };
+  const session = instrumentSession('lobby');
+  await page.evaluate(
+    ({ session, song, view }) => {
+      const store = (window as unknown as { __clientStore: { update: (fn: (s: unknown) => unknown) => void } }).__clientStore;
+      const wsClient = (window as unknown as { __wsClient: unknown }).__wsClient;
+      store.update((s) => ({ ...(s as object), view, session, selfParticipantId: 'p1', catalog: [song], wsClient }));
+    },
+    { session, song: lrcOnlySong, view: 'lobby' },
+  );
+
+  const toggle = page.getByRole('button', { name: /Toggle lyrics/ });
+  await expect(toggle).toBeDisabled();
+  await expect(toggle).toHaveAttribute('aria-label', /No in-tab lyrics for this song \(use the Lyrics part\)/);
+  await expect(toggle).not.toHaveAttribute('aria-label', /No lyrics for this song/);
 });
 
 test('lyrics available + instrument part: Toggle lyrics is enabled with no reason suffix', async ({ mount, page }) => {

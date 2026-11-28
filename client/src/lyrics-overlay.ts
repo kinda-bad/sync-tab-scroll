@@ -256,7 +256,12 @@ export function createLyricsOverlay(
   // Recomputed on resize since the strip's/track's pixel geometry changes,
   // but the underlying formula is the same cheap DOM measurement — no
   // alphaTab re-layout involved (see plan-lyrics-ticker-2026-07-03.md).
-  const resizeHandler = () => centerActiveSyllable();
+  // The bottom reserve (applyReserve, below) also depends on the viewport
+  // height, which a ResizeObserver on the strip alone doesn't see.
+  const resizeHandler = () => {
+    centerActiveSyllable();
+    applyReserve();
+  };
   window.addEventListener('resize', resizeHandler);
 
   // Top position takes its own space (ui.md "Lyrics ticker position"):
@@ -270,22 +275,34 @@ export function createLyricsOverlay(
   // so no updateSettings() (and no re-render) is needed. A ResizeObserver
   // keeps both in step with the strip's real height (font-size preference,
   // desktop breakpoint). Bottom stays an overlay: auto-scroll aligns the
-  // current row to the top, so a bottom strip never covers it, and the
-  // tab view's padding-bottom already clears its last rows.
-  function applyTopReserve(): void {
-    const isTop = overlay.classList.contains('lyrics-overlay--top') && overlay.style.display !== 'none';
+  // current row to the top, so a bottom strip never covers it mid-song.
+  // At the end of a song, though, the last rows need scroll room to clear
+  // it: the tab view's padding-bottom (App.svelte, `.engine-containers`,
+  // this container's parent) reads `--lyrics-strip-bottom-reserve`, set
+  // here to the strip's real distance from the viewport's bottom edge
+  // (its height plus the bar and gap it sits above), so the large font
+  // steps (up to 7rem on desktop) no longer leave the last rows behind it.
+  function applyReserve(): void {
+    const visible = overlay.style.display !== 'none';
+    const isTop = visible && overlay.classList.contains('lyrics-overlay--top');
     const rect = overlay.getBoundingClientRect();
     container.style.height = isTop ? `${Math.ceil(rect.bottom)}px` : '';
     if (api.settings) api.settings.player.scrollOffsetY = isTop ? -Math.ceil(rect.bottom) : 0;
+    const reserveHost = container.parentElement;
+    if (visible && !isTop) {
+      reserveHost?.style.setProperty('--lyrics-strip-bottom-reserve', `${Math.ceil(document.documentElement.clientHeight - rect.top)}px`);
+    } else {
+      reserveHost?.style.removeProperty('--lyrics-strip-bottom-reserve');
+    }
   }
-  const reserveObserver = new ResizeObserver(() => applyTopReserve());
+  const reserveObserver = new ResizeObserver(() => applyReserve());
   reserveObserver.observe(overlay);
-  applyTopReserve();
+  applyReserve();
 
   return {
     setVisible(visible: boolean) {
       overlay.style.display = visible ? '' : 'none';
-      applyTopReserve();
+      applyReserve();
     },
     setFontSize(size: LyricsTickerFontSize) {
       overlay.dataset.lyricsSize = size;
@@ -294,7 +311,7 @@ export function createLyricsOverlay(
       overlay.classList.toggle('lyrics-overlay--top', position === 'top');
       // The strip's pixel geometry moved — recenter against the new rect.
       centerActiveSyllable();
-      applyTopReserve();
+      applyReserve();
     },
     setMeasureMarkersVisible(visible: boolean) {
       measureMarkersVisible = visible;
@@ -310,6 +327,7 @@ export function createLyricsOverlay(
       window.removeEventListener('resize', resizeHandler);
       reserveObserver.disconnect();
       container.style.height = '';
+      container.parentElement?.style.removeProperty('--lyrics-strip-bottom-reserve');
       if (api.settings) api.settings.player.scrollOffsetY = 0;
       overlay.remove();
     },
