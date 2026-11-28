@@ -317,6 +317,62 @@
   z-index: 9999;
 }
 
+/* ── Mono: rule edge, plain fill, plain drain (both modes) ────────────────
+   brand.md, Themes › Mono: no signature shape, texture or motion. The bar's
+   top edge is a straight 1px ink rule (no clip-path); the progress/
+   readiness fill is a flat solid bar in the one accent (--live), with no
+   stripes, segments or glow; the lyric-gap drain is the same flat bar in
+   gray, since a gap is not "what's happening now". Same unconditional-class
+   convention as the riot/cyberpunk devices above: Bar.svelte, HazardBar.svelte
+   and playback-engine.ts carry these classes in every theme, and only these
+   selectors make them do anything. Width changes keep the short linear
+   transition the other fills use; reduced motion drops it (below). */
+[data-theme='mono-dark'] .rule-edge,
+[data-theme='mono-light'] .rule-edge {
+  border-top: 1px solid var(--ink);
+}
+[data-theme='mono-dark'] .plain-fill,
+[data-theme='mono-light'] .plain-fill {
+  --hazard-fill: 0;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+[data-theme='mono-dark'] .gap-drain-plain,
+[data-theme='mono-light'] .gap-drain-plain {
+  --gap-fill: 1;
+  position: relative;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+[data-theme='mono-dark'] .plain-fill::before,
+[data-theme='mono-light'] .plain-fill::before,
+[data-theme='mono-dark'] .gap-drain-plain::before,
+[data-theme='mono-light'] .gap-drain-plain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--live);
+  transition: width 0.2s linear;
+}
+[data-theme='mono-dark'] .plain-fill::before,
+[data-theme='mono-light'] .plain-fill::before {
+  width: calc(var(--hazard-fill) * 100%);
+}
+[data-theme='mono-dark'] .gap-drain-plain::before,
+[data-theme='mono-light'] .gap-drain-plain::before {
+  width: calc(var(--gap-fill) * 100%);
+  background: var(--hazard);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='mono-dark'] .plain-fill::before,
+  [data-theme='mono-light'] .plain-fill::before,
+  [data-theme='mono-dark'] .gap-drain-plain::before,
+  [data-theme='mono-light'] .gap-drain-plain::before {
+    transition: none;
+  }
+}
+
 /* ── alphaTab playback cursor ────────────────────────────────────────────
    alphaTab ships .at-cursor-bar/.at-cursor-beat/.at-selection with only
    positioning inline styles — zero color/opacity of its own; styling
@@ -325,11 +381,11 @@
    instance renders, including test harnesses), so this lives in global
    CSS rather than a component's scoped <style> block. */
 .at-cursor-bar {
-  background: var(--riot-dim);
+  background: var(--live-dim);
 }
 .at-cursor-beat {
-  background: var(--riot);
-  opacity: 0.6;
+  background: var(--live);
+  opacity: var(--cursor-beat-opacity);
 }
 .at-selection {
   background: var(--hazard-dim);
@@ -476,7 +532,7 @@
   justify-content: flex-start;
 }
 .lyric-syllable.at-highlight {
-  color: var(--riot);
+  color: var(--lyric-active);
   font-weight: 700;
 }
 
@@ -506,8 +562,8 @@
 /* The bar playback is in (ui.md "Measure markers", lyrics-overlay.ts
    updateCurrentMeasure): full-strength --ink instead of the dimmed
    markers' --ink-dim at 0.7 opacity. --ink is each theme's primary text
-   color, so it is the brightest neutral in every theme; --riot stays
-   reserved for the sung syllable. */
+   color, so it is the brightest neutral in every theme; --lyric-active
+   stays reserved for the sung syllable. */
 .lyrics-measure-marker--current {
   color: var(--ink);
   opacity: 1;

@@ -87,24 +87,26 @@ test('the View tab holds two orthogonal theme controls, for any participant', as
   const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
 
   await component.getByRole('button', { name: 'View' }).click();
-  await expect(component.getByText(/Theme: Riot|Theme: Cyberpunk/)).toBeVisible();
+  await expect(component.getByText(/Theme: (Riot|Cyberpunk|Mono)/)).toBeVisible();
   await expect(component.getByText(/Light mode|Dark mode/)).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
 // Two orthogonal theme controls (brand.md Themes, ui.md Preferences): a
-// theme-family picker (riot/cyberpunk) and the existing light/dark toggle,
-// computing one of 4 flat `data-theme` values. Each control must act
+// theme-family picker (riot/cyberpunk/mono, a cycle) and the existing
+// light/dark toggle, computing one of 6 flat `data-theme` values. Each control must act
 // independently of the other, and the combined value must persist across a
 // simulated reload (re-reading localStorage, same as theme.ts's own
 // loadStoredTheme/persistTheme round-trip).
 // ---------------------------------------------------------------------------
 
-const THEME_COMBINATIONS: Array<{ family: 'Riot' | 'Cyberpunk'; mode: 'Dark' | 'Light'; expected: string }> = [
+const THEME_COMBINATIONS: Array<{ family: 'Riot' | 'Cyberpunk' | 'Mono'; mode: 'Dark' | 'Light'; expected: string }> = [
   { family: 'Riot', mode: 'Dark', expected: 'dark' },
   { family: 'Riot', mode: 'Light', expected: 'light' },
   { family: 'Cyberpunk', mode: 'Dark', expected: 'cyberpunk-dark' },
   { family: 'Cyberpunk', mode: 'Light', expected: 'cyberpunk-light' },
+  { family: 'Mono', mode: 'Dark', expected: 'mono-dark' },
+  { family: 'Mono', mode: 'Light', expected: 'mono-light' },
 ];
 
 for (const { family, mode, expected } of THEME_COMBINATIONS) {
@@ -122,8 +124,12 @@ for (const { family, mode, expected } of THEME_COMBINATIONS) {
     const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
     await component.getByRole('button', { name: 'View' }).click();
 
-    if (family === 'Cyberpunk') {
+    // The family button cycles Riot → Cyberpunk → Mono → Riot.
+    if (family !== 'Riot') {
       await component.getByText('Theme: Riot').click();
+    }
+    if (family === 'Mono') {
+      await component.getByText('Theme: Cyberpunk').click();
     }
     if (mode === 'Light') {
       // Buttons are labeled with the mode a click switches *to* — starting
@@ -166,6 +172,30 @@ test('the theme-family picker and light/dark toggle act independently: switching
 
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('cyberpunk-light');
   await expect(component.getByText('Theme: Cyberpunk')).toBeVisible();
+});
+
+test('the theme-family picker cycles Riot → Cyberpunk → Mono → Riot, keeping the mode', async ({ mount, page }) => {
+  await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'light'));
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+  await component.getByRole('button', { name: 'View' }).click();
+
+  await component.getByText('Theme: Riot').click();
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('cyberpunk-light');
+  await component.getByText('Theme: Cyberpunk').click();
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('mono-light');
+  await expect(component.getByText('Theme: Mono')).toBeVisible();
+  await component.getByText('Theme: Mono').click();
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+});
+
+test('a stored Mono theme shows as "Theme: Mono" and keeps its family when the mode changes', async ({ mount, page }) => {
+  await page.evaluate(() => localStorage.setItem('sync-tab-scroll:theme', 'mono-dark'));
+  const component = await mount(SettingsModalHarness, { props: { session: baseSession(), selfParticipantId: 'member-1' } });
+  await component.getByRole('button', { name: 'View' }).click();
+
+  await expect(component.getByText('Theme: Mono')).toBeVisible();
+  await component.getByText('Light mode').click();
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('mono-light');
 });
 
 // --- Playback tab: host-broadcast run-through controls ---------------------

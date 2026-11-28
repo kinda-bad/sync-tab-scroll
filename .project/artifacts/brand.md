@@ -1,7 +1,7 @@
 ---
 name: brand
 status: stable
-last_updated: 2026-07-07
+last_updated: 2026-11-27
 ---
 
 # Brand & Theming
@@ -65,13 +65,24 @@ palette of five semantic roles, deliberately not a rainbow:
 | `--ink` / `--ink-dim` | primary / secondary text |
 | `--riot` | the one loud accent — CTAs, cursor, "live"/active state |
 | `--hazard` | caution/pending accent — readiness fill, tape texture |
+| `--live` / `--live-dim` | what's happening right now — playback cursor, current-bar highlight, playhead; defaults to `--riot`/`--riot-dim` (added 2026-11-27 for Mono, below) |
+| `--focus` | keyboard focus ring and focused-field border; defaults to `--riot` |
+
+`--live` and `--focus` (plus three small knobs: `--primary-hover-bg`/
+`--primary-hover-filter` for the primary button's hover,
+`--gap-dot-active` for the lit lyric-gap countdown dot, and
+`--cursor-beat-opacity`) are defined once in `tokens.css`'s plain `:root`
+block, pointing at each theme's existing roles, so `riot` and `cyberpunk`
+render exactly as before. They exist so a theme can separate "now" from
+"primary": `mono` does, keeping `--riot` plain ink and putting its one
+accent in `--live`/`--focus` only.
 
 These are **semantic role names, not theme-specific** (no `--void` vs.
 `--paper` split) so that components never branch on which theme is
 active — only the values behind each name change per
 `[data-theme='...']` block (`client/src/styles/tokens.css`). This is
 also what makes the palette extensible: **Themes** below documents how
-this now supports two fully distinct themes (`riot`, `cyberpunk`), each
+this now supports three fully distinct themes (`riot`, `cyberpunk`, `mono`), each
 with its own dark/light pair — a new theme is a new pair of
 `[data-theme='...']` blocks plus a new toolbar entry in
 `.storybook/preview.ts`'s `withThemeByDataAttribute` config — nothing
@@ -167,12 +178,12 @@ Respects `prefers-reduced-motion`.
 
 ## Themes
 
-Two fully distinct themes, each with its own dark/light pair — orthogonal
-controls (per `ui.md`'s Preferences tab): a **theme** picker (`riot` /
-`cyberpunk`) and the existing light/dark toggle, combining into four flat
+Three fully distinct themes, each with its own dark/light pair — orthogonal
+controls (per `ui.md`'s View tab): a **theme** picker (`riot` /
+`cyberpunk` / `mono`) and the existing light/dark toggle, combining into six flat
 `data-theme` values: `dark`, `light` (theme `riot`, the default — see UI
 Chrome Redesign above for its palette), `cyberpunk-dark`,
-`cyberpunk-light`. `riot` keeps the `dark`/`light` values rather than
+`cyberpunk-light`, `mono-dark`, `mono-light`. `riot` keeps the `dark`/`light` values rather than
 being renamed to `riot-dark`/`riot-light`, since it's a rework of the
 original default theme in place, not a new theme added alongside it.
 
@@ -256,6 +267,116 @@ repeating-linear-gradient texture), gated the same way, alongside the
 glitch fringe — both run in both `cyberpunk` modes, per the Motion
 bullet above.
 
+### Mono
+
+Added 2026-11-27. "No nonsense black and white, with one lightly used
+accent color." Where `riot` is physical and `cyberpunk` is digital, `mono`
+is the absence of a device: black, white and untinted grays, and one
+signal green that appears only for **what's happening right now**.
+
+**Where the accent goes, and nowhere else.** `--live`/`--focus` carry the
+green; `--riot` is plain ink and `--hazard` a mid gray, so every component
+that reads the "primary" or "caution" roles comes out black, white or
+gray without knowing which theme is on.
+
+- Green: the playback cursor (`.at-cursor-beat`, full strength) and the
+  current-bar highlight (`.at-cursor-bar`, `--live-dim`); the horizontal
+  view's playhead; the currently sung syllable and lyric line
+  (`--lyric-active`); the progress/readiness fill; focus rings and the
+  focused text field; the primary button's hover.
+- Ink/gray: everything else — links, borders, primary and secondary
+  buttons (a selected choice is an inverted ink chip), icons, badges
+  (Host, Ready, Loading), toasts, the connection banner, the lyric-gap
+  countdown dots and drain, measure markers, the start marker and early
+  stop, the count-in beat widget, and all tab notation glyphs and lines.
+
+**`mono-dark`**:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#000000` |
+| `--surface` | `#111111` |
+| `--surface-raised` | `#1a1a1a` |
+| `--bar-surface` | `#1f1f1f` |
+| `--ink` | `#ffffff` |
+| `--ink-dim` | `rgba(255,255,255,0.62)` |
+| `--riot` | `#ffffff` (ink) |
+| `--hazard` | `#9e9e9e` |
+| `--border` | `rgba(255,255,255,0.24)` |
+| `--live` / `--focus` | `#30d158` |
+| `--live-dim` | `rgba(48,209,88,0.22)` |
+| `--lyric-base` | `--ink-dim` |
+| `--lyric-active` | `--live` |
+
+**`mono-light`**:
+
+| Token | Value |
+|---|---|
+| `--bg` | `#ffffff` |
+| `--surface` | `#f5f5f5` |
+| `--surface-raised` | `#f0f0f0` |
+| `--bar-surface` | `#ebebeb` |
+| `--ink` | `#000000` |
+| `--ink-dim` | `rgba(0,0,0,0.62)` |
+| `--riot` | `#000000` (ink) |
+| `--hazard` | `#5c5c5c` |
+| `--border` | `rgba(0,0,0,0.24)` |
+| `--live` / `--focus` | `#007a33` |
+| `--live-dim` | `rgba(0,122,51,0.14)` |
+| `--lyric-base` | `--ink-dim` |
+| `--lyric-active` | `--live` |
+
+The accent was first signal red (`#ff3b30` dark, `#d70500` light). On
+2026-11-27 it changed to signal green after comparing two blues and two
+greens on a playback screenshot. The light green is a deep `#007a33`
+because the sung syllable is *text* on the lyrics ticker's light-gray
+strip, where it needs 4.5:1.
+
+**Signature devices — deliberately none:**
+
+- **Bar edge**: a straight edge with a 1px `--ink` rule (`.rule-edge`,
+  `border-top`), no `clip-path`. `mono`-scoped
+  (`[data-theme='mono-dark'], [data-theme='mono-light']`) like the other
+  themes' edges.
+- **Progress/readiness fill**: a flat solid bar in `--live`
+  (`.plain-fill`) on a `--surface-raised` track — no stripes, segments or
+  glow. Same `HazardBar.svelte`/`--hazard-fill` mechanism as the other
+  themes' devices.
+- **Motion**: no signature motion. Fills keep the same short linear
+  width transition every theme uses; it's dropped under
+  `prefers-reduced-motion`. No scanline, no glitch, no tape.
+- **Type**: the existing two fonts, unchanged, with no text-shadow
+  (`.glitch-text` is inert). The fonts have no weight tokens to tighten,
+  so weights stay as they are.
+
+**Contrast (WCAG 2.x, computed; alpha tokens composited over each
+surface).** Text needs 4.5:1; the accent as a non-text indicator 3:1.
+
+| Pair | `mono-dark` | `mono-light` |
+|---|---|---|
+| `--ink` on bg / surface / raised / bar / ticker | 21.0 / 18.9 / 17.4 / 16.5 / 18.1 | 21.0 / 19.3 / 18.4 / 17.6 / 18.8 |
+| `--ink-dim` on the same | 7.8 / 7.7 / 7.3 / 7.1 / 7.4 | 6.2 / 6.0 / 6.0 / 5.9 / 6.0 |
+| `--hazard` (text) on the same | 7.8 / 7.1 / 6.5 / 6.2 / 6.8 | 6.7 / 6.1 / 5.9 / 5.6 / 6.0 |
+| `--live` (sung syllable: text) on the same | 10.4 / 9.3 / 8.6 / 8.2 / 8.9 | 5.5 / 5.0 / 4.8 / 4.6 / 4.9 |
+| `--bg` text on `--live` (primary-button hover) | 10.4 | 5.5 |
+| `--bg` text on `--hazard` (`.btn-hazard`) | 7.8 | 6.7 |
+| Beat cursor (`--live`, opacity 1) on bg | 10.4 | 5.5 |
+| Horizontal playhead (`--live` at 0.8) on bg | 6.7 | 3.8 |
+| Progress fill (`--live`) on its track | 8.6 | 4.8 |
+| Focus ring (`--live`) on bg | 10.4 | 5.5 |
+| Current-bar wash (`--live-dim`) on bg | 1.4 | 1.2 |
+| `--ink` notation over that wash | 14.9 | 17.2 |
+
+"Ticker" is the lyrics strip's `color-mix(--surface-raised 85%,
+transparent)` over the canvas. `--border` (about 1.8–2.2:1) is decorative
+and not relied on to convey state. The beat cursor runs at full strength
+in `mono` (`--cursor-beat-opacity: 1`): at the other themes' 0.6 the light
+mode's green line would drop to 2.6:1 on white. The current-bar wash is deliberately
+faint (well under 3:1): it is supplementary, and a stronger wash muddied
+the glyphs under it. Position is always carried by an indicator that
+passes — the beat cursor in the paged view, the playhead in the
+horizontal view, where the beat cursor is hidden.
+
 ## Lyrics Gap Indicator (2026-07-06)
 
 The full-lyrics sheet's gap-timing indicator (ui.md) reuses each theme's
@@ -273,6 +394,10 @@ session/playback progress):
 - **`cyberpunk`**: an LED-marquee-styled drain — the same segmented,
   hard-edged block language as `.led-marquee`, `--hazard`-colored, same
   drain-not-fill direction.
+- **`mono`**: a flat gray drain (`.gap-drain-plain`, `--hazard`), same
+  direction. Gray, not the accent: a gap is a wait, not what's happening
+  now. Its lit countdown dot is ink (`--gap-dot-active`), for the same
+  reason.
 
 The four countdown dots reuse the existing active/base lyric-text color
 roles (the same convention the lyric-line highlight already uses,
@@ -388,6 +513,25 @@ cyan/magenta instead of amber/rose to match the Themes section's
 | Base (non-highlighted) lyric text | — | `#00647d`, deep cyan-teal | full lyrics view |
 | Lobby pre-playback pointer | — | `#00647d` — same cyan-family/magenta-family split as dark mode | lobby cursor overlay |
 
+**`mono` theme.** Ink and grays only (`brand-colors.ts`
+`monoDarkTabColors`/`monoLightTabColors`): every alphaTab resource is the
+mode's ink — white in `mono-dark`, black in `mono-light` — at a lower
+alpha, so nothing alphaTab paints is tinted. The accent reaches notation
+only through the CSS cursor.
+
+| Role | Token | `mono-dark` | `mono-light` | alphaTab resource / class |
+|---|---|---|---|---|
+| Note glyphs | `--tab-foreground` | `#ffffff` | `#000000` | `mainGlyphColor` |
+| Ghost notes, ties, bar numbers, section labels | `--tab-foreground-dim` | white at 0.50 | black at 0.50 | `secondaryGlyphColor`, `barNumberColor`, `scoreInfoColor` |
+| Staff lines | `--tab-ruling-dim` | white at 0.35 | black at 0.35 | `staffLineColor` |
+| Barlines | `--tab-ruling-mid` | white at 0.55 | black at 0.55 | `barSeparatorColor` |
+| Playback cursor (beat) | `--live` | `#30d158`, full strength | `#007a33`, full strength | `.at-cursor-beat` |
+| Current-bar highlight | `--live-dim` | `#30d158` at 0.22 | `#007a33` at 0.14 | `.at-cursor-bar` |
+| Active/currently-sung lyric syllable | `--lyric-active` | `#30d158` | `#007a33` | `.at-highlight`, lyrics view line-highlight |
+| Base lyric text | `--lyric-base` | `--ink-dim` | `--ink-dim` | full lyrics view, ticker |
+| Lobby pre-playback pointer | `--live` | `#30d158` | `#007a33` | the same alphaTab cursor (`.at-cursor-beat`) |
+| Selection | `--hazard-dim` | gray | gray | `.at-selection` |
+
 ## Typography
 
 `--font-display: 'Bungee'` for hero/title moments only (the app
@@ -411,11 +555,12 @@ doesn't have to match the visual volume.
 Motion is theme-scoped, not mode-scoped — see UI Chrome Redesign's
 Motion section for `riot` (tape-peel, both modes) and Themes' Cyberpunk
 section for `cyberpunk` (glitch fringe + CRT scanline + RGB-split title
-text, both modes). Each theme has exactly one signature motion identity,
-expressed identically in both its light and dark variants; the two
-themes never share a motion device. Animated progress/readiness fill
-(`.hazard-stripes` for `riot`, `.led-marquee` for `cyberpunk`) carries
-per-participant readiness and playback progress in both themes — one
+text, both modes). `riot` and `cyberpunk` each have exactly one signature
+motion identity, expressed identically in both its light and dark
+variants, and never share a motion device; `mono` deliberately has none
+(Themes › Mono). Progress/readiness fill (`.hazard-stripes` for `riot`,
+`.led-marquee` for `cyberpunk`, `.plain-fill` for `mono`) carries
+per-participant readiness and playback progress in every theme — one
 device per theme, two jobs each. The full-lyrics sheet's gap-timing drain
 bar (Lyrics Gap Indicator, above) reuses each theme's same visual
 language but is a separate element with its own job, not a third use of

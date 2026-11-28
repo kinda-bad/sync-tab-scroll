@@ -61,7 +61,7 @@ test("highlights the current bar's marker, following playback through a repeat",
   await expect(markers.nth(3)).toHaveClass(/lyrics-measure-marker--current/);
 });
 
-for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light']) {
+for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light', 'mono-dark', 'mono-light']) {
   test(`current bar number uses the full-strength ink color, brighter than the other markers (${theme})`, async ({ mount, page }) => {
     await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme);
     await mountWithMarkers(mount, page);

@@ -72,7 +72,7 @@
   left: var(--hview-playhead);
   width: 2px;
   margin-left: -1px;
-  background: var(--riot);
+  background: var(--live);
   opacity: 0.8;
   pointer-events: none;
   z-index: 1001;
@@ -146,7 +146,7 @@
   left: var(--hview-playhead);
   width: 2px;
   margin-left: -1px;
-  background: var(--riot);
+  background: var(--live);
   opacity: 0.8;
 }
 

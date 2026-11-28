@@ -83,8 +83,10 @@
   background: var(--lyric-base);
 }
 
+/* --gap-dot-active defaults to --lyric-active (tokens.css); mono keeps the
+   countdown in ink so its accent stays on the sung syllable. */
 .gap-dot.active {
-  background: var(--lyric-active);
+  background: var(--gap-dot-active);
 }
 
 .gap-drain {

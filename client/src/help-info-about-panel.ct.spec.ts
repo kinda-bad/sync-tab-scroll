@@ -85,7 +85,7 @@ test('the About tab renders the alphaTab/Songsterr shoutout, GitHub source link,
 // Links had no style of their own, so they rendered in the browser's default
 // blue: close to unreadable on the dark themes' near-black surfaces. They now
 // use the theme's primary color (--riot) and are always underlined.
-for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light']) {
+for (const theme of ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light', 'mono-dark', 'mono-light']) {
   test(`About tab links use the theme's primary color, not browser-default blue (${theme})`, async ({ mount, page }) => {
     await mount(AppHarness);
     await setStore(page, lobbySession());

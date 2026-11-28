@@ -1,7 +1,8 @@
 <script lang="ts">
   /**
-   * The signature fill device (brand.md) — diagonal hazard-tape stripes
-   * instead of a smooth gradient. One component, reused for per-participant
+   * The signature fill device (brand.md) — riot's diagonal hazard-tape
+   * stripes, cyberpunk's LED marquee or mono's flat accent fill, chosen by
+   * CSS per data-theme from the classes below. One component, reused for per-participant
    * readiness, playback progress, and (via CSS class on the syllable
    * itself) lyric-timing highlight.
    */
@@ -9,7 +10,7 @@
   export let label: string | undefined = undefined;
 </script>
 
-<div class="hazard-bar hazard-stripes led-marquee" style="--hazard-fill: {Math.max(0, Math.min(1, fill))}" role="progressbar" aria-valuenow={Math.round(fill * 100)} aria-valuemin={0} aria-valuemax={100}>
+<div class="hazard-bar hazard-stripes led-marquee plain-fill" style="--hazard-fill: {Math.max(0, Math.min(1, fill))}" role="progressbar" aria-valuenow={Math.round(fill * 100)} aria-valuemin={0} aria-valuemax={100}>
   {#if label}
     <span class="hazard-bar-label">{label}</span>
   {/if}

@@ -1,4 +1,4 @@
-import type { Theme } from './tab-renderer';
+import { isTheme, type Theme } from './tab-renderer';
 import { setEngineTheme } from './playback-engine';
 
 export type StoredTheme = Theme;
@@ -7,8 +7,7 @@ export const STORAGE_KEY = 'sync-tab-scroll:theme';
 
 export function loadStoredTheme(): StoredTheme | undefined {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw !== 'dark' && raw !== 'light' && raw !== 'cyberpunk-dark' && raw !== 'cyberpunk-light') return undefined;
-  return raw;
+  return isTheme(raw) ? raw : undefined;
 }
 
 export function persistTheme(theme: StoredTheme): void {

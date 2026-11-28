@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import PlaybackEngineHarness from './test-harness/PlaybackEngineHarness.svelte';
-import { lightTabColors } from './brand-colors';
+import { lightTabColors, monoDarkTabColors, monoLightTabColors } from './brand-colors';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GP_PATH = path.resolve(__dirname, '../test-fixtures/synthetic-song.gp');
@@ -119,6 +119,32 @@ test('a freshly-created engine picks up the document theme instead of hardcoding
   const actualFill = await component.getByTestId('tab-container').locator('svg text').first().evaluate((el) => getComputedStyle(el).fill);
   expect(actualFill).toBe(expectedFill);
 });
+
+// Mono (brand.md, Themes › Mono): the engine's document-theme read must
+// recognize both Mono values too, not fall back to riot's dark colors.
+for (const [theme, colors] of [['mono-dark', monoDarkTabColors], ['mono-light', monoLightTabColors]] as const) {
+  test(`a freshly-created engine renders ${theme}'s ink-colored notation`, async ({ mount, page }) => {
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t;
+    }, theme);
+    const component = await mount(PlaybackEngineHarness, { props: { gpFilePath: '/fixture.gp', trackIndex: 0 } });
+    await expect(component.getByTestId('tab-container').locator('svg').first()).toBeVisible({ timeout: 20_000 });
+    const { r, g, b, a } = colors.foreground;
+    const expectedFill = await page.evaluate(
+      ({ r, g, b, a }) => {
+        const probe = document.createElement('div');
+        probe.style.color = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+      },
+      { r, g, b, a },
+    );
+    const actualFill = await component.getByTestId('tab-container').locator('svg text').first().evaluate((el) => getComputedStyle(el).fill);
+    expect(actualFill).toBe(expectedFill);
+  });
+}
 
 /**
  * Playback-tick-report reporter (plan-playback-sync-fixes): deliberately not
