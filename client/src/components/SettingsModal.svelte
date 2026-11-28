@@ -63,13 +63,16 @@
   let activeTab: SettingsTab = 'people';
   let lobbyCursorInput = 1;
   let theme: StoredTheme = loadStoredTheme() ?? 'dark';
+  const THEME_FAMILIES = ['riot', 'cyberpunk', 'mono'] as const;
+  type ThemeFamily = (typeof THEME_FAMILIES)[number];
+  const THEME_FAMILY_LABELS: Record<ThemeFamily, string> = { riot: 'Riot', cyberpunk: 'Cyberpunk', mono: 'Mono' };
 
   // Two orthogonal controls (ui.md Preferences, brand.md Themes) combine
   // into the one flat `StoredTheme`/`data-theme` value `theme.ts` actually
   // persists and `applyTheme()` consumes — derived from it on mount/every
   // change, never a second source of truth (constitution Principle I).
-  $: themeFamily = theme.startsWith('cyberpunk') ? 'cyberpunk' : 'riot';
-  $: themeMode = theme.endsWith('dark') ? 'dark' : 'light';
+  $: themeFamily = (theme.startsWith('cyberpunk') ? 'cyberpunk' : theme.startsWith('mono') ? 'mono' : 'riot') as ThemeFamily;
+  $: themeMode = (theme.endsWith('dark') ? 'dark' : 'light') as 'dark' | 'light';
 
   let metronome = loadStoredMetronome();
   let barsPerRow: number | null = loadStoredBarsPerRow();
@@ -145,14 +148,15 @@
   // by the Participants sublabels and the Tracks rows.
   $: partNames = partDisplayNames((session?.availableParts ?? []).map((p) => p.instrumentName));
 
-  function setTheme(family: 'riot' | 'cyberpunk', mode: 'dark' | 'light'): void {
-    theme = family === 'riot' ? mode : (`cyberpunk-${mode}` as StoredTheme);
+  function setTheme(family: ThemeFamily, mode: 'dark' | 'light'): void {
+    theme = family === 'riot' ? mode : (`${family}-${mode}` as StoredTheme);
     applyTheme(theme);
     persistTheme(theme);
   }
 
   function toggleThemeFamily() {
-    setTheme(themeFamily === 'riot' ? 'cyberpunk' : 'riot', themeMode);
+    // A cycle (Riot → Cyberpunk → Mono → Riot): one button, like before.
+    setTheme(THEME_FAMILIES[(THEME_FAMILIES.indexOf(themeFamily) + 1) % THEME_FAMILIES.length], themeMode);
   }
 
   function toggleThemeMode() {
@@ -460,7 +464,7 @@
   {:else if activeTab === 'view'}
     <span class="section-label">Theme</span>
     <div class="control-row">
-      <Button variant="ghost" label={themeFamily === 'riot' ? 'Theme: Riot' : 'Theme: Cyberpunk'} onclick={toggleThemeFamily} />
+      <Button variant="ghost" label={`Theme: ${THEME_FAMILY_LABELS[themeFamily]}`} onclick={toggleThemeFamily} />
       <Button variant="ghost" label={themeMode === 'dark' ? 'Light mode' : 'Dark mode'} onclick={toggleThemeMode} />
     </div>
 

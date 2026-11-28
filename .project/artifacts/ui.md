@@ -546,9 +546,11 @@ The tabs in detail:
 - **View**: how the tab looks, personal except the host's layout pin:
   - **Theme**: two orthogonal theme controls (`client/src/theme.ts`), per
     `brand.md`'s Themes section: a **theme** picker (`riot` — the
-    default — or `cyberpunk`) and the existing dark/light toggle,
-    combining into one of four `data-theme` values (`dark`, `light`,
-    `cyberpunk-dark`, `cyberpunk-light`). Changing either control
+    default — `cyberpunk` or `mono`; one button labeled with the current
+    theme, "Theme: Riot", that cycles Riot → Cyberpunk → Mono → Riot) and
+    the existing dark/light toggle, combining into one of six `data-theme`
+    values (`dark`, `light`, `cyberpunk-dark`, `cyberpunk-light`,
+    `mono-dark`, `mono-light`). Changing either control
     switches the app's CSS palette and the tab notation's colors
     together, and both choices persist across a refresh.
   - **Bars per row**: one group holding both the personal choice and the

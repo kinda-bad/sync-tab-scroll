@@ -123,7 +123,7 @@
   }
 
   .btn:focus-visible {
-    outline: 2px solid var(--riot);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
 
@@ -138,8 +138,13 @@
     color: var(--bg);
   }
 
+  /* --primary-hover-* (tokens.css) default to --riot + a brightness lift;
+     mono, whose --riot is pure ink a lift can't brighten, swaps in its
+     accent instead. */
   .btn-riot:hover:not(:disabled) {
-    filter: brightness(1.12);
+    background: var(--primary-hover-bg);
+    border-color: var(--primary-hover-bg);
+    filter: var(--primary-hover-filter);
   }
 
   .btn-hazard {

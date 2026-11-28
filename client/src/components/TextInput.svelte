@@ -62,7 +62,7 @@
 
   .field-input:focus {
     outline: none;
-    border-color: var(--riot);
+    border-color: var(--focus);
   }
 
   .field-input.has-error {

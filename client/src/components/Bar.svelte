@@ -16,7 +16,7 @@
   <HazardBar fill={progress} />
 </div>
 <div class="bar-wrap">
-  <div class="bar torn-edge signature-glitch signature-tape glitch-cut-edge">
+  <div class="bar torn-edge signature-glitch signature-tape glitch-cut-edge rule-edge">
     <div class="bar-section bar-identity">
       {@render identity()}
     </div>
@@ -67,7 +67,9 @@
     background: var(--bar-surface);
     /* torn-edge's (riot) and glitch-cut-edge's (cyberpunk) clip-paths both
        eat into the top ~12–24% depending on theme — extra top padding
-       keeps content clear of whichever jagged silhouette is active. */
+       keeps content clear of whichever jagged silhouette is active (mono's
+       straight rule-edge doesn't need it, but one padding keeps the bar
+       the same height in every theme). */
     padding-top: calc(var(--space-3) + 0.5rem);
   }
 

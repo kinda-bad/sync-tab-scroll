@@ -1,10 +1,17 @@
 import * as at from '@coderline/alphatab';
 import type { FlatSyncPoint } from '@sync-tab-scroll/shared';
-import { darkTabColors, lightTabColors, cyberpunkDarkTabColors, cyberpunkLightTabColors } from './brand-colors';
+import { darkTabColors, lightTabColors, cyberpunkDarkTabColors, cyberpunkLightTabColors, monoDarkTabColors, monoLightTabColors } from './brand-colors';
 import { tabScaleForViewportWidth } from './tab-scale';
 import { createHorizontalScrollHandler } from './horizontal-scroll-handler';
 
-export type Theme = 'dark' | 'light' | 'cyberpunk-dark' | 'cyberpunk-light';
+/** Every `data-theme` value (brand.md, Themes): riot keeps the bare `dark`/`light`. */
+export const THEMES = ['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light', 'mono-dark', 'mono-light'] as const;
+export type Theme = (typeof THEMES)[number];
+
+/** The one validity check for a stored or document `data-theme` value, shared by theme.ts and playback-engine.ts. */
+export function isTheme(value: unknown): value is Theme {
+  return (THEMES as readonly unknown[]).includes(value);
+}
 
 export interface TabRendererOptions {
   container: HTMLElement;
@@ -45,6 +52,8 @@ function applyThemeColors(resources: at.RenderingResources, theme: Theme): void 
     light: lightTabColors,
     'cyberpunk-dark': cyberpunkDarkTabColors,
     'cyberpunk-light': cyberpunkLightTabColors,
+    'mono-dark': monoDarkTabColors,
+    'mono-light': monoLightTabColors,
   }[theme];
   resources.mainGlyphColor = colors.foreground; // flat full-brightness — see class doc comment below
   resources.secondaryGlyphColor = colors.foregroundDim;

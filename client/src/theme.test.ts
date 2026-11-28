@@ -13,12 +13,12 @@ function fakeLocalStorage() {
   };
 }
 
-describe('loadStoredTheme (4-value data-theme set, brand.md Themes)', () => {
+describe('loadStoredTheme (6-value data-theme set, brand.md Themes)', () => {
   beforeEach(() => {
     (globalThis as unknown as { localStorage: ReturnType<typeof fakeLocalStorage> }).localStorage = fakeLocalStorage();
   });
 
-  it.each(['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light'] as const)('returns %s when stored', (value) => {
+  it.each(['dark', 'light', 'cyberpunk-dark', 'cyberpunk-light', 'mono-dark', 'mono-light'] as const)('returns %s when stored', (value) => {
     localStorage.setItem(STORAGE_KEY, value);
     expect(loadStoredTheme()).toBe(value);
   });
@@ -27,8 +27,8 @@ describe('loadStoredTheme (4-value data-theme set, brand.md Themes)', () => {
     expect(loadStoredTheme()).toBeUndefined();
   });
 
-  it('returns undefined for a value outside the 4-value set', () => {
-    localStorage.setItem(STORAGE_KEY, 'riot-dark');
+  it.each(['riot-dark', 'mono', 'mono-sepia'])('returns undefined for %s, outside the 6-value set', (value) => {
+    localStorage.setItem(STORAGE_KEY, value);
     expect(loadStoredTheme()).toBeUndefined();
   });
 });

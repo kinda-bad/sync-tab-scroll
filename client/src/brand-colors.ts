@@ -26,3 +26,23 @@ export const cyberpunkLightTabColors = {
   rulingDim: new at.model.Color(214, 0, 107, 89), // magenta (0.35 alpha) — staff lines
   rulingMid: new at.model.Color(214, 0, 107, 128), // magenta (0.50 alpha) — barlines
 };
+
+/**
+ * Mono tab-notation palettes (brand.md, Themes › Mono): ink and grays only.
+ * Every resource is the mode's ink (pure white on black, pure black on
+ * white) at a lower alpha, so nothing alphaTab paints carries a tint; the
+ * signal-red accent reaches notation only through the CSS playback cursor.
+ */
+export const monoDarkTabColors = {
+  foreground: new at.model.Color(255, 255, 255, 255), // white ink — fret numbers, notes, stems
+  foregroundDim: new at.model.Color(255, 255, 255, 128), // 0.50 — ghost notes/ties, bar numbers, section labels
+  rulingDim: new at.model.Color(255, 255, 255, 89), // 0.35 — staff lines
+  rulingMid: new at.model.Color(255, 255, 255, 140), // 0.55 — barlines
+};
+
+export const monoLightTabColors = {
+  foreground: new at.model.Color(0, 0, 0, 255), // black ink
+  foregroundDim: new at.model.Color(0, 0, 0, 128), // 0.50
+  rulingDim: new at.model.Color(0, 0, 0, 89), // 0.35
+  rulingMid: new at.model.Color(0, 0, 0, 140), // 0.55
+};

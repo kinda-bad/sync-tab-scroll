@@ -569,7 +569,7 @@
   }
   .bar-code-copied {
     margin-left: 0.4em;
-    color: var(--accent, #6cf);
+    color: var(--riot);
     font-weight: 600;
   }
 </style>

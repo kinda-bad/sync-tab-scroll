@@ -2,7 +2,7 @@ import type { AlphaTabApi } from '@coderline/alphatab';
 import type * as at from '@coderline/alphatab';
 import { PlayerMode } from '@coderline/alphatab';
 import { playbackOrderOf, unrollSyllables, type CatalogSong, type Session } from '@sync-tab-scroll/shared';
-import { createTabRenderer, setTheme, switchTrack, type Theme } from './tab-renderer';
+import { createTabRenderer, isTheme, setTheme, switchTrack, type Theme } from './tab-renderer';
 import { loadStoredMetronome } from './metronome-preference';
 import { loadStoredTrackMute } from './track-mute-preference';
 import { createHeadlessPlayer } from './headless-player';
@@ -176,8 +176,7 @@ export function ensurePlaybackEngine(
   // document rather than importing from theme.ts, which already imports
   // setEngineTheme from this module (a reverse import here would be circular).
   const datasetTheme = document.documentElement.dataset.theme;
-  const theme: Theme =
-    datasetTheme === 'light' || datasetTheme === 'cyberpunk-dark' || datasetTheme === 'cyberpunk-light' ? datasetTheme : 'dark';
+  const theme: Theme = isTheme(datasetTheme) ? datasetTheme : 'dark';
 
   // Recording mode plays the song's operator-supplied backing track instead of
   // the synth (datamodel.md Session.playbackSource); playerMode is fixed at
@@ -489,8 +488,8 @@ export function ensurePlaybackEngine(
     // === lineEls.length never occurs since this feature only covers a
     // leading gap or a gap between two real lines (plan: a trailing gap
     // after the last line is out of scope), so a reference node always
-    // exists. brand.md: the drain bar carries both theme-specific classes
-    // unconditionally (`.gap-drain-tape`/`.gap-drain-led`, T006) — CSS
+    // exists. brand.md: the drain bar carries every theme's class
+    // unconditionally (`.gap-drain-tape`/`.gap-drain-led`/`.gap-drain-plain`) — CSS
     // decides which one actually renders per data-theme, same convention as
     // HazardBar's own `.hazard-stripes`/`.led-marquee` pair.
     function renderGapIndicators(): void {
@@ -511,7 +510,7 @@ export function ensurePlaybackEngine(
         lineEl.insertBefore(dotFrag, lineEl.firstChild);
 
         const drainEl = document.createElement('div');
-        drainEl.className = 'gap-drain gap-drain-tape gap-drain-led';
+        drainEl.className = 'gap-drain gap-drain-tape gap-drain-led gap-drain-plain';
         drainEl.style.setProperty('--gap-fill', '1');
         containers.fullLyricsEl.insertBefore(drainEl, lineEl);
 
