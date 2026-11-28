@@ -125,12 +125,12 @@
 
 :root[data-theme='mono-dark'] {
   /* "mono" dark (brand.md, Themes › Mono) — no-nonsense black and white
-     with one lightly used signal-red accent. Surfaces are untinted grays.
+     with one lightly used signal-green accent. Surfaces are untinted grays.
      --riot (primary/selected/links) is plain ink here, and --hazard
-     (caution/pending) a mid gray, so the red lives only in --live/--focus:
+     (caution/pending) a mid gray, so the green lives only in --live/--focus:
      the playback cursor, the sung syllable, the progress fill, focus rings
-     and primary-button hover. #ff3b30 rather than a deeper red: on black
-     it clears 4.5:1 on every surface (brand.md has the ratios). */
+     and primary-button hover. #30d158 clears 8:1 on every dark surface
+     (brand.md has the ratios). */
   --bg: #000000;
   --surface: #111111;
   --surface-raised: #1a1a1a;
@@ -142,8 +142,8 @@
   --hazard: #9e9e9e;
   --hazard-dim: rgba(158, 158, 158, 0.3);
   --border: rgba(255, 255, 255, 0.24);
-  --live: #ff3b30;
-  --live-dim: rgba(255, 59, 48, 0.22);
+  --live: #30d158;
+  --live-dim: rgba(48, 209, 88, 0.22);
   --focus: var(--live);
   --primary-hover-bg: var(--live);
   --primary-hover-filter: none;
@@ -157,9 +157,9 @@
 
 :root[data-theme='mono-light'] {
   /* "mono" light (brand.md, Themes › Mono) — white paper, black ink, the
-     same single accent. Tuned from the requested #e10600 to #d70500 so the
-     sung syllable (text, 4.5:1) still clears AA on the light-gray raised
-     surface the lyrics ticker sits on; still plainly signal red. */
+     same single accent. #007a33 rather than a brighter
+     green so the sung syllable (text, 4.5:1) still clears AA on the
+     light-gray raised surface the lyrics ticker sits on. */
   --bg: #ffffff;
   --surface: #f5f5f5;
   --surface-raised: #f0f0f0;
@@ -171,8 +171,8 @@
   --hazard: #5c5c5c;
   --hazard-dim: rgba(92, 92, 92, 0.18);
   --border: rgba(0, 0, 0, 0.24);
-  --live: #d70500;
-  --live-dim: rgba(215, 5, 0, 0.14);
+  --live: #007a33;
+  --live-dim: rgba(0, 122, 51, 0.14);
   --focus: var(--live);
   --primary-hover-bg: var(--live);
   --primary-hover-filter: none;
@@ -198,7 +198,7 @@
   --primary-hover-bg: var(--riot);
   --primary-hover-filter: brightness(1.12);
   --gap-dot-active: var(--lyric-active);
-  /* The beat cursor's strength: mono runs it at 1, since its red at 0.6
+  /* The beat cursor's strength: mono runs it at 1, since its accent at 0.6
      drops under 3:1 against black (brand.md, Themes › Mono). */
   --cursor-beat-opacity: 0.6;
 

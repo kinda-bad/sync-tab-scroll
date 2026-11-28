@@ -272,14 +272,14 @@ bullet above.
 Added 2026-11-27. "No nonsense black and white, with one lightly used
 accent color." Where `riot` is physical and `cyberpunk` is digital, `mono`
 is the absence of a device: black, white and untinted grays, and one
-signal red that appears only for **what's happening right now**.
+signal green that appears only for **what's happening right now**.
 
 **Where the accent goes, and nowhere else.** `--live`/`--focus` carry the
-red; `--riot` is plain ink and `--hazard` a mid gray, so every component
+green; `--riot` is plain ink and `--hazard` a mid gray, so every component
 that reads the "primary" or "caution" roles comes out black, white or
 gray without knowing which theme is on.
 
-- Red: the playback cursor (`.at-cursor-beat`, full strength) and the
+- Green: the playback cursor (`.at-cursor-beat`, full strength) and the
   current-bar highlight (`.at-cursor-bar`, `--live-dim`); the horizontal
   view's playhead; the currently sung syllable and lyric line
   (`--lyric-active`); the progress/readiness fill; focus rings and the
@@ -303,8 +303,8 @@ gray without knowing which theme is on.
 | `--riot` | `#ffffff` (ink) |
 | `--hazard` | `#9e9e9e` |
 | `--border` | `rgba(255,255,255,0.24)` |
-| `--live` / `--focus` | `#ff3b30` |
-| `--live-dim` | `rgba(255,59,48,0.22)` |
+| `--live` / `--focus` | `#30d158` |
+| `--live-dim` | `rgba(48,209,88,0.22)` |
 | `--lyric-base` | `--ink-dim` |
 | `--lyric-active` | `--live` |
 
@@ -321,15 +321,16 @@ gray without knowing which theme is on.
 | `--riot` | `#000000` (ink) |
 | `--hazard` | `#5c5c5c` |
 | `--border` | `rgba(0,0,0,0.24)` |
-| `--live` / `--focus` | `#d70500` |
-| `--live-dim` | `rgba(215,5,0,0.14)` |
+| `--live` / `--focus` | `#007a33` |
+| `--live-dim` | `rgba(0,122,51,0.14)` |
 | `--lyric-base` | `--ink-dim` |
 | `--lyric-active` | `--live` |
 
-The light red was asked for as about `#e10600`; it's tuned to `#d70500`
-because the sung syllable is *text* and sits on the lyrics ticker's
-light-gray strip, where `#e10600` falls to about 4.4:1. Dark mode keeps
-the requested `#ff3b30`.
+The accent was first signal red (`#ff3b30` dark, `#d70500` light). On
+2026-11-27 it changed to signal green after comparing two blues and two
+greens on a playback screenshot. The light green is a deep `#007a33`
+because the sung syllable is *text* on the lyrics ticker's light-gray
+strip, where it needs 4.5:1.
 
 **Signature devices — deliberately none:**
 
@@ -356,21 +357,21 @@ surface).** Text needs 4.5:1; the accent as a non-text indicator 3:1.
 | `--ink` on bg / surface / raised / bar / ticker | 21.0 / 18.9 / 17.4 / 16.5 / 18.1 | 21.0 / 19.3 / 18.4 / 17.6 / 18.8 |
 | `--ink-dim` on the same | 7.8 / 7.7 / 7.3 / 7.1 / 7.4 | 6.2 / 6.0 / 6.0 / 5.9 / 6.0 |
 | `--hazard` (text) on the same | 7.8 / 7.1 / 6.5 / 6.2 / 6.8 | 6.7 / 6.1 / 5.9 / 5.6 / 6.0 |
-| `--live` (sung syllable: text) on the same | 5.9 / 5.3 / 4.9 / 4.7 / 5.1 | 5.4 / 4.9 / 4.7 / 4.5 / 4.8 |
-| `--bg` text on `--live` (primary-button hover) | 5.9 | 5.4 |
+| `--live` (sung syllable: text) on the same | 10.4 / 9.3 / 8.6 / 8.2 / 8.9 | 5.5 / 5.0 / 4.8 / 4.6 / 4.9 |
+| `--bg` text on `--live` (primary-button hover) | 10.4 | 5.5 |
 | `--bg` text on `--hazard` (`.btn-hazard`) | 7.8 | 6.7 |
-| Beat cursor (`--live`, opacity 1) on bg | 5.9 | 5.4 |
-| Horizontal playhead (`--live` at 0.8) on bg | 4.0 | 4.4 |
-| Progress fill (`--live`) on its track | 4.9 | 4.7 |
-| Focus ring (`--live`) on bg | 5.9 | 5.4 |
-| Current-bar wash (`--live-dim`) on bg | 1.2 | 1.3 |
-| `--ink` notation over that wash | 17.1 | 16.3 |
+| Beat cursor (`--live`, opacity 1) on bg | 10.4 | 5.5 |
+| Horizontal playhead (`--live` at 0.8) on bg | 6.7 | 3.8 |
+| Progress fill (`--live`) on its track | 8.6 | 4.8 |
+| Focus ring (`--live`) on bg | 10.4 | 5.5 |
+| Current-bar wash (`--live-dim`) on bg | 1.4 | 1.2 |
+| `--ink` notation over that wash | 14.9 | 17.2 |
 
 "Ticker" is the lyrics strip's `color-mix(--surface-raised 85%,
 transparent)` over the canvas. `--border` (about 1.8–2.2:1) is decorative
 and not relied on to convey state. The beat cursor runs at full strength
-in `mono` (`--cursor-beat-opacity: 1`): at the other themes' 0.6 the red
-line would drop to 2.6:1 on black. The current-bar wash is deliberately
+in `mono` (`--cursor-beat-opacity: 1`): at the other themes' 0.6 the light
+mode's green line would drop to 2.6:1 on white. The current-bar wash is deliberately
 faint (well under 3:1): it is supplementary, and a stronger wash muddied
 the glyphs under it. Position is always carried by an indicator that
 passes — the beat cursor in the paged view, the playhead in the
@@ -524,11 +525,11 @@ only through the CSS cursor.
 | Ghost notes, ties, bar numbers, section labels | `--tab-foreground-dim` | white at 0.50 | black at 0.50 | `secondaryGlyphColor`, `barNumberColor`, `scoreInfoColor` |
 | Staff lines | `--tab-ruling-dim` | white at 0.35 | black at 0.35 | `staffLineColor` |
 | Barlines | `--tab-ruling-mid` | white at 0.55 | black at 0.55 | `barSeparatorColor` |
-| Playback cursor (beat) | `--live` | `#ff3b30`, full strength | `#d70500`, full strength | `.at-cursor-beat` |
-| Current-bar highlight | `--live-dim` | `#ff3b30` at 0.22 | `#d70500` at 0.14 | `.at-cursor-bar` |
-| Active/currently-sung lyric syllable | `--lyric-active` | `#ff3b30` | `#d70500` | `.at-highlight`, lyrics view line-highlight |
+| Playback cursor (beat) | `--live` | `#30d158`, full strength | `#007a33`, full strength | `.at-cursor-beat` |
+| Current-bar highlight | `--live-dim` | `#30d158` at 0.22 | `#007a33` at 0.14 | `.at-cursor-bar` |
+| Active/currently-sung lyric syllable | `--lyric-active` | `#30d158` | `#007a33` | `.at-highlight`, lyrics view line-highlight |
 | Base lyric text | `--lyric-base` | `--ink-dim` | `--ink-dim` | full lyrics view, ticker |
-| Lobby pre-playback pointer | `--live` | `#ff3b30` | `#d70500` | the same alphaTab cursor (`.at-cursor-beat`) |
+| Lobby pre-playback pointer | `--live` | `#30d158` | `#007a33` | the same alphaTab cursor (`.at-cursor-beat`) |
 | Selection | `--hazard-dim` | gray | gray | `.at-selection` |
 
 ## Typography

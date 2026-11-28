@@ -136,15 +136,15 @@ test.describe('.glitch-text (cyberpunk RGB-split hero/title type)', () => {
 });
 
 /**
- * Mono (brand.md, Themes › Mono): black and white with one signal-red
+ * Mono (brand.md, Themes › Mono): black and white with one signal-green
  * accent, used only for what's happening now. No clip-path edge, no
  * texture, no signature motion, no type flourish — each asserted as a
  * positive Mono rule (a 1px rule, a flat accent fill), not merely as the
  * absence of the other themes' rules, which an unknown theme would also pass.
  */
 const MONO_THEMES = [
-  { theme: 'mono-dark', bg: 'rgb(0, 0, 0)', ink: 'rgb(255, 255, 255)', live: 'rgb(255, 59, 48)' },
-  { theme: 'mono-light', bg: 'rgb(255, 255, 255)', ink: 'rgb(0, 0, 0)', live: 'rgb(215, 5, 0)' },
+  { theme: 'mono-dark', bg: 'rgb(0, 0, 0)', ink: 'rgb(255, 255, 255)', live: 'rgb(48, 209, 88)' },
+  { theme: 'mono-light', bg: 'rgb(255, 255, 255)', ink: 'rgb(0, 0, 0)', live: 'rgb(0, 122, 51)' },
 ] as const;
 
 async function resolveVar(page: import('@playwright/test').Page, name: string, prop: 'color' | 'backgroundColor' = 'color') {
@@ -163,7 +163,7 @@ async function resolveVar(page: import('@playwright/test').Page, name: string, p
 
 for (const { theme, bg, ink, live } of MONO_THEMES) {
   test.describe(`mono (${theme})`, () => {
-    test('applies its own black/white tokens and the signal-red accent', async ({ mount, page }) => {
+    test('applies its own black/white tokens and the signal-green accent', async ({ mount, page }) => {
       await setTheme(page, theme);
       await mount(BarHarness);
       expect(await resolveVar(page, '--bg')).toBe(bg);
@@ -172,7 +172,7 @@ for (const { theme, bg, ink, live } of MONO_THEMES) {
       expect(await resolveVar(page, '--focus')).toBe(live);
       expect(await resolveVar(page, '--lyric-active')).toBe(live);
       // The accent is used lightly: the primary/selected role and the
-      // caution role are ink and gray, not red.
+      // caution role are ink and gray, not the accent.
       expect(await resolveVar(page, '--riot')).toBe(ink);
       expect(await resolveVar(page, '--hazard')).not.toBe(live);
       expect(await resolveVar(page, '--lyric-base')).not.toBe(live);
@@ -256,7 +256,7 @@ for (const { theme, bg, ink, live } of MONO_THEMES) {
         };
       });
       expect(probe.beat).toBe(live);
-      // Full strength: at riot's 0.6 the red beat line falls under 3:1 on black.
+      // Full strength: at riot's 0.6 the beat line falls under 3:1 on white.
       expect(probe.beatOpacity).toBe('1');
       expect(probe.syllable).toBe(live);
       expect(probe.drainImage).toBe('none');

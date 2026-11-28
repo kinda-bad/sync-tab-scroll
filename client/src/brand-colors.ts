@@ -31,7 +31,7 @@ export const cyberpunkLightTabColors = {
  * Mono tab-notation palettes (brand.md, Themes › Mono): ink and grays only.
  * Every resource is the mode's ink (pure white on black, pure black on
  * white) at a lower alpha, so nothing alphaTab paints carries a tint; the
- * signal-red accent reaches notation only through the CSS playback cursor.
+ * signal-green accent reaches notation only through the CSS playback cursor.
  */
 export const monoDarkTabColors = {
   foreground: new at.model.Color(255, 255, 255, 255), // white ink — fret numbers, notes, stems
