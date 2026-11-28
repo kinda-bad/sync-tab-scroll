@@ -26,13 +26,14 @@
   // feedback-bottom-bar-icons-3a15 F003-F006) — lucide-svelte, adopted per
   // Principle V rather than hand-rolled inline SVGs.
   // T002 (tasks-icons-a11y-ticker-a10d.md, feedback F001/F004): Settings
-  // moved cog → settings; Leave session moved log-out → bone ("breaking up
-  // the band" — log-out now belongs to the account menu's actual Sign out).
+  // moved cog → settings; Leave session moved log-out → bone (log-out now
+  // belongs to the account menu's actual Sign out), then bone → power
+  // (feedback-song-part-control-during-playb-dba8 F003).
   import Settings from '@lucide/svelte/icons/settings';
   import Play from '@lucide/svelte/icons/play';
   import Pause from '@lucide/svelte/icons/pause';
   import Square from '@lucide/svelte/icons/square';
-  import Bone from './components/icons/BoneFracture.svelte';
+  import Power from '@lucide/svelte/icons/power';
   import MicVocal from '@lucide/svelte/icons/mic-vocal';
   import ListMusic from '@lucide/svelte/icons/list-music';
   import Clock from '@lucide/svelte/icons/clock';
@@ -131,12 +132,17 @@
   // the source GP file (lyricsTrackIndex) — the tab-less Lyrics part shows
   // the full sheet instead, and a song without a lyrics track has nothing
   // to tick. The bar control stays visible in every case; when unavailable
-  // it is disabled with one of these reasons.
+  // it is disabled with one of these reasons. A song with a line-timed .lrc
+  // but no lyrics track still offers the Lyrics part, so its reason points
+  // there rather than claiming the song has no lyrics (feedback
+  // feedback-song-part-control-during-playb-dba8 F004).
   $: lyricsTickerAvailable = hasPart && !isLyricsPart && catalogSong?.lyricsTrackIndex != null;
   $: lyricsToggleReason = isLyricsPart
     ? 'Lyrics part shows the full sheet'
     : catalogSong?.lyricsTrackIndex == null
-      ? 'No lyrics for this song'
+      ? catalogSong?.lyricsLrc
+        ? 'No in-tab lyrics for this song (use the Lyrics part)'
+        : 'No lyrics for this song'
       : 'Pick a part first';
 
   // Song/part selection lives in a modal (ui.md Lobby View), not inline —
@@ -159,6 +165,14 @@
       songPartModalOpen = false;
     } else {
       songPartModalOpen = true;
+      // Mid-song (feedback feedback-song-part-control-during-playb-dba8
+      // F002): opening never stops or resets anything. A host opening it
+      // while running pauses, so the band isn't racing on while they look;
+      // closing doesn't auto-resume (the host presses Resume). A non-host
+      // has no transport control, so their session playback carries on.
+      if (isHost && $clientStore.view === 'playback' && isRunning) {
+        $clientStore.wsClient?.send({ type: 'playback-control', action: 'pause' });
+      }
     }
   }
 
@@ -290,9 +304,10 @@
         barNumber={$beatWidgetState.barNumber}
         beatDurationMs={$beatWidgetState.beatDurationMs}
       />
-      {#if $clientStore.view === 'lobby'}
-        <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
-      {/if}
+      <!-- Present in Lobby and Playback alike (ui.md; feedback
+           feedback-song-part-control-during-playb-dba8 F001). Only the
+           auto-open (needsSongOrPart) is Lobby-only. -->
+      <Button variant="ghost" label="Song & part" iconOnly icon={ListMusic} onclick={toggleSongPartModal} />
       <!-- T004 (tasks-icons-a11y-ticker-a10d.md, feedback F006 — confirmed
            reversal of ui.md's "absent entirely" decision): always visible,
            disabled (never absent) when no ticker is available, with the
@@ -317,7 +332,7 @@
           <Button variant="ghost" label="Stop" iconOnly icon={Square} onclick={stopPlayback} />
         {/if}
       {/if}
-      <Button variant="ghost" label="Leave session" iconOnly icon={Bone} onclick={leaveSession} />
+      <Button variant="ghost" label="Leave session" iconOnly icon={Power} onclick={leaveSession} />
     {/snippet}
     {#snippet status()}
       {#if participant}
@@ -416,8 +431,11 @@
   }
   .engine-containers.visible {
     /* Reserves scroll room so the tab's last rows can clear the fixed
-       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). */
-    padding-bottom: calc(var(--lyrics-strip-height) * 2);
+       lyrics ticker strip (plan-lyrics-ticker-2026-07-03.md). The strip's
+       real height varies with the font-size preference, so
+       lyrics-overlay.ts (applyReserve) sets the exact reserve; the
+       fallback covers the moment before it runs. */
+    padding-bottom: var(--lyrics-strip-bottom-reserve, calc(var(--lyrics-strip-height) * 2));
   }
   /*
    * T004 (tasks-bottom-bar-icons-47a6.md, feedback F001): toggling the

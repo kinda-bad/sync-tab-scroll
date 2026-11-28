@@ -7,6 +7,8 @@ client/public/test/
 
 # Local catalog content (real commercial .gp files, pipeline output — not for the repo)
 catalog/
+# Pre-patch originals of catalog files (same licensing as catalog/)
+catalog-originals/
 
 # Claude Code local tooling/config — not for the repo
 .claude/skills/ardd-*/
