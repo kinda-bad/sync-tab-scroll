@@ -38,7 +38,10 @@ is getting unwieldy as songs and catalogues grow (user, 2026-11-28).
   (or contain one spanning it), with the song name as its accessible name, keyboard
   focus and a hover/pressed state, so this isn't only a click handler on an `<li>`.
   Non-hosts can't pick a song, so for them rows stay plain, non-interactive text.
-  To settle at plan time: whether the "Your part" list gets the same treatment (its
-  rows also have one "Select" button each, with the selected part shown as a
-  highlighted, disabled button that would need another way to show "selected").
+  The "Your part" list gets the same treatment (user, 2026-11-28): drop its
+  "Select" buttons and make each part row tappable to pick that part. The part you
+  have selected is shown by highlighting the whole row, and that row isn't
+  clickable (`aria-current` or `aria-pressed` so assistive tech hears it as
+  selected, and `disabled` or no button at all on it). This includes the Lyrics row;
+  when the song has no `.lrc`, that row is shown disabled as today.
   [artifacts: ui]
