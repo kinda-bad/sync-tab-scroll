@@ -425,6 +425,7 @@ change it:
 | Theme (family + light/dark) | Settings › View | Anyone | this device |
 | Bars per row — just you | Settings › View | Anyone | this device |
 | Bars per row — for everyone | Settings › View | Host (badge) | session |
+| Horizontal view | Settings › View | Anyone | this device |
 | Lyrics ticker font size, position, scrolling, anchor, measure markers | Settings › Lyrics | Anyone | this device |
 | Audio source (Synth / Recording) | Settings › Audio | Host (badge) | session |
 | Count-in | Settings › Audio | Host (badge) | session |
@@ -577,8 +578,14 @@ The tabs in detail:
       the override ("Pins every participant's tab layout to a fixed number
       of bars per row, overriding each participant's own choice."). Clearing it (back to "Auto")
       restores each participant's independent preference immediately.
-  - Further personal view settings (the horizontal scroll view,
-    `horizontal-scroll-view.md`) are added to this tab, below Bars per row.
+  - **Horizontal view** (`horizontal-scroll-view`): a personal toggle,
+    visible to **every** participant, below Bars per row: persisted
+    client-side (`client/src/horizontal-view-preference.ts`, default
+    **off**), its own self-contained row (`HorizontalViewSetting.svelte`).
+    On, this participant's Playback View switches to the side-scrolling
+    layout (Playback View, "Horizontal view" below) at once, rebuilding the
+    engine in the other layout; nobody else's view changes. Bars per row
+    doesn't apply while it's on.
 - **Lyrics**: every lyrics ticker setting in one place, all personal and
   this-device-only, under a hint that only your screen changes and the
   Lyrics part's full lyric sheet keeps its own layout:
@@ -981,6 +988,51 @@ identically regardless of which one they're on:
   indicator). Gaps of one measure or shorter get no special treatment —
   the sheet just continues to the next line as before.
 
+**Horizontal view (personal preference, 2026-11-27,
+`horizontal-scroll-view`)**: the tab shows as one long staff scrolling right
+to left past a fixed playhead, instead of wrapped rows scrolling down the
+page, the way practice apps like Yousician do. The playhead is a vertical
+line a quarter of the way in from the left, across both bands; the sheet
+moves under it smoothly and never jumps (except back to a repeat's start,
+below). infrastructure.md Tab Rendering has the alphaTab settings.
+
+- **Bands**: the view fills the screen between the hazard strip and the
+  Bar. The lyrics band sits above the tab and takes about a third of the
+  height, the tab the other two thirds (a starting point to tune). With no
+  lyrics (toggled off, or a song with no lyric track) the tab takes the
+  whole height. The staff shrinks to fit its band, so it never scrolls up
+  and down. At Start the view is scrolled fully into view.
+- **Lyrics band**: replaces the single-line ticker in this view. The same
+  syllables, in playback order, sit on one line by their position in the
+  song, spaced apart only as much as their text needs, and slide right to
+  left so each one reaches the playhead as it is sung; the sung syllable
+  is highlighted with the ticker's rules (bar-line clearing; measure
+  markers, when on, are lines at each bar). It follows the lyrics font
+  size preference; the ticker's position, Scrolling and Anchor settings
+  (`lyrics-ticker-scroll-modes`) apply to the in-tab ticker only, not to
+  this band, which always glides past the fixed playhead.
+- **Lyrics part**: the same layout with no tab band: the band alone,
+  larger and vertically centered, with its own playhead, in place of the
+  stacked sheet. Built from the song's GP lyric track when it has one,
+  else from the `.lrc` lines by time. The sheet's gap indicators don't
+  carry over.
+- **Host settings**: host-mandated bars-per-row is ignored (a single line
+  has no rows). The start marker, Spotlight, and the host's click-to-seek
+  all work, and each brings the chosen beat under the playhead while
+  stopped. The early-stop point dims the sheet from the stop beat onward,
+  scrolling with it, instead of the paged view's bottom-third scrim.
+- **Repeats**: the lyrics band reads forward through repeats; the tab lays
+  each written bar out once (alphaTab has no unrolled layout), so the
+  sheet jumps back to the repeat's start when playback does.
+- **Phones in portrait**: the view needs landscape. On a phone-width
+  screen in portrait, in the Playback View (the Lobby stays usable), a
+  prompt covers the tab area ("Turn your phone
+  sideways for the horizontal view."), never the Bar, with a "Use the
+  paged view instead" button that turns the preference off. The client
+  also asks for a landscape lock (`screen.orientation.lock`), which most
+  browsers only grant in fullscreen, so the prompt is the real mechanism.
+  Portrait support is to be revisited.
+
 Every participant's alphaTab instance loads and plays the **full
 multi-track mix** by default — every instrument's MIDI notes, not just the
 part they've selected to render/follow (`Participant.selectedPart` scopes
@@ -1154,6 +1206,9 @@ every rule below assumes):
   tests must run under **mobile emulation** (`isMobile`), not just a
   narrow desktop window: desktop Chromium ignores the viewport meta
   entirely.
+  One exception by design: the horizontal view's tab band (Playback View)
+  holds a staff much wider than the screen. It is `overflow-x: hidden`
+  and only the app scrolls it, so the user never scrolls sideways.
 - **Layouts wrap rather than breakpoint.** Preference order: intrinsic
   fluidity (flex-wrap, `min()`, `max-width: 100%`) over `@media`
   queries. Control rows in the settings modal, `ListRow`'s trailing

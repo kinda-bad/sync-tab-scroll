@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ensurePlaybackEngine, renderNowVisible, setEngineTrackMute, __getEngineStateForTesting } from '../playback-engine';
+  import { ensurePlaybackEngine, renderNowVisible, setEngineTrackMute, setEngineEarlyStop, __getEngineStateForTesting } from '../playback-engine';
   import { clientStore } from '../store';
   import { barTickMap } from '../bar-tick';
   import { get } from 'svelte/store';
@@ -24,10 +24,15 @@
   // Lets a CT test vary the song's lyric metadata (e.g. an lrclib-sourced
   // song: lyricsTrackIndex null + its own syncPoints) without a new harness.
   export let songOverrides: Partial<CatalogSong> = {};
+  // Horizontal view (feature horizontal-scroll-view): builds the engine in
+  // the one-line layout inside the same band structure App.svelte uses.
+  export let horizontal = false;
+  export let barsPerRow: number | null = null;
 
   let tabContainer: HTMLDivElement;
   let overlayContainer: HTMLDivElement;
   let fullLyricsEl: HTMLDivElement;
+  let tabScrollEl: HTMLDivElement;
 
   onMount(() => {
     const sent: unknown[] = [];
@@ -45,6 +50,7 @@
     // and separately lets the test flip visibility independent of any Svelte
     // reactive block (App.svelte's own tick()+rAF safety net isn't present here).
     (window as unknown as { __renderNowVisible: () => void }).__renderNowVisible = renderNowVisible;
+    (window as unknown as { __setEarlyStop: (tick: number | null) => void }).__setEarlyStop = setEngineEarlyStop;
     // settings-menu-reorganization: the loaded song's bars, published for the
     // Settings modal's bar inputs.
     (window as unknown as { __getBarTickMap: () => unknown }).__getBarTickMap = () => get(barTickMap);
@@ -70,7 +76,7 @@
       ...songOverrides,
     };
 
-    ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, song, trackIndex, isLyricsPart);
+    ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl, tabScrollEl }, wsClient, song, trackIndex, isLyricsPart, 'synth', barsPerRow, horizontal);
 
     // Test-only: spies on the real api.changeTrackMute (alphaTab's own
     // method — it only mutates internal synth channel state, not readable
@@ -117,13 +123,28 @@
     // engine can attach the backing track.
     (window as unknown as { __switchSource: (source: 'synth' | 'recording') => void }).__switchSource = (source) => {
       const nextSong: CatalogSong = source === 'recording' ? { ...song, recordingPath, syncPoints } : song;
-      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl }, wsClient, nextSong, trackIndex, isLyricsPart, source);
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl, tabScrollEl }, wsClient, nextSong, trackIndex, isLyricsPart, source, barsPerRow, horizontal);
+    };
+
+    // Test-only: mirrors App.svelte re-invoking ensurePlaybackEngine when the
+    // personal horizontal-view preference flips (a rebuild in the other layout).
+    (window as unknown as { __switchHorizontal: (on: boolean) => void }).__switchHorizontal = (on) => {
+      horizontal = on;
+      ensurePlaybackEngine({ tabContainer, overlayContainer, fullLyricsEl, tabScrollEl }, wsClient, song, trackIndex, isLyricsPart, 'synth', barsPerRow, on);
     };
   });
 </script>
 
-<!-- Same order as App.svelte: the overlay container comes first so a top
-     ticker's reserved space sits above the tab. -->
-<div bind:this={overlayContainer} data-testid="overlay-container" class="lyrics-overlay-container"></div>
-<div bind:this={tabContainer} data-testid="tab-container" style={startHidden ? 'display: none' : ''}></div>
-<div bind:this={fullLyricsEl} data-testid="full-lyrics" class="full-lyrics-view" class:visible={isLyricsPart}></div>
+<!-- Same order and structure as App.svelte: the overlay container comes
+     first so a top ticker's reserved space (or the horizontal view's lyrics
+     band) sits above the tab. -->
+<div class="engine-containers visible" class:horizontal data-testid="engine-containers">
+  <div bind:this={overlayContainer} data-testid="overlay-container" class="lyrics-overlay-container"></div>
+  <div class="tab-band">
+    <div bind:this={tabScrollEl} class="tab-scroll" data-testid="tab-scroll">
+      <div bind:this={tabContainer} data-testid="tab-container" class="tab-container" style={startHidden ? 'display: none' : ''}></div>
+    </div>
+  </div>
+  {#if horizontal && !isLyricsPart}<div class="hview-playhead" data-testid="playhead"></div>{/if}
+</div>
+<div bind:this={fullLyricsEl} data-testid="full-lyrics" class="full-lyrics-view" class:visible={isLyricsPart} class:horizontal={horizontal && isLyricsPart}></div>

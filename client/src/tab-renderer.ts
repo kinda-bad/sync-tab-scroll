@@ -2,6 +2,7 @@ import * as at from '@coderline/alphatab';
 import type { FlatSyncPoint } from '@sync-tab-scroll/shared';
 import { darkTabColors, lightTabColors, cyberpunkDarkTabColors, cyberpunkLightTabColors } from './brand-colors';
 import { tabScaleForViewportWidth } from './tab-scale';
+import { createHorizontalScrollHandler } from './horizontal-scroll-handler';
 
 export type Theme = 'dark' | 'light' | 'cyberpunk-dark' | 'cyberpunk-light';
 
@@ -29,6 +30,13 @@ export interface TabRendererOptions {
    * `null`/omitted means alphaTab's native auto-wrap.
    */
   barsPerRow?: number | null;
+  /**
+   * The horizontal view (feature horizontal-scroll-view): the element the
+   * one-line staff scrolls inside, past a fixed playhead. Omitted → the paged
+   * view, unchanged. alphaTab reads `player.scrollElement` once and caches
+   * it, so the layout is fixed at construction (a switch rebuilds the engine).
+   */
+  horizontalScrollElement?: HTMLElement;
 }
 
 function applyThemeColors(resources: at.RenderingResources, theme: Theme): void {
@@ -65,7 +73,17 @@ function applyThemeColors(resources: at.RenderingResources, theme: Theme): void 
  * Light-mode values (brand.md) are a first pass, not production-validated
  * like dark mode's harvested values — expect a future visual QA pass.
  */
-export function createTabRenderer({ container, gpFilePath, trackIndex, theme = 'dark', playerMode, recordingPath, syncPoints, barsPerRow }: TabRendererOptions): at.AlphaTabApi {
+export function createTabRenderer({
+  container,
+  gpFilePath,
+  trackIndex,
+  theme = 'dark',
+  playerMode,
+  recordingPath,
+  syncPoints,
+  barsPerRow,
+  horizontalScrollElement,
+}: TabRendererOptions): at.AlphaTabApi {
   const recording = playerMode === at.PlayerMode.EnabledBackingTrack;
   const settings = new at.Settings();
   settings.core.engine = 'svg';
@@ -96,7 +114,19 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   // pins alphaTab's native display.barsPerRow when set (host pin or the
   // participant's own personal preference, resolved by the caller);
   // omitted/null leaves alphaTab's own auto-wrap behavior unchanged.
-  if (barsPerRow != null) settings.display.barsPerRow = barsPerRow;
+  if (barsPerRow != null && !horizontalScrollElement) settings.display.barsPerRow = barsPerRow;
+  if (horizontalScrollElement) {
+    // The horizontal view (feature horizontal-scroll-view): one long staff
+    // (a single line has no rows, so bars-per-row is ignored above) that
+    // alphaTab's own Smooth scroll mode moves past a fixed on-time position,
+    // inside the view's own band rather than the page (so the document never
+    // scrolls sideways, ui.md Small Screens). scrollOffsetX stays 0: the band
+    // pads its left edge by the playhead's offset instead, so even the first
+    // beat can sit under the playhead (a negative offset would clamp at 0).
+    settings.display.layoutMode = at.LayoutMode.Horizontal;
+    settings.player.scrollMode = at.ScrollMode.Smooth;
+    settings.player.scrollElement = horizontalScrollElement;
+  }
 
   applyThemeColors(settings.display.resources, theme);
 
@@ -139,6 +169,7 @@ export function createTabRenderer({ container, gpFilePath, trackIndex, theme = '
   }
 
   const api = new at.AlphaTabApi(container, settings);
+  if (horizontalScrollElement) api.customScrollHandler = createHorizontalScrollHandler(api);
 
   api.error.on((e) => console.error('[tab-renderer] error', e));
 

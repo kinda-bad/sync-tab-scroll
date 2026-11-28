@@ -648,6 +648,59 @@ full color reasoning and values, and documents a feature request filed
 with alphaTab requesting finer-grained resource colors or semantic
 classes, which would let this be revisited if it lands upstream.
 
+### Horizontal view (2026-11-27)
+
+The personal horizontal view (ui.md Playback View, `horizontal-scroll-view`)
+is alphaTab's own horizontal layout and scroll mode, not a custom renderer
+(Principle V):
+
+- `display.layoutMode = LayoutMode.Horizontal` (one staff system for the
+  whole song; `display.barsPerRow` is not applied), `player.scrollMode =
+  ScrollMode.Smooth` (alphaTab keeps the on-time position at
+  `scrollOffsetX` and scrolls the sheet past it beat to beat with its own
+  rAF animation), and `player.scrollElement` = the view's tab band
+  (`.tab-scroll`, `overflow-x: hidden`), so only that band scrolls, never
+  the document. alphaTab caches the scroll element on first use and fixes
+  the layout's scroll handler, so turning the view on or off rebuilds the
+  engine (the same teardown as a source switch).
+- `scrollOffsetX` stays 0. The band pads its left edge by the playhead's
+  offset (`--hview-playhead`, 25%), so even the first beat can sit under
+  the playhead; a negative offset would clamp at `scrollLeft` 0. The
+  default Smooth handler still pads the sheet's right end (canvas
+  `padding-right`), so the last beat reaches the playhead too.
+- **Upstream bug worked around**: in 1.9.0,
+  `HorizontalSmoothScrollHandler.forceScrollTo` scrolls the *vertical*
+  axis to the beat's x (`scrollToY(onNotesX + scrollOffsetY)`).
+  `api.scrollToCursor()` lands there, and both the engine (every Start,
+  the cursor-follow fix) and alphaTab (every pause) call it. The engine
+  installs `api.customScrollHandler` (`horizontal-scroll-handler.ts`):
+  alphaTab's `onBeatCursorUpdating` unchanged, `forceScrollTo` scrolling
+  horizontally. Worth reporting upstream.
+- alphaTab only scrolls while playing, so the engine also calls
+  `scrollToCursor()` after each render and after every seek while not
+  playing (start-marker park, Spotlight, the host's click-to-seek), two
+  frames later so alphaTab has moved its cursor first.
+- The beat cursor is hidden (the app's playhead line stands in for it;
+  alphaTab notes that its cursor and scroll animations drift slightly);
+  the bar highlight stays.
+- The render scale fits the staff to the tab band's height, between 60%
+  of the start scale and the start scale, re-fitted after each render and
+  whenever the band resizes (a phone turned from portrait; the horizontal
+  layout doesn't re-render on a resize by itself). Changes under 0.02 are
+  ignored, so a fit can't loop.
+- The early-stop dim is placed after each render and once the MIDI (tick
+  cache) exists.
+- The lyrics band (`horizontal-lyrics-band.ts`) reuses the ticker's
+  placed syllable stream on the playback timeline. Items sit at
+  `position × scale` (about four characters per quarter note), pushed
+  right just enough not to overlap, and the band moves along a
+  piecewise-linear map through every item's anchor, extrapolated per
+  frame from alphaTab's position reports at their measured rate, so it
+  glides and each syllable reaches the playhead on its own tick. Repeats
+  read forward in the band, while the tab, which lays each written bar
+  out once, jumps back at a repeat sign (alphaTab has no unrolled-repeat
+  layout).
+
 ### Recording Playback Mode
 
 `sync-tabs-to-real-audio`. When the host switches the session to the **recording**

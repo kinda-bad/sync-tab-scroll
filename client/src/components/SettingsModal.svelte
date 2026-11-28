@@ -5,6 +5,7 @@
   import ReadinessBadge from './ReadinessBadge.svelte';
   import ListRow from './ListRow.svelte';
   import TrackRow from './TrackRow.svelte';
+  import HorizontalViewSetting from './HorizontalViewSetting.svelte';
   import { applyTheme, loadStoredTheme, persistTheme, type StoredTheme } from '../theme';
   import { debounce } from '../debounce';
   import { loadStoredMetronome, persistMetronome } from '../metronome-preference';
@@ -492,6 +493,7 @@
     {/if}
 
     <!-- More personal view settings (e.g. Horizontal view) go below this line. -->
+    <HorizontalViewSetting />
   {:else if activeTab === 'lyrics'}
     <p class="hint">How the lyrics ticker over your tab looks and moves. Only your screen changes; the Lyrics part's full lyric sheet keeps its own layout.</p>
 

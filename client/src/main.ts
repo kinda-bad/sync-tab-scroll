@@ -7,6 +7,7 @@ import { __getPlaybackPositionForE2E } from './playback-engine';
 import './styles/tokens.css';
 import './styles/motifs.css';
 import './lyrics.css';
+import './styles/horizontal-view.css';
 
 // Read-only e2e test hook (T019, tasks-recording-drift-foundation) — no
 // other window-reachable handle on the engine exists in the real (non-CT)
