@@ -32,3 +32,13 @@ is getting unwieldy as songs and catalogues grow (user, 2026-11-28).
   collapsed sections that have matches, and the empty state ("No songs match").
   It should be available to non-hosts too, since everyone can browse the list.
   [artifacts: ui]
+- [ ] F004 Drop the per-song "Select" button: the whole song row should be tappable to
+  select that song (user, 2026-11-28). Today each row in the catalog is a `ListRow`
+  with a host-only ghost "Select" `Button`. The row itself needs to be a real button
+  (or contain one spanning it), with the song name as its accessible name, keyboard
+  focus and a hover/pressed state, so this isn't only a click handler on an `<li>`.
+  Non-hosts can't pick a song, so for them rows stay plain, non-interactive text.
+  To settle at plan time: whether the "Your part" list gets the same treatment (its
+  rows also have one "Select" button each, with the selected part shown as a
+  highlighted, disabled button that would need another way to show "selected").
+  [artifacts: ui]
