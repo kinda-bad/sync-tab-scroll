@@ -363,12 +363,18 @@ surface).** Text needs 4.5:1; the accent as a non-text indicator 3:1.
 | Horizontal playhead (`--live` at 0.8) on bg | 4.0 | 4.4 |
 | Progress fill (`--live`) on its track | 4.9 | 4.7 |
 | Focus ring (`--live`) on bg | 5.9 | 5.4 |
+| Current-bar wash (`--live-dim`) on bg | 1.2 | 1.3 |
+| `--ink` notation over that wash | 17.1 | 16.3 |
 
 "Ticker" is the lyrics strip's `color-mix(--surface-raised 85%,
 transparent)` over the canvas. `--border` (about 1.8–2.2:1) is decorative
 and not relied on to convey state. The beat cursor runs at full strength
 in `mono` (`--cursor-beat-opacity: 1`): at the other themes' 0.6 the red
-line would drop to 2.6:1 on black.
+line would drop to 2.6:1 on black. The current-bar wash is deliberately
+faint (well under 3:1): it is supplementary, and a stronger wash muddied
+the glyphs under it. Position is always carried by an indicator that
+passes — the beat cursor in the paged view, the playhead in the
+horizontal view, where the beat cursor is hidden.
 
 ## Lyrics Gap Indicator (2026-07-06)
 
@@ -522,6 +528,7 @@ only through the CSS cursor.
 | Current-bar highlight | `--live-dim` | `#ff3b30` at 0.22 | `#d70500` at 0.14 | `.at-cursor-bar` |
 | Active/currently-sung lyric syllable | `--lyric-active` | `#ff3b30` | `#d70500` | `.at-highlight`, lyrics view line-highlight |
 | Base lyric text | `--lyric-base` | `--ink-dim` | `--ink-dim` | full lyrics view, ticker |
+| Lobby pre-playback pointer | `--live` | `#ff3b30` | `#d70500` | the same alphaTab cursor (`.at-cursor-beat`) |
 | Selection | `--hazard-dim` | gray | gray | `.at-selection` |
 
 ## Typography
