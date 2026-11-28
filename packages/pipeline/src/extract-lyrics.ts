@@ -4,7 +4,7 @@ import { readRawLyricsLines, readRawLyricsLine, countSyllables, alignLinesByTime
 import { isLegacyGpFile, readGp5RawLyricsLine } from './gp5-lyrics.js';
 import { searchLrclib, parseLrclibLinesWithTimestamps } from './lrclib.js';
 import { buildLrc, passthroughLrc } from './lrc-writer.js';
-import { publishSong, slugify, type CatalogMeta, type CatalogPartMeta } from './catalog.js';
+import { keepLineBreaks, publishSong, readExistingMeta, slugify, type CatalogMeta, type CatalogPartMeta } from './catalog.js';
 
 /**
  * Format-dispatching raw-line read (pipeline.md "Legacy GP3–5 Raw-Line
@@ -53,6 +53,7 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
     name: title,
     artist,
     parts,
+    trackNames: score.tracks.map((track) => track.name),
     lyricsTrackIndex: null,
     lyricsLineIndex: null,
     lyricLineBreaks: null,
@@ -87,6 +88,12 @@ export async function extractLyrics(gpFilePath: string, catalogRoot: string): Pr
         lyricLineBreaks = [syllables.length];
       }
     }
+
+    lyricLineBreaks = keepLineBreaks(readExistingMeta(path.join(catalogRoot, songSlug, 'meta.json')), lyricLineBreaks, {
+      syllableCount: syllables.length,
+      lineCount: lines.length,
+      song: songSlug,
+    });
 
     lrcContent = buildLrc(lines, lyricLineBreaks, syllables, buildPlaybackOrder(score), tickToMs);
     meta = { ...meta, lyricsTrackIndex: source.trackIndex, lyricsLineIndex: source.lineIndex, lyricLineBreaks };
